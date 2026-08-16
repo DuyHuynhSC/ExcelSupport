@@ -1,0 +1,50 @@
+<Window x:Class="ExcelSupport.Views.RenameSheetDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Đổi Tên Sheet" 
+        Height="210" Width="360"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStyle="SingleBorderWindow"
+        FontFamily="Segoe UI" FontSize="12">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Tiêu đề / Mô tả -->
+        <TextBlock Grid.Row="0" x:Name="TxtPrompt" Text="Nhập tên mới cho Sheet:" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8" Foreground="{DynamicResource TextBrush}"/>
+
+        <!-- Ô nhập Tên Mới -->
+        <TextBox Grid.Row="1" x:Name="TxtNewSheetName" 
+                 FontSize="13" Padding="6,4" 
+                 MaxLength="31"
+                 Background="{DynamicResource InputBgBrush}"
+                 Foreground="{DynamicResource TextBrush}"
+                 BorderBrush="{DynamicResource BorderBrush}"
+                 BorderThickness="1"
+                 Margin="0,0,0,6"/>
+
+        <!-- Cảnh báo ký tự -->
+        <TextBlock Grid.Row="2" Text="Tối đa 31 ký tự. Không dùng các ký tự: \ / ? * [ ] :" 
+                   FontSize="10" Foreground="#94A3B8" TextWrapping="Wrap"/>
+
+        <!-- Nút Xác nhận / Hủy -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="BtnOk" Content="Đổi Tên" 
+                    IsDefault="True" Width="85" Height="28" 
+                    Background="#107C41" Foreground="#FFFFFF" 
+                    FontWeight="SemiBold" Margin="0,0,8,0" 
+                    Click="OnOkClick" Cursor="Hand"/>
+            <Button x:Name="BtnCancel" Content="Hủy" 
+                    IsCancel="True" Width="70" Height="28" 
+                    Background="#F1F5F9" Foreground="#334155" 
+                    Click="OnCancelClick" Cursor="Hand"/>
+        </StackPanel>
+    </Grid>
+</Window>

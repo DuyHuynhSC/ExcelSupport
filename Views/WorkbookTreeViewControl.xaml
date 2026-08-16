@@ -1,0 +1,1181 @@
+<UserControl x:Class="ExcelSupport.Views.WorkbookTreeViewControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:ExcelSupport.ViewModels"
+             xmlns:views="clr-namespace:ExcelSupport.Views"
+             x:Name="RootControl"
+             FontFamily="Segoe UI" FontSize="12">
+    
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
+        <!-- Style cho Nút Tab Segmented Control -->
+        <Style x:Key="SegmentedTabButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="TabBorder" Background="{TemplateBinding Background}" 
+                                CornerRadius="4" Padding="6,2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho Nút Dải màu Tab trên từng dòng Sheet -->
+        <Style x:Key="ColorBarButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho Nút icon nhỏ (Sort, Clear, Close, Visibility Toggle) -->
+        <Style x:Key="IconActionButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" 
+                                CornerRadius="3" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#CBD5E1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho Nút Đóng nhanh Workbook (Close X Button) -->
+        <Style x:Key="CloseWorkbookButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="ToolTip" Value="Đóng Workbook này"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="CloseBorder" Background="{TemplateBinding Background}" 
+                                CornerRadius="10">
+                            <TextBlock Text="✕" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" 
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CloseBorder" Property="Background" Value="#FEE2E2"/>
+                                <Setter Property="Foreground" Value="#DC2626"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="CloseBorder" Property="Background" Value="#FCA5A5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho ListBoxItem Workbook -->
+        <Style x:Key="WorkbookItemContainerStyle" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border x:Name="ItemBorder" 
+                                Background="#FFFFFF" 
+                                BorderBrush="#E2E8F0" 
+                                BorderThickness="1" 
+                                CornerRadius="5" 
+                                Padding="8,6"
+                                SnapsToDevicePixels="True"
+                                Cursor="Hand">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1E293B"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#334155"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#F8FAFC"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#CBD5E1"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#334155"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#475569"/>
+                            </MultiDataTrigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="ItemBorder" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Path=IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1E3A8A"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#60A5FA"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho ListBoxItem Worksheet -->
+        <Style x:Key="WorksheetItemContainerStyle" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border x:Name="WsBorder" 
+                                Background="#FFFFFF" 
+                                BorderBrush="#E2E8F0" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="6,5"
+                                SnapsToDevicePixels="True"
+                                Cursor="Hand">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                <Setter TargetName="WsBorder" Property="Background" Value="#1E293B"/>
+                                <Setter TargetName="WsBorder" Property="BorderBrush" Value="#334155"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="WsBorder" Property="Background" Value="#F0FDF4"/>
+                                <Setter TargetName="WsBorder" Property="BorderBrush" Value="#BBF7D0"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="WsBorder" Property="Background" Value="#064E3B"/>
+                                <Setter TargetName="WsBorder" Property="BorderBrush" Value="#059669"/>
+                            </MultiDataTrigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="WsBorder" Property="Background" Value="#DCFCE7"/>
+                                <Setter TargetName="WsBorder" Property="BorderBrush" Value="#16A34A"/>
+                                <Setter TargetName="WsBorder" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Path=IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="WsBorder" Property="Background" Value="#065F46"/>
+                                <Setter TargetName="WsBorder" Property="BorderBrush" Value="#34D399"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Hàng 0: Thanh chuyển Tab phía trên cùng (3 Tabs + Theme Toggle) -->
+            <RowDefinition Height="Auto"/>
+            <!-- Hàng 1: Nội dung chính -->
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Thanh chuyển Tab phía trên cùng (3 Tabs: Sheet | AI Trợ Lý | Cài Đặt + Nút Toggle Theme) -->
+        <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="6,5">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Tab 0: Quản lý Sheet -->
+                <Button Grid.Column="0" Click="OnSelectSheetsTabClick" Margin="0,0,2,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabButtonStyle}">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="Foreground" Value="#475569"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#334155"/>
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
+                                    <Setter Property="Background" Value="#107C41"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="📋 " FontSize="10" VerticalAlignment="Center"/>
+                        <TextBlock Text="Sheet" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Tab 1: Trợ lý AI -->
+                <Button Grid.Column="1" Click="OnSelectAiAssistantTabClick" Margin="2,0,2,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabButtonStyle}">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="Foreground" Value="#475569"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#334155"/>
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                                    <Setter Property="Background" Value="#2563EB"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="🤖 " FontSize="10" VerticalAlignment="Center"/>
+                        <TextBlock Text="AI Trợ Lý" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Tab 2: Cài đặt AI -->
+                <Button Grid.Column="2" Click="OnSelectAiSettingsTabClick" Margin="2,0,4,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabButtonStyle}">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="Foreground" Value="#475569"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#334155"/>
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                                    <Setter Property="Background" Value="#64748B"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="⚙️ " FontSize="10" VerticalAlignment="Center"/>
+                        <TextBlock Text="Cài Đặt" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Nút Toggle Dark / Light Theme -->
+                <Button Grid.Column="3" Command="{Binding ToggleThemeCommand}" 
+                        ToolTip="{Binding ThemeToggleTooltip}"
+                        Width="28" Height="28" Cursor="Hand" Margin="2,0,0,0">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#F1F5F9"/>
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="ThemeBorder" Background="{TemplateBinding Background}" 
+                                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                                CornerRadius="14">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ThemeBorder" Property="Background" Value="#E2E8F0"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#334155"/>
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <TextBlock Text="{Binding ThemeToggleIcon}" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ==================== NỘI DUNG TAB 0: QUẢN LÝ SHEET ==================== -->
+        <Grid Grid.Row="1" Margin="8">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.RowDefinitions>
+                <!-- Phần 1: Danh sách Workbook (Chiếm 45%) -->
+                <RowDefinition Height="45*" MinHeight="110"/>
+                <!-- Thanh Splitter để người dùng tùy ý kéo giãn chiều cao -->
+                <RowDefinition Height="6"/>
+                <!-- Phần 2: Danh sách Worksheet (Chiếm 55%) -->
+                <RowDefinition Height="55*" MinHeight="130"/>
+            </Grid.RowDefinitions>
+
+            <!-- ==================== PHẦN TRÊN: DANH SÁCH WORKBOOKS ==================== -->
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Tiêu đề & Nút Sort Workbook -->
+                <WrapPanel Grid.Row="0" Margin="0,0,0,4" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                        <TextBlock Text="📁 " FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="Workbooks" FontWeight="Bold" FontSize="12.5" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#F1F5F9"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Border Background="#E2E8F0" CornerRadius="10" Padding="6,1" Margin="6,0,0,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding Workbooks.Count, StringFormat='{}{0}'}" 
+                                       FontSize="10.5" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#475569"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Nút Sort A-Z dồn về trái -->
+                    <Button Style="{StaticResource IconActionButtonStyle}"
+                            Command="{Binding ToggleWorkbookSortCommand}"
+                            ToolTip="Sắp xếp danh sách Workbook (A-Z / Z-A)">
+                        <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#FFFFFF"/>
+                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding WorkbookSortLabel}" FontSize="10.5" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#334155"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </Button>
+                </WrapPanel>
+
+                <!-- Khung Tìm kiếm Workbook -->
+                <Border Grid.Row="1" BorderThickness="1" CornerRadius="4" 
+                        Margin="0,0,0,6" Padding="6,3">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFFFF"/>
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#1E293B"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Foreground="#94A3B8" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" 
+                                 Text="{Binding WorkbookSearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 BorderThickness="0" Background="Transparent" 
+                                 VerticalAlignment="Center" FontSize="11.5">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                        <!-- Nút xóa tìm kiếm -->
+                        <Button Grid.Column="2" 
+                                Command="{Binding ClearWorkbookSearchCommand}"
+                                Style="{StaticResource IconActionButtonStyle}"
+                                Visibility="{Binding WorkbookSearchText.Length, Converter={StaticResource BoolToVisConverter}}">
+                            <TextBlock Text="✕" FontSize="10" Foreground="#94A3B8"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- ListBox Workbooks -->
+                <ListBox Grid.Row="2"
+                         ItemsSource="{Binding WorkbooksView}"
+                         SelectedItem="{Binding SelectedWorkbook, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource WorkbookItemContainerStyle}"
+                         PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:WorkbookNodeViewModel}">
+                            <Grid Background="Transparent" ToolTip="{Binding FilePath}">
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="📋 Sao chép tên Workbook" Command="{Binding CopyNameCommand}"/>
+                                        <MenuItem Header="📁 Sao chép đường dẫn file" Command="{Binding CopyPathCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="👁️ Hiện tất cả Sheet ẩn" Command="{Binding UnhideAllSheetsCommand}"/>
+                                        <MenuItem Header="📑 Tạo Bảng Mục Lục (Index Sheet)" Command="{Binding CreateTocCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="📤 Tách Sheets thành file riêng (.xlsx)..." Command="{Binding SplitWorkbookCommand}"/>
+                                        <MenuItem Header="📥 Gộp dữ liệu các Sheet..." Command="{Binding MergeSheetsCommand}"/>
+                                        <MenuItem Header="✏️ Đổi tên Sheet hàng loạt..." Command="{Binding BatchRenameCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="🔤 Sắp xếp danh sách A-Z" Command="{Binding SortAscendingCommand}"/>
+                                        <MenuItem Header="🔤 Sắp xếp danh sách Z-A" Command="{Binding SortDescendingCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="❌ Đóng Workbook này" 
+                                                  Foreground="#DC2626"
+                                                  Command="{Binding CloseWorkbookCommand}"/>
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="📗" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Column="1" 
+                                           Text="{Binding WorkbookName}" 
+                                           FontWeight="SemiBold" 
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,2,0">
+                                    <!-- Badge Active nếu là Workbook đang kích hoạt trong Excel -->
+                                    <Border Background="#107C41" CornerRadius="3" Padding="4,1" Margin="0,0,4,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="Active" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    </Border>
+
+                                    <Border CornerRadius="3" Padding="4,1">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#F1F5F9"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                        <Setter Property="Background" Value="#334155"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding SheetCount, StringFormat='{}{0} sh'}" 
+                                                   FontSize="9.5" Foreground="#94A3B8"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Nút Đóng Workbook trực tiếp -->
+                                <Button Grid.Column="3" 
+                                        Margin="4,0,0,0"
+                                        Style="{StaticResource CloseWorkbookButtonStyle}"
+                                        Command="{Binding DataContext.CloseWorkbookCommand, ElementName=RootControl}"
+                                        CommandParameter="{Binding WorkbookName}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <!-- ==================== THANH KÉO SPLITTER ==================== -->
+            <GridSplitter Grid.Row="1" 
+                          Height="3" 
+                          HorizontalAlignment="Stretch" 
+                          VerticalAlignment="Center"
+                          Cursor="SizeNS"
+                          ShowsPreview="False">
+                <GridSplitter.Style>
+                    <Style TargetType="GridSplitter">
+                        <Setter Property="Background" Value="#CBD5E1"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                <Setter Property="Background" Value="#334155"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </GridSplitter.Style>
+            </GridSplitter>
+
+            <!-- ==================== PHẦN DƯỚI: DANH SÁCH WORKSHEETS ==================== -->
+            <Grid Grid.Row="2" Margin="0,4,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Tiêu đề & Nút Công cụ Worksheet -->
+                <WrapPanel Grid.Row="0" Margin="0,0,0,4" VerticalAlignment="Center">
+                    <!-- Tiêu đề Worksheets + Số lượng Sheet -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                        <TextBlock Text="📄 " FontSize="13" VerticalAlignment="Center"/>
+                        <TextBlock Text="Worksheets" FontWeight="Bold" FontSize="12.5" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#F1F5F9"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Border CornerRadius="10" Padding="6,1" Margin="5,0,0,0"
+                                Visibility="{Binding HasSelectedWorkbook, Converter={StaticResource BoolToVisConverter}}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#E2E8F0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding SelectedWorkbook.SheetCount, StringFormat='{}{0}'}" 
+                                       FontSize="10.5" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#475569"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Nút Bật/Tắt hiển thị Sheet ẩn -->
+                    <Button Style="{StaticResource IconActionButtonStyle}"
+                            Command="{Binding ToggleShowHiddenSheetsCommand}"
+                            ToolTip="{Binding ShowHiddenSheetsTooltip}"
+                            Margin="0,0,4,0">
+                        <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#FFFFFF"/>
+                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="👁️ " FontSize="10" VerticalAlignment="Center"/>
+                                <TextBlock FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Sheet Ẩn: Bật"/>
+                                            <Setter Property="Foreground" Value="#16A34A"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ShowHiddenSheets}" Value="False">
+                                                    <Setter Property="Text" Value="Sheet Ẩn: Tắt"/>
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <!-- Nút Tạo Mục Lục -->
+                    <Button Style="{StaticResource IconActionButtonStyle}"
+                            Command="{Binding CreateTocCommand}"
+                            ToolTip="Tạo bảng Mục Lục (Index Sheet) tự động với Hyperlink"
+                            Margin="0,0,4,0">
+                        <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#FFFFFF"/>
+                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📑 " FontSize="10" VerticalAlignment="Center"/>
+                                <TextBlock Text="Mục Lục" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <!-- Nút Tách / Gộp Sheets -->
+                    <Button Style="{StaticResource IconActionButtonStyle}"
+                            Command="{Binding OpenToolsDialogCommand}"
+                            ToolTip="Công cụ Tách Sheets, Gộp Sheets, Đổi tên hàng loạt"
+                            Margin="0,0,4,0">
+                        <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#FFFFFF"/>
+                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✂️ " FontSize="10" VerticalAlignment="Center"/>
+                                <TextBlock Text="Tách/Gộp" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <!-- Nút Sort Sheet A-Z -->
+                    <Button Style="{StaticResource IconActionButtonStyle}"
+                            Command="{Binding ToggleSheetSortCommand}"
+                            ToolTip="Sắp xếp danh sách Sheet (A-Z / Z-A)">
+                        <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#FFFFFF"/>
+                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding SheetSortLabel}" FontSize="10.5" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#334155"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </Button>
+                </WrapPanel>
+
+                <!-- Khung Tìm kiếm Worksheet -->
+                <Border Grid.Row="1" BorderThickness="1" CornerRadius="4" 
+                        Margin="0,0,0,6" Padding="6,3">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFFFF"/>
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                    <Setter Property="Background" Value="#1E293B"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Foreground="#94A3B8" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" 
+                                 Text="{Binding SheetSearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 BorderThickness="0" Background="Transparent" 
+                                 VerticalAlignment="Center" FontSize="11.5">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                        <!-- Nút xóa tìm kiếm -->
+                        <Button Grid.Column="2" 
+                                Command="{Binding ClearSheetSearchCommand}"
+                                Style="{StaticResource IconActionButtonStyle}"
+                                Visibility="{Binding SheetSearchText.Length, Converter={StaticResource BoolToVisConverter}}">
+                            <TextBlock Text="✕" FontSize="10" Foreground="#94A3B8"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- ListBox Worksheets của Workbook được chọn -->
+                <ListBox Grid.Row="2"
+                         ItemsSource="{Binding SheetsView}"
+                         SelectedItem="{Binding SelectedWorksheet, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource WorksheetItemContainerStyle}"
+                         PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:WorksheetNodeViewModel}">
+                            <Grid Background="Transparent">
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="📋 Sao chép tên Sheet" Command="{Binding CopyNameCommand}"/>
+                                        <MenuItem Header="✏️ Đổi tên Sheet..." Command="{Binding RenameSheetCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="👁️ Hiện Sheet này (Unhide)" 
+                                                  Command="{Binding UnhideSheetCommand}">
+                                            <MenuItem.Style>
+                                                <Style TargetType="MenuItem">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </MenuItem.Style>
+                                        </MenuItem>
+
+                                        <MenuItem Header="🙈 Ẩn Sheet này (Hide)" 
+                                                  Command="{Binding HideSheetCommand}">
+                                            <MenuItem.Style>
+                                                <Style TargetType="MenuItem">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsHidden}" Value="False">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </MenuItem.Style>
+                                        </MenuItem>
+
+                                        <MenuItem Header="🔒 Ẩn sâu (Very Hidden)" 
+                                                  Command="{Binding VeryHideSheetCommand}">
+                                            <MenuItem.Style>
+                                                <Style TargetType="MenuItem">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsVeryHidden}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </MenuItem.Style>
+                                        </MenuItem>
+
+                                        <Separator/>
+                                        <MenuItem Header="🎨 Đổi màu Tab Sheet..." Command="{Binding PickCustomColorCommand}"/>
+                                        <MenuItem Header="✕ Xóa màu Tab (Mặc định)" Command="{Binding ClearColorCommand}"/>
+
+                                        <Separator/>
+                                        <MenuItem Header="📑 Tạo Bảng Mục Lục (Index Sheet)" Command="{Binding CreateTocCommand}"/>
+                                        <Separator/>
+                                        <MenuItem Header="🔤 Sắp xếp Sheet A-Z" Command="{Binding SortAscendingCommand}"/>
+                                        <MenuItem Header="🔤 Sắp xếp Sheet Z-A" Command="{Binding SortDescendingCommand}"/>
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
+
+                                <Grid.ColumnDefinitions>
+                                    <!-- Cột 0: Dải màu Tab Sheet -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Cột 1: Icon Sheet -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Cột 2: Tên Sheet -->
+                                    <ColumnDefinition Width="*"/>
+                                    <!-- Cột 3: Biểu tượng Ổ Khóa Protect -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Cột 4: Trạng thái Hidden Badge -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Cột 5: Trạng thái Active -->
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Dải màu Tab Sheet dạng nút bấm nhanh -->
+                                <Button Grid.Column="0" 
+                                        Style="{StaticResource ColorBarButtonStyle}"
+                                        Command="{Binding PickCustomColorCommand}"
+                                        ToolTip="{Binding TabColorHex, StringFormat='Màu Tab: {0} (Click để chọn màu)'}">
+                                    <Border Width="6" Height="16" 
+                                            CornerRadius="3" 
+                                            Background="{Binding DisplayTabColor}" 
+                                            BorderBrush="#94A3B8"
+                                            BorderThickness="0.6"/>
+                                </Button>
+
+                                <!-- Icon Sheet -->
+                                <TextBlock Grid.Column="1" FontSize="12" Margin="0,0,5,0" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="📋"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                                                    <Setter Property="Text" Value="🙈"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsVeryHidden}" Value="True">
+                                                    <Setter Property="Text" Value="🔒"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- Tên Sheet -->
+                                <TextBlock Grid.Column="2" 
+                                           Text="{Binding SheetName}" 
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#334155"/>
+                                            <Setter Property="FontWeight" Value="Normal"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                    <Setter Property="FontStyle" Value="Italic"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- Biểu tượng Ổ khóa khi Sheet bị Protect -->
+                                <Border Grid.Column="3" 
+                                        Background="#FEF2F2" 
+                                        BorderBrush="#FECACA" 
+                                        BorderThickness="1" 
+                                        CornerRadius="3" 
+                                        Padding="3,1" 
+                                        Margin="3,0,2,0" 
+                                        VerticalAlignment="Center"
+                                        ToolTip="Sheet này đang được bảo vệ (Protected Sheet)">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="🔒" FontSize="9.5" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Badge Ẩn / Very Hidden -->
+                                <Border Grid.Column="4" 
+                                        CornerRadius="3" 
+                                        Padding="4,1" 
+                                        Margin="2,0,2,0"
+                                        VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Setter Property="Background" Value="#F1F5F9"/>
+                                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Background" Value="#FEF3C7"/>
+                                                    <Setter Property="BorderBrush" Value="#FDE68A"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsVeryHidden}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Background" Value="#FEE2E2"/>
+                                                    <Setter Property="BorderBrush" Value="#FECACA"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding VisibilityStatusText}" FontSize="8.5" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#B45309"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsVeryHidden}" Value="True">
+                                                        <Setter Property="Foreground" Value="#DC2626"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+
+                                <!-- Badge Đang xem -->
+                                <Border Grid.Column="5" 
+                                        Background="#DCFCE7" 
+                                        BorderBrush="#86EFAC" 
+                                        BorderThickness="1" 
+                                        CornerRadius="3" 
+                                        Padding="4,1" 
+                                        VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="Active" FontSize="9" FontWeight="Bold" Foreground="#15803D"/>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Placeholder khi chưa chọn Workbook nào -->
+                <Border Grid.Row="2" CornerRadius="5" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFFFF"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                    <Setter Property="Background" Value="#1E293B"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding HasSelectedWorkbook}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="🔍" FontSize="22" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                        <TextBlock Text="Chọn một Workbook ở phía trên để xem các Sheet" 
+                                   Foreground="#94A3B8" FontSize="11" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ==================== NỘI DUNG TAB 1: TRỢ LÝ AI (DỊCH Ô / CÔNG THỨC / GỠ LỖI) ==================== -->
+        <Grid Grid.Row="1">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <views:AiAssistantControl DataContext="{Binding AiAssistant}"/>
+        </Grid>
+
+        <!-- ==================== NỘI DUNG TAB 2: CÀI ĐẶT AI ==================== -->
+        <Grid Grid.Row="1">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <views:AiSettingsControl DataContext="{Binding AiSettings}"/>
+        </Grid>
+    </Grid>
+</UserControl>
