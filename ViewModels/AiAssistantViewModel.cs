@@ -19,6 +19,7 @@ namespace ExcelSupport.ViewModels
 
         // --- Translation Properties ---
         private bool _writeToAdjacentColumn = false;
+        private bool _enableGlossary = true;
         private string _translationSummary = string.Empty;
         private int _translatedCellCount = 0;
 
@@ -56,6 +57,29 @@ namespace ExcelSupport.ViewModels
         {
             get => _writeToAdjacentColumn;
             set => SetProperty(ref _writeToAdjacentColumn, value);
+        }
+
+        public bool EnableGlossary
+        {
+            get => _enableGlossary;
+            set
+            {
+                if (SetProperty(ref _enableGlossary, value))
+                {
+                    var cfg = AiConfigManager.Current;
+                    cfg.EnableGlossary = value;
+                    AiConfigManager.Save(cfg);
+                }
+            }
+        }
+
+        public string GlossaryCountText
+        {
+            get
+            {
+                int count = AiConfigManager.Current.Glossary?.Count ?? 0;
+                return $"📖 Thuật Ngữ Glossary ({count})";
+            }
         }
 
         public string TranslationSummary
@@ -137,6 +161,7 @@ namespace ExcelSupport.ViewModels
         // --- Commands ---
         public ICommand TranslateJaToViCommand { get; }
         public ICommand TranslateViToJaCommand { get; }
+        public ICommand OpenGlossaryDialogCommand { get; }
         public ICommand GenerateFormulaCommand { get; }
         public ICommand InsertFormulaToExcelCommand { get; }
         public ICommand CopyFormulaCommand { get; }
@@ -148,8 +173,17 @@ namespace ExcelSupport.ViewModels
 
         public AiAssistantViewModel()
         {
+            _enableGlossary = AiConfigManager.Current.EnableGlossary;
+
             TranslateJaToViCommand = new RelayCommand(async _ => await ExecuteTranslateSelectionAsync(isJaToVi: true), _ => !IsBusy);
             TranslateViToJaCommand = new RelayCommand(async _ => await ExecuteTranslateSelectionAsync(isJaToVi: false), _ => !IsBusy);
+            OpenGlossaryDialogCommand = new RelayCommand(_ =>
+            {
+                var dlg = new Views.GlossaryDialog(IsDarkTheme);
+                dlg.ShowDialog();
+                OnPropertyChanged(nameof(GlossaryCountText));
+            });
+
             GenerateFormulaCommand = new RelayCommand(async _ => await ExecuteGenerateFormulaAsync(), _ => !IsBusy && !string.IsNullOrWhiteSpace(FormulaPrompt));
             InsertFormulaToExcelCommand = new RelayCommand(_ => ExecuteInsertFormula());
             CopyFormulaCommand = new RelayCommand(_ => ExecuteCopyFormula());
@@ -185,12 +219,39 @@ namespace ExcelSupport.ViewModels
                 string srcLang = isJaToVi ? "tiếng Nhật" : "tiếng Việt";
                 string tgtLang = isJaToVi ? "tiếng Việt" : "tiếng Nhật";
 
+                // Build Glossary Instruction
+                string glossaryInstructions = string.Empty;
+                if (EnableGlossary && config.Glossary != null && config.Glossary.Count > 0)
+                {
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine("\n\n[QUY TẮC THUẬT NGỮ BẮT BUỘC - GLOSSARY]:");
+                    int ruleIndex = 1;
+                    foreach (var g in config.Glossary)
+                    {
+                        if (string.IsNullOrWhiteSpace(g.Japanese) && string.IsNullOrWhiteSpace(g.Vietnamese)) continue;
+
+                        string noteStr = string.IsNullOrWhiteSpace(g.Note) ? string.Empty : $" (Ngữ cảnh: {g.Note})";
+                        if (isJaToVi)
+                        {
+                            sb.AppendLine($"{ruleIndex}. \"{g.Japanese}\" BẮT BUỘC dịch thành \"{g.Vietnamese}\"{noteStr}");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"{ruleIndex}. \"{g.Vietnamese}\" BẮT BUỘC dịch thành \"{g.Japanese}\"{noteStr}");
+                        }
+                        ruleIndex++;
+                    }
+                    sb.AppendLine("LƯU Ý: Nếu trong văn bản nguồn có chứa các thuật ngữ trên, bạn BẮT BUỘC PHẢI DÙNG CHÍNH XÁC bản dịch tương ứng trong Glossary.");
+                    glossaryInstructions = sb.ToString();
+                }
+
                 // Build input JSON array
                 var inputList = items.Select((item, idx) => new { id = idx, text = item.OriginalText }).ToList();
                 string inputJson = JsonConvert.SerializeObject(inputList);
 
                 string systemPrompt = $"Bạn là chuyên gia biên dịch ngôn ngữ công sở chuyên nghiệp giữa {srcLang} và {tgtLang} trong môi trường Excel/Doanh nghiệp. " +
                                       $"Hãy dịch từng mục trong mảng JSON được cung cấp sang {tgtLang}. " +
+                                      $"{glossaryInstructions}\n\n" +
                                       $"Yêu cầu nghiêm ngặt: Trả về duy nhất một chuỗi JSON hợp lệ theo định dạng: " +
                                       $"[{{\"id\": 0, \"trans\": \"bản dịch\"}}, ...] không kèm bất kỳ lời giải thích hay markdown nào khác.";
 
@@ -218,7 +279,9 @@ namespace ExcelSupport.ViewModels
                 if (ok)
                 {
                     string targetDesc = WriteToAdjacentColumn ? "ghi vào cột bên cạnh" : "ghi đè trực tiếp";
-                    TranslationSummary = $"✅ Đã dịch thành công {items.Count} ô ({dirLabel}) và {targetDesc}!";
+                    string glossaryNote = (EnableGlossary && config.Glossary != null && config.Glossary.Count > 0)
+                        ? " (Đã áp dụng Glossary)" : string.Empty;
+                    TranslationSummary = $"✅ Đã dịch thành công {items.Count} ô ({dirLabel}){glossaryNote} và {targetDesc}!";
                     TranslatedCellCount = items.Count;
                 }
                 else

@@ -110,12 +110,19 @@ namespace ExcelSupport.ViewModels
         public ICommand HideSheetCommand { get; }
         public ICommand VeryHideSheetCommand { get; }
         public ICommand CreateTocCommand { get; }
+        public ICommand CheckVietnameseCommand { get; }
         public ICommand SortAscendingCommand { get; }
         public ICommand SortDescendingCommand { get; }
 
         public WorksheetNodeViewModel()
         {
             CopyNameCommand = new RelayCommand(_ => CopyToClipboard(SheetName));
+
+            CheckVietnameseCommand = new RelayCommand(_ =>
+            {
+                var dlg = new Views.VietnameseCheckDialog(IsDarkTheme);
+                dlg.ShowDialog();
+            });
 
             RenameSheetCommand = new RelayCommand(_ =>
             {

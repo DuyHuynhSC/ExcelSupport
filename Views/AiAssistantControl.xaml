@@ -460,7 +460,7 @@
                         </Separator>
 
                         <!-- Tùy chọn Vị trí ghi -->
-                        <TextBlock Text="Vị trí ghi kết quả:" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,4">
+                        <TextBlock Text="Tùy chọn nâng cao:" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,4">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#475569"/>
@@ -472,9 +472,10 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
+
                         <CheckBox Content="Ghi kết quả sang cột bên phải (Giữ nguyên ô gốc)" 
                                   IsChecked="{Binding WriteToAdjacentColumn}" 
-                                  FontSize="11" Cursor="Hand" Margin="0,0,0,4">
+                                  FontSize="11" Cursor="Hand" Margin="0,0,0,6">
                             <CheckBox.Style>
                                 <Style TargetType="CheckBox">
                                     <Setter Property="Foreground" Value="#334155"/>
@@ -486,6 +487,31 @@
                                 </Style>
                             </CheckBox.Style>
                         </CheckBox>
+
+                        <!-- Tùy chọn Glossary -->
+                        <StackPanel Margin="0,2,0,2">
+                            <CheckBox Content="Áp dụng từ điển Thuật ngữ (Glossary)" 
+                                      IsChecked="{Binding EnableGlossary}" 
+                                      FontWeight="SemiBold" FontSize="11" Cursor="Hand" Margin="0,0,0,5">
+                                <CheckBox.Style>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="Foreground" Value="#334155"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#CBD5E1"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
+
+                            <Button Command="{Binding OpenGlossaryDialogCommand}" 
+                                    Content="{Binding GlossaryCountText}" 
+                                    Style="{StaticResource AiSecondaryButtonStyle}" 
+                                    HorizontalAlignment="Left"
+                                    FontSize="11" Padding="8,4" Cursor="Hand" 
+                                    ToolTip="Mở bảng quản lý, thêm, sửa, xóa, Import/Export file CSV và JSON"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 

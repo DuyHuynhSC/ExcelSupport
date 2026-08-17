@@ -546,6 +546,7 @@
                                         <Separator/>
                                         <MenuItem Header="👁️ Hiện tất cả Sheet ẩn" Command="{Binding UnhideAllSheetsCommand}"/>
                                         <MenuItem Header="📑 Tạo Bảng Mục Lục (Index Sheet)" Command="{Binding CreateTocCommand}"/>
+                                        <MenuItem Header="🇻🇳 Kiểm tra tiếng Việt trong Workbook..." Command="{Binding CheckVietnameseCommand}"/>
                                         <Separator/>
                                         <MenuItem Header="📤 Tách Sheets thành file riêng (.xlsx)..." Command="{Binding SplitWorkbookCommand}"/>
                                         <MenuItem Header="📥 Gộp dữ liệu các Sheet..." Command="{Binding MergeSheetsCommand}"/>
@@ -957,6 +958,7 @@
 
                                         <Separator/>
                                         <MenuItem Header="📑 Tạo Bảng Mục Lục (Index Sheet)" Command="{Binding CreateTocCommand}"/>
+                                        <MenuItem Header="🇻🇳 Kiểm tra tiếng Việt..." Command="{Binding CheckVietnameseCommand}"/>
                                         <Separator/>
                                         <MenuItem Header="🔤 Sắp xếp Sheet A-Z" Command="{Binding SortAscendingCommand}"/>
                                         <MenuItem Header="🔤 Sắp xếp Sheet Z-A" Command="{Binding SortDescendingCommand}"/>

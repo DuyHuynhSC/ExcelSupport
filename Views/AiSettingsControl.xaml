@@ -153,7 +153,7 @@
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="🤖" FontSize="15" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Cấu Hình AI Nội Bộ (QWEN 3.6)" FontWeight="Bold" FontSize="12.5" VerticalAlignment="Center">
+                        <TextBlock Text="Cấu Hình AI Nội Bộ" FontWeight="Bold" FontSize="12.5" VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#1E3A8A"/>

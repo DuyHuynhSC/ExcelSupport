@@ -43,6 +43,7 @@ namespace ExcelSupport.ViewModels
         public ICommand SplitWorkbookCommand { get; }
         public ICommand MergeSheetsCommand { get; }
         public ICommand BatchRenameCommand { get; }
+        public ICommand CheckVietnameseCommand { get; }
 
         public WorkbookNodeViewModel()
         {
@@ -56,6 +57,12 @@ namespace ExcelSupport.ViewModels
                 {
                     AddInEvents.Instance?.CreateTableOfContents(wbName);
                 });
+            });
+
+            CheckVietnameseCommand = new RelayCommand(_ =>
+            {
+                var dlg = new Views.VietnameseCheckDialog(IsDarkTheme);
+                dlg.ShowDialog();
             });
 
             UnhideAllSheetsCommand = new RelayCommand(_ =>

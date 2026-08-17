@@ -186,6 +186,7 @@ namespace ExcelSupport.ViewModels
         public ICommand ClearSheetSearchCommand { get; }
         public ICommand CopyTextCommand { get; }
         public ICommand UnhideAllSheetsCommand { get; }
+        public ICommand OpenVietnameseCheckDialogCommand { get; }
 
         public event Action<string>? RequestActivateWorkbook;
         public event Action<string, string>? RequestActivateWorksheet;
@@ -332,6 +333,12 @@ namespace ExcelSupport.ViewModels
                 {
                     NotifyUnhideAllSheets(SelectedWorkbook.WorkbookName);
                 }
+            });
+
+            OpenVietnameseCheckDialogCommand = new RelayCommand(_ =>
+            {
+                var dlg = new Views.VietnameseCheckDialog(IsDarkTheme);
+                dlg.ShowDialog();
             });
         }
 

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using ExcelSupport.Models;
 
 namespace ExcelSupport.Services
 {
@@ -11,5 +13,8 @@ namespace ExcelSupport.Services
         public int MaxTokens { get; set; } = 2048;
         public int TimeoutSeconds { get; set; } = 30;
         public bool IsDarkTheme { get; set; } = false;
+
+        public bool EnableGlossary { get; set; } = true;
+        public List<GlossaryItem> Glossary { get; set; } = new List<GlossaryItem>();
     }
 }

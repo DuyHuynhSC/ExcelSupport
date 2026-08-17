@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using ExcelDna.Integration;
 using Microsoft.Office.Interop.Excel;
 using ExcelSupport.Host;
+using ExcelSupport.Models;
 using ExcelSupport.ViewModels;
 using ExcelApp = Microsoft.Office.Interop.Excel.Application;
 using WpfApplication = System.Windows.Application;
@@ -1574,6 +1575,444 @@ namespace ExcelSupport
             catch (Exception ex)
             {
                 WpfMessageBox.Show($"Lỗi nhập sheet từ file:\n{ex.Message}", "Nhập File",
+                                   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+            finally
+            {
+                _isBatchProcessing = false;
+                if (_excelApp != null)
+                {
+                    try { _excelApp.EnableEvents = true; } catch { }
+                    try { _excelApp.ScreenUpdating = true; } catch { }
+                    try { _excelApp.DisplayAlerts = true; } catch { }
+                }
+            }
+        }
+
+        #endregion
+
+        #region Vietnamese Text Scanner & Auditor
+
+        public enum VietnameseScanScope
+        {
+            ActiveSheet,
+            ActiveWorkbook,
+            AllWorkbooks
+        }
+
+        private static readonly HashSet<char> VietnameseCharSet = new HashSet<char>(
+            "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ" +
+            "ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ"
+        );
+
+        public static bool HasVietnamese(string? text)
+        {
+            if (text == null || text.Length == 0) return false;
+
+            // 1. Kiểm tra trực tiếp từng ký tự
+            foreach (char c in text)
+            {
+                if (VietnameseCharSet.Contains(c)) return true;
+                // Dấu tổ hợp Unicode (Combining Diacritical Marks)
+                if (c >= '\u0300' && c <= '\u036F') return true;
+            }
+
+            // 2. Chuẩn hóa sang NFC (FormC) để xử lý bảng mã Unicode tổ hợp
+            try
+            {
+                string normalized = text.Normalize(System.Text.NormalizationForm.FormC);
+                foreach (char c in normalized)
+                {
+                    if (VietnameseCharSet.Contains(c)) return true;
+                }
+            }
+            catch { }
+
+            return false;
+        }
+
+        public List<VietnameseLocationItem> ScanVietnameseLocations(VietnameseScanScope scope, Action<string>? progressCallback = null)
+        {
+            var results = new List<VietnameseLocationItem>();
+
+            if (_excelApp == null)
+            {
+                try { _excelApp = (ExcelApp)ExcelDnaUtil.Application; } catch { }
+            }
+            if (_excelApp == null) return results;
+
+            dynamic app = _excelApp;
+            var targetWorkbooks = new List<dynamic>();
+
+            try
+            {
+                int wbCount = 0;
+                try { wbCount = app.Workbooks.Count; } catch { }
+                if (wbCount == 0) return results;
+
+                if (scope == VietnameseScanScope.AllWorkbooks)
+                {
+                    for (int i = 1; i <= wbCount; i++)
+                    {
+                        try { targetWorkbooks.Add(app.Workbooks[i]); } catch { }
+                    }
+                }
+                else
+                {
+                    dynamic? activeWb = null;
+                    try { activeWb = app.ActiveWorkbook; } catch { }
+                    if (activeWb != null)
+                    {
+                        targetWorkbooks.Add(activeWb);
+                    }
+                    else if (wbCount > 0)
+                    {
+                        try { targetWorkbooks.Add(app.Workbooks[1]); } catch { }
+                    }
+                }
+
+                int totalFound = 0;
+
+                foreach (var wb in targetWorkbooks)
+                {
+                    string wbName = string.Empty;
+                    try { wbName = wb.Name; } catch { }
+
+                    var targetSheets = new List<dynamic>();
+                    if (scope == VietnameseScanScope.ActiveSheet)
+                    {
+                        dynamic? activeWs = null;
+                        try { activeWs = app.ActiveSheet; } catch { }
+                        if (activeWs != null)
+                        {
+                            targetSheets.Add(activeWs);
+                        }
+                        else
+                        {
+                            try { targetSheets.Add(wb.ActiveSheet ?? wb.Sheets[1]); } catch { }
+                        }
+                    }
+                    else
+                    {
+                        int sheetCount = 0;
+                        try { sheetCount = wb.Sheets.Count; } catch { }
+                        for (int s = 1; s <= sheetCount; s++)
+                        {
+                            try { targetSheets.Add(wb.Sheets[s]); } catch { }
+                        }
+                    }
+
+                    foreach (var ws in targetSheets)
+                    {
+                        string wsName = string.Empty;
+                        try { wsName = ws.Name; } catch { }
+
+                        progressCallback?.Invoke($"Đang quét: {wbName} ➔ {wsName}...");
+
+                        // 1. Kiểm tra tên Sheet
+                        if (HasVietnamese(wsName))
+                        {
+                            totalFound++;
+                            results.Add(new VietnameseLocationItem
+                            {
+                                Index = totalFound,
+                                WorkbookName = wbName,
+                                SheetName = wsName,
+                                CellAddress = "-",
+                                TextContent = wsName,
+                                Type = VietnameseLocationType.SheetName
+                            });
+                        }
+
+                        // 2. Kiểm tra dữ liệu trong UsedRange
+                        try
+                        {
+                            dynamic usedRange = ws.UsedRange;
+                            if (usedRange != null)
+                            {
+                                int startRow = 1;
+                                int startCol = 1;
+                                try { startRow = usedRange.Row; } catch { }
+                                try { startCol = usedRange.Column; } catch { }
+
+                                object? valObj = null;
+                                try { valObj = usedRange.Value2; } catch { }
+
+                                if (valObj is Array arr)
+                                {
+                                    if (arr.Rank == 2)
+                                    {
+                                        int r1 = arr.GetLowerBound(0);
+                                        int r2 = arr.GetUpperBound(0);
+                                        int c1 = arr.GetLowerBound(1);
+                                        int c2 = arr.GetUpperBound(1);
+
+                                        for (int r = r1; r <= r2; r++)
+                                        {
+                                            for (int c = c1; c <= c2; c++)
+                                            {
+                                                object? cellVal = arr.GetValue(r, c);
+                                                if (cellVal != null)
+                                                {
+                                                    string str = cellVal.ToString() ?? string.Empty;
+                                                    if (HasVietnamese(str))
+                                                    {
+                                                        totalFound++;
+                                                        string addr = GetExcelColumnLetter(startCol + (c - c1)) + (startRow + (r - r1));
+                                                        results.Add(new VietnameseLocationItem
+                                                        {
+                                                            Index = totalFound,
+                                                            WorkbookName = wbName,
+                                                            SheetName = wsName,
+                                                            CellAddress = addr,
+                                                            TextContent = str,
+                                                            Type = VietnameseLocationType.Cell
+                                                        });
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else if (arr.Rank == 1)
+                                    {
+                                        int i1 = arr.GetLowerBound(0);
+                                        int i2 = arr.GetUpperBound(0);
+                                        for (int i = i1; i <= i2; i++)
+                                        {
+                                            object? cellVal = arr.GetValue(i);
+                                            if (cellVal != null)
+                                            {
+                                                string str = cellVal.ToString() ?? string.Empty;
+                                                if (HasVietnamese(str))
+                                                {
+                                                    totalFound++;
+                                                    string addr = GetExcelColumnLetter(startCol) + (startRow + (i - i1));
+                                                    results.Add(new VietnameseLocationItem
+                                                    {
+                                                        Index = totalFound,
+                                                        WorkbookName = wbName,
+                                                        SheetName = wsName,
+                                                        CellAddress = addr,
+                                                        TextContent = str,
+                                                        Type = VietnameseLocationType.Cell
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else if (valObj != null)
+                                {
+                                    string str = valObj.ToString() ?? string.Empty;
+                                    if (HasVietnamese(str))
+                                    {
+                                        totalFound++;
+                                        string addr = GetExcelColumnLetter(startCol) + startRow;
+                                        results.Add(new VietnameseLocationItem
+                                        {
+                                            Index = totalFound,
+                                            WorkbookName = wbName,
+                                            SheetName = wsName,
+                                            CellAddress = addr,
+                                            TextContent = str,
+                                            Type = VietnameseLocationType.Cell
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception exUsed)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"UsedRange scan error in {wsName}: {exUsed.Message}");
+                        }
+
+                        // 3. Kiểm tra Comments / Ghi chú
+                        try
+                        {
+                            object? commentsObj = ws?.Comments;
+                            if (commentsObj != null)
+                            {
+                                dynamic comments = commentsObj;
+                                int commentCount = (int)comments.Count;
+                                for (int ci = 1; ci <= commentCount; ci++)
+                                {
+                                    try
+                                    {
+                                        dynamic comment = comments[ci];
+                                        string commentText = comment.Text();
+                                        if (HasVietnamese(commentText))
+                                        {
+                                            totalFound++;
+                                            string commentAddr = comment.Parent.Address.Replace("$", "");
+                                            results.Add(new VietnameseLocationItem
+                                            {
+                                                Index = totalFound,
+                                                WorkbookName = wbName,
+                                                SheetName = wsName,
+                                                CellAddress = commentAddr,
+                                                TextContent = commentText,
+                                                Type = VietnameseLocationType.Comment
+                                            });
+                                        }
+                                    }
+                                    catch { }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ScanVietnameseLocations error: {ex.Message}");
+            }
+
+            return results;
+        }
+
+        public bool NavigateToCell(string workbookName, string sheetName, string cellAddress)
+        {
+            if (_excelApp == null) return false;
+
+            try
+            {
+                dynamic app = _excelApp;
+                dynamic targetWb = app.Workbooks[workbookName];
+                if (targetWb == null) return false;
+
+                targetWb.Activate();
+
+                dynamic targetWs = targetWb.Sheets[sheetName];
+                if (targetWs == null) return false;
+
+                // Nếu Sheet đang bị ẩn, tự động hiện ra để người dùng xem
+                if ((int)targetWs.Visible != (int)XlSheetVisibility.xlSheetVisible)
+                {
+                    targetWs.Visible = (int)XlSheetVisibility.xlSheetVisible;
+                }
+
+                targetWs.Activate();
+
+                if (!string.IsNullOrEmpty(cellAddress) && cellAddress != "-")
+                {
+                    dynamic rng = targetWs.Range[cellAddress];
+                    if (rng != null)
+                    {
+                        rng.Select();
+                        try
+                        {
+                            app.ActiveWindow.ScrollRow = rng.Row;
+                            app.ActiveWindow.ScrollColumn = rng.Column;
+                        }
+                        catch { }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"NavigateToCell error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public bool CreateVietnameseReportSheet(List<VietnameseLocationItem> items)
+        {
+            if (_excelApp == null || items == null || items.Count == 0) return false;
+
+            _isBatchProcessing = true;
+            dynamic app = _excelApp;
+
+            try
+            {
+                try { app.EnableEvents = false; } catch { }
+                try { app.DisplayAlerts = false; } catch { }
+                try { app.ScreenUpdating = false; } catch { }
+
+                dynamic wb = app.ActiveWorkbook;
+                if (wb == null) return false;
+
+                string reportSheetName = $"VN_Check_{DateTime.Now:yyyyMMdd_HHmm}";
+                if (reportSheetName.Length > 31) reportSheetName = reportSheetName.Substring(0, 31);
+
+                dynamic firstSheet = wb.Sheets[1];
+                dynamic wsReport = wb.Worksheets.Add(Before: firstSheet);
+                wsReport.Name = reportSheetName;
+                wsReport.Tab.Color = 0x2563EB; // Màu xanh nổi bật
+
+                // Tiêu đề
+                wsReport.Range["A1"].Value = "BÁO CÁO RÀ SOÁT CÁC VỊ TRÍ CHỨA TIẾNG VIỆT";
+                wsReport.Range["A1"].Font.Bold = true;
+                wsReport.Range["A1"].Font.Size = 14;
+                wsReport.Range["A1"].Font.Color = 0x1E3A8A;
+
+                wsReport.Range["A2"].Value = $"Thời gian quét: {DateTime.Now:dd/MM/yyyy HH:mm:ss} | Tổng số vị trí: {items.Count}";
+                wsReport.Range["A2"].Font.Italic = true;
+                wsReport.Range["A2"].Font.Size = 10;
+                wsReport.Range["A2"].Font.Color = 0x64748B;
+
+                // Headers
+                string[] headers = new string[] { "STT", "Tên File (Workbook)", "Tên Sheet", "Địa Chỉ Ô", "Loại Vị Trí", "Nội Dung Tiếng Việt" };
+                for (int h = 0; h < headers.Length; h++)
+                {
+                    dynamic cell = wsReport.Cells[4, h + 1];
+                    cell.Value = headers[h];
+                    cell.Font.Bold = true;
+                    cell.Interior.Color = 0x107C41; // Green
+                    cell.Font.Color = 0xFFFFFF; // White
+                }
+
+                // Ghi dữ liệu
+                for (int i = 0; i < items.Count; i++)
+                {
+                    var item = items[i];
+                    int r = 5 + i;
+
+                    wsReport.Cells[r, 1].Value = i + 1;
+                    wsReport.Cells[r, 2].Value = item.WorkbookName;
+                    wsReport.Cells[r, 3].Value = item.SheetName;
+                    wsReport.Cells[r, 4].Value = item.CellAddress;
+                    wsReport.Cells[r, 5].Value = item.TypeDescription;
+                    wsReport.Cells[r, 6].Value = item.TextContent;
+
+                    // Thêm Hyperlink nếu có địa chỉ ô
+                    if (!string.IsNullOrEmpty(item.CellAddress) && item.CellAddress != "-")
+                    {
+                        try
+                        {
+                            string subAddress = $"'{item.SheetName}'!{item.CellAddress}";
+                            dynamic cellLink = wsReport.Cells[r, 4];
+                            wsReport.Hyperlinks.Add(Anchor: cellLink, Address: "", SubAddress: subAddress, TextToDisplay: item.CellAddress);
+                        }
+                        catch { }
+                    }
+                }
+
+                // Định dạng kẻ bảng
+                int lastRow = 4 + items.Count;
+                dynamic tableRange = wsReport.Range[$"A4:F{lastRow}"];
+                tableRange.Borders.LineStyle = 1; // xlContinuous
+                tableRange.Borders.Color = 0xCBD5E1;
+
+                // Tự động căn chỉnh độ rộng cột
+                wsReport.Columns["A:F"].AutoFit();
+
+                _isBatchProcessing = false;
+                try { app.EnableEvents = true; } catch { }
+                try { app.DisplayAlerts = true; } catch { }
+                try { app.ScreenUpdating = true; } catch { }
+
+                RefreshWorkbookTree();
+                WpfMessageBox.Show($"✅ Đã tạo thành công Sheet báo cáo [{reportSheetName}] với {items.Count} vị trí tiếng Việt!",
+                                   "Tạo Báo Cáo Thành Công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi tạo sheet báo cáo:\n{ex.Message}", "Lỗi Báo Cáo",
                                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return false;
             }

@@ -97,6 +97,17 @@ namespace ExcelSupport.Ribbon
                   onAction='OnCloseCurrentWorkbook' />
         </group>
 
+        <!-- Group 3: Kiểm tra & Rà soát -->
+        <group id='grpAuditTools' label='Kiểm Tra'>
+          <button id='btnCheckVietnamese'
+                  label='Kiểm Tra Tiếng Việt'
+                  size='large'
+                  imageMso='Spelling'
+                  screentip='Kiểm tra &amp; Định vị Tiếng Việt'
+                  supertip='Quét toàn bộ ô, tên Sheet và ghi chú để tìm và nhảy tới các vị trí chứa tiếng Việt có dấu.'
+                  onAction='OnCheckVietnamese' />
+        </group>
+
       </tab>
     </tabs>
   </ribbon>
@@ -285,6 +296,12 @@ namespace ExcelSupport.Ribbon
             {
                 AddInEvents.MainViewModel.CloseWorkbookCommand.Execute(AddInEvents.MainViewModel.SelectedWorkbook.WorkbookName);
             }
+        }
+
+        public void OnCheckVietnamese(IRibbonControl control)
+        {
+            var dlg = new Views.VietnameseCheckDialog(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+            dlg.ShowDialog();
         }
     }
 }

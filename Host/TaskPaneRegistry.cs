@@ -124,7 +124,7 @@ namespace ExcelSupport.Host
                     var newPane = CustomTaskPaneFactory.CreateCustomTaskPane(hostControl, "Workbook Navigator", activeWindow);
                     if (newPane != null)
                     {
-                        newPane.DockPosition = MsoCTPDockPosition.msoCTPDockPositionRight;
+                        newPane.DockPosition = MsoCTPDockPosition.msoCTPDockPositionLeft;
                         newPane.Width = 320;
 
                         newPane.VisibleStateChange += ctp =>
