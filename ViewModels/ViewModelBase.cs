@@ -31,7 +31,7 @@ namespace ExcelSupport.ViewModels
             set => SetProperty(ref _isDarkTheme, value);
         }
 
-        public static void CopyToClipboard(string text)
+        internal static void CopyToClipboard(string text)
         {
             if (string.IsNullOrEmpty(text)) return;
             try

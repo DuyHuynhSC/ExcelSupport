@@ -44,6 +44,7 @@ namespace ExcelSupport.ViewModels
         public ICommand MergeSheetsCommand { get; }
         public ICommand BatchRenameCommand { get; }
         public ICommand CheckVietnameseCommand { get; }
+        public ICommand CompareWorkbookCommand { get; }
 
         public WorkbookNodeViewModel()
         {
@@ -61,8 +62,12 @@ namespace ExcelSupport.ViewModels
 
             CheckVietnameseCommand = new RelayCommand(_ =>
             {
-                var dlg = new Views.VietnameseCheckDialog(IsDarkTheme);
-                dlg.ShowDialog();
+                Views.VietnameseCheckDialog.ShowWindow(IsDarkTheme);
+            });
+
+            CompareWorkbookCommand = new RelayCommand(_ =>
+            {
+                Views.WorkbookCompareDialog.ShowWindow(WorkbookName, IsDarkTheme);
             });
 
             UnhideAllSheetsCommand = new RelayCommand(_ =>

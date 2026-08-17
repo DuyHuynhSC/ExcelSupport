@@ -42,6 +42,34 @@ namespace ExcelSupport.Views
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        private static VietnameseCheckDialog? _currentInstance;
+
+        internal static void ShowWindow(bool isDarkTheme = false)
+        {
+            if (_currentInstance != null && _currentInstance.IsLoaded)
+            {
+                _currentInstance.IsDarkTheme = isDarkTheme;
+                _currentInstance.Activate();
+                _currentInstance.ExecuteScan();
+                return;
+            }
+
+            _currentInstance = new VietnameseCheckDialog(isDarkTheme);
+            _currentInstance.Closed += (s, e) => _currentInstance = null;
+
+            try
+            {
+                var addIn = AddInEvents.Instance;
+                if (addIn?.ExcelAppInstance != null)
+                {
+                    new System.Windows.Interop.WindowInteropHelper(_currentInstance).Owner = (IntPtr)addIn.ExcelAppInstance.Hwnd;
+                }
+            }
+            catch { }
+
+            _currentInstance.Show();
+        }
+
         private bool _isInitialized = false;
 
         public VietnameseCheckDialog(bool isDarkTheme = false)

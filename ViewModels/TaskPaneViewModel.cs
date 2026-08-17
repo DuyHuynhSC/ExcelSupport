@@ -187,6 +187,7 @@ namespace ExcelSupport.ViewModels
         public ICommand CopyTextCommand { get; }
         public ICommand UnhideAllSheetsCommand { get; }
         public ICommand OpenVietnameseCheckDialogCommand { get; }
+        public ICommand OpenWorkbookCompareDialogCommand { get; }
 
         public event Action<string>? RequestActivateWorkbook;
         public event Action<string, string>? RequestActivateWorksheet;
@@ -337,8 +338,17 @@ namespace ExcelSupport.ViewModels
 
             OpenVietnameseCheckDialogCommand = new RelayCommand(_ =>
             {
-                var dlg = new Views.VietnameseCheckDialog(IsDarkTheme);
-                dlg.ShowDialog();
+                Views.VietnameseCheckDialog.ShowWindow(IsDarkTheme);
+            });
+
+            OpenWorkbookCompareDialogCommand = new RelayCommand(param =>
+            {
+                string? defaultWb = null;
+                if (param is WorkbookNodeViewModel wb) defaultWb = wb.WorkbookName;
+                else if (param is string s) defaultWb = s;
+                else if (SelectedWorkbook != null) defaultWb = SelectedWorkbook.WorkbookName;
+
+                Views.WorkbookCompareDialog.ShowWindow(defaultWb, IsDarkTheme);
             });
         }
 

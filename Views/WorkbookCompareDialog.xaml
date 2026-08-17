@@ -1,0 +1,613 @@
+<Window x:Class="ExcelSupport.Views.WorkbookCompareDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ExcelSupport.Views"
+        mc:Ignorable="d"
+        Title="So Sánh 2 Workbooks / Sheets — ExcelSupport" 
+        Height="720" Width="1040"
+        MinHeight="560" MinWidth="850"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
+        <!-- Custom ScrollBar Style -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Width" Value="8"/>
+        </Style>
+
+        <!-- Standard Button Style -->
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#1E40AF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DialogSecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#CBD5E1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DialogActionButtonStyle" TargetType="Button" BasedOn="{StaticResource DialogSecondaryButtonStyle}">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0: Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1: Source & Config Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2: Filter & Stats Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 3: DataGrid Results -->
+            <RowDefinition Height="*"/>
+            <!-- 4: Footer / Actions -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 0. HEADER ==================== -->
+        <Border Grid.Row="0" Padding="20,12" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📊" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="SO SÁNH WORKBOOKS / SHEETS" FontWeight="Bold" FontSize="15" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Text="Đối chiếu sai khác dữ liệu giữa 2 phiên bản file Excel, tô màu trực quan và xuất báo cáo" 
+                               FontSize="11.5" Margin="26,2,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#64748B"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Statistics Badges -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border x:Name="BadgeModified" CornerRadius="10" Padding="10,4" Margin="0,0,6,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1">
+                        <TextBlock x:Name="TxtCountModified" Text="0 thay đổi" FontWeight="SemiBold" FontSize="11" Foreground="#92400E"/>
+                    </Border>
+                    <Border x:Name="BadgeAdded" CornerRadius="10" Padding="10,4" Margin="0,0,6,0" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1">
+                        <TextBlock x:Name="TxtCountAdded" Text="0 thêm mới" FontWeight="SemiBold" FontSize="11" Foreground="#166534"/>
+                    </Border>
+                    <Border x:Name="BadgeDeleted" CornerRadius="10" Padding="10,4" Margin="0,0,0,0" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1">
+                        <TextBlock x:Name="TxtCountDeleted" Text="0 đã xóa" FontWeight="SemiBold" FontSize="11" Foreground="#991B1B"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 1. SOURCE & CONFIG BAR ==================== -->
+        <Border Grid.Row="1" Padding="20,12" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#0F172A"/>
+                            <Setter Property="BorderBrush" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Dòng 1: Chọn Workbook A và Workbook B -->
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="130"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Nguồn A (File Gốc) -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="📁 File A (Gốc / Bản cũ):" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#334155"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="2*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="CboWorkbook1" Grid.Column="0" Height="28" Margin="0,0,6,0" SelectionChanged="OnWorkbook1SelectionChanged"/>
+                            <ComboBox x:Name="CboSheet1" Grid.Column="1" Height="28"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Biểu tượng so sánh ⇋ -->
+                    <TextBlock Grid.Column="1" Text="⇋" FontSize="18" FontWeight="Bold" Foreground="#94A3B8" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,14,0,0"/>
+
+                    <!-- Nguồn B (File Mới) -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="📁 File B (Mới / Cần đối soát):" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#334155"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="2*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="CboWorkbook2" Grid.Column="0" Height="28" Margin="0,0,6,0" SelectionChanged="OnWorkbook2SelectionChanged"/>
+                            <ComboBox x:Name="CboSheet2" Grid.Column="1" Height="28"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Nút Quét So Sánh -->
+                    <Button Grid.Column="3" Content="🔍 So Sánh Ngay" Height="28" Margin="12,18,0,0" 
+                            Style="{StaticResource DialogPrimaryButtonStyle}" Click="OnCompareClick"/>
+                </Grid>
+
+                <!-- Dòng 2: Tùy chọn so sánh -->
+                <WrapPanel Grid.Row="1" VerticalAlignment="Center">
+                    <TextBlock Text="Chế độ:" FontWeight="SemiBold" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#475569"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <RadioButton x:Name="RbCellByCell" Content="Theo Tọa Độ Ô (A1, B2...)" IsChecked="True" GroupName="CompMode" FontSize="11" Margin="0,0,12,0" Cursor="Hand" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="RbKeyColumn" Content="Theo Cột Khóa Chính:" GroupName="CompMode" FontSize="11" Margin="0,0,4,0" Cursor="Hand" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="CboKeyColumn" Width="90" Height="24" Margin="0,0,16,0" FontSize="11" VerticalAlignment="Center"/>
+
+                    <CheckBox x:Name="ChkIgnoreWhitespace" Content="Bỏ qua khoảng trắng thừa" IsChecked="True" FontSize="11" Margin="0,0,12,0" Cursor="Hand" VerticalAlignment="Center"/>
+                    <CheckBox x:Name="ChkCaseInsensitive" Content="Không phân biệt HOA/thường" FontSize="11" Margin="0,0,12,0" Cursor="Hand" VerticalAlignment="Center"/>
+                    <CheckBox x:Name="ChkCompareFormulas" Content="So sánh Công thức (thay vì Giá trị)" FontSize="11" Margin="0,0,0,0" Cursor="Hand" VerticalAlignment="Center"/>
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 2. FILTER & SEARCH BAR ==================== -->
+        <Border Grid.Row="2" Padding="20,8" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#F1F5F9"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="240"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Bộ lọc theo loại sai khác -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Lọc kết quả:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#334155"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#CBD5E1"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <RadioButton x:Name="RbFilterAll" Content="Tất cả" IsChecked="True" GroupName="DiffFilter" FontSize="11" Margin="0,0,8,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterModified" Content="Chỉ ô thay đổi" GroupName="DiffFilter" FontSize="11" Margin="0,0,8,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterAdded" Content="Chỉ ô thêm mới" GroupName="DiffFilter" FontSize="11" Margin="0,0,8,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterDeleted" Content="Chỉ ô đã xóa" GroupName="DiffFilter" FontSize="11" Margin="0,0,0,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
+                </StackPanel>
+
+                <!-- Ô tìm kiếm -->
+                <Border Grid.Column="2" CornerRadius="6" BorderThickness="1" Height="28">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Background" Value="#0F172A"/>
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Margin="8,0,4,0" VerticalAlignment="Center" Foreground="#94A3B8"/>
+                        <TextBox Grid.Column="1" x:Name="TxtSearch" BorderThickness="0" Background="Transparent" 
+                                 VerticalContentAlignment="Center" FontSize="11.5"
+                                 TextChanged="OnSearchTextChanged">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Setter Property="CaretBrush" Value="#0F172A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                            <Setter Property="CaretBrush" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                        <Button Grid.Column="2" Content="✕" FontSize="10" Margin="0,0,6,0" Background="Transparent" 
+                                BorderThickness="0" Foreground="#94A3B8" Cursor="Hand" Click="OnClearSearchClick"
+                                Visibility="{Binding Text.Length, ElementName=TxtSearch, Converter={StaticResource BoolToVisConverter}}"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 3. RESULTS DATAGRID ==================== -->
+        <DataGrid Grid.Row="3" x:Name="GridDiffResults" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  MouseDoubleClick="OnRowDoubleClick"
+                  BorderThickness="0">
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
+                    <Setter Property="RowBackground" Value="#FFFFFF"/>
+                    <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#0F172A"/>
+                            <Setter Property="HorizontalGridLinesBrush" Value="#1E293B"/>
+                            <Setter Property="RowBackground" Value="#0F172A"/>
+                            <Setter Property="AlternatingRowBackground" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#F1F5F9"/>
+                    <Setter Property="Foreground" Value="#475569"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="FontSize" Value="11.5"/>
+                    <Setter Property="Padding" Value="10,8"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="Foreground" Value="#94A3B8"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.Columns>
+                <!-- STT -->
+                <DataGridTextColumn Header="STT" Binding="{Binding Index}" Width="55">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#64748B"/>
+                            <Setter Property="FontSize" Value="11"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Tên Sheet -->
+                <DataGridTextColumn Header="Tên Sheet" Binding="{Binding SheetName}" Width="110">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Padding" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Vị trí / Khóa -->
+                <DataGridTextColumn Header="Vị Trí / Khóa" Binding="{Binding KeyIdentifier}" Width="120">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="Consolas, Segoe UI"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#2563EB"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="Padding" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Loại Sai Khác (Badge) -->
+                <DataGridTemplateColumn Header="Loại Sai Khác" Width="130">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Type}" Value="Modified">
+                                                <Setter Property="Background" Value="#FEF3C7"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Type}" Value="Added">
+                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Type}" Value="Deleted">
+                                                <Setter Property="Background" Value="#FEE2E2"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding TypeDescription}" FontWeight="SemiBold" FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Type}" Value="Modified">
+                                                    <Setter Property="Foreground" Value="#92400E"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="Added">
+                                                    <Setter Property="Foreground" Value="#166534"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="Deleted">
+                                                    <Setter Property="Foreground" Value="#991B1B"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Giá trị File A (Cũ) -->
+                <DataGridTextColumn Header="Giá Trị File A (Gốc)" Binding="{Binding OldValue}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#475569"/>
+                            <Setter Property="Padding" Value="6,0"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Giá trị File B (Mới) -->
+                <DataGridTextColumn Header="Giá Trị File B (Mới)" Binding="{Binding NewValue}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="FontWeight" Value="Medium"/>
+                            <Setter Property="Padding" Value="6,0"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Cột Hành Động (Đi tới ô) -->
+                <DataGridTemplateColumn Header="Hành Động" Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="🎯 Đi tới ô" FontSize="10.5" Padding="6,3" Cursor="Hand"
+                                    Style="{StaticResource DialogActionButtonStyle}"
+                                    Click="OnGoToCellClick"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- ==================== 4. FOOTER & ACTIONS ==================== -->
+        <Border Grid.Row="4" Padding="20,12" BorderThickness="0,1,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Status Message -->
+                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="Sẵn sàng so sánh." 
+                           VerticalAlignment="Center" FontSize="11.5">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#64748B"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="🎨 Tô Màu Nổi Bật (Sheet B)" Margin="0,0,8,0"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnHighlightClick"/>
+
+                    <Button Content="📋 Tạo Sheet Báo Cáo" Margin="0,0,8,0"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnCreateReportSheetClick"/>
+
+                    <Button Content="📤 Xuất CSV..." Margin="0,0,8,0"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnExportCsvClick"/>
+
+                    <Button Content="Đóng" Width="70"
+                            Style="{StaticResource DialogSecondaryButtonStyle}"
+                            Click="OnCloseClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

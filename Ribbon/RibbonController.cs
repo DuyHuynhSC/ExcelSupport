@@ -97,8 +97,16 @@ namespace ExcelSupport.Ribbon
                   onAction='OnCloseCurrentWorkbook' />
         </group>
 
-        <!-- Group 3: Kiểm tra & Rà soát -->
-        <group id='grpAuditTools' label='Kiểm Tra'>
+        <!-- Group 3: Kiểm tra & Đối Soát -->
+        <group id='grpAuditTools' label='Kiểm Tra &amp; Đối Soát'>
+          <button id='btnCompareWorkbooks'
+                  label='So Sánh Workbooks'
+                  size='large'
+                  imageMso='CompareMaster'
+                  screentip='So Sánh 2 Workbooks / Sheets'
+                  supertip='Đối chiếu sai khác dữ liệu giữa 2 file Excel hoặc 2 Sheet, tô màu trực quan và xuất báo cáo chi tiết.'
+                  onAction='OnCompareWorkbooks' />
+
           <button id='btnCheckVietnamese'
                   label='Kiểm Tra Tiếng Việt'
                   size='large'
@@ -298,10 +306,14 @@ namespace ExcelSupport.Ribbon
             }
         }
 
+        public void OnCompareWorkbooks(IRibbonControl control)
+        {
+            Views.WorkbookCompareDialog.ShowWindow(AddInEvents.MainViewModel?.SelectedWorkbook?.WorkbookName, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
         public void OnCheckVietnamese(IRibbonControl control)
         {
-            var dlg = new Views.VietnameseCheckDialog(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
-            dlg.ShowDialog();
+            Views.VietnameseCheckDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
     }
 }

@@ -20,6 +20,7 @@ namespace ExcelSupport
         public static TaskPaneViewModel? MainViewModel { get; private set; }
 
         private ExcelApp? _excelApp;
+        public ExcelApp? ExcelAppInstance => _excelApp;
         private bool _isBatchProcessing = false;
 
         public void AutoOpen()
@@ -1606,7 +1607,7 @@ namespace ExcelSupport
             "ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ"
         );
 
-        public static bool HasVietnamese(string? text)
+        internal static bool HasVietnamese(string? text)
         {
             if (text == null || text.Length == 0) return false;
 
@@ -1874,49 +1875,63 @@ namespace ExcelSupport
 
         public bool NavigateToCell(string workbookName, string sheetName, string cellAddress)
         {
+            if (_excelApp == null)
+            {
+                try { _excelApp = (ExcelApp)ExcelDnaUtil.Application; } catch { }
+            }
             if (_excelApp == null) return false;
 
-            try
+            ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
             {
-                dynamic app = _excelApp;
-                dynamic targetWb = app.Workbooks[workbookName];
-                if (targetWb == null) return false;
-
-                targetWb.Activate();
-
-                dynamic targetWs = targetWb.Sheets[sheetName];
-                if (targetWs == null) return false;
-
-                // Nếu Sheet đang bị ẩn, tự động hiện ra để người dùng xem
-                if ((int)targetWs.Visible != (int)XlSheetVisibility.xlSheetVisible)
+                try
                 {
-                    targetWs.Visible = (int)XlSheetVisibility.xlSheetVisible;
-                }
+                    dynamic app = _excelApp;
+                    dynamic targetWb = app.Workbooks[workbookName];
+                    if (targetWb == null) return;
 
-                targetWs.Activate();
+                    try { targetWb.Activate(); } catch { }
 
-                if (!string.IsNullOrEmpty(cellAddress) && cellAddress != "-")
-                {
-                    dynamic rng = targetWs.Range[cellAddress];
-                    if (rng != null)
+                    dynamic targetWs = targetWb.Sheets[sheetName];
+                    if (targetWs == null) return;
+
+                    // Nếu Sheet đang bị ẩn, tự động hiện ra để người dùng xem
+                    try
                     {
-                        rng.Select();
-                        try
+                        if ((int)targetWs.Visible != (int)XlSheetVisibility.xlSheetVisible)
                         {
-                            app.ActiveWindow.ScrollRow = rng.Row;
-                            app.ActiveWindow.ScrollColumn = rng.Column;
+                            targetWs.Visible = (int)XlSheetVisibility.xlSheetVisible;
                         }
-                        catch { }
+                    }
+                    catch { }
+
+                    try { targetWs.Activate(); } catch { }
+
+                    if (!string.IsNullOrEmpty(cellAddress) && cellAddress != "-")
+                    {
+                        string cleanAddr = cellAddress.Split(' ')[0];
+                        if (!string.IsNullOrEmpty(cleanAddr) && !cleanAddr.StartsWith("Dòng"))
+                        {
+                            dynamic rng = targetWs.Range[cleanAddr];
+                            if (rng != null)
+                            {
+                                try { rng.Select(); } catch { }
+                                try
+                                {
+                                    app.ActiveWindow.ScrollRow = rng.Row;
+                                    app.ActiveWindow.ScrollColumn = rng.Column;
+                                }
+                                catch { }
+                            }
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"NavigateToCell error: {ex.Message}");
+                }
+            });
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"NavigateToCell error: {ex.Message}");
-                return false;
-            }
+            return true;
         }
 
         public bool CreateVietnameseReportSheet(List<VietnameseLocationItem> items)
@@ -2029,5 +2044,636 @@ namespace ExcelSupport
         }
 
         #endregion
+
+        #region Workbook & Sheet Diff & Compare Engine
+
+        public List<string> GetOpenWorkbookNamesList()
+        {
+            var list = new List<string>();
+            if (_excelApp == null)
+            {
+                try { _excelApp = (ExcelApp)ExcelDnaUtil.Application; } catch { }
+            }
+            if (_excelApp == null) return list;
+
+            try
+            {
+                dynamic app = _excelApp;
+                int count = app.Workbooks.Count;
+                for (int i = 1; i <= count; i++)
+                {
+                    try { list.Add(app.Workbooks[i].Name); } catch { }
+                }
+            }
+            catch { }
+            return list;
+        }
+
+        public List<string> GetWorksheetNamesList(string workbookName)
+        {
+            var list = new List<string>();
+            if (_excelApp == null || string.IsNullOrEmpty(workbookName)) return list;
+
+            try
+            {
+                dynamic app = _excelApp;
+                dynamic wb = app.Workbooks[workbookName];
+                if (wb != null)
+                {
+                    int count = wb.Sheets.Count;
+                    for (int i = 1; i <= count; i++)
+                    {
+                        try { list.Add(wb.Sheets[i].Name); } catch { }
+                    }
+                }
+            }
+            catch { }
+            return list;
+        }
+
+        public List<CompareDiffItem> CompareWorkbooksOrSheets(
+            string wb1Name, 
+            string? ws1Name, 
+            string wb2Name, 
+            string? ws2Name, 
+            CompareOptions options, 
+            Action<string>? progressCallback = null)
+        {
+            var results = new List<CompareDiffItem>();
+            if (_excelApp == null)
+            {
+                try { _excelApp = (ExcelApp)ExcelDnaUtil.Application; } catch { }
+            }
+            if (_excelApp == null) return results;
+
+            dynamic app = _excelApp;
+
+            try
+            {
+                object? rawWb1 = null;
+                object? rawWb2 = null;
+
+                try { rawWb1 = app.Workbooks[wb1Name]; } catch { }
+                try { rawWb2 = app.Workbooks[wb2Name]; } catch { }
+
+                if (rawWb1 == null || rawWb2 == null)
+                {
+                    progressCallback?.Invoke("Không tìm thấy Workbook đã chọn.");
+                    return results;
+                }
+
+                dynamic wb1 = rawWb1;
+                dynamic wb2 = rawWb2;
+
+                var sheetPairs = new List<(object ws1, object ws2, string sName1, string sName2)>();
+
+                // Nếu người dùng chọn đích danh Sheet1 vs Sheet2
+                if (!string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(ws2Name))
+                {
+                    object? s1 = null;
+                    object? s2 = null;
+                    try { s1 = wb1.Sheets[ws1Name!]; } catch { }
+                    try { s2 = wb2.Sheets[ws2Name!]; } catch { }
+                    if (s1 != null && s2 != null)
+                    {
+                        sheetPairs.Add((s1, s2, ws1Name!, ws2Name!));
+                    }
+                }
+                else
+                {
+                    // So sánh toàn bộ các Sheet có cùng tên
+                    dynamic sheets1 = wb1.Sheets;
+                    int count1 = (int)sheets1.Count;
+                    for (int i = 1; i <= count1; i++)
+                    {
+                        try
+                        {
+                            dynamic s1 = sheets1[i];
+                            string sName = (string)s1.Name;
+                            object? s2 = null;
+                            try { s2 = wb2.Sheets[sName]; } catch { }
+                            if (s2 != null)
+                            {
+                                sheetPairs.Add((s1, s2, sName, sName));
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                if (sheetPairs.Count == 0)
+                {
+                    progressCallback?.Invoke("Không tìm thấy Sheet nào phù hợp để so sánh.");
+                    return results;
+                }
+
+                int totalDiffCount = 0;
+
+                foreach (var pair in sheetPairs)
+                {
+                    progressCallback?.Invoke($"Đang so sánh Sheet [{pair.sName1}]...");
+                    dynamic ws1 = pair.ws1;
+                    dynamic ws2 = pair.ws2;
+
+                    if (options.Mode == CompareMode.CellByCell)
+                    {
+                        CompareSheetCellByCell(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                    }
+                    else
+                    {
+                        CompareSheetByKeyColumn(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                    }
+                }
+
+                progressCallback?.Invoke($"Hoàn tất! Tìm thấy {results.Count} điểm sai khác.");
+            }
+            catch (Exception ex)
+            {
+                progressCallback?.Invoke($"Lỗi so sánh: {ex.Message}");
+            }
+
+            return results;
+        }
+
+        private void CompareSheetCellByCell(
+            dynamic ws1, dynamic ws2, 
+            string sheetName, string wb1Name, string wb2Name, 
+            CompareOptions options, 
+            List<CompareDiffItem> results, 
+            ref int totalDiffCount)
+        {
+            try
+            {
+                dynamic u1 = ws1.UsedRange;
+                dynamic u2 = ws2.UsedRange;
+
+                int r1Start = 1, c1Start = 1, r1Count = 0, c1Count = 0;
+                int r2Start = 1, c2Start = 1, r2Count = 0, c2Count = 0;
+
+                if (u1 != null)
+                {
+                    try { r1Start = u1.Row; c1Start = u1.Column; r1Count = u1.Rows.Count; c1Count = u1.Columns.Count; } catch { }
+                }
+                if (u2 != null)
+                {
+                    try { r2Start = u2.Row; c2Start = u2.Column; r2Count = u2.Rows.Count; c2Count = u2.Columns.Count; } catch { }
+                }
+
+                if (r1Count == 0 && r2Count == 0) return;
+
+                int minRow = Math.Min(r1Start, r2Start);
+                int minCol = Math.Min(c1Start, c2Start);
+                int maxRow = Math.Max(r1Start + r1Count - 1, r2Start + r2Count - 1);
+                int maxCol = Math.Max(c1Start + c1Count - 1, c2Start + c2Count - 1);
+
+                object? valObj1 = options.CompareFormulas ? u1?.Formula : u1?.Value2;
+                object? valObj2 = options.CompareFormulas ? u2?.Formula : u2?.Value2;
+
+                for (int r = minRow; r <= maxRow; r++)
+                {
+                    for (int c = minCol; c <= maxCol; c++)
+                    {
+                        string str1 = GetValueFromArray(valObj1, r1Start, c1Start, r1Count, c1Count, r, c);
+                        string str2 = GetValueFromArray(valObj2, r2Start, c2Start, r2Count, c2Count, r, c);
+
+                        string norm1 = NormalizeCompareString(str1, options);
+                        string norm2 = NormalizeCompareString(str2, options);
+
+                        if (!string.Equals(norm1, norm2, options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                        {
+                            totalDiffCount++;
+                            DiffType diffType = DiffType.Modified;
+
+                            if (string.IsNullOrEmpty(norm1) && !string.IsNullOrEmpty(norm2))
+                            {
+                                diffType = DiffType.Added;
+                            }
+                            else if (!string.IsNullOrEmpty(norm1) && string.IsNullOrEmpty(norm2))
+                            {
+                                diffType = DiffType.Deleted;
+                            }
+
+                            string addr = GetExcelColumnLetter(c) + r;
+
+                            results.Add(new CompareDiffItem
+                            {
+                                Index = totalDiffCount,
+                                SheetName = sheetName,
+                                CellAddress = addr,
+                                KeyIdentifier = addr,
+                                Type = diffType,
+                                OldValue = str1,
+                                NewValue = str2,
+                                Workbook1Name = wb1Name,
+                                Workbook2Name = wb2Name
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error CompareSheetCellByCell: {ex.Message}");
+            }
+        }
+
+        private void CompareSheetByKeyColumn(
+            dynamic ws1, dynamic ws2, 
+            string sheetName, string wb1Name, string wb2Name, 
+            CompareOptions options, 
+            List<CompareDiffItem> results, 
+            ref int totalDiffCount)
+        {
+            try
+            {
+                dynamic u1 = ws1.UsedRange;
+                dynamic u2 = ws2.UsedRange;
+
+                int keyCol = options.KeyColumnIndex; // 1-based index (e.g. 1 = col A)
+
+                var dict1 = ExtractRowsByKey(u1, keyCol, options);
+                var dict2 = ExtractRowsByKey(u2, keyCol, options);
+
+                // 1. Kiểm tra các dòng có trong cả 2 hoặc bị sửa đổi
+                foreach (var kvp in dict1)
+                {
+                    string key = kvp.Key;
+                    int row1Index = kvp.Value.row;
+                    var row1Vals = kvp.Value.values;
+
+                    if (dict2.TryGetValue(key, out (int row, string[] values) row2Data))
+                    {
+                        int row2Index = row2Data.row;
+                        var row2Vals = row2Data.values;
+
+                        int maxCols = Math.Max(row1Vals.Length, row2Vals.Length);
+                        for (int col = 0; col < maxCols; col++)
+                        {
+                            string s1 = col < row1Vals.Length ? row1Vals[col] : string.Empty;
+                            string s2 = col < row2Vals.Length ? row2Vals[col] : string.Empty;
+
+                            string n1 = NormalizeCompareString(s1, options);
+                            string n2 = NormalizeCompareString(s2, options);
+
+                            if (!string.Equals(n1, n2, options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                            {
+                                totalDiffCount++;
+                                string colLetter = GetExcelColumnLetter(col + 1);
+                                string addr = $"{colLetter}{row2Index} (A:{colLetter}{row1Index})";
+
+                                results.Add(new CompareDiffItem
+                                {
+                                    Index = totalDiffCount,
+                                    SheetName = sheetName,
+                                    CellAddress = addr,
+                                    KeyIdentifier = $"Khóa: [{key}] - Cột {colLetter}",
+                                    Type = DiffType.Modified,
+                                    OldValue = s1,
+                                    NewValue = s2,
+                                    Workbook1Name = wb1Name,
+                                    Workbook2Name = wb2Name
+                                });
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Dòng có ở File A nhưng bị xóa ở File B
+                        totalDiffCount++;
+                        results.Add(new CompareDiffItem
+                        {
+                            Index = totalDiffCount,
+                            SheetName = sheetName,
+                            CellAddress = $"Dòng {row1Index}",
+                            KeyIdentifier = $"Khóa: [{key}]",
+                            Type = DiffType.Deleted,
+                            OldValue = string.Join(" | ", row1Vals),
+                            NewValue = "(Đã bị xóa khỏi File B)",
+                            Workbook1Name = wb1Name,
+                            Workbook2Name = wb2Name
+                        });
+                    }
+                }
+
+                // 2. Kiểm tra các dòng thêm mới ở File B
+                foreach (var kvp in dict2)
+                {
+                    string key = kvp.Key;
+                    if (!dict1.ContainsKey(key))
+                    {
+                        totalDiffCount++;
+                        int row2Index = kvp.Value.row;
+                        var row2Vals = kvp.Value.values;
+
+                        results.Add(new CompareDiffItem
+                        {
+                            Index = totalDiffCount,
+                            SheetName = sheetName,
+                            CellAddress = $"Dòng {row2Index}",
+                            KeyIdentifier = $"Khóa: [{key}]",
+                            Type = DiffType.Added,
+                            OldValue = "(Không có trong File A)",
+                            NewValue = string.Join(" | ", row2Vals),
+                            Workbook1Name = wb1Name,
+                            Workbook2Name = wb2Name
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error CompareSheetByKeyColumn: {ex.Message}");
+            }
+        }
+
+        private Dictionary<string, (int row, string[] values)> ExtractRowsByKey(dynamic? usedRange, int keyCol, CompareOptions options)
+        {
+            var dict = new Dictionary<string, (int row, string[] values)>(StringComparer.OrdinalIgnoreCase);
+            if (usedRange == null) return dict;
+
+            try
+            {
+                int startRow = usedRange.Row;
+                int startCol = usedRange.Column;
+                int rowCount = usedRange.Rows.Count;
+                int colCount = usedRange.Columns.Count;
+
+                object? valObj = options.CompareFormulas ? usedRange.Formula : usedRange.Value2;
+
+                for (int r = startRow; r < startRow + rowCount; r++)
+                {
+                    var rowVals = new string[colCount];
+                    string keyVal = string.Empty;
+
+                    for (int c = startCol; c < startCol + colCount; c++)
+                    {
+                        string str = GetValueFromArray(valObj, startRow, startCol, rowCount, colCount, r, c);
+                        int colIdx = c - startCol;
+                        rowVals[colIdx] = str;
+
+                        if (c == keyCol)
+                        {
+                            keyVal = NormalizeCompareString(str, options);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(keyVal) && !dict.ContainsKey(keyVal))
+                    {
+                        dict[keyVal] = (r, rowVals);
+                    }
+                }
+            }
+            catch { }
+
+            return dict;
+        }
+
+        private string GetValueFromArray(object? valObj, int startRow, int startCol, int rowCount, int colCount, int targetRow, int targetCol)
+        {
+            if (valObj == null) return string.Empty;
+
+            if (valObj is Array arr)
+            {
+                if (arr.Rank == 2)
+                {
+                    int r1 = arr.GetLowerBound(0);
+                    int c1 = arr.GetLowerBound(1);
+                    int rIdx = r1 + (targetRow - startRow);
+                    int cIdx = c1 + (targetCol - startCol);
+
+                    if (rIdx >= arr.GetLowerBound(0) && rIdx <= arr.GetUpperBound(0) &&
+                        cIdx >= arr.GetLowerBound(1) && cIdx <= arr.GetUpperBound(1))
+                    {
+                        object? item = arr.GetValue(rIdx, cIdx);
+                        return item?.ToString() ?? string.Empty;
+                    }
+                }
+                else if (arr.Rank == 1)
+                {
+                    int i1 = arr.GetLowerBound(0);
+                    int idx = i1 + (targetRow - startRow);
+                    if (idx >= arr.GetLowerBound(0) && idx <= arr.GetUpperBound(0))
+                    {
+                        object? item = arr.GetValue(idx);
+                        return item?.ToString() ?? string.Empty;
+                    }
+                }
+            }
+            else if (targetRow == startRow && targetCol == startCol)
+            {
+                return valObj.ToString() ?? string.Empty;
+            }
+
+            return string.Empty;
+        }
+
+        private string NormalizeCompareString(string? text, CompareOptions options)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+            string res = text!;
+            if (options.IgnoreWhitespace)
+            {
+                res = res.Trim();
+            }
+            return res;
+        }
+
+        public bool HighlightDiffInWorksheet(List<CompareDiffItem> diffs, string wbName, string wsName)
+        {
+            if (_excelApp == null || diffs == null || diffs.Count == 0) return false;
+
+            try
+            {
+                dynamic app = _excelApp;
+                dynamic wb = app.Workbooks[wbName];
+                dynamic ws = wb.Sheets[wsName];
+
+                _isBatchProcessing = true;
+                try { app.ScreenUpdating = false; } catch { }
+
+                foreach (var diff in diffs)
+                {
+                    if (!string.Equals(diff.SheetName, wsName, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    string cleanAddr = diff.CellAddress.Split(' ')[0];
+                    if (string.IsNullOrEmpty(cleanAddr) || cleanAddr.StartsWith("Dòng")) continue;
+
+                    try
+                    {
+                        dynamic rng = ws.Range[cleanAddr];
+                        if (rng != null)
+                        {
+                            switch (diff.Type)
+                            {
+                                case DiffType.Modified:
+                                    rng.Interior.Color = 0x82E0FF; // BGR: Light Amber/Yellow (RGB: 255, 224, 130)
+                                    break;
+                                case DiffType.Added:
+                                    rng.Interior.Color = 0xC8E6C9; // BGR: Light Green (RGB: 200, 230, 201)
+                                    break;
+                                case DiffType.Deleted:
+                                    rng.Interior.Color = 0xCCD2FF; // BGR: Light Red/Pink (RGB: 255, 210, 204)
+                                    break;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                _isBatchProcessing = false;
+                try { app.ScreenUpdating = true; } catch { }
+
+                WpfMessageBox.Show($"✅ Đã tô màu nổi bật các ô sai khác trên Sheet [{wsName}] thành công!\n- Màu Vàng: Ô thay đổi giá trị\n- Màu Xanh: Ô/Dòng thêm mới\n- Màu Đỏ: Ô/Dòng bị xóa",
+                                   "Tô Màu Hoàn Tất", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi tô màu sai khác:\n{ex.Message}", "Lỗi Tô Màu",
+                                   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+            finally
+            {
+                _isBatchProcessing = false;
+                if (_excelApp != null)
+                {
+                    try { _excelApp.ScreenUpdating = true; } catch { }
+                }
+            }
+        }
+
+        public bool CreateDiffReportSheet(string targetWbName, List<CompareDiffItem> diffs)
+        {
+            if (_excelApp == null || diffs == null || diffs.Count == 0) return false;
+
+            try
+            {
+                dynamic app = _excelApp;
+                dynamic wb = app.Workbooks[targetWbName];
+                if (wb == null) return false;
+
+                _isBatchProcessing = true;
+                try { app.ScreenUpdating = false; } catch { }
+                try { app.DisplayAlerts = false; } catch { }
+
+                string reportSheetName = $"Diff_Report_{DateTime.Now:yyyyMMdd_HHmm}";
+                dynamic wsReport = wb.Sheets.Add(Before: wb.Sheets[1]);
+                wsReport.Name = reportSheetName;
+                wsReport.Tab.Color = 0xD97706;
+
+                // Tiêu đề lớn
+                wsReport.Range["A1:F1"].Merge();
+                wsReport.Cells[1, 1] = $"BÁO CÁO SAI KHÁC DỮ LIỆU (WORKBOOK COMPARE REPORT) — {DateTime.Now:dd/MM/yyyy HH:mm:ss}";
+                dynamic titleRange = wsReport.Range["A1:F1"];
+                titleRange.Font.Bold = true;
+                titleRange.Font.Size = 13;
+                titleRange.Font.Color = 0xFFFFFF;
+                titleRange.Interior.Color = 0x1E293B; // Dark Slate Header
+                titleRange.HorizontalAlignment = -4108; // xlCenter
+
+                // Thông tin file so sánh
+                wsReport.Cells[2, 1] = $"File Gốc (A): {diffs[0].Workbook1Name}  ⇋  File Mới (B): {diffs[0].Workbook2Name}  |  Tổng số sai khác: {diffs.Count}";
+                dynamic subRange = wsReport.Range["A2:F2"];
+                subRange.Merge();
+                subRange.Font.Italic = true;
+                subRange.Font.Size = 10.5;
+                subRange.Font.Color = 0x475569;
+
+                // Header Cột
+                string[] headers = { "STT", "Tên Sheet", "Vị Trí / Khóa", "Loại Sai Khác", "Giá Trị File A (Gốc)", "Giá Trị File B (Mới)" };
+                for (int c = 0; c < headers.Length; c++)
+                {
+                    dynamic headerCell = wsReport.Cells[3, c + 1];
+                    headerCell.Value2 = headers[c];
+                    headerCell.Font.Bold = true;
+                    headerCell.Font.Color = 0x0F172A;
+                    headerCell.Interior.Color = 0xE2E8F0; // Slate 200
+                    headerCell.HorizontalAlignment = -4108; // xlCenter
+                }
+
+                // Điền dữ liệu
+                for (int i = 0; i < diffs.Count; i++)
+                {
+                    var item = diffs[i];
+                    int r = 4 + i;
+
+                    wsReport.Cells[r, 1] = item.Index;
+                    wsReport.Cells[r, 2] = item.SheetName;
+                    wsReport.Cells[r, 3] = item.CellAddress;
+                    wsReport.Cells[r, 4] = item.TypeDescription;
+                    wsReport.Cells[r, 5] = item.OldValue;
+                    wsReport.Cells[r, 6] = item.NewValue;
+
+                    // Màu badge loại sai khác
+                    dynamic typeCell = wsReport.Cells[r, 4];
+                    typeCell.HorizontalAlignment = -4108;
+                    switch (item.Type)
+                    {
+                        case DiffType.Modified:
+                            typeCell.Interior.Color = 0xFEF3C7;
+                            typeCell.Font.Color = 0x92400E;
+                            break;
+                        case DiffType.Added:
+                            typeCell.Interior.Color = 0xDCFCE7;
+                            typeCell.Font.Color = 0x166534;
+                            break;
+                        case DiffType.Deleted:
+                            typeCell.Interior.Color = 0xFEE2E2;
+                            typeCell.Font.Color = 0x991B1B;
+                            break;
+                    }
+
+                    // Hyperlink đến vị trí ô trên Sheet
+                    string cleanAddr = item.CellAddress.Split(' ')[0];
+                    if (!string.IsNullOrEmpty(cleanAddr) && !cleanAddr.StartsWith("Dòng"))
+                    {
+                        try
+                        {
+                            string subAddress = $"'{item.SheetName}'!{cleanAddr}";
+                            dynamic cellLink = wsReport.Cells[r, 3];
+                            wsReport.Hyperlinks.Add(Anchor: cellLink, Address: "", SubAddress: subAddress, TextToDisplay: item.CellAddress);
+                        }
+                        catch { }
+                    }
+                }
+
+                // Định dạng kẻ bảng
+                int lastRow = 3 + diffs.Count;
+                dynamic tableRange = wsReport.Range[$"A3:F{lastRow}"];
+                tableRange.Borders.LineStyle = 1;
+                tableRange.Borders.Color = 0xCBD5E1;
+
+                // Tự động căn chỉnh độ rộng cột
+                wsReport.Columns["A:F"].AutoFit();
+
+                _isBatchProcessing = false;
+                try { app.ScreenUpdating = true; } catch { }
+                try { app.DisplayAlerts = true; } catch { }
+
+                RefreshWorkbookTree();
+                WpfMessageBox.Show($"✅ Đã tạo thành công Sheet báo cáo sai khác [{reportSheetName}] với {diffs.Count} mục!",
+                                   "Tạo Báo Cáo Thành Công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi tạo sheet báo cáo sai khác:\n{ex.Message}", "Lỗi Báo Cáo",
+                                   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+            finally
+            {
+                _isBatchProcessing = false;
+                if (_excelApp != null)
+                {
+                    try { _excelApp.ScreenUpdating = true; } catch { }
+                    try { _excelApp.DisplayAlerts = true; } catch { }
+                }
+            }
+        }
+
+        #endregion
     }
 }
+

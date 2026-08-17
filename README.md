@@ -48,7 +48,19 @@
 
 ---
 
-### 3. 🇻🇳 Kiểm Tra & Định Vị Tiếng Việt Trong Workbooks (Vietnamese Text Auditor)
+### 3. 📊 So Sánh 2 Workbooks / 2 Sheets (Diff & Compare Tool)
+* 🔍 **Đối chiếu dữ liệu chuyên sâu:** So sánh sự khác biệt giữa 2 phiên bản file Excel (File A cũ $\leftrightarrow$ File B mới) hoặc 2 Sheet bất kỳ.
+* ⚙️ **2 Chế độ so sánh mạnh mẽ:**
+  * **Theo Tọa Độ Ô (Cell-by-Cell Grid Diff):** So sánh giá trị từng ô `A1`, `B2`, `C10`...
+  * **Theo Cột Khóa Chính (Key ID / Mã NV / Mã SP):** Tự động căn chỉnh và phát hiện chính xác: Dòng nào bị **Sửa đổi**, Dòng nào **Thêm mới**, Dòng nào **Bị xóa** kể cả khi bị chèn thêm dòng hoặc thứ tự dòng bị xáo trộn.
+* 🎯 **Điều hướng tức thì (Jump to Cell):** **Click đúp vào bất kỳ dòng sai khác nào** (hoặc bấm `🎯 Đi tới ô`): Excel tự động kích hoạt file $\rightarrow$ mở đúng sheet $\rightarrow$ cuộn bôi chọn ô tính đó.
+* 🎨 **Tô Màu Trực Quan (Highlight Changes):** Tự động tô màu nổi bật các ô khác biệt trên Sheet (Màu Vàng: Ô thay đổi, Màu Xanh: Thêm mới, Màu Đỏ: Bị xóa).
+* 📋 **Tạo Sheet Báo Cáo & Xuất CSV:** Tự động tạo Sheet Báo Cáo sai khác (`Diff_Report_...`) kèm Hyperlink bấm là chuyển đến ô tính, hoặc xuất file `.csv` chuẩn UTF-8 with BOM.
+* 🚀 **Vị trí gọi:** Nút lớn **`📊 So Sánh Workbooks`** trên thanh Ribbon (Tab NAVIGATOR) và Menu chuột phải Workbook trên Task Pane.
+
+---
+
+### 4. 🇻🇳 Kiểm Tra & Định Vị Tiếng Việt Trong Workbooks (Vietnamese Text Auditor)
 * 🔍 **Rà soát toàn diện:** Quét toàn bộ **Nội dung ô** (`UsedRange`), **Tên Worksheet**, và **Ghi chú (Comments)** để phát hiện mọi vị trí còn tồn tại tiếng Việt có dấu.
 * 🎯 **Điều hướng tức thì (Jump to Cell):** **Click đúp vào dòng kết quả** (hoặc bấm nút `🎯 Đi tới ô`): Excel tự động kích hoạt Workbook $\rightarrow$ mở Sheet $\rightarrow$ cuộn và chọn đúng ô tính.
 * 🌐 **Phạm vi quét linh hoạt:** Hỗ trợ quét theo **Sheet hiện tại**, **Workbook hiện tại** hoặc **Tất cả các Workbook đang mở**.

@@ -120,8 +120,7 @@ namespace ExcelSupport.ViewModels
 
             CheckVietnameseCommand = new RelayCommand(_ =>
             {
-                var dlg = new Views.VietnameseCheckDialog(IsDarkTheme);
-                dlg.ShowDialog();
+                Views.VietnameseCheckDialog.ShowWindow(IsDarkTheme);
             });
 
             RenameSheetCommand = new RelayCommand(_ =>
