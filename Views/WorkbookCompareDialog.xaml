@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:ExcelSupport.Views"
         mc:Ignorable="d"
         Title="So Sánh 2 Workbooks / Sheets — ExcelSupport" 
-        Height="720" Width="1040"
-        MinHeight="560" MinWidth="850"
+        Height="740" Width="1080"
+        MinHeight="580" MinWidth="900"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Display"
@@ -22,13 +22,13 @@
             <Setter Property="Width" Value="8"/>
         </Style>
 
-        <!-- Standard Button Style -->
+        <!-- Standard Button Styles -->
         <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#2563EB"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Padding" Value="16,6"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
@@ -92,6 +92,33 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Dark Theme aware RadioButton Style -->
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Dark Theme aware CheckBox Style -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
     </Window.Resources>
 
     <Window.Style>
@@ -158,7 +185,7 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
-                    <TextBlock Text="Đối chiếu sai khác dữ liệu giữa 2 phiên bản file Excel, tô màu trực quan và xuất báo cáo" 
+                    <TextBlock Text="Đối chiếu sai khác dữ liệu giữa 2 phiên bản file Excel, thuật toán LCS thông minh và xuất báo cáo" 
                                FontSize="11.5" Margin="26,2,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -207,15 +234,16 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Dòng 1: Chọn Workbook A và Workbook B -->
-                <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid Grid.Row="0" Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="36"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Nguồn A (File Gốc) -->
@@ -243,8 +271,8 @@
                     </StackPanel>
 
                     <!-- Biểu tượng so sánh ⇋ -->
-                    <TextBlock Grid.Column="1" Text="⇋" FontSize="18" FontWeight="Bold" Foreground="#94A3B8" 
-                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,14,0,0"/>
+                    <TextBlock Grid.Column="1" Text="⇋" FontSize="20" FontWeight="Bold" Foreground="#94A3B8" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,16,0,0"/>
 
                     <!-- Nguồn B (File Mới) -->
                     <StackPanel Grid.Column="2">
@@ -271,13 +299,13 @@
                     </StackPanel>
 
                     <!-- Nút Quét So Sánh -->
-                    <Button Grid.Column="3" Content="🔍 So Sánh Ngay" Height="28" Margin="12,18,0,0" 
+                    <Button Grid.Column="3" Content="🔍 So Sánh Ngay" Height="28" Margin="14,18,0,0" 
                             Style="{StaticResource DialogPrimaryButtonStyle}" Click="OnCompareClick"/>
                 </Grid>
 
-                <!-- Dòng 2: Tùy chọn so sánh -->
-                <WrapPanel Grid.Row="1" VerticalAlignment="Center">
-                    <TextBlock Text="Chế độ:" FontWeight="SemiBold" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center">
+                <!-- Dòng 2: Thuật toán so sánh (LCS / Tọa độ / Cột Khóa) -->
+                <WrapPanel Grid.Row="1" Margin="0,0,0,8" VerticalAlignment="Center">
+                    <TextBlock Text="Thuật toán:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#475569"/>
@@ -289,13 +317,31 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <RadioButton x:Name="RbCellByCell" Content="Theo Tọa Độ Ô (A1, B2...)" IsChecked="True" GroupName="CompMode" FontSize="11" Margin="0,0,12,0" Cursor="Hand" VerticalAlignment="Center"/>
-                    <RadioButton x:Name="RbKeyColumn" Content="Theo Cột Khóa Chính:" GroupName="CompMode" FontSize="11" Margin="0,0,4,0" Cursor="Hand" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="CboKeyColumn" Width="90" Height="24" Margin="0,0,16,0" FontSize="11" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="RbLcsRows" Content="LCS theo Dòng (Bắt dòng chèn/xóa)" IsChecked="True" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbLcsCols" Content="LCS theo Cột (Bắt cột chèn/xóa)" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbLcs2D" Content="LCS 2 Chiều (Cả Dòng &amp; Cột)" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbCellByCell" Content="Tọa độ ô cố định (A1 ↔ A1)" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbKeyColumn" Content="Theo Cột Khóa:" GroupName="CompMode" Margin="0,0,4,0"/>
+                    <ComboBox x:Name="CboKeyColumn" Width="95" Height="24" Margin="0,0,8,0" FontSize="11"/>
+                </WrapPanel>
 
-                    <CheckBox x:Name="ChkIgnoreWhitespace" Content="Bỏ qua khoảng trắng thừa" IsChecked="True" FontSize="11" Margin="0,0,12,0" Cursor="Hand" VerticalAlignment="Center"/>
-                    <CheckBox x:Name="ChkCaseInsensitive" Content="Không phân biệt HOA/thường" FontSize="11" Margin="0,0,12,0" Cursor="Hand" VerticalAlignment="Center"/>
-                    <CheckBox x:Name="ChkCompareFormulas" Content="So sánh Công thức (thay vì Giá trị)" FontSize="11" Margin="0,0,0,0" Cursor="Hand" VerticalAlignment="Center"/>
+                <!-- Dòng 3: Tùy chọn lọc chuỗi so sánh -->
+                <WrapPanel Grid.Row="2" VerticalAlignment="Center">
+                    <TextBlock Text="Tùy chọn:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#475569"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <CheckBox x:Name="ChkIgnoreWhitespace" Content="Bỏ qua khoảng trắng thừa" IsChecked="True" Margin="0,0,16,0"/>
+                    <CheckBox x:Name="ChkCaseInsensitive" Content="Không phân biệt HOA / thường" Margin="0,0,16,0"/>
+                    <CheckBox x:Name="ChkCompareFormulas" Content="So sánh Công thức (thay vì Giá trị)" Margin="0,0,0,0"/>
                 </WrapPanel>
             </Grid>
         </Border>
@@ -319,7 +365,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="240"/>
+                    <ColumnDefinition Width="260"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Bộ lọc theo loại sai khác -->
@@ -337,10 +383,10 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <RadioButton x:Name="RbFilterAll" Content="Tất cả" IsChecked="True" GroupName="DiffFilter" FontSize="11" Margin="0,0,8,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
-                    <RadioButton x:Name="RbFilterModified" Content="Chỉ ô thay đổi" GroupName="DiffFilter" FontSize="11" Margin="0,0,8,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
-                    <RadioButton x:Name="RbFilterAdded" Content="Chỉ ô thêm mới" GroupName="DiffFilter" FontSize="11" Margin="0,0,8,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
-                    <RadioButton x:Name="RbFilterDeleted" Content="Chỉ ô đã xóa" GroupName="DiffFilter" FontSize="11" Margin="0,0,0,0" Cursor="Hand" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterAll" Content="Tất cả" IsChecked="True" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterModified" Content="Chỉ ô thay đổi" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterAdded" Content="Chỉ ô thêm mới" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterDeleted" Content="Chỉ ô đã xóa" GroupName="DiffFilter" Margin="0,0,0,0" Checked="OnDiffFilterChanged"/>
                 </StackPanel>
 
                 <!-- Ô tìm kiếm -->
@@ -456,17 +502,23 @@
                             <Setter Property="FontWeight" Value="SemiBold"/>
                             <Setter Property="VerticalAlignment" Value="Center"/>
                             <Setter Property="Padding" Value="4,0"/>
+                            <Setter Property="Foreground" Value="#0F172A"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                                </DataTrigger>
+                            </Style.Triggers>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
                 <!-- Vị trí / Khóa -->
-                <DataGridTextColumn Header="Vị Trí / Khóa" Binding="{Binding KeyIdentifier}" Width="120">
+                <DataGridTextColumn Header="Vị Trí / Khóa" Binding="{Binding KeyIdentifier}" Width="130">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="FontFamily" Value="Consolas, Segoe UI"/>
                             <Setter Property="VerticalAlignment" Value="Center"/>
-                            <Setter Property="Foreground" Value="#2563EB"/>
+                            <Setter Property="Foreground" Value="#3B82F6"/>
                             <Setter Property="FontWeight" Value="Bold"/>
                             <Setter Property="Padding" Value="4,0"/>
                         </Style>
@@ -515,38 +567,57 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <!-- Giá trị File A (Cũ) -->
-                <DataGridTextColumn Header="Giá Trị File A (Gốc)" Binding="{Binding OldValue}" Width="*">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="VerticalAlignment" Value="Center"/>
-                            <Setter Property="Foreground" Value="#475569"/>
-                            <Setter Property="Padding" Value="6,0"/>
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <!-- Giá trị File A (Gốc) có tô đỏ phần khác biệt -->
+                <DataGridTemplateColumn Header="Giá Trị File A (Gốc)" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock local:InlineDiffHelper.DiffSegments="{Binding OldValueSegments}"
+                                       VerticalAlignment="Center" Padding="6,0" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
-                <!-- Giá trị File B (Mới) -->
-                <DataGridTextColumn Header="Giá Trị File B (Mới)" Binding="{Binding NewValue}" Width="*">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="VerticalAlignment" Value="Center"/>
-                            <Setter Property="FontWeight" Value="Medium"/>
-                            <Setter Property="Padding" Value="6,0"/>
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <!-- Giá trị File B (Mới) có tô đỏ phần khác biệt (ví dụ số 1) -->
+                <DataGridTemplateColumn Header="Giá Trị File B (Mới)" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock local:InlineDiffHelper.DiffSegments="{Binding NewValueSegments}"
+                                       VerticalAlignment="Center" Padding="6,0" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="Medium"/>
+                                        <Setter Property="Foreground" Value="#0F172A"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Cột Hành Động (Đi tới ô) -->
                 <DataGridTemplateColumn Header="Hành Động" Width="90">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Button Content="🎯 Đi tới ô" FontSize="10.5" Padding="6,3" Cursor="Hand"
-                                    Style="{StaticResource DialogActionButtonStyle}"
-                                    Click="OnGoToCellClick"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                     Style="{StaticResource DialogActionButtonStyle}"
+                                     Click="OnGoToCellClick"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

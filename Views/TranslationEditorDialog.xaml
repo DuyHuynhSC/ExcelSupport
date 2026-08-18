@@ -1,0 +1,354 @@
+<Window x:Class="ExcelSupport.Views.TranslationEditorDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Trình Chỉnh Sửa &amp; Chuẩn Hóa Kết Quả Dịch — ExcelSupport" 
+        Height="640" Width="920"
+        MinHeight="480" MinWidth="750"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <!-- Primary Action Button (Green) -->
+        <Style x:Key="EditorPrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#107C41"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="18,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#0A552A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#063C1C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button (Cancel) -->
+        <Style x:Key="EditorSecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- DataGrid Header Style -->
+        <Style x:Key="EditorHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- DataGrid Cell Style -->
+        <Style x:Key="EditorCellStyle" TargetType="{x:Type DataGridCell}">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}" BorderThickness="0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#EFF6FF"/>
+                    <Setter Property="Foreground" Value="#1E40AF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- Content Grid -->
+            <RowDefinition Height="*"/>
+            <!-- Footer -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== HEADER ==================== -->
+        <Border Grid.Row="0" Padding="20,12" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🌐" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="CHỈNH SỬA KẾT QUẢ DỊCH THUẬT" FontWeight="Bold" FontSize="15">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Text="Kiểm tra, điều chỉnh hoặc trau chuốt câu từ bản dịch trước khi chèn vào bảng tính Excel." 
+                               FontSize="11.5" Foreground="#64748B" Margin="30,2,0,0"/>
+                </StackPanel>
+
+                <!-- Badges -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#E0F2FE" CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
+                        <TextBlock x:Name="TxtDirectionBadge" Text="🇯🇵 ➔ 🇻🇳 Nhật ➔ Việt" FontSize="11" FontWeight="SemiBold" Foreground="#0369A1"/>
+                    </Border>
+                    <Border Background="#F1F5F9" CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
+                        <TextBlock x:Name="TxtCountBadge" Text="0 ô cần chèn" FontSize="11" FontWeight="SemiBold" Foreground="#475569"/>
+                    </Border>
+                    <Border Background="#DCFCE7" CornerRadius="12" Padding="10,4">
+                        <TextBlock x:Name="TxtTargetColBadge" Text="Ghi sang cột bên phải" FontSize="11" FontWeight="SemiBold" Foreground="#15803D"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== BODY ==================== -->
+        <Grid Grid.Row="1" Margin="20,12">
+            <Grid.RowDefinitions>
+                <!-- Search bar -->
+                <RowDefinition Height="Auto"/>
+                <!-- DataGrid -->
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Search bar -->
+            <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="TxtSearch" Grid.Column="0" Height="28" VerticalContentAlignment="Center" Padding="8,0"
+                         TextChanged="OnSearchTextChanged">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox">
+                            <Setter Property="Background" Value="#FFFFFF"/>
+                            <Setter Property="Foreground" Value="#0F172A"/>
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Background" Value="#1E293B"/>
+                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <TextBlock IsHitTestVisible="False" Text="🔍 Tìm kiếm văn bản gốc / bản dịch..." 
+                           VerticalAlignment="Center" Margin="10,0,0,0" FontSize="11.5" Foreground="#94A3B8">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=TxtSearch}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <TextBlock Grid.Column="1" Text="💡 Bạn có thể nhấp trực tiếp vào cột 'Bản Dịch' để chỉnh sửa trước khi chèn." 
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="11.5" Foreground="#64748B"/>
+            </Grid>
+
+            <!-- DataGrid -->
+            <DataGrid x:Name="GridTranslations" Grid.Row="1"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="True"
+                      GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column"
+                      ColumnHeaderStyle="{StaticResource EditorHeaderStyle}"
+                      CellStyle="{StaticResource EditorCellStyle}"
+                      SelectionMode="Single"
+                      BorderThickness="1"
+                      RowHeight="NaN">
+                <DataGrid.Style>
+                    <Style TargetType="DataGrid">
+                        <Setter Property="Background" Value="#FFFFFF"/>
+                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                        <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Background" Value="#1E293B"/>
+                                <Setter Property="BorderBrush" Value="#334155"/>
+                                <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Style>
+
+                <DataGrid.Columns>
+                    <!-- Cột Địa chỉ ô -->
+                    <DataGridTemplateColumn Header="Địa Chỉ Ô" Width="95" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="#F1F5F9" CornerRadius="4" Padding="6,3" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,2,0,0">
+                                    <TextBlock Text="{Binding Address}" FontWeight="Bold" FontSize="11.5" Foreground="#475569"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Cột Văn bản gốc -->
+                    <DataGridTemplateColumn Header="Văn Bản Gốc (Source)" Width="4*" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding OriginalText}" TextWrapping="Wrap" Margin="4,2" FontSize="12" Foreground="#64748B"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Cột Bản dịch (Có thể sửa) -->
+                    <DataGridTemplateColumn Header="✏️ Bản Dịch (Có Thể Chỉnh Sửa)" Width="5*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Text="{Binding TranslatedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         TextWrapping="Wrap" AcceptsReturn="True"
+                                         Padding="6,4" FontSize="12.5" FontWeight="Medium"
+                                         BorderThickness="1" BorderBrush="#CBD5E1" Background="#FFFFFF">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Background" Value="#0F172A"/>
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <!-- ==================== FOOTER ==================== -->
+        <Border Grid.Row="2" Padding="20,12" BorderThickness="0,1,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtFooterStatus" Grid.Column="0" Text="Nhấn 'Chèn vào' để cập nhật kết quả dịch lên bảng tính Excel." 
+                           VerticalAlignment="Center" FontSize="11.5" Foreground="#64748B"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="📥 Chèn vào" Style="{StaticResource EditorPrimaryBtn}" Margin="0,0,10,0" Click="OnInsertClick"/>
+                    <Button Content="Cancel" Width="80" Style="{StaticResource EditorSecondaryBtn}" Click="OnCancelClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

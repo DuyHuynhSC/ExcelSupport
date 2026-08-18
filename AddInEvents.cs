@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 using ExcelDna.Integration;
 using Microsoft.Office.Interop.Excel;
 using ExcelSupport.Host;
 using ExcelSupport.Models;
+using ExcelSupport.Services;
 using ExcelSupport.ViewModels;
+using CompareOptions = ExcelSupport.Models.CompareOptions;
 using ExcelApp = Microsoft.Office.Interop.Excel.Application;
 using WpfApplication = System.Windows.Application;
 using WpfMessageBox = System.Windows.MessageBox;
@@ -26,6 +30,21 @@ namespace ExcelSupport
         public void AutoOpen()
         {
             Instance = this;
+
+            // Khởi tạo WPF Application runtime với ShutdownMode = OnExplicitShutdown
+            // Đảm bảo không bao giờ đóng tiến trình Excel khi một hộp thoại WPF đóng lại
+            if (WpfApplication.Current == null)
+            {
+                try
+                {
+                    new WpfApplication
+                    {
+                        ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown
+                    };
+                }
+                catch { }
+            }
+
             _excelApp = (ExcelApp)ExcelDnaUtil.Application;
             MainViewModel = new TaskPaneViewModel();
 
@@ -618,14 +637,6 @@ namespace ExcelSupport
             public bool HasError => !string.IsNullOrEmpty(ErrorText);
         }
 
-        public class CellTextItem
-        {
-            public int Row { get; set; }
-            public int Column { get; set; }
-            public string Address { get; set; } = string.Empty;
-            public string OriginalText { get; set; } = string.Empty;
-            public string TranslatedText { get; set; } = string.Empty;
-        }
 
         public ActiveCellInfo? GetActiveCellInfo()
         {
@@ -777,6 +788,8 @@ namespace ExcelSupport
 
                     _excelApp.ScreenUpdating = false;
 
+                    var backupList = new List<TranslationUndoHelper.CellBackupItem>();
+
                     foreach (var item in items)
                     {
                         if (string.IsNullOrEmpty(item.TranslatedText)) continue;
@@ -788,13 +801,27 @@ namespace ExcelSupport
                             cell = ws.Cells[item.Row, targetCol] as Range;
                             if (cell != null)
                             {
+                                object? oldVal = cell.Value2;
                                 cell.Value2 = item.TranslatedText;
+
+                                backupList.Add(new TranslationUndoHelper.CellBackupItem
+                                {
+                                    Row = item.Row,
+                                    Column = targetCol,
+                                    OldValue = oldVal,
+                                    NewValue = item.TranslatedText
+                                });
                             }
                         }
                         finally
                         {
                             if (cell != null) Marshal.ReleaseComObject(cell);
                         }
+                    }
+
+                    if (backupList.Count > 0)
+                    {
+                        TranslationUndoHelper.RecordAndApply(ws, backupList, "Dịch Thuật AI");
                     }
 
                     return true;
@@ -2175,13 +2202,24 @@ namespace ExcelSupport
                     dynamic ws1 = pair.ws1;
                     dynamic ws2 = pair.ws2;
 
-                    if (options.Mode == CompareMode.CellByCell)
+                    switch (options.Mode)
                     {
-                        CompareSheetCellByCell(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
-                    }
-                    else
-                    {
-                        CompareSheetByKeyColumn(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                        case CompareMode.CellByCell:
+                            CompareSheetCellByCell(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            break;
+                        case CompareMode.LcsRows:
+                            CompareSheetByRowLcs(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            break;
+                        case CompareMode.LcsColumns:
+                            CompareSheetByColumnLcs(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            break;
+                        case CompareMode.Lcs2D:
+                            CompareSheetBy2DLcs(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            break;
+                        case CompareMode.KeyColumn:
+                        default:
+                            CompareSheetByKeyColumn(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            break;
                     }
                 }
 
@@ -2385,6 +2423,632 @@ namespace ExcelSupport
                 System.Diagnostics.Debug.WriteLine($"Error CompareSheetByKeyColumn: {ex.Message}");
             }
         }
+
+        #region LCS (Longest Common Subsequence) Diffing Methods
+
+        private struct GridData
+        {
+            public int StartRow;
+            public int StartCol;
+            public int RowCount;
+            public int ColCount;
+            public string[,] Cells;
+        }
+
+        private GridData ExtractGridData(dynamic ws, CompareOptions options)
+        {
+            var data = new GridData
+            {
+                StartRow = 1,
+                StartCol = 1,
+                RowCount = 0,
+                ColCount = 0,
+                Cells = new string[0, 0]
+            };
+
+            if (ws == null) return data;
+
+            try
+            {
+                dynamic u = ws.UsedRange;
+                if (u == null) return data;
+
+                data.StartRow = (int)u.Row;
+                data.StartCol = (int)u.Column;
+                data.RowCount = (int)u.Rows.Count;
+                data.ColCount = (int)u.Columns.Count;
+
+                if (data.RowCount <= 0 || data.ColCount <= 0) return data;
+
+                data.Cells = new string[data.RowCount, data.ColCount];
+                object? valObj = options.CompareFormulas ? u.Formula : u.Value2;
+
+                for (int r = 0; r < data.RowCount; r++)
+                {
+                    for (int c = 0; c < data.ColCount; c++)
+                    {
+                        data.Cells[r, c] = GetValueFromArray(valObj, data.StartRow, data.StartCol, data.RowCount, data.ColCount, data.StartRow + r, data.StartCol + c);
+                    }
+                }
+            }
+            catch { }
+
+            return data;
+        }
+
+        private static List<(int? idx1, int? idx2)> ComputeLcsAlignment<T>(
+            IList<T> seq1, 
+            IList<T> seq2, 
+            Func<T, T, bool> areEqual)
+        {
+            int m = seq1.Count;
+            int n = seq2.Count;
+
+            int[,] dp = new int[m + 1, n + 1];
+
+            for (int i = 0; i < m; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    if (areEqual(seq1[i], seq2[j]))
+                    {
+                        dp[i + 1, j + 1] = dp[i, j] + 1;
+                    }
+                    else
+                    {
+                        dp[i + 1, j + 1] = Math.Max(dp[i + 1, j], dp[i, j + 1]);
+                    }
+                }
+            }
+
+            var result = new List<(int? idx1, int? idx2)>();
+            int currI = m;
+            int currJ = n;
+
+            while (currI > 0 || currJ > 0)
+            {
+                if (currI > 0 && currJ > 0 && areEqual(seq1[currI - 1], seq2[currJ - 1]))
+                {
+                    result.Add((currI - 1, currJ - 1));
+                    currI--;
+                    currJ--;
+                }
+                else if (currJ > 0 && (currI == 0 || dp[currI, currJ - 1] >= dp[currI - 1, currJ]))
+                {
+                    result.Add((null, currJ - 1));
+                    currJ--;
+                }
+                else if (currI > 0 && (currJ == 0 || dp[currI, currJ - 1] < dp[currI - 1, currJ]))
+                {
+                    result.Add((currI - 1, null));
+                    currI--;
+                }
+            }
+
+            result.Reverse();
+            return result;
+        }
+
+        private string FormatRowSummary(string[] rowVals, int startCol, out string primaryCellAddress, int rowNum)
+        {
+            var nonEmptyItems = new List<(string colLetter, string val)>();
+            for (int i = 0; i < rowVals.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(rowVals[i]))
+                {
+                    string colLetter = GetExcelColumnLetter(startCol + i);
+                    nonEmptyItems.Add((colLetter, rowVals[i].Trim()));
+                }
+            }
+
+            if (nonEmptyItems.Count == 0)
+            {
+                primaryCellAddress = $"Dòng {rowNum}";
+                return "(Dòng trống)";
+            }
+
+            if (nonEmptyItems.Count == 1)
+            {
+                primaryCellAddress = $"{nonEmptyItems[0].colLetter}{rowNum}";
+                return nonEmptyItems[0].val;
+            }
+
+            primaryCellAddress = $"Dòng {rowNum}";
+            return string.Join(" | ", nonEmptyItems.Select(x => $"[{x.colLetter}] {x.val}"));
+        }
+
+        private string FormatColumnSummary(string[] colVals, int startRow, out string primaryCellAddress, string colLetter)
+        {
+            var nonEmptyItems = new List<(int rowNum, string val)>();
+            for (int i = 0; i < colVals.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(colVals[i]))
+                {
+                    nonEmptyItems.Add((startRow + i, colVals[i].Trim()));
+                }
+            }
+
+            if (nonEmptyItems.Count == 0)
+            {
+                primaryCellAddress = $"Cột {colLetter}";
+                return "(Cột trống)";
+            }
+
+            if (nonEmptyItems.Count == 1)
+            {
+                primaryCellAddress = $"{colLetter}{nonEmptyItems[0].rowNum}";
+                return nonEmptyItems[0].val;
+            }
+
+            primaryCellAddress = $"Cột {colLetter}";
+            return string.Join(" | ", nonEmptyItems.Select(x => $"[Dòng {x.rowNum}] {x.val}"));
+        }
+
+        private void CompareSheetByRowLcs(
+            dynamic ws1, dynamic ws2, 
+            string sheetName, string wb1Name, string wb2Name, 
+            CompareOptions options, 
+            List<CompareDiffItem> results, 
+            ref int totalDiffCount)
+        {
+            var g1 = ExtractGridData(ws1, options);
+            var g2 = ExtractGridData(ws2, options);
+
+            if (g1.RowCount == 0 && g2.RowCount == 0) return;
+
+            var rows1 = new List<string[]>();
+            for (int r = 0; r < g1.RowCount; r++)
+            {
+                var rowVals = new string[g1.ColCount];
+                for (int c = 0; c < g1.ColCount; c++) rowVals[c] = g1.Cells[r, c];
+                rows1.Add(rowVals);
+            }
+
+            var rows2 = new List<string[]>();
+            for (int r = 0; r < g2.RowCount; r++)
+            {
+                var rowVals = new string[g2.ColCount];
+                for (int c = 0; c < g2.ColCount; c++) rowVals[c] = g2.Cells[r, c];
+                rows2.Add(rowVals);
+            }
+
+            var alignment = ComputeLcsAlignment(rows1, rows2, (r1, r2) =>
+            {
+                int maxC = Math.Max(r1.Length, r2.Length);
+                for (int c = 0; c < maxC; c++)
+                {
+                    string s1 = c < r1.Length ? r1[c] : string.Empty;
+                    string s2 = c < r2.Length ? r2[c] : string.Empty;
+                    string n1 = NormalizeCompareString(s1, options);
+                    string n2 = NormalizeCompareString(s2, options);
+                    if (!string.Equals(n1, n2, options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                        return false;
+                }
+                return true;
+            });
+
+            // Group consecutive unaligned (deleted & added) rows to detect in-place row modifications
+            int alignIdx = 0;
+            while (alignIdx < alignment.Count)
+            {
+                var item = alignment[alignIdx];
+                if (item.idx1.HasValue && item.idx2.HasValue)
+                {
+                    // Exact match, no diff
+                    alignIdx++;
+                }
+                else
+                {
+                    // Collect consecutive deleted rows (idx1 only) and added rows (idx2 only)
+                    var delGroup = new List<int>();
+                    var addGroup = new List<int>();
+
+                    while (alignIdx < alignment.Count && (!alignment[alignIdx].idx1.HasValue || !alignment[alignIdx].idx2.HasValue))
+                    {
+                        if (alignment[alignIdx].idx1.HasValue) delGroup.Add(alignment[alignIdx].idx1!.Value);
+                        if (alignment[alignIdx].idx2.HasValue) addGroup.Add(alignment[alignIdx].idx2!.Value);
+                        alignIdx++;
+                    }
+
+                    int pairCount = Math.Min(delGroup.Count, addGroup.Count);
+                    for (int p = 0; p < pairCount; p++)
+                    {
+                        int r1Idx = delGroup[p];
+                        int r2Idx = addGroup[p];
+                        int r1Actual = g1.StartRow + r1Idx;
+                        int r2Actual = g2.StartRow + r2Idx;
+                        string[] r1Vals = rows1[r1Idx];
+                        string[] r2Vals = rows2[r2Idx];
+
+                        int maxCols = Math.Max(r1Vals.Length, r2Vals.Length);
+                        for (int col = 0; col < maxCols; col++)
+                        {
+                            string s1 = col < r1Vals.Length ? r1Vals[col] : string.Empty;
+                            string s2 = col < r2Vals.Length ? r2Vals[col] : string.Empty;
+                            string n1 = NormalizeCompareString(s1, options);
+                            string n2 = NormalizeCompareString(s2, options);
+
+                            if (!string.Equals(n1, n2, options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                            {
+                                totalDiffCount++;
+                                string colLetter = GetExcelColumnLetter(g2.StartCol + col);
+                                string addr = $"{colLetter}{r2Actual}";
+
+                                results.Add(new CompareDiffItem
+                                {
+                                    Index = totalDiffCount,
+                                    SheetName = sheetName,
+                                    CellAddress = addr,
+                                    KeyIdentifier = $"Dòng {r2Actual} (Sửa)",
+                                    Type = DiffType.Modified,
+                                    OldValue = s1,
+                                    NewValue = s2,
+                                    Workbook1Name = wb1Name,
+                                    Workbook2Name = wb2Name
+                                });
+                            }
+                        }
+                    }
+
+                    // Remaining deleted rows
+                    for (int d = pairCount; d < delGroup.Count; d++)
+                    {
+                        totalDiffCount++;
+                        int r1Idx = delGroup[d];
+                        int r1Actual = g1.StartRow + r1Idx;
+                        string rowSummary = FormatRowSummary(rows1[r1Idx], g1.StartCol, out string primaryAddr, r1Actual);
+
+                        results.Add(new CompareDiffItem
+                        {
+                            Index = totalDiffCount,
+                            SheetName = sheetName,
+                            CellAddress = primaryAddr,
+                            KeyIdentifier = $"Dòng {r1Actual} (LCS)",
+                            Type = DiffType.Deleted,
+                            OldValue = rowSummary,
+                            NewValue = "(Đã bị xóa khỏi Sheet B)",
+                            Workbook1Name = wb1Name,
+                            Workbook2Name = wb2Name
+                        });
+                    }
+
+                    // Remaining added rows
+                    for (int a = pairCount; a < addGroup.Count; a++)
+                    {
+                        totalDiffCount++;
+                        int r2Idx = addGroup[a];
+                        int r2Actual = g2.StartRow + r2Idx;
+                        string rowSummary = FormatRowSummary(rows2[r2Idx], g2.StartCol, out string primaryAddr, r2Actual);
+
+                        results.Add(new CompareDiffItem
+                        {
+                            Index = totalDiffCount,
+                            SheetName = sheetName,
+                            CellAddress = primaryAddr,
+                            KeyIdentifier = $"Dòng {r2Actual} (LCS)",
+                            Type = DiffType.Added,
+                            OldValue = "(Không có trong Sheet A)",
+                            NewValue = rowSummary,
+                            Workbook1Name = wb1Name,
+                            Workbook2Name = wb2Name
+                        });
+                    }
+                }
+            }
+        }
+
+        private void CompareSheetByColumnLcs(
+            dynamic ws1, dynamic ws2, 
+            string sheetName, string wb1Name, string wb2Name, 
+            CompareOptions options, 
+            List<CompareDiffItem> results, 
+            ref int totalDiffCount)
+        {
+            var g1 = ExtractGridData(ws1, options);
+            var g2 = ExtractGridData(ws2, options);
+
+            if (g1.ColCount == 0 && g2.ColCount == 0) return;
+
+            var cols1 = new List<string[]>();
+            for (int c = 0; c < g1.ColCount; c++)
+            {
+                var colVals = new string[g1.RowCount];
+                for (int r = 0; r < g1.RowCount; r++) colVals[r] = g1.Cells[r, c];
+                cols1.Add(colVals);
+            }
+
+            var cols2 = new List<string[]>();
+            for (int c = 0; c < g2.ColCount; c++)
+            {
+                var colVals = new string[g2.RowCount];
+                for (int r = 0; r < g2.RowCount; r++) colVals[r] = g2.Cells[r, c];
+                cols2.Add(colVals);
+            }
+
+            var alignment = ComputeLcsAlignment(cols1, cols2, (c1, c2) =>
+            {
+                int maxR = Math.Max(c1.Length, c2.Length);
+                for (int r = 0; r < maxR; r++)
+                {
+                    string s1 = r < c1.Length ? c1[r] : string.Empty;
+                    string s2 = r < c2.Length ? c2[r] : string.Empty;
+                    string n1 = NormalizeCompareString(s1, options);
+                    string n2 = NormalizeCompareString(s2, options);
+                    if (!string.Equals(n1, n2, options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                        return false;
+                }
+                return true;
+            });
+
+            int alignIdx = 0;
+            while (alignIdx < alignment.Count)
+            {
+                var item = alignment[alignIdx];
+                if (item.idx1.HasValue && item.idx2.HasValue)
+                {
+                    alignIdx++;
+                }
+                else
+                {
+                    var delGroup = new List<int>();
+                    var addGroup = new List<int>();
+
+                    while (alignIdx < alignment.Count && (!alignment[alignIdx].idx1.HasValue || !alignment[alignIdx].idx2.HasValue))
+                    {
+                        if (alignment[alignIdx].idx1.HasValue) delGroup.Add(alignment[alignIdx].idx1!.Value);
+                        if (alignment[alignIdx].idx2.HasValue) addGroup.Add(alignment[alignIdx].idx2!.Value);
+                        alignIdx++;
+                    }
+
+                    int pairCount = Math.Min(delGroup.Count, addGroup.Count);
+                    for (int p = 0; p < pairCount; p++)
+                    {
+                        int c1Idx = delGroup[p];
+                        int c2Idx = addGroup[p];
+                        int c1Actual = g1.StartCol + c1Idx;
+                        int c2Actual = g2.StartCol + c2Idx;
+                        string[] c1Vals = cols1[c1Idx];
+                        string[] c2Vals = cols2[c2Idx];
+
+                        int maxRows = Math.Max(c1Vals.Length, c2Vals.Length);
+                        for (int row = 0; row < maxRows; row++)
+                        {
+                            string s1 = row < c1Vals.Length ? c1Vals[row] : string.Empty;
+                            string s2 = row < c2Vals.Length ? c2Vals[row] : string.Empty;
+                            string n1 = NormalizeCompareString(s1, options);
+                            string n2 = NormalizeCompareString(s2, options);
+
+                            if (!string.Equals(n1, n2, options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                            {
+                                totalDiffCount++;
+                                string colLetter = GetExcelColumnLetter(c2Actual);
+                                int rowNum = g2.StartRow + row;
+                                string addr = $"{colLetter}{rowNum}";
+
+                                results.Add(new CompareDiffItem
+                                {
+                                    Index = totalDiffCount,
+                                    SheetName = sheetName,
+                                    CellAddress = addr,
+                                    KeyIdentifier = $"Cột {colLetter} (Sửa)",
+                                    Type = DiffType.Modified,
+                                    OldValue = s1,
+                                    NewValue = s2,
+                                    Workbook1Name = wb1Name,
+                                    Workbook2Name = wb2Name
+                                });
+                            }
+                        }
+                    }
+
+                    // Remaining deleted columns
+                    for (int d = pairCount; d < delGroup.Count; d++)
+                    {
+                        totalDiffCount++;
+                        int c1Idx = delGroup[d];
+                        string colLetter = GetExcelColumnLetter(g1.StartCol + c1Idx);
+                        string colSummary = FormatColumnSummary(cols1[c1Idx], g1.StartRow, out string primaryAddr, colLetter);
+
+                        results.Add(new CompareDiffItem
+                        {
+                            Index = totalDiffCount,
+                            SheetName = sheetName,
+                            CellAddress = primaryAddr,
+                            KeyIdentifier = $"Cột {colLetter} (LCS)",
+                            Type = DiffType.Deleted,
+                            OldValue = colSummary,
+                            NewValue = "(Đã bị xóa khỏi Sheet B)",
+                            Workbook1Name = wb1Name,
+                            Workbook2Name = wb2Name
+                        });
+                    }
+
+                    // Remaining added columns
+                    for (int a = pairCount; a < addGroup.Count; a++)
+                    {
+                        totalDiffCount++;
+                        int c2Idx = addGroup[a];
+                        string colLetter = GetExcelColumnLetter(g2.StartCol + c2Idx);
+                        string colSummary = FormatColumnSummary(cols2[c2Idx], g2.StartRow, out string primaryAddr, colLetter);
+
+                        results.Add(new CompareDiffItem
+                        {
+                            Index = totalDiffCount,
+                            SheetName = sheetName,
+                            CellAddress = primaryAddr,
+                            KeyIdentifier = $"Cột {colLetter} (LCS)",
+                            Type = DiffType.Added,
+                            OldValue = "(Không có trong Sheet A)",
+                            NewValue = colSummary,
+                            Workbook1Name = wb1Name,
+                            Workbook2Name = wb2Name
+                        });
+                    }
+                }
+            }
+        }
+
+        private void CompareSheetBy2DLcs(
+            dynamic ws1, dynamic ws2, 
+            string sheetName, string wb1Name, string wb2Name, 
+            CompareOptions options, 
+            List<CompareDiffItem> results, 
+            ref int totalDiffCount)
+        {
+            var g1 = ExtractGridData(ws1, options);
+            var g2 = ExtractGridData(ws2, options);
+
+            if (g1.RowCount == 0 && g2.RowCount == 0) return;
+
+            // 1. Column LCS Alignment
+            var cols1 = new List<string[]>();
+            for (int c = 0; c < g1.ColCount; c++)
+            {
+                var colVals = new string[g1.RowCount];
+                for (int r = 0; r < g1.RowCount; r++) colVals[r] = g1.Cells[r, c];
+                cols1.Add(colVals);
+            }
+            var cols2 = new List<string[]>();
+            for (int c = 0; c < g2.ColCount; c++)
+            {
+                var colVals = new string[g2.RowCount];
+                for (int r = 0; r < g2.RowCount; r++) colVals[r] = g2.Cells[r, c];
+                cols2.Add(colVals);
+            }
+            var colAlignment = ComputeLcsAlignment(cols1, cols2, (c1, c2) =>
+            {
+                int maxR = Math.Max(c1.Length, c2.Length);
+                for (int r = 0; r < maxR; r++)
+                {
+                    string s1 = r < c1.Length ? c1[r] : string.Empty;
+                    string s2 = r < c2.Length ? c2[r] : string.Empty;
+                    if (!string.Equals(NormalizeCompareString(s1, options), NormalizeCompareString(s2, options),
+                                      options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                        return false;
+                }
+                return true;
+            });
+
+            // 2. Row LCS Alignment
+            var rows1 = new List<string[]>();
+            for (int r = 0; r < g1.RowCount; r++)
+            {
+                var rowVals = new string[g1.ColCount];
+                for (int c = 0; c < g1.ColCount; c++) rowVals[c] = g1.Cells[r, c];
+                rows1.Add(rowVals);
+            }
+            var rows2 = new List<string[]>();
+            for (int r = 0; r < g2.RowCount; r++)
+            {
+                var rowVals = new string[g2.ColCount];
+                for (int c = 0; c < g2.ColCount; c++) rowVals[c] = g2.Cells[r, c];
+                rows2.Add(rowVals);
+            }
+            var rowAlignment = ComputeLcsAlignment(rows1, rows2, (r1, r2) =>
+            {
+                int maxC = Math.Max(r1.Length, r2.Length);
+                for (int c = 0; c < maxC; c++)
+                {
+                    string s1 = c < r1.Length ? r1[c] : string.Empty;
+                    string s2 = c < r2.Length ? r2[c] : string.Empty;
+                    if (!string.Equals(NormalizeCompareString(s1, options), NormalizeCompareString(s2, options),
+                                      options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                        return false;
+                }
+                return true;
+            });
+
+            // 3. Compare cells on aligned 2D intersections
+            foreach (var (r1, r2) in rowAlignment)
+            {
+                foreach (var (c1, c2) in colAlignment)
+                {
+                    if (r1.HasValue && r2.HasValue && c1.HasValue && c2.HasValue)
+                    {
+                        string s1 = g1.Cells[r1.Value, c1.Value];
+                        string s2 = g2.Cells[r2.Value, c2.Value];
+                        string n1 = NormalizeCompareString(s1, options);
+                        string n2 = NormalizeCompareString(s2, options);
+
+                        if (!string.Equals(n1, n2, options.CaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                        {
+                            totalDiffCount++;
+                            int r2Actual = g2.StartRow + r2.Value;
+                            int c2Actual = g2.StartCol + c2.Value;
+                            string colLetter = GetExcelColumnLetter(c2Actual);
+                            string addr = $"{colLetter}{r2Actual}";
+
+                            results.Add(new CompareDiffItem
+                            {
+                                Index = totalDiffCount,
+                                SheetName = sheetName,
+                                CellAddress = addr,
+                                KeyIdentifier = $"Ô 2D ({addr})",
+                                Type = DiffType.Modified,
+                                OldValue = s1,
+                                NewValue = s2,
+                                Workbook1Name = wb1Name,
+                                Workbook2Name = wb2Name
+                            });
+                        }
+                    }
+                    else if (!r1.HasValue && r2.HasValue && c2.HasValue)
+                    {
+                        // Cell on an Added Row in Sheet 2
+                        string s2 = g2.Cells[r2.Value, c2.Value];
+                        if (!string.IsNullOrEmpty(s2))
+                        {
+                            totalDiffCount++;
+                            int r2Actual = g2.StartRow + r2.Value;
+                            int c2Actual = g2.StartCol + c2.Value;
+                            string colLetter = GetExcelColumnLetter(c2Actual);
+                            string addr = $"{colLetter}{r2Actual}";
+
+                            results.Add(new CompareDiffItem
+                            {
+                                Index = totalDiffCount,
+                                SheetName = sheetName,
+                                CellAddress = addr,
+                                KeyIdentifier = $"Dòng {r2Actual} (Thêm)",
+                                Type = DiffType.Added,
+                                OldValue = "(Không có)",
+                                NewValue = s2,
+                                Workbook1Name = wb1Name,
+                                Workbook2Name = wb2Name
+                            });
+                        }
+                    }
+                    else if (r1.HasValue && !r2.HasValue && c1.HasValue)
+                    {
+                        // Cell on a Deleted Row in Sheet 1
+                        string s1 = g1.Cells[r1.Value, c1.Value];
+                        if (!string.IsNullOrEmpty(s1))
+                        {
+                            totalDiffCount++;
+                            int r1Actual = g1.StartRow + r1.Value;
+                            int c1Actual = g1.StartCol + c1.Value;
+                            string colLetter = GetExcelColumnLetter(c1Actual);
+                            string addr = $"{colLetter}{r1Actual}";
+
+                            results.Add(new CompareDiffItem
+                            {
+                                Index = totalDiffCount,
+                                SheetName = sheetName,
+                                CellAddress = addr,
+                                KeyIdentifier = $"Dòng {r1Actual} (Xóa)",
+                                Type = DiffType.Deleted,
+                                OldValue = s1,
+                                NewValue = "(Đã bị xóa)",
+                                Workbook1Name = wb1Name,
+                                Workbook2Name = wb2Name
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion
 
         private Dictionary<string, (int row, string[] values)> ExtractRowsByKey(dynamic? usedRange, int keyCol, CompareOptions options)
         {
@@ -2674,6 +3338,753 @@ namespace ExcelSupport
         }
 
         #endregion
+
+        #region Data Cleaning & Normalization Wizard
+
+        public bool ExecuteDataCleaning(DataCleaningOptions options, out int modifiedCellsCount, out string statusMessage)
+        {
+            modifiedCellsCount = 0;
+            statusMessage = string.Empty;
+
+            if (_excelApp == null)
+            {
+                try { _excelApp = (ExcelApp)ExcelDnaUtil.Application; } catch { }
+            }
+            if (_excelApp == null)
+            {
+                statusMessage = "Không thể kết nối tới ứng dụng Excel.";
+                return false;
+            }
+
+            dynamic app = _excelApp;
+
+            try
+            {
+                _isBatchProcessing = true;
+                try { app.ScreenUpdating = false; } catch { }
+                try { app.DisplayAlerts = false; } catch { }
+
+                var targetRanges = new List<(dynamic ws, dynamic rng)>();
+
+                if (options.Scope == CleaningScope.SelectedRange)
+                {
+                    dynamic? sel = app.Selection;
+                    dynamic? activeWs = app.ActiveSheet;
+                    if (sel != null && activeWs != null)
+                    {
+                        targetRanges.Add((activeWs!, sel!));
+                    }
+                }
+                else if (options.Scope == CleaningScope.ActiveSheet)
+                {
+                    dynamic? activeWs = app.ActiveSheet;
+                    if (activeWs != null)
+                    {
+                        dynamic? ur = activeWs.UsedRange;
+                        if (ur != null)
+                        {
+                            targetRanges.Add((activeWs!, ur!));
+                        }
+                    }
+                }
+                else if (options.Scope == CleaningScope.ActiveWorkbook)
+                {
+                    dynamic? activeWb = app.ActiveWorkbook;
+                    if (activeWb != null)
+                    {
+                        int count = (int)activeWb.Sheets.Count;
+                        for (int i = 1; i <= count; i++)
+                        {
+                            try
+                            {
+                                dynamic? ws = activeWb.Sheets[i];
+                                if (ws != null)
+                                {
+                                    dynamic? ur = ws.UsedRange;
+                                    if (ur != null)
+                                    {
+                                        targetRanges.Add((ws!, ur!));
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+
+                if (targetRanges.Count == 0)
+                {
+                    statusMessage = "Không tìm thấy vùng dữ liệu nào để dọn dẹp.";
+                    return false;
+                }
+
+                int totalModified = 0;
+
+                foreach (var (ws, rng) in targetRanges)
+                {
+                    int rStart = (int)rng.Row;
+                    int cStart = (int)rng.Column;
+                    int rCount = (int)rng.Rows.Count;
+                    int cCount = (int)rng.Columns.Count;
+
+                    if (rCount <= 0 || cCount <= 0) continue;
+
+                    object? valObj = rng.Value2;
+                    object[,] newValues = new object[rCount, cCount];
+                    bool hasChange = false;
+
+                    for (int r = 0; r < rCount; r++)
+                    {
+                        for (int c = 0; c < cCount; c++)
+                        {
+                            int curRow = rStart + r;
+                            int curCol = cStart + c;
+                            string originalStr = GetValueFromArray(valObj, rStart, cStart, rCount, cCount, curRow, curCol);
+                            string previousAbove = r > 0 ? (newValues[r - 1, c]?.ToString() ?? string.Empty) : string.Empty;
+
+                            var (cleanedVal, isModified) = CleanCellValue(originalStr, previousAbove, options);
+
+                            newValues[r, c] = cleanedVal;
+                            if (isModified)
+                            {
+                                totalModified++;
+                                hasChange = true;
+                            }
+                        }
+                    }
+
+                    if (hasChange)
+                    {
+                        // Ghi ngược lại Excel theo mảng 2D 1-based
+                        object[,] excelArr = new object[rCount, cCount];
+                        for (int r = 0; r < rCount; r++)
+                        {
+                            for (int c = 0; c < cCount; c++)
+                            {
+                                excelArr[r, c] = newValues[r, c];
+                            }
+                        }
+
+                        rng.Value2 = excelArr;
+                    }
+                }
+
+                modifiedCellsCount = totalModified;
+                statusMessage = $"✅ Đã dọn dẹp và chuẩn hóa thành công {totalModified} ô tính!";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                statusMessage = $"Lỗi dọn dẹp dữ liệu: {ex.Message}";
+                return false;
+            }
+            finally
+            {
+                _isBatchProcessing = false;
+                if (_excelApp != null)
+                {
+                    try { _excelApp.ScreenUpdating = true; } catch { }
+                    try { _excelApp.DisplayAlerts = true; } catch { }
+                }
+            }
+        }
+
+        private (object resultValue, bool isModified) CleanCellValue(string str, string previousAboveValue, DataCleaningOptions options)
+        {
+            if (string.IsNullOrEmpty(str))
+            {
+                // Xử lý ô trống
+                if (options.FillBlanks == BlankFillOption.CustomValue && !string.IsNullOrEmpty(options.CustomBlankValue))
+                {
+                    return (options.CustomBlankValue, true);
+                }
+                if (options.FillBlanks == BlankFillOption.FillDownFromAbove && !string.IsNullOrEmpty(previousAboveValue))
+                {
+                    return (previousAboveValue, true);
+                }
+                return (string.Empty, false);
+            }
+
+            string processed = str;
+
+            // Xử lý mã lỗi
+            if (options.ReplaceErrorValues && (processed.StartsWith("#") || processed == "#N/A" || processed == "#VALUE!" || processed == "#REF!"))
+            {
+                return (options.CustomErrorReplacement, true);
+            }
+
+            // 1. Khoảng trắng & ký tự điều khiển
+            if (options.RemoveNonBreakingSpaces)
+            {
+                processed = processed.Replace("\u00A0", " ").Replace("&nbsp;", " ");
+            }
+            if (options.RemoveUnprintableChars)
+            {
+                var sb = new StringBuilder(processed.Length);
+                foreach (char c in processed)
+                {
+                    if (c >= 32 || c == '\t' || c == '\r' || c == '\n') sb.Append(c);
+                }
+                processed = sb.ToString();
+            }
+            if (options.RemoveLineBreaks)
+            {
+                processed = processed.Replace("\r", " ").Replace("\n", " ");
+            }
+            if (options.TrimSpaces)
+            {
+                processed = processed.Trim();
+            }
+            if (options.ReduceMultipleSpaces)
+            {
+                while (processed.Contains("  "))
+                {
+                    processed = processed.Replace("  ", " ");
+                }
+            }
+
+            // 2. Chữ HOA / thường
+            if (options.CaseOption == TextCaseOption.UpperCase)
+            {
+                processed = processed.ToUpper();
+            }
+            else if (options.CaseOption == TextCaseOption.LowerCase)
+            {
+                processed = processed.ToLower();
+            }
+            else if (options.CaseOption == TextCaseOption.ProperCase)
+            {
+                processed = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(processed.ToLower());
+            }
+            else if (options.CaseOption == TextCaseOption.SentenceCase && processed.Length > 0)
+            {
+                processed = char.ToUpper(processed[0]) + (processed.Length > 1 ? processed.Substring(1).ToLower() : "");
+            }
+
+            // 3. Ngôn ngữ & Ký tự chuyên dụng
+            if (options.RemoveVietnameseDiacritics)
+            {
+                processed = VietnameseToKatakanaConverter.RemoveDiacritics(processed);
+            }
+            if (options.ConvertVietnameseToKatakana)
+            {
+                processed = VietnameseToKatakanaConverter.ConvertToKatakana(processed, options.KatakanaUseMiddleDot);
+            }
+            if (options.JapaneseHalfWidthToFullWidth)
+            {
+                processed = ConvertHankakuZenkaku(processed, toZenkaku: true);
+            }
+            if (options.JapaneseFullWidthToHalfWidth)
+            {
+                processed = ConvertHankakuZenkaku(processed, toZenkaku: false);
+            }
+            if (options.RemoveDigits)
+            {
+                var sb = new StringBuilder();
+                foreach (char c in processed) if (!char.IsDigit(c)) sb.Append(c);
+                processed = sb.ToString();
+            }
+            if (options.RemoveLetters)
+            {
+                var sb = new StringBuilder();
+                foreach (char c in processed) if (!char.IsLetter(c)) sb.Append(c);
+                processed = sb.ToString();
+            }
+            if (options.RemoveSpecialSymbols)
+            {
+                var sb = new StringBuilder();
+                foreach (char c in processed) if (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)) sb.Append(c);
+                processed = sb.ToString();
+            }
+
+            // 4. Số & Ngày tháng
+            if (options.ConvertNumbersStoredAsText)
+            {
+                if (double.TryParse(processed.Replace(",", "").Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double numVal))
+                {
+                    bool isNumModified = (str != numVal.ToString(CultureInfo.InvariantCulture));
+                    return (numVal, isNumModified);
+                }
+            }
+
+            if (options.StandardizeDates && DateTime.TryParse(processed, out DateTime dt))
+            {
+                string dtFormatted = dt.ToString(options.DateFormat);
+                return (dtFormatted, dtFormatted != str);
+            }
+
+            bool isMod = (processed != str);
+            return (processed, isMod);
+        }
+
+        private static string ConvertHankakuZenkaku(string text, bool toZenkaku)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+            var sb = new StringBuilder(text.Length);
+            foreach (char c in text)
+            {
+                if (toZenkaku)
+                {
+                    if (c >= 33 && c <= 126) sb.Append((char)(c + 65248));
+                    else if (c == 32) sb.Append((char)12288);
+                    else sb.Append(c);
+                }
+                else
+                {
+                    if (c >= 65281 && c <= 65374) sb.Append((char)(c - 65248));
+                    else if (c == 12288) sb.Append(' ');
+                    else sb.Append(c);
+                }
+            }
+            return sb.ToString();
+        }
+
+        #endregion
+
+        #region Smart Duplicate Finder & Grouping
+
+        public List<ColumnSelectionItem> GetActiveSheetColumnsInfo(bool firstRowIsHeader)
+        {
+            var list = new List<ColumnSelectionItem>();
+            if (_excelApp == null)
+            {
+                try { _excelApp = (ExcelApp)ExcelDnaUtil.Application; } catch { }
+            }
+            if (_excelApp == null) return list;
+
+            try
+            {
+                dynamic? app = _excelApp;
+                if (app == null) return list;
+                dynamic? ws = app.ActiveSheet;
+                if (ws == null) return list;
+                dynamic? u = ws.UsedRange;
+                if (u == null) return list;
+
+                int startCol = (int)u.Column;
+                int colCount = (int)u.Columns.Count;
+                int startRow = (int)u.Row;
+
+                object? valObj = u.Value2;
+
+                for (int c = 0; c < colCount; c++)
+                {
+                    int colActual = startCol + c;
+                    string colLetter = GetExcelColumnLetter(colActual);
+                    string header = string.Empty;
+
+                    if (firstRowIsHeader)
+                    {
+                        header = GetValueFromArray(valObj, startRow, startCol, (int)u.Rows.Count, colCount, startRow, colActual);
+                    }
+
+                    list.Add(new ColumnSelectionItem
+                    {
+                        ColumnIndex = colActual,
+                        ColumnLetter = colLetter,
+                        HeaderName = header,
+                        IsSelected = true
+                    });
+                }
+            }
+            catch { }
+
+            return list;
+        }
+
+        public List<DuplicateGroupItem> FindDuplicateGroups(DuplicateFinderOptions options, Action<string>? progressCallback = null)
+        {
+            var results = new List<DuplicateGroupItem>();
+            if (_excelApp == null)
+            {
+                try { _excelApp = (ExcelApp)ExcelDnaUtil.Application; } catch { }
+            }
+            if (_excelApp == null) return results;
+
+            try
+            {
+                dynamic? app = _excelApp;
+                if (app == null) return results;
+                dynamic? ws = app.ActiveSheet;
+                dynamic? wb = app.ActiveWorkbook;
+                if (ws == null) return results;
+                dynamic? u = ws.UsedRange;
+                if (u == null) return results;
+
+                string wbName = wb?.Name ?? string.Empty;
+                string wsName = ws.Name?.ToString() ?? string.Empty;
+
+                int startRow = (int)u.Row;
+                int startCol = (int)u.Column;
+                int rowCount = (int)u.Rows.Count;
+                int colCount = (int)u.Columns.Count;
+
+                if (rowCount <= 1) return results;
+
+                int dataStartRow = options.FirstRowIsHeader ? startRow + 1 : startRow;
+                object? valObj = u.Value2;
+
+                var rowRecords = new List<(int row, string[] allVals, string keyString)>();
+
+                for (int r = dataStartRow; r < startRow + rowCount; r++)
+                {
+                    var allVals = new string[colCount];
+                    var keyParts = new List<string>();
+
+                    for (int c = 0; c < colCount; c++)
+                    {
+                        int colActual = startCol + c;
+                        string cellStr = GetValueFromArray(valObj, startRow, startCol, rowCount, colCount, r, colActual);
+                        allVals[c] = cellStr;
+
+                        if (options.SelectedColumnIndices.Count == 0 || options.SelectedColumnIndices.Contains(colActual))
+                        {
+                            string norm = cellStr;
+                            if (options.IgnoreWhitespace) norm = norm.Trim();
+                            if (options.CaseInsensitive) norm = norm.ToLowerInvariant();
+                            keyParts.Add(norm);
+                        }
+                    }
+
+                    string keyString = string.Join(" | ", keyParts);
+                    rowRecords.Add((r, allVals, keyString));
+                }
+
+                progressCallback?.Invoke($"Đang gom nhóm {rowRecords.Count} dòng dữ liệu...");
+
+                int nextGroupId = 1;
+
+                if (options.Mode == DuplicateMatchMode.ExactMatch)
+                {
+                    var dict = new Dictionary<string, List<(int row, string[] allVals)>>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var rec in rowRecords)
+                    {
+                        if (string.IsNullOrEmpty(rec.keyString)) continue;
+                        if (!dict.TryGetValue(rec.keyString, out var list))
+                        {
+                            list = new List<(int row, string[] allVals)>();
+                            dict[rec.keyString] = list;
+                        }
+                        list.Add((rec.row, rec.allVals));
+                    }
+
+                    foreach (var kvp in dict)
+                    {
+                        if (kvp.Value.Count > 1)
+                        {
+                            int gId = nextGroupId++;
+                            for (int i = 0; i < kvp.Value.Count; i++)
+                            {
+                                var item = kvp.Value[i];
+                                results.Add(new DuplicateGroupItem
+                                {
+                                    GroupId = gId,
+                                    RowIndex = item.row,
+                                    IsMaster = (i == 0),
+                                    KeySummary = kvp.Key,
+                                    RowValuesSummary = string.Join(" | ", item.allVals),
+                                    SheetName = wsName,
+                                    WorkbookName = wbName,
+                                    Similarity = 1.0,
+                                    RawRowValues = item.allVals
+                                });
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Fuzzy Match clustering
+                    var clusters = new List<List<(int row, string[] allVals, string keyString, double sim)>>();
+
+                    foreach (var rec in rowRecords)
+                    {
+                        if (string.IsNullOrEmpty(rec.keyString)) continue;
+
+                        bool addedToCluster = false;
+                        foreach (var cluster in clusters)
+                        {
+                            string masterKey = cluster[0].keyString;
+                            double sim = CalculateStringSimilarity(rec.keyString, masterKey);
+                            if (sim >= options.FuzzySimilarityThreshold)
+                            {
+                                cluster.Add((rec.row, rec.allVals, rec.keyString, sim));
+                                addedToCluster = true;
+                                break;
+                            }
+                        }
+
+                        if (!addedToCluster)
+                        {
+                            clusters.Add(new List<(int row, string[] allVals, string keyString, double sim)>
+                            {
+                                (rec.row, rec.allVals, rec.keyString, 1.0)
+                            });
+                        }
+                    }
+
+                    foreach (var cluster in clusters)
+                    {
+                        if (cluster.Count > 1)
+                        {
+                            int gId = nextGroupId++;
+                            for (int i = 0; i < cluster.Count; i++)
+                            {
+                                var item = cluster[i];
+                                results.Add(new DuplicateGroupItem
+                                {
+                                    GroupId = gId,
+                                    RowIndex = item.row,
+                                    IsMaster = (i == 0),
+                                    KeySummary = item.keyString,
+                                    RowValuesSummary = string.Join(" | ", item.allVals),
+                                    SheetName = wsName,
+                                    WorkbookName = wbName,
+                                    Similarity = item.sim,
+                                    RawRowValues = item.allVals
+                                });
+                            }
+                        }
+                    }
+                }
+
+                progressCallback?.Invoke($"Hoàn tất! Tìm thấy {results.Count} dòng trùng lặp ({nextGroupId - 1} nhóm).");
+            }
+            catch (Exception ex)
+            {
+                progressCallback?.Invoke($"Lỗi tìm trùng lặp: {ex.Message}");
+            }
+
+            return results;
+        }
+
+        private static double CalculateStringSimilarity(string s1, string s2)
+        {
+            if (s1 == s2) return 1.0;
+            if (string.IsNullOrEmpty(s1) || string.IsNullOrEmpty(s2)) return 0.0;
+
+            int len1 = s1.Length;
+            int len2 = s2.Length;
+            if (len1 > 300 || len2 > 300)
+            {
+                s1 = s1.Substring(0, Math.Min(300, len1));
+                s2 = s2.Substring(0, Math.Min(300, len2));
+                len1 = s1.Length;
+                len2 = s2.Length;
+            }
+
+            int[,] d = new int[len1 + 1, len2 + 1];
+
+            for (int i = 0; i <= len1; i++) d[i, 0] = i;
+            for (int j = 0; j <= len2; j++) d[0, j] = j;
+
+            for (int i = 1; i <= len1; i++)
+            {
+                for (int j = 1; j <= len2; j++)
+                {
+                    int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
+                    d[i, j] = Math.Min(Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1), d[i - 1, j - 1] + cost);
+                }
+            }
+
+            int maxLen = Math.Max(len1, len2);
+            return 1.0 - (double)d[len1, len2] / maxLen;
+        }
+
+        public bool HighlightDuplicatesInWorksheet(List<DuplicateGroupItem> duplicates)
+        {
+            if (duplicates == null || duplicates.Count == 0 || _excelApp == null) return false;
+
+            try
+            {
+                dynamic app = _excelApp;
+                dynamic ws = app.ActiveSheet;
+                if (ws == null) return false;
+
+                _isBatchProcessing = true;
+                try { app.ScreenUpdating = false; } catch { }
+
+                // Bảng màu pastel xoay vòng cho các nhóm trùng
+                int[] pastelColors = { 0xFEF3C7, 0xDCFCE7, 0xFEE2E2, 0xE0E7FF, 0xEDE9FE, 0xFAE8FF, 0xFFEDD5 };
+
+                foreach (var item in duplicates)
+                {
+                    int color = pastelColors[(item.GroupId - 1) % pastelColors.Length];
+                    dynamic rowRange = ws.Rows[item.RowIndex];
+                    if (rowRange != null)
+                    {
+                        rowRange.Interior.Color = color;
+                    }
+                }
+
+                _isBatchProcessing = false;
+                try { app.ScreenUpdating = true; } catch { }
+
+                WpfMessageBox.Show($"✅ Đã tô màu phân biệt thành công {duplicates.Count} dòng trùng lặp!",
+                                   "Tô Màu Thành Công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi tô màu dòng trùng:\n{ex.Message}", "Lỗi Tô Màu",
+                                   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+            finally
+            {
+                _isBatchProcessing = false;
+                if (_excelApp != null) try { _excelApp.ScreenUpdating = true; } catch { }
+            }
+        }
+
+        public bool DeleteDuplicateRowsInWorksheet(List<DuplicateGroupItem> duplicates, bool keepFirst)
+        {
+            if (duplicates == null || duplicates.Count == 0 || _excelApp == null) return false;
+
+            var rowsToDelete = new List<int>();
+            foreach (var item in duplicates)
+            {
+                if (keepFirst && !item.IsMaster)
+                {
+                    rowsToDelete.Add(item.RowIndex);
+                }
+                else if (!keepFirst && item.IsMaster)
+                {
+                    rowsToDelete.Add(item.RowIndex);
+                }
+            }
+
+            if (rowsToDelete.Count == 0)
+            {
+                WpfMessageBox.Show("Không có dòng trùng nào được chọn để xóa.", "Thông báo",
+                                   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return false;
+            }
+
+            var confirm = WpfMessageBox.Show($"Bạn có chắc chắn muốn xóa vĩnh viễn {rowsToDelete.Count} dòng dữ liệu trùng lặp?",
+                                            "Xác Nhận Xóa Dòng Trùng", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question);
+            if (confirm != System.Windows.MessageBoxResult.Yes) return false;
+
+            try
+            {
+                dynamic app = _excelApp;
+                dynamic ws = app.ActiveSheet;
+                if (ws == null) return false;
+
+                _isBatchProcessing = true;
+                try { app.ScreenUpdating = false; } catch { }
+
+                // Xóa từ dòng dưới lên trên để không làm xáo trộn số dòng
+                rowsToDelete.Sort((a, b) => b.CompareTo(a));
+
+                foreach (int r in rowsToDelete)
+                {
+                    dynamic rowRange = ws.Rows[r];
+                    rowRange.Delete();
+                }
+
+                _isBatchProcessing = false;
+                try { app.ScreenUpdating = true; } catch { }
+
+                WpfMessageBox.Show($"✅ Đã xóa thành công {rowsToDelete.Count} dòng trùng lặp khỏi bảng tính!",
+                                   "Xóa Thành Công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi xóa dòng trùng:\n{ex.Message}", "Lỗi Xóa",
+                                   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+            finally
+            {
+                _isBatchProcessing = false;
+                if (_excelApp != null) try { _excelApp.ScreenUpdating = true; } catch { }
+            }
+        }
+
+        public bool ExtractDuplicatesToNewSheet(List<DuplicateGroupItem> duplicates)
+        {
+            if (duplicates == null || duplicates.Count == 0 || _excelApp == null) return false;
+
+            try
+            {
+                dynamic? app = _excelApp;
+                if (app == null) return false;
+                dynamic? activeWb = app.ActiveWorkbook;
+                dynamic? sourceWs = app.ActiveSheet;
+                if (activeWb == null || sourceWs == null) return false;
+
+                _isBatchProcessing = true;
+                try { app.ScreenUpdating = false; } catch { }
+
+                string reportSheetName = $"Duplicates_{DateTime.Now:yyyyMMdd_HHmm}";
+                dynamic? wsReport = activeWb!.Sheets.Add(After: sourceWs);
+                if (wsReport == null) return false;
+                wsReport.Name = reportSheetName;
+
+                string sourceWsName = sourceWs != null ? (sourceWs.Name?.ToString() ?? "Sheet") : "Sheet";
+
+                // Tiêu đề
+                wsReport.Cells[1, 1].Value2 = $"BÁO CÁO CÁC DÒNG TRÙNG LẶP ({sourceWsName})";
+                wsReport.Cells[1, 1].Font.Bold = true;
+                wsReport.Cells[1, 1].Font.Size = 14;
+
+                // Header
+                wsReport.Cells[3, 1].Value2 = "Nhóm";
+                wsReport.Cells[3, 2].Value2 = "Dòng Gốc";
+                wsReport.Cells[3, 3].Value2 = "Vai Trò";
+                wsReport.Cells[3, 4].Value2 = "Độ Khớp";
+                wsReport.Cells[3, 5].Value2 = "Nội Dung Dòng";
+
+                dynamic headerRange = wsReport.Range["A3:E3"];
+                headerRange.Font.Bold = true;
+                headerRange.Interior.Color = 0xF1F5F9;
+                headerRange.Borders.LineStyle = 1;
+
+                int r = 4;
+                foreach (var item in duplicates)
+                {
+                    wsReport.Cells[r, 1].Value2 = item.GroupTitle;
+                    wsReport.Cells[r, 2].Value2 = item.RowDisplay;
+                    wsReport.Cells[r, 3].Value2 = item.RoleDescription;
+                    wsReport.Cells[r, 4].Value2 = item.SimilarityPercentage;
+                    wsReport.Cells[r, 5].Value2 = item.RowValuesSummary;
+
+                    if (item.IsMaster)
+                    {
+                        wsReport.Range[$"A{r}:E{r}"].Interior.Color = 0xDCFCE7; // Green
+                    }
+
+                    r++;
+                }
+
+                wsReport.Columns["A:E"].AutoFit();
+
+                _isBatchProcessing = false;
+                try { app.ScreenUpdating = true; } catch { }
+
+                RefreshWorkbookTree();
+                WpfMessageBox.Show($"✅ Đã tách thành công {duplicates.Count} dòng trùng sang Sheet [{reportSheetName}]!",
+                                   "Tách Dữ Liệu Thành Công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi tách dòng trùng sang Sheet mới:\n{ex.Message}", "Lỗi Tách Sheet",
+                                   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+            finally
+            {
+                _isBatchProcessing = false;
+                if (_excelApp != null) try { _excelApp.ScreenUpdating = true; } catch { }
+            }
+        }
+
+        #endregion
     }
 }
+
 

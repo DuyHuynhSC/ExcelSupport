@@ -231,10 +231,17 @@ namespace ExcelSupport.Views
             string? ws1Name = CboSheet1.SelectedIndex > 0 ? CboSheet1.SelectedItem?.ToString() : null;
             string? ws2Name = CboSheet2.SelectedIndex > 0 ? CboSheet2.SelectedItem?.ToString() : null;
 
+            CompareMode mode = CompareMode.LcsRows;
+            if (RbLcsRows.IsChecked == true) mode = CompareMode.LcsRows;
+            else if (RbLcsCols.IsChecked == true) mode = CompareMode.LcsColumns;
+            else if (RbLcs2D.IsChecked == true) mode = CompareMode.Lcs2D;
+            else if (RbCellByCell.IsChecked == true) mode = CompareMode.CellByCell;
+            else if (RbKeyColumn.IsChecked == true) mode = CompareMode.KeyColumn;
+
             var options = new CompareOptions
             {
-                Mode = RbKeyColumn.IsChecked == true ? CompareMode.KeyColumn : CompareMode.CellByCell,
-                KeyColumnIndex = CboKeyColumn.SelectedIndex + 1,
+                Mode = mode,
+                KeyColumnIndex = CboKeyColumn.SelectedIndex >= 0 ? CboKeyColumn.SelectedIndex + 1 : 1,
                 IgnoreWhitespace = ChkIgnoreWhitespace.IsChecked == true,
                 CaseInsensitive = ChkCaseInsensitive.IsChecked == true,
                 CompareFormulas = ChkCompareFormulas.IsChecked == true

@@ -1,0 +1,429 @@
+<Window x:Class="ExcelSupport.Views.DataCleaningWizardDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Trình Dọn Dẹp &amp; Chuẩn Hóa Dữ Liệu — ExcelSupport" 
+        Height="680" Width="880"
+        MinHeight="540" MinWidth="750"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <!-- Button Styles -->
+        <Style x:Key="WizardPrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#107C41"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#0A552A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#063C1C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="WizardSecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Dark Theme aware GroupBox Style -->
+        <Style TargetType="GroupBox">
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Dark Theme aware RadioButton Style -->
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Dark Theme aware CheckBox Style -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Dark Theme aware TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- Content -->
+            <RowDefinition Height="*"/>
+            <!-- Footer -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== HEADER ==================== -->
+        <Border Grid.Row="0" Padding="20,12" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="🧹" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <StackPanel>
+                    <TextBlock Text="TRÌNH DỌN DẸP &amp; CHUẨN HÓA DỮ LIỆU" FontWeight="Bold" FontSize="15">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#0F172A"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#F8FAFC"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Làm sạch khoảng trắng, chuẩn hóa chữ hoa/thường, xóa dấu tiếng Việt, chuyển sang Katakana, sửa số lưu dạng text..." 
+                               FontSize="11.5" Foreground="#64748B" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ==================== CONTENT BODY ==================== -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Cột Trái: Danh Sách Tùy Chọn Dọn Dẹp -->
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                    <!-- Group: Phạm Vi Áp Dụng -->
+                    <GroupBox Header="🎯 1. Phạm Vi Áp Dụng" Margin="0,0,0,12" Padding="10,8" FontWeight="SemiBold">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="RbScopeSelection" Content="Vùng đang chọn (Selection)" IsChecked="True" GroupName="ScopeGroup" Margin="0,0,14,0"/>
+                            <RadioButton x:Name="RbScopeSheet" Content="Sheet hiện tại" GroupName="ScopeGroup" Margin="0,0,14,0"/>
+                            <RadioButton x:Name="RbScopeWorkbook" Content="Toàn bộ Workbook" GroupName="ScopeGroup"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Group: Khoảng Trắng & Xuống Dòng -->
+                    <GroupBox Header="✂️ 2. Khoảng Trắng &amp; Ký Tự Điều Khiển" Margin="0,0,0,12" Padding="10,8" FontWeight="SemiBold">
+                        <StackPanel>
+                            <CheckBox x:Name="ChkTrim" Content="Xóa khoảng trắng thừa ở đầu và cuối (Trim)" IsChecked="True" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkReduceSpaces" Content="Thu gọn nhiều khoảng trắng liên tiếp thành 1 dấu cách" IsChecked="True" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkRemoveNbsp" Content="Xóa khoảng trắng không ngắt (&amp;nbsp; / \u00A0)" IsChecked="True" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkRemoveLineBreaks" Content="Xóa dấu xuống dòng trong ô (\r, \n)" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkRemoveUnprintable" Content="Xóa ký tự ẩn không in được (ASCII 0-31)"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Group: Chữ Hoa / Chữ Thường -->
+                    <GroupBox Header="🔤 3. Chuẩn Hóa Chữ HOA / Thường" Margin="0,0,0,12" Padding="10,8" FontWeight="SemiBold">
+                        <StackPanel>
+                            <RadioButton x:Name="RbCaseNone" Content="Không đổi chữ hoa/thường" IsChecked="True" GroupName="CaseGroup" Margin="0,0,0,6"/>
+                            <RadioButton x:Name="RbCaseUpper" Content="IN HOA TOÀN BỘ (UPPERCASE)" GroupName="CaseGroup" Margin="0,0,0,6"/>
+                            <RadioButton x:Name="RbCaseLower" Content="in thường toàn bộ (lowercase)" GroupName="CaseGroup" Margin="0,0,0,6"/>
+                            <RadioButton x:Name="RbCaseProper" Content="Viết Hoa Đầu Mỗi Từ (Proper / Title Case: &quot;nguyễn văn an&quot; → &quot;Nguyễn Văn An&quot;)" GroupName="CaseGroup" Margin="0,0,0,6"/>
+                            <RadioButton x:Name="RbCaseSentence" Content="Viết hoa đầu câu (Sentence case)" GroupName="CaseGroup"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Group: Ngôn Ngữ & Ký Tự Tiếng Việt / Nhật Bản -->
+                    <GroupBox Header="🇯🇵 🇻🇳 4. Tiếng Việt &amp; Tiếng Nhật Bản" Margin="0,0,0,12" Padding="10,8" FontWeight="SemiBold">
+                        <StackPanel>
+                            <!-- Khung nổi bật Phiên âm Katakana -->
+                            <Border CornerRadius="6" Padding="8,8" Margin="0,0,0,8" BorderThickness="1">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#EFF6FF"/>
+                                        <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Background" Value="#1E293B"/>
+                                                <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+
+                                <StackPanel>
+                                    <CheckBox x:Name="ChkToKatakana" Content="Chuyển tên tiếng Việt sang Katakana Nhật Bản (vd: Nguyễn Văn A → グエン・ヴァン・アー)" FontWeight="Bold" Margin="0,0,0,6"/>
+                                    <StackPanel Orientation="Horizontal" Margin="22,0,0,0">
+                                        <RadioButton x:Name="RbKataDot" Content="Dùng dấu chấm giữa (・)" IsChecked="True" GroupName="KataSep" Margin="0,0,14,0"/>
+                                        <RadioButton x:Name="RbKataSpace" Content="Dùng dấu cách ( )" GroupName="KataSep"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <CheckBox x:Name="ChkRemoveAccents" Content="Xóa dấu tiếng Việt (vd: &quot;Nguyễn Văn Ánh&quot; → &quot;Nguyen Van Anh&quot;)" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkHankakuToZenkaku" Content="Chuyển Hankaku → Zenkaku (Nửa chiều rộng → Toàn chiều rộng)" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkZenkakuToHankaku" Content="Chuyển Zenkaku → Hankaku (Toàn chiều rộng → Nửa chiều rộng)" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkRemoveDigits" Content="Xóa tất cả chữ số (0-9)" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkRemoveLetters" Content="Xóa tất cả chữ cái" Margin="0,0,0,6"/>
+                            <CheckBox x:Name="ChkRemoveSymbols" Content="Chỉ giữ lại chữ và số (Xóa ký tự đặc biệt)"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Group: Số & Ngày Tháng -->
+                    <GroupBox Header="🔢 5. Số &amp; Ngày Tháng" Margin="0,0,0,12" Padding="10,8" FontWeight="SemiBold">
+                        <StackPanel>
+                            <CheckBox x:Name="ChkNumbersAsText" Content="Sửa số lưu dạng Text thành Số thực (để tính toán SUM, VLOOKUP)" IsChecked="True" Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <CheckBox x:Name="ChkStandardizeDate" Content="Chuẩn hóa ngày tháng theo dạng:" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="CboDateFormat" Width="120" Height="24" SelectedIndex="0">
+                                    <ComboBoxItem Content="yyyy-MM-dd"/>
+                                    <ComboBoxItem Content="dd/MM/yyyy"/>
+                                    <ComboBoxItem Content="MM/dd/yyyy"/>
+                                    <ComboBoxItem Content="yyyy/MM/dd"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Group: Ô Trống & Lỗi -->
+                    <GroupBox Header="⚠️ 6. Ô Trống &amp; Mã Lỗi" Margin="0,0,0,4" Padding="10,8" FontWeight="SemiBold">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6" VerticalAlignment="Center">
+                                <CheckBox x:Name="ChkFillBlanks" Content="Điền ô trống bằng:" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtCustomBlank" Text="N/A" Width="80" Height="24" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                <RadioButton x:Name="RbFillDown" Content="Hoặc lấy giá trị từ ô trên (Fill Down)" GroupName="BlankAction"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <CheckBox x:Name="ChkFixErrors" Content="Thay thế các ô bị lỗi (#N/A, #VALUE!...) bằng:" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtCustomError" Text="" Width="80" Height="24" VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+
+                <!-- Cột Phải: Khung Xem Thử Trực Quan (Live Preview) -->
+                <Border Grid.Column="1" BorderThickness="1" CornerRadius="8" Padding="14">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFFFF"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Background" Value="#1E293B"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="👁️ XEM THỬ KẾT QUẢ MẪU" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,10">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#107C41"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#4ADE80"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <StackPanel Grid.Row="1">
+                            <TextBlock Text="Nhập chuỗi thử nghiệm:" FontSize="11" Foreground="#64748B" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtSampleInput" Text="  Nguyễn   Văn   Ánh  " Height="28" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Kết quả sau khi áp dụng:" FontSize="11" Foreground="#64748B" Margin="0,0,0,4"/>
+                            <Border BorderThickness="1" CornerRadius="6" Padding="8,10" Margin="0,0,0,14">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#F8FAFC"/>
+                                        <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Background" Value="#0F172A"/>
+                                                <Setter Property="BorderBrush" Value="#475569"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock x:Name="TxtSampleOutput" Text="Nguyen Van Anh" FontWeight="Bold" FontSize="13" TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#2563EB"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#60A5FA"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+
+                            <TextBlock Text="Mẫu tên Katakana:" FontSize="11" Foreground="#64748B" Margin="0,0,0,4"/>
+                            <Border BorderThickness="1" CornerRadius="6" Padding="8,10">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#F0FDF4"/>
+                                        <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Background" Value="#0F172A"/>
+                                                <Setter Property="BorderBrush" Value="#10B981"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock x:Name="TxtSampleKatakana" Text="グエン・ヴァン・アイン" FontWeight="Bold" FontSize="13" TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#16A34A"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#4ADE80"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+
+                        <Button Grid.Row="2" Content="🔄 Cập Nhật Xem Thử" Style="{StaticResource WizardSecondaryBtn}" Click="OnRefreshPreviewClick" HorizontalAlignment="Stretch"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ==================== FOOTER ==================== -->
+        <Border Grid.Row="2" Padding="20,12" BorderThickness="0,1,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="Chọn các quy tắc và nhấn 'Tiến Hành Dọn Dẹp'." 
+                           VerticalAlignment="Center" FontSize="11.5" Foreground="#64748B"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="🧹 Tiến Hành Dọn Dẹp" Style="{StaticResource WizardPrimaryBtn}" Margin="0,0,8,0" Click="OnExecuteClick"/>
+                    <Button Content="Đóng" Width="70" Style="{StaticResource WizardSecondaryBtn}" Click="OnCloseClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

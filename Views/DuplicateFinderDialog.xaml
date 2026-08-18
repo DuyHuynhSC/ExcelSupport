@@ -1,0 +1,486 @@
+<Window x:Class="ExcelSupport.Views.DuplicateFinderDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ExcelSupport.Views"
+        mc:Ignorable="d"
+        Title="Tìm &amp; Xử Lý Dữ Liệu Trùng Lặp Nâng Cao — ExcelSupport" 
+        Height="720" Width="1040"
+        MinHeight="560" MinWidth="850"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
+        <!-- Button Styles -->
+        <Style x:Key="DupPrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DupSecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DupActionBtn" TargetType="Button" BasedOn="{StaticResource DupSecondaryBtn}">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#E2E8F0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0: Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1: Configuration / Column Selection -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2: Filter & Search Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 3: DataGrid -->
+            <RowDefinition Height="*"/>
+            <!-- 4: Footer / Actions -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 0. HEADER ==================== -->
+        <Border Grid.Row="0" Padding="20,12" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🔍" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="TÌM &amp; XỬ LÝ DỮ LIỆU TRÙNG LẶP NÂNG CAO" FontWeight="Bold" FontSize="15" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Text="Quét và gom nhóm các bản ghi trùng lặp theo cột khóa, so khớp chính xác / mờ, tô màu và tách sheet" 
+                               FontSize="11.5" Foreground="#64748B" Margin="26,2,0,0"/>
+                </StackPanel>
+
+                <!-- Statistics Badges -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border CornerRadius="10" Padding="10,4" Margin="0,0,6,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1">
+                        <TextBlock x:Name="TxtTotalDuplicates" Text="0 dòng trùng" FontWeight="SemiBold" FontSize="11" Foreground="#92400E"/>
+                    </Border>
+                    <Border CornerRadius="10" Padding="10,4" Margin="0,0,0,0" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1">
+                        <TextBlock x:Name="TxtTotalGroups" Text="0 nhóm trùng" FontWeight="SemiBold" FontSize="11" Foreground="#166534"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 1. CONFIGURATION BAR ==================== -->
+        <Border Grid.Row="1" Padding="20,10" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#0F172A"/>
+                            <Setter Property="BorderBrush" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Dòng 1: Cột khóa & Chọn cột -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📌 Cột Khóa So Sánh:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="ChkFirstRowHeader" Content="Dòng đầu là Tiêu đề cột" IsChecked="True" Margin="0,0,12,0" Checked="OnHeaderOptionChanged" Unchecked="OnHeaderOptionChanged"/>
+                        <Button Content="Tất cả" Padding="6,2" FontSize="10.5" Style="{StaticResource DupActionBtn}" Margin="0,0,4,0" Click="OnSelectAllColumnsClick"/>
+                        <Button Content="Bỏ chọn" Padding="6,2" FontSize="10.5" Style="{StaticResource DupActionBtn}" Margin="0,0,14,0" Click="OnDeselectAllColumnsClick"/>
+
+                        <!-- Danh sách các cột có thể tích chọn -->
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" MaxWidth="500">
+                            <ItemsControl x:Name="ItemsColumns">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Content="🔍 Tìm Dòng Trùng" Style="{StaticResource DupPrimaryBtn}" Click="OnFindDuplicatesClick"/>
+                </Grid>
+
+                <!-- Dòng 2: Chế độ so khớp -->
+                <WrapPanel Grid.Row="1" VerticalAlignment="Center">
+                    <TextBlock Text="Chế độ:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="RbExactMatch" Content="Chính xác 100%" IsChecked="True" GroupName="DupMatchMode" Margin="0,0,14,0"/>
+                    <RadioButton x:Name="RbFuzzyMatch" Content="So khớp mờ (Fuzzy Match)" GroupName="DupMatchMode" Margin="0,0,8,0"/>
+                    <TextBlock Text="Độ tương đồng ≥" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="#64748B"/>
+                    <Slider x:Name="SliderThreshold" Minimum="0.7" Maximum="1.0" Value="0.85" SmallChange="0.05" LargeChange="0.1" Width="80" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding Value, ElementName=SliderThreshold, StringFormat={}{0:P0}}" FontWeight="Bold" FontSize="11" Margin="0,0,16,0" VerticalAlignment="Center" Foreground="#2563EB"/>
+
+                    <CheckBox x:Name="ChkIgnoreSpaces" Content="Bỏ qua khoảng trắng" IsChecked="True" Margin="0,0,12,0"/>
+                    <CheckBox x:Name="ChkIgnoreCase" Content="Không phân biệt HOA/thường" IsChecked="True"/>
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 2. FILTER & SEARCH BAR ==================== -->
+        <Border Grid.Row="2" Padding="20,8" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#F1F5F9"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="260"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Lọc:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="RbFilterAll" Content="Tất cả các dòng trong nhóm" IsChecked="True" GroupName="DupFilter" Margin="0,0,12,0" Checked="OnFilterChanged"/>
+                    <RadioButton x:Name="RbFilterDuplicatesOnly" Content="Chỉ xem dòng trùng (Bỏ dòng gốc)" GroupName="DupFilter" Margin="0,0,12,0" Checked="OnFilterChanged"/>
+                </StackPanel>
+
+                <!-- Search box -->
+                <Border Grid.Column="2" CornerRadius="6" BorderThickness="1" Height="28">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Background" Value="#0F172A"/>
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Margin="8,0,4,0" VerticalAlignment="Center" Foreground="#94A3B8"/>
+                        <TextBox Grid.Column="1" x:Name="TxtSearch" BorderThickness="0" Background="Transparent" VerticalContentAlignment="Center" FontSize="11.5" TextChanged="OnSearchTextChanged"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 3. DATAGRID RESULTS ==================== -->
+        <DataGrid Grid.Row="3" x:Name="GridDuplicates" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  MouseDoubleClick="OnRowDoubleClick"
+                  BorderThickness="0">
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
+                    <Setter Property="RowBackground" Value="#FFFFFF"/>
+                    <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#0F172A"/>
+                            <Setter Property="HorizontalGridLinesBrush" Value="#1E293B"/>
+                            <Setter Property="RowBackground" Value="#0F172A"/>
+                            <Setter Property="AlternatingRowBackground" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#F1F5F9"/>
+                    <Setter Property="Foreground" Value="#475569"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="FontSize" Value="11.5"/>
+                    <Setter Property="Padding" Value="10,8"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="Foreground" Value="#94A3B8"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.Columns>
+                <!-- Nhóm -->
+                <DataGridTemplateColumn Header="Nhóm" Width="85">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Background="#EDE9FE" CornerRadius="4" Padding="6,2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding GroupTitle}" FontWeight="Bold" FontSize="11" Foreground="#6D28D9"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Dòng Excel -->
+                <DataGridTextColumn Header="Vị Trí" Binding="{Binding RowDisplay}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#2563EB"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Vai Trò (Master / Duplicate) -->
+                <DataGridTemplateColumn Header="Vai Trò" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMaster}" Value="True">
+                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsMaster}" Value="False">
+                                                <Setter Property="Background" Value="#FEF3C7"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding RoleDescription}" FontWeight="SemiBold" FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMaster}" Value="True">
+                                                    <Setter Property="Foreground" Value="#166534"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsMaster}" Value="False">
+                                                    <Setter Property="Foreground" Value="#92400E"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Độ Khớp -->
+                <DataGridTextColumn Header="Độ Khớp" Binding="{Binding SimilarityPercentage}" Width="75">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#64748B"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Nội dung dòng -->
+                <DataGridTextColumn Header="Nội Dung Dòng Dữ Liệu" Binding="{Binding RowValuesSummary}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Padding" Value="6,0"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Nút Đi tới dòng -->
+                <DataGridTemplateColumn Header="Hành Động" Width="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="🎯 Đi tới dòng" FontSize="10.5" Padding="6,3" Cursor="Hand"
+                                    Style="{StaticResource DupActionBtn}"
+                                    Click="OnGoToRowClick"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- ==================== 4. FOOTER / ACTIONS ==================== -->
+        <Border Grid.Row="4" Padding="20,12" BorderThickness="0,1,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="Sẵn sàng quét dòng trùng." 
+                           VerticalAlignment="Center" FontSize="11.5" Foreground="#64748B"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="🎨 Tô Màu Nhóm" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnHighlightClick"/>
+                    <Button Content="🗑️ Xóa Dòng Trùng (Giữ dòng đầu)" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnDeleteDuplicatesClick"/>
+                    <Button Content="📋 Tách Ra Sheet Mới" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnExtractToSheetClick"/>
+                    <Button Content="Đóng" Width="70" Style="{StaticResource DupSecondaryBtn}" Click="OnCloseClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

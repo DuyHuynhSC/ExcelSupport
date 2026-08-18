@@ -97,12 +97,12 @@ namespace ExcelSupport.Ribbon
                   onAction='OnCloseCurrentWorkbook' />
         </group>
 
-        <!-- Group 3: Kiểm tra & Đối Soát -->
+        <!-- Group 3: Kiểm Tra & Đối Soát -->
         <group id='grpAuditTools' label='Kiểm Tra &amp; Đối Soát'>
           <button id='btnCompareWorkbooks'
                   label='So Sánh Workbooks'
                   size='large'
-                  imageMso='CompareMaster'
+                  image='compare_icon'
                   screentip='So Sánh 2 Workbooks / Sheets'
                   supertip='Đối chiếu sai khác dữ liệu giữa 2 file Excel hoặc 2 Sheet, tô màu trực quan và xuất báo cáo chi tiết.'
                   onAction='OnCompareWorkbooks' />
@@ -114,6 +114,25 @@ namespace ExcelSupport.Ribbon
                   screentip='Kiểm tra &amp; Định vị Tiếng Việt'
                   supertip='Quét toàn bộ ô, tên Sheet và ghi chú để tìm và nhảy tới các vị trí chứa tiếng Việt có dấu.'
                   onAction='OnCheckVietnamese' />
+        </group>
+
+        <!-- Group 4: Xử Lý Dữ Liệu -->
+        <group id='grpDataTools' label='Xử Lý Dữ Liệu'>
+          <button id='btnDataCleaner'
+                  label='Dọn Dẹp Dữ Liệu'
+                  size='large'
+                  image='cleaner_icon'
+                  screentip='Trình Dọn Dẹp &amp; Chuẩn Hóa Dữ Liệu'
+                  supertip='Xóa khoảng trắng thừa, chuẩn hóa chữ hoa/thường, xóa dấu tiếng Việt, chuyển sang Katakana, sửa số lưu dạng text, điền ô trống...'
+                  onAction='OnDataCleaner' />
+
+          <button id='btnDuplicateFinder'
+                  label='Tìm Trùng Lặp'
+                  size='large'
+                  image='duplicate_icon'
+                  screentip='Tìm &amp; Xử Lý Dữ Liệu Trùng Lặp Nâng Cao'
+                  supertip='Tìm kiếm và gom nhóm các dòng trùng lặp theo 1 hoặc nhiều cột khóa, so khớp chính xác/mờ, tô màu và tách sheet.'
+                  onAction='OnDuplicateFinder' />
         </group>
 
       </tab>
@@ -128,7 +147,103 @@ namespace ExcelSupport.Ribbon
             {
                 return CreateNavigatorBitmap();
             }
+            if (imageId == "compare_icon")
+            {
+                return CreateCompareBitmap();
+            }
+            if (imageId == "cleaner_icon")
+            {
+                return CreateCleanerBitmap();
+            }
+            if (imageId == "duplicate_icon")
+            {
+                return CreateDuplicateBitmap();
+            }
             return base.LoadImage(imageId);
+        }
+
+        private Bitmap CreateCompareBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // 1. Sheet A (Phía sau bên trái - Màu Xanh Dương #2563EB)
+                using (var brushA = new LinearGradientBrush(new Rectangle(2, 3, 17, 22),
+                    Color.FromArgb(37, 99, 235), Color.FromArgb(29, 78, 216), 45f))
+                {
+                    FillRoundedRectangle(g, brushA, new Rectangle(2, 3, 17, 22), 3);
+                }
+                using (var penA = new Pen(Color.FromArgb(30, 64, 175), 1f))
+                {
+                    DrawRoundedRectangle(g, penA, new Rectangle(2, 3, 17, 22), 3);
+                }
+
+                // Header Sheet A
+                using (var headBrush = new SolidBrush(Color.FromArgb(220, 255, 255, 255)))
+                {
+                    FillRoundedRectangle(g, headBrush, new Rectangle(4, 5, 13, 4), 1);
+                }
+                // Các dòng Sheet A
+                using (var lineBrush = new SolidBrush(Color.FromArgb(160, 255, 255, 255)))
+                {
+                    g.FillRectangle(lineBrush, 4, 11, 13, 2);
+                    g.FillRectangle(lineBrush, 4, 15, 13, 2);
+                    g.FillRectangle(lineBrush, 4, 19, 13, 2);
+                }
+
+                // 2. Sheet B (Phía trước bên phải - Màu Xanh Lục Excel #107C41)
+                using (var brushB = new LinearGradientBrush(new Rectangle(13, 7, 17, 22),
+                    Color.FromArgb(16, 124, 65), Color.FromArgb(10, 85, 42), 45f))
+                {
+                    FillRoundedRectangle(g, brushB, new Rectangle(13, 7, 17, 22), 3);
+                }
+                using (var penB = new Pen(Color.FromArgb(6, 60, 28), 1f))
+                {
+                    DrawRoundedRectangle(g, penB, new Rectangle(13, 7, 17, 22), 3);
+                }
+
+                // Header Sheet B
+                using (var headBrushB = new SolidBrush(Color.FromArgb(220, 255, 255, 255)))
+                {
+                    FillRoundedRectangle(g, headBrushB, new Rectangle(15, 9, 13, 4), 1);
+                }
+                // Các dòng Sheet B (với 1 ô màu Cam nổi bật thể hiện sự khác biệt!)
+                using (var lineBrushB = new SolidBrush(Color.FromArgb(160, 255, 255, 255)))
+                {
+                    g.FillRectangle(lineBrushB, 15, 15, 13, 2);
+                    // Dòng khác biệt màu cam
+                    using (var diffBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                    {
+                        g.FillRectangle(diffBrush, 15, 19, 13, 2);
+                    }
+                    g.FillRectangle(lineBrushB, 15, 23, 13, 2);
+                }
+
+                // 3. Biểu tượng mũi tên so sánh 2 chiều ⇋ hình tròn ở góc dưới bên trái
+                using (var circleBrush = new SolidBrush(Color.FromArgb(245, 158, 11))) // Amber Badge
+                {
+                    g.FillEllipse(circleBrush, 1, 17, 14, 14);
+                }
+                using (var circlePen = new Pen(Color.FromArgb(255, 255, 255), 1.2f))
+                {
+                    g.DrawEllipse(circlePen, 1, 17, 14, 14);
+                }
+                // Mũi tên ⇋ màu trắng bên trong hình tròn
+                using (var arrowPen = new Pen(Color.White, 1.5f))
+                {
+                    // Mũi tên trên sang phải: ->
+                    g.DrawLine(arrowPen, 3, 22, 11, 22);
+                    g.DrawLine(arrowPen, 9, 20, 12, 22);
+                    // Mũi tên dưới sang trái: <-
+                    g.DrawLine(arrowPen, 4, 26, 12, 26);
+                    g.DrawLine(arrowPen, 6, 28, 3, 26);
+                }
+            }
+            return bmp;
         }
 
         private Bitmap CreateNavigatorBitmap()
@@ -314,6 +429,123 @@ namespace ExcelSupport.Ribbon
         public void OnCheckVietnamese(IRibbonControl control)
         {
             Views.VietnameseCheckDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnDataCleaner(IRibbonControl control)
+        {
+            Views.DataCleaningWizardDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnDuplicateFinder(IRibbonControl control)
+        {
+            Views.DuplicateFinderDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        private Bitmap CreateCleanerBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền bảng tính xanh lục Excel
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(16, 124, 65), Color.FromArgb(10, 85, 42), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Viền
+                using (var pen = new Pen(Color.FromArgb(6, 60, 28), 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Các ô lưới trắng mờ
+                using (var gridBrush = new SolidBrush(Color.FromArgb(200, 255, 255, 255)))
+                {
+                    g.FillRectangle(gridBrush, 5, 5, 6, 4);
+                    g.FillRectangle(gridBrush, 13, 5, 6, 4);
+                    g.FillRectangle(gridBrush, 5, 11, 6, 4);
+                    g.FillRectangle(gridBrush, 13, 11, 6, 4);
+                }
+
+                // Cây chổi thần / Tia sáng lấp lánh (Sparkle & Magic Wand)
+                using (var wandBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                using (var wandPen = new Pen(Color.FromArgb(254, 240, 138), 2f))
+                {
+                    // Thân đũa thần
+                    g.DrawLine(wandPen, 10, 26, 24, 12);
+                    // Đầu đũa ngôi sao / lấp lánh
+                    g.FillEllipse(wandBrush, 22, 10, 6, 6);
+                }
+
+                // Tia lấp lánh nhỏ
+                using (var starBrush = new SolidBrush(Color.White))
+                {
+                    g.FillEllipse(starBrush, 24, 6, 3, 3);
+                    g.FillEllipse(starBrush, 27, 13, 3, 3);
+                    g.FillEllipse(starBrush, 18, 11, 2, 2);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateDuplicateBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Trang 1 phía sau (Màu tím Pastel)
+                using (var card1 = new LinearGradientBrush(new Rectangle(8, 2, 20, 22),
+                    Color.FromArgb(139, 92, 246), Color.FromArgb(109, 40, 217), 45f))
+                {
+                    FillRoundedRectangle(g, card1, new Rectangle(8, 2, 20, 22), 3);
+                }
+
+                // Trang 2 phía trước (Màu xanh dương đậm)
+                using (var card2 = new LinearGradientBrush(new Rectangle(3, 8, 20, 22),
+                    Color.FromArgb(37, 99, 235), Color.FromArgb(29, 78, 216), 45f))
+                {
+                    FillRoundedRectangle(g, card2, new Rectangle(3, 8, 20, 22), 3);
+                }
+
+                // Viền trắng cho trang trước
+                using (var pen = new Pen(Color.White, 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(3, 8, 20, 22), 3);
+                }
+
+                // Các dòng nội dung trên trang trước
+                using (var lineBrush = new SolidBrush(Color.FromArgb(200, 255, 255, 255)))
+                {
+                    g.FillRectangle(lineBrush, 6, 12, 14, 2);
+                    g.FillRectangle(lineBrush, 6, 16, 14, 2);
+                    g.FillRectangle(lineBrush, 6, 20, 10, 2);
+                }
+
+                // Huy hiệu kính lúp & số 2 (Duplicate Badge)
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                using (var badgePen = new Pen(Color.White, 1.5f))
+                {
+                    g.FillEllipse(badgeBrush, 17, 17, 13, 13);
+                    g.DrawEllipse(badgePen, 17, 17, 13, 13);
+                }
+
+                // Dấu "=" màu trắng bên trong huy hiệu thể hiện trùng khớp
+                using (var equalPen = new Pen(Color.White, 2f))
+                {
+                    g.DrawLine(equalPen, 21, 22, 26, 22);
+                    g.DrawLine(equalPen, 21, 25, 26, 25);
+                }
+            }
+            return bmp;
         }
     }
 }

@@ -488,6 +488,22 @@
                             </CheckBox.Style>
                         </CheckBox>
 
+                        <!-- Checkbox Mở editor -->
+                        <CheckBox Content="Mở editor (chỉnh sửa bản dịch trước khi chèn)" 
+                                  IsChecked="{Binding OpenEditor}" 
+                                  FontWeight="SemiBold" FontSize="11" Cursor="Hand" Margin="0,0,0,6">
+                            <CheckBox.Style>
+                                <Style TargetType="CheckBox">
+                                    <Setter Property="Foreground" Value="#334155"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </CheckBox.Style>
+                        </CheckBox>
+
                         <!-- Tùy chọn Glossary -->
                         <StackPanel Margin="0,2,0,2">
                             <CheckBox Content="Áp dụng từ điển Thuật ngữ (Glossary)" 

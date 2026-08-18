@@ -50,13 +50,17 @@
 
 ### 3. 📊 So Sánh 2 Workbooks / 2 Sheets (Diff & Compare Tool)
 * 🔍 **Đối chiếu dữ liệu chuyên sâu:** So sánh sự khác biệt giữa 2 phiên bản file Excel (File A cũ $\leftrightarrow$ File B mới) hoặc 2 Sheet bất kỳ.
-* ⚙️ **2 Chế độ so sánh mạnh mẽ:**
-  * **Theo Tọa Độ Ô (Cell-by-Cell Grid Diff):** So sánh giá trị từng ô `A1`, `B2`, `C10`...
-  * **Theo Cột Khóa Chính (Key ID / Mã NV / Mã SP):** Tự động căn chỉnh và phát hiện chính xác: Dòng nào bị **Sửa đổi**, Dòng nào **Thêm mới**, Dòng nào **Bị xóa** kể cả khi bị chèn thêm dòng hoặc thứ tự dòng bị xáo trộn.
-* 🎯 **Điều hướng tức thì (Jump to Cell):** **Click đúp vào bất kỳ dòng sai khác nào** (hoặc bấm `🎯 Đi tới ô`): Excel tự động kích hoạt file $\rightarrow$ mở đúng sheet $\rightarrow$ cuộn bôi chọn ô tính đó.
+* ⚙️ **Bộ thuật toán so sánh đa dạng (bao gồm Thuật toán LCS thông minh):**
+  * **LCS theo Dòng (Row LCS - Mặc định):** Tự động phát hiện chính xác các dòng chèn mới hoặc dòng bị xóa mà **không làm lệch các dòng bên dưới**, tìm ra đúng các ô bị sửa đổi trên từng dòng tương ứng.
+  * **LCS theo Cột (Column LCS):** Tự động nhận diện các cột bị chèn mới hoặc xóa bỏ.
+  * **LCS 2 Chiều (2D LCS Grid):** Căn chỉnh cả dòng và cột 2D trước khi so sánh ma trận dữ liệu.
+  * **Theo Tọa Độ Ô Cố Định (Cell-by-Cell Grid):** So sánh giá trị từng ô cùng tọa độ `A1`, `B2`, `C10`...
+  * **Theo Cột Khóa Chính (Key Column ID):** Ghép dòng dựa trên mã định danh (Mã NV, Mã SP, Số Hóa đơn...).
+* 🎯 **Điều hướng tức thì (Jump to Cell):** **Click đúp vào bất kỳ dòng sai khác nào** (hoặc bấm `🎯 Đi tới ô`): Excel tự động kích hoạt file $\rightarrow$ mở đúng sheet $\rightarrow$ cuộn bôi chọn ô tính đó (chạy mượt mà, không khóa ứng dụng).
 * 🎨 **Tô Màu Trực Quan (Highlight Changes):** Tự động tô màu nổi bật các ô khác biệt trên Sheet (Màu Vàng: Ô thay đổi, Màu Xanh: Thêm mới, Màu Đỏ: Bị xóa).
 * 📋 **Tạo Sheet Báo Cáo & Xuất CSV:** Tự động tạo Sheet Báo Cáo sai khác (`Diff_Report_...`) kèm Hyperlink bấm là chuyển đến ô tính, hoặc xuất file `.csv` chuẩn UTF-8 with BOM.
-* 🚀 **Vị trí gọi:** Nút lớn **`📊 So Sánh Workbooks`** trên thanh Ribbon (Tab NAVIGATOR) và Menu chuột phải Workbook trên Task Pane.
+* 🌓 **Hỗ trợ toàn diện Dark / Light Theme:** Giao diện ComboBox, RadioButton, CheckBox và bảng dữ liệu hiển thị sắc nét, tương phản tối ưu.
+* 🚀 **Vị trí gọi:** Nút lớn với Icon chuyên nghiệp **`📊 So Sánh Workbooks`** trên thanh Ribbon (Tab NAVIGATOR) và Menu chuột phải Workbook trên Task Pane.
 
 ---
 
@@ -71,7 +75,36 @@
 
 ---
 
-### 4. 📋 Tạo Bảng Mục Lục Tự Động (Auto-Generate Table of Contents)
+### 5. 🧹 Trình Dọn Dẹp & Chuẩn Hóa Dữ Liệu (Data Cleaning & Normalization Wizard)
+* ✂️ **Xử lý khoảng trắng & Ký tự ẩn:** Xóa khoảng trắng thừa đầu/cuối (`Trim`), thu gọn nhiều dấu cách liên tiếp, xóa khoảng trắng không ngắt (`&nbsp;` / `\u00A0`), xóa dấu xuống dòng trong ô (`\r`, `\n`) và ký tự điều khiển (ASCII 0-31).
+* 🔤 **Chuẩn hóa Chữ HOA / thường (Text Case):** `IN HOA TOÀN BỘ`, `in thường toàn bộ`, `Viết Hoa Đầu Mỗi Từ` (Proper/Title Case: "nguyễn văn an" $\rightarrow$ "Nguyễn Văn An"), `Viết hoa đầu câu`.
+* 🇯🇵 🇻🇳 **Ngôn ngữ chuyên sâu:**
+  * **Chuyển tên tiếng Việt sang Katakana Nhật Bản:** "Nguyễn Văn Ánh" $\rightarrow$ "グエン・ヴァン・アイン" (Hỗ trợ tùy chọn dấu chấm giữa `・` hoặc dấu cách).
+  * **Xóa dấu tiếng Việt:** "Nguyễn Văn Ánh" $\rightarrow$ "Nguyen Van Anh".
+  * **Chuyển đổi Nhật Bản:** Hankaku (Nửa chiều rộng `ｱｲｳｴｵ`) $\leftrightarrow$ Zenkaku (Toàn chiều rộng `アイウエオ`).
+  * Xóa chữ số (chỉ giữ chữ), Xóa chữ cái (chỉ giữ số), Xóa ký tự đặc biệt.
+* 🔢 **Sửa số lưu dạng Text & Ngày tháng:** Tự động chuyển chuỗi số dạng text thành Số thực để tính toán hàm `SUM`, `VLOOKUP`, và chuẩn hóa định dạng ngày tháng (`yyyy-MM-dd`, `dd/MM/yyyy`...).
+* ⚠️ **Xử lý ô trống & Lỗi:** Điền ô trống bằng giá trị tùy biến hoặc sao chép giá trị từ trên xuống (`Fill Down`), thay thế mã lỗi `#N/A`, `#VALUE!`, `#REF!`.
+* 👁️ **Khung Xem Thử Trực Quan (Live Preview):** Hiển thị ngay kết quả mẫu trước khi áp dụng vào Excel.
+* 🚀 **Vị trí mở:** Nút lớn với Icon chuyên dụng **`🧹 Dọn Dẹp Dữ Liệu`** trên Ribbon (Nhóm Xử Lý Dữ Liệu).
+
+---
+
+### 6. 🔍 Tìm & Xử Lý Dữ Liệu Trùng Lặp Nâng Cao (Smart Duplicate Finder & Grouping)
+* 📌 **Lựa chọn Cột Khóa Linh Hoạt:** Chọn 1 hoặc nhiều cột kết hợp để làm tiêu chí xác định trùng lặp (Composite Key), hỗ trợ nhận diện tự động dòng Header.
+* ⚙️ **2 Chế độ so khớp thông minh:**
+  * **Chính xác 100% (Exact Match):** Đối chiếu tuyệt đối các cột khóa.
+  * **So khớp mờ (Fuzzy Match):** Nhận diện các dòng trùng do sai lệch chính tả, thừa dấu câu, khoảng trắng với thanh trượt tỷ lệ tương đồng ($70\% - 100\%$).
+* 📊 **Gom Nhóm & Trực Quan Hóa (DataGrid):** Gom các dòng trùng vào từng cụm (**Nhóm 1, Nhóm 2...**) với huy hiệu màu sắc, phân biệt rõ **Dòng gốc (Master)** và **Dòng trùng (Duplicate)**. Click đúp để nhảy ngay tới dòng trên Excel.
+* 🛠️ **Các hành động xử lý trực tiếp:**
+  * 🎨 **Tô Màu Nhóm Trên Sheet:** Đổi màu các nhóm trùng trên bảng tính Excel với bảng màu pastel dễ nhìn.
+  * 🗑️ **Xóa Dòng Trùng:** Tự động xóa sạch các dòng thừa, giữ lại dòng đầu hoặc dòng cuối.
+  * 📋 **Tách Ra Sheet Mới:** Tự động copy các dòng trùng sang Sheet `Duplicates_yyyyMMdd_HHmm` có định dạng bảng chi tiết để đối soát.
+* 🚀 **Vị trí mở:** Nút lớn với Icon chuyên dụng **`🔍 Tìm Trùng Lặp`** trên Ribbon (Nhóm Xử Lý Dữ Liệu).
+
+---
+
+### 7. 📋 Tạo Bảng Mục Lục Tự Động (Auto-Generate Table of Contents)
 * Tự động quét toàn bộ các sheet trong Workbook hiện tại và tạo một Sheet `Mục Lục` ở vị trí đầu tiên.
 * **Gắn liên kết Hyperlink:** Bấm chuột vào tên sheet trên bảng mục lục là chuyển ngay đến sheet tương ứng.
 * Bảng thống kê chi tiết: STT, Tên Sheet, Trạng thái (Hiện / Ẩn / Ẩn sâu), Màu sắc Tab và Cột Ghi chú.

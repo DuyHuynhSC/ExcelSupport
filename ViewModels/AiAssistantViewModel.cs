@@ -59,6 +59,13 @@ namespace ExcelSupport.ViewModels
             set => SetProperty(ref _writeToAdjacentColumn, value);
         }
 
+        private bool _openEditor = false;
+        public bool OpenEditor
+        {
+            get => _openEditor;
+            set => SetProperty(ref _openEditor, value);
+        }
+
         public bool EnableGlossary
         {
             get => _enableGlossary;
@@ -271,6 +278,28 @@ namespace ExcelSupport.ViewModels
                     else
                     {
                         items[i].TranslatedText = items[i].OriginalText;
+                    }
+                }
+
+                // Nếu người dùng chọn "Mở editor" -> Hiển thị form chỉnh sửa kết quả dịch
+                if (OpenEditor)
+                {
+                    var editorDlg = new Views.TranslationEditorDialog(items, isJaToVi, WriteToAdjacentColumn, IsDarkTheme);
+                    try
+                    {
+                        var addInInstance = AddInEvents.Instance;
+                        if (addInInstance?.ExcelAppInstance != null)
+                        {
+                            new System.Windows.Interop.WindowInteropHelper(editorDlg).Owner = (IntPtr)addInInstance.ExcelAppInstance.Hwnd;
+                        }
+                    }
+                    catch { }
+
+                    bool? dialogResult = editorDlg.ShowDialog();
+                    if (dialogResult != true)
+                    {
+                        TranslationSummary = "⏹️ Đã hủy chèn kết quả dịch.";
+                        return;
                     }
                 }
 
