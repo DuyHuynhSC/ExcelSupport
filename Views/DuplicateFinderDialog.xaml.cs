@@ -54,7 +54,6 @@ namespace ExcelSupport.Views
                 }
 
                 _currentInstance = new DuplicateFinderDialog(isDarkTheme);
-                _currentInstance.Closed += (s, e) => _currentInstance = null;
 
                 try
                 {
@@ -66,7 +65,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                _currentInstance.Show();
+                _currentInstance.ShowDialog();
+                _currentInstance = null;
             }
             catch (Exception ex)
             {

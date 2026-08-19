@@ -8,272 +8,303 @@ namespace ExcelSupport.Services
     public static class VietnameseToKatakanaConverter
     {
         // Bảng ánh xạ các âm tiết / tên tiếng Việt thông dụng sang Katakana
-        private static readonly Dictionary<string, string> SyllableMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            // Họ phổ biến
-            { "nguyen", "グエン" },
-            { "tran", "チャン" },
-            { "le", "レ" },
-            { "pham", "ファム" },
-            { "hoang", "ホアン" },
-            { "huynh", "フイン" },
-            { "phan", "ファン" },
-            { "vu", "ヴー" },
-            { "vo", "ヴォ" },
-            { "dang", "ダン" },
-            { "bui", "ブイ" },
-            { "do", "ドー" },
-            { "ho", "ホー" },
-            { "ngo", "ゴー" },
-            { "duong", "ズオン" },
-            { "ly", "リー" },
-            { "dinh", "ディン" },
-            { "doan", "ドアン" },
-            { "truong", "チュオン" },
-            { "luong", "ルオン" },
-            { "tong", "トン" },
-            { "trinh", "チン" },
-            { "dao", "ダオ" },
-            { "ha", "ハー" },
-            { "mai", "マイ" },
-            { "cao", "カオ" },
-            { "ta", "ター" },
-            { "thai", "タイ" },
-            { "chu", "チュー" },
-            { "luu", "ルー" },
+        private static readonly Dictionary<string, string> SyllableMap;
+        private static readonly Dictionary<string, string> ConsonantMap;
+        private static readonly Dictionary<string, string> VowelMap;
 
-            // Tên đệm & Tên chính phổ biến
-            { "van", "ヴァン" },
-            { "thi", "ティ" },
-            { "anh", "アイン" },
-            { "an", "アン" },
-            { "bac", "バック" },
-            { "bach", "バック" },
-            { "bao", "バオ" },
-            { "bich", "ビック" },
-            { "binh", "ビン" },
-            { "cam", "カム" },
-            { "canh", "カイン" },
-            { "chau", "チャウ" },
-            { "chi", "チー" },
-            { "chien", "チエン" },
-            { "chinh", "チン" },
-            { "chung", "チュン" },
-            { "cong", "コン" },
-            { "cuc", "クック" },
-            { "cuong", "クオン" },
-            { "dai", "ダイ" },
-            { "dan", "ダン" },
-            { "dat", "ダット" },
-            { "dien", "ディエン" },
-            { "diep", "ディエップ" },
-            { "diep ", "ディエップ" },
-            { "dieu", "ディエウ" },
-            { "doanh", "ドアン" },
-            { "dong", "ドン" },
-            { "duc", "ドゥック" },
-            { "dung", "ズン" },
-            { "duy", "ズイ" },
-            { "duyen", "ズエン" },
-            { "giang", "ザン" },
-            { "giao", "ザオ" },
-            { "hai", "ハイ" },
-            { "han", "ハン" },
-            { "hanh", "ハイン" },
-            { "hao", "ハオ" },
-            { "hau", "ハウ" },
-            { "hien", "ヒエン" },
-            { "hiep", "ヒエップ" },
-            { "hieu", "ヒエウ" },
-            { "hoa", "ホア" },
-            { "hoai", "ホアイ" },
-            { "hoan", "ホアン" },
-            { "hong", "ホン" },
-            { "hop", "ホップ" },
-            { "hue", "フエ" },
-            { "hung", "フン" },
-            { "huong", "フオン" },
-            { "huu", "フー" },
-            { "huy", "フイ" },
-            { "huyen", "フエン" },
-            { "kha", "カー" },
-            { "khai", "カイ" },
-            { "khanh", "カイン" },
-            { "khiem", "キエム" },
-            { "khoa", "コア" },
-            { "khoi", "コイ" },
-            { "khuong", "クオン" },
-            { "kien", "キエン" },
-            { "kiet", "キエット" },
-            { "kieu", "キエウ" },
-            { "kim", "キム" },
-            { "ky", "キー" },
-            { "lam", "ラム" },
-            { "lan", "ラン" },
-            { "lanh", "ライン" },
-            { "lap", "ラップ" },
-            { "liem", "リエム" },
-            { "lien", "リエン" },
-            { "linh", "リン" },
-            { "loan", "ロアン" },
-            { "loc", "ロック" },
-            { "loi", "ロイ" },
-            { "long", "ロン" },
-            { "luan", "ルアン" },
-            { "luc", "ルック" },
-            { "luat", "ルアット" },
-            { "man", "マン" },
-            { "manh", "マイン" },
-            { "minh", "ミン" },
-            { "my", "ミー" },
-            { "nam", "ナム" },
-            { "nga", "ガー" },
-            { "ngan", "ガン" },
-            { "nghi", "ギー" },
-            { "nghia", "ギア" },
-            { "ngoc", "ゴック" },
-            { "ngu", "グー" },
-            { "nguyet", "グエット" },
-            { "nhan", "ニャン" },
-            { "nhat", "ニャット" },
-            { "nhi", "ニー" },
-            { "nhien", "ニエン" },
-            { "nhu", "ニュー" },
-            { "nhung", "ニュン" },
-            { "nu", "ヌー" },
-            { "oanh", "オアン" },
-            { "phat", "ファット" },
-            { "phi", "フィー" },
-            { "phong", "フォン" },
-            { "phu", "フー" },
-            { "phuc", "フック" },
-            { "phung", "フン" },
-            { "phuoc", "フオック" },
-            { "phuong", "フオン" },
-            { "quan", "クアン" },
-            { "quang", "クアン" },
-            { "quoc", "クオック" },
-            { "quy", "クイ" },
-            { "quyen", "クエン" },
-            { "quynh", "クイン" },
-            { "sang", "サン" },
-            { "sen", "セン" },
-            { "sinh", "シン" },
-            { "son", "ソン" },
-            { "tai", "タイ" },
-            { "tam", "タム" },
-            { "tan", "タン" },
-            { "tao", "タオ" },
-            { "thach", "タック" },
-            { "thang", "タン" },
-            { "thanh", "タイン" },
-            { "thao", "タオ" },
-            { "thieng", "ティエン" },
-            { "thien", "ティエン" },
-            { "thinh", "ティン" },
-            { "thoa", "トア" },
-            { "tho", "トー" },
-            { "thong", "トン" },
-            { "thu", "トゥー" },
-            { "thuan", "トゥアン" },
-            { "thuc", "トゥック" },
-            { "thung", "トゥン" },
-            { "thuy", "トゥイ" },
-            { "thuyen", "トゥエン" },
-            { "tien", "ティエン" },
-            { "tin", "ティン" },
-            { "toan", "トアン" },
-            { "tong", "トン" },
-            { "tra", "チャ" },
-            { "trang", "チャン" },
-            { "tri", "チー" },
-            { "trieu", "チエウ" },
-            { "truc", "チュック" },
-            { "trung", "チュン" },
-            { "tu", "トゥー" },
-            { "tuan", "トゥアン" },
-            { "tung", "トゥン" },
-            { "tuyet", "トゥエット" },
-            { "uyen", "ウエン" },
-            { "vinh", "ヴィン" },
-            { "vuong", "ヴオン" },
-            { "xuan", "スアン" },
-            { "yen", "イエン" }
-        };
-
-        // Bảng quy tắc phụ âm đầu (Consonants)
-        private static readonly Dictionary<string, string> ConsonantMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        static VietnameseToKatakanaConverter()
         {
-            { "ngh", "ギ" },
-            { "ng", "グ" },
-            { "nh", "ニ" },
-            { "th", "ト" },
-            { "tr", "チ" },
-            { "ch", "チ" },
-            { "ph", "フ" },
-            { "kh", "ク" },
-            { "gh", "グ" },
-            { "qu", "ク" },
-            { "gi", "ジ" },
-            { "b", "ブ" },
-            { "c", "ク" },
-            { "d", "ズ" },
-            { "đ", "ド" },
-            { "g", "グ" },
-            { "h", "ハ" },
-            { "k", "ク" },
-            { "l", "ル" },
-            { "m", "ム" },
-            { "n", "ヌ" },
-            { "p", "プ" },
-            { "r", "ラ" },
-            { "s", "サ" },
-            { "t", "ト" },
-            { "v", "ヴ" },
-            { "x", "サ" }
-        };
+            SyllableMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            ConsonantMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            VowelMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // Bảng nguyên âm (Vowels)
-        private static readonly Dictionary<string, string> VowelMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            try
+            {
+                // Họ phổ biến
+                AddSyllable("nguyen", "グエン");
+                AddSyllable("tran", "チャン");
+                AddSyllable("le", "レ");
+                AddSyllable("pham", "ファム");
+                AddSyllable("hoang", "ホアン");
+                AddSyllable("huynh", "フイン");
+                AddSyllable("phan", "ファン");
+                AddSyllable("vu", "ヴー");
+                AddSyllable("vo", "ヴォ");
+                AddSyllable("dang", "ダン");
+                AddSyllable("bui", "ブイ");
+                AddSyllable("do", "ドー");
+                AddSyllable("ho", "ホー");
+                AddSyllable("ngo", "ゴー");
+                AddSyllable("duong", "ズオン");
+                AddSyllable("ly", "リー");
+                AddSyllable("dinh", "ディン");
+                AddSyllable("doan", "ドアン");
+                AddSyllable("truong", "チュオン");
+                AddSyllable("luong", "ルオン");
+                AddSyllable("tong", "トン");
+                AddSyllable("trinh", "チン");
+                AddSyllable("dao", "ダオ");
+                AddSyllable("ha", "ハー");
+                AddSyllable("mai", "マイ");
+                AddSyllable("cao", "カオ");
+                AddSyllable("ta", "ター");
+                AddSyllable("thai", "タイ");
+                AddSyllable("chu", "チュー");
+                AddSyllable("luu", "ルー");
+
+                // Tên đệm & Tên chính phổ biến
+                AddSyllable("van", "ヴァン");
+                AddSyllable("thi", "ティ");
+                AddSyllable("anh", "アイン");
+                AddSyllable("an", "アン");
+                AddSyllable("bac", "バック");
+                AddSyllable("bach", "バック");
+                AddSyllable("bao", "バオ");
+                AddSyllable("bich", "ビック");
+                AddSyllable("binh", "ビン");
+                AddSyllable("cam", "カム");
+                AddSyllable("canh", "カイン");
+                AddSyllable("chau", "チャウ");
+                AddSyllable("chi", "チー");
+                AddSyllable("chien", "チエン");
+                AddSyllable("chinh", "チン");
+                AddSyllable("chung", "チュン");
+                AddSyllable("cong", "コン");
+                AddSyllable("cuc", "クック");
+                AddSyllable("cuong", "クオン");
+                AddSyllable("dai", "ダイ");
+                AddSyllable("dan", "ダン");
+                AddSyllable("dat", "ダット");
+                AddSyllable("dien", "ディエン");
+                AddSyllable("diep", "ディエップ");
+                AddSyllable("dieu", "ディエウ");
+                AddSyllable("doanh", "ドアン");
+                AddSyllable("dong", "ドン");
+                AddSyllable("duc", "ドゥック");
+                AddSyllable("dung", "ズン");
+                AddSyllable("duy", "ズイ");
+                AddSyllable("duyen", "ズエン");
+                AddSyllable("giang", "ザン");
+                AddSyllable("giao", "ザオ");
+                AddSyllable("hai", "ハイ");
+                AddSyllable("han", "ハン");
+                AddSyllable("hanh", "ハイン");
+                AddSyllable("hao", "ハオ");
+                AddSyllable("hau", "ハウ");
+                AddSyllable("hien", "ヒエン");
+                AddSyllable("hiep", "ヒエップ");
+                AddSyllable("hieu", "ヒエウ");
+                AddSyllable("hoa", "ホア");
+                AddSyllable("hoai", "ホアイ");
+                AddSyllable("hoan", "ホアン");
+                AddSyllable("hong", "ホン");
+                AddSyllable("hop", "ホップ");
+                AddSyllable("hue", "フエ");
+                AddSyllable("hung", "フン");
+                AddSyllable("huong", "フオン");
+                AddSyllable("huu", "フー");
+                AddSyllable("huy", "フイ");
+                AddSyllable("huyen", "フエン");
+                AddSyllable("kha", "カー");
+                AddSyllable("khai", "カイ");
+                AddSyllable("khanh", "カイン");
+                AddSyllable("khiem", "キエム");
+                AddSyllable("khoa", "コア");
+                AddSyllable("khoi", "コイ");
+                AddSyllable("khuong", "クオン");
+                AddSyllable("kien", "キエン");
+                AddSyllable("kiet", "キエット");
+                AddSyllable("kieu", "キエウ");
+                AddSyllable("kim", "キム");
+                AddSyllable("ky", "キー");
+                AddSyllable("lam", "ラム");
+                AddSyllable("lan", "ラン");
+                AddSyllable("lanh", "ライン");
+                AddSyllable("lap", "ラップ");
+                AddSyllable("liem", "リエム");
+                AddSyllable("lien", "リエン");
+                AddSyllable("linh", "リン");
+                AddSyllable("loan", "ロアン");
+                AddSyllable("loc", "ロック");
+                AddSyllable("loi", "ロイ");
+                AddSyllable("long", "ロン");
+                AddSyllable("luan", "ルアン");
+                AddSyllable("luc", "ルック");
+                AddSyllable("luat", "ルアット");
+                AddSyllable("man", "マン");
+                AddSyllable("manh", "マイン");
+                AddSyllable("minh", "ミン");
+                AddSyllable("my", "ミー");
+                AddSyllable("nam", "ナム");
+                AddSyllable("nga", "ガー");
+                AddSyllable("ngan", "ガン");
+                AddSyllable("nghi", "ギー");
+                AddSyllable("nghia", "ギア");
+                AddSyllable("ngoc", "ゴック");
+                AddSyllable("ngu", "グー");
+                AddSyllable("nguyet", "グエット");
+                AddSyllable("nhan", "ニャン");
+                AddSyllable("nhat", "ニャット");
+                AddSyllable("nhi", "ニー");
+                AddSyllable("nhien", "ニエン");
+                AddSyllable("nhu", "ニュー");
+                AddSyllable("nhung", "ニュン");
+                AddSyllable("nu", "ヌー");
+                AddSyllable("oanh", "オアン");
+                AddSyllable("phat", "ファット");
+                AddSyllable("phi", "フィー");
+                AddSyllable("phong", "フォン");
+                AddSyllable("phu", "フー");
+                AddSyllable("phuc", "フック");
+                AddSyllable("phung", "フン");
+                AddSyllable("phuoc", "フオック");
+                AddSyllable("phuong", "フオン");
+                AddSyllable("quan", "クアン");
+                AddSyllable("quang", "クアン");
+                AddSyllable("quoc", "クオック");
+                AddSyllable("quy", "クイ");
+                AddSyllable("quyen", "クエン");
+                AddSyllable("quynh", "クイン");
+                AddSyllable("sang", "サン");
+                AddSyllable("sen", "セン");
+                AddSyllable("sinh", "シン");
+                AddSyllable("son", "ソン");
+                AddSyllable("tai", "タイ");
+                AddSyllable("tam", "タム");
+                AddSyllable("tan", "タン");
+                AddSyllable("tao", "タオ");
+                AddSyllable("thach", "タック");
+                AddSyllable("thang", "タン");
+                AddSyllable("thanh", "タイン");
+                AddSyllable("thao", "タオ");
+                AddSyllable("thieng", "ティエン");
+                AddSyllable("thien", "ティエン");
+                AddSyllable("thinh", "ティン");
+                AddSyllable("thoa", "トア");
+                AddSyllable("tho", "トー");
+                AddSyllable("thong", "トン");
+                AddSyllable("thu", "トゥー");
+                AddSyllable("thuan", "トゥアン");
+                AddSyllable("thuc", "トゥック");
+                AddSyllable("thung", "トゥン");
+                AddSyllable("thuy", "トゥイ");
+                AddSyllable("thuyen", "トゥエン");
+                AddSyllable("tien", "ティエン");
+                AddSyllable("tin", "ティン");
+                AddSyllable("toan", "トアン");
+                AddSyllable("tra", "チャ");
+                AddSyllable("trang", "チャン");
+                AddSyllable("tri", "チー");
+                AddSyllable("trieu", "チエウ");
+                AddSyllable("truc", "チュック");
+                AddSyllable("trung", "チュン");
+                AddSyllable("tu", "トゥー");
+                AddSyllable("tuan", "トゥアン");
+                AddSyllable("tung", "トゥン");
+                AddSyllable("tuyet", "トゥエット");
+                AddSyllable("uyen", "ウエン");
+                AddSyllable("vinh", "ヴィン");
+                AddSyllable("vuong", "ヴオン");
+                AddSyllable("xuan", "スアン");
+                AddSyllable("yen", "イエン");
+
+                // Phụ âm đầu
+                AddConsonant("ngh", "ギ");
+                AddConsonant("ng", "グ");
+                AddConsonant("nh", "ニ");
+                AddConsonant("th", "ト");
+                AddConsonant("tr", "チ");
+                AddConsonant("ch", "チ");
+                AddConsonant("ph", "フ");
+                AddConsonant("kh", "ク");
+                AddConsonant("gh", "グ");
+                AddConsonant("qu", "ク");
+                AddConsonant("gi", "ジ");
+                AddConsonant("b", "ブ");
+                AddConsonant("c", "ク");
+                AddConsonant("d", "ズ");
+                AddConsonant("đ", "ド");
+                AddConsonant("g", "グ");
+                AddConsonant("h", "ハ");
+                AddConsonant("k", "ク");
+                AddConsonant("l", "ル");
+                AddConsonant("m", "ム");
+                AddConsonant("n", "ヌ");
+                AddConsonant("p", "プ");
+                AddConsonant("r", "ラ");
+                AddConsonant("s", "サ");
+                AddConsonant("t", "ト");
+                AddConsonant("v", "ヴ");
+                AddConsonant("x", "サ");
+
+                // Nguyên âm
+                AddVowel("a", "ア");
+                AddVowel("ai", "アイ");
+                AddVowel("ao", "アオ");
+                AddVowel("au", "アウ");
+                AddVowel("ay", "アイ");
+                AddVowel("e", "エ");
+                AddVowel("eo", "エオ");
+                AddVowel("i", "イ");
+                AddVowel("ia", "イア");
+                AddVowel("ieu", "イエウ");
+                AddVowel("o", "オ");
+                AddVowel("oa", "オア");
+                AddVowel("oai", "オアイ");
+                AddVowel("oay", "オアイ");
+                AddVowel("oe", "オエ");
+                AddVowel("oi", "オイ");
+                AddVowel("oo", "オー");
+                AddVowel("u", "ウ");
+                AddVowel("ua", "ウア");
+                AddVowel("uay", "ウアイ");
+                AddVowel("ue", "ウエ");
+                AddVowel("ui", "ウイ");
+                AddVowel("uo", "ウオ");
+                AddVowel("uoi", "ウオイ");
+                AddVowel("uou", "ウオウ");
+                AddVowel("uy", "ウイ");
+                AddVowel("uye", "ウエ");
+                AddVowel("uyen", "ウエン");
+                AddVowel("uyu", "ウイウ");
+                AddVowel("y", "イ");
+                AddVowel("ye", "イエ");
+                AddVowel("yeu", "イエウ");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"VietnameseToKatakanaConverter static init error: {ex.Message}");
+            }
+        }
+
+        private static void AddSyllable(string key, string val)
         {
-            { "a", "ア" },
-            { "ai", "アイ" },
-            { "ao", "アオ" },
-            { "au", "アウ" },
-            { "ay", "アイ" },
-            { "e", "エ" },
-            { "eo", "エオ" },
-            { "i", "イ" },
-            { "ia", "イア" },
-            { "ieu", "イエウ" },
-            { "o", "オ" },
-            { "oa", "オア" },
-            { "oai", "オアイ" },
-            { "oay", "オアイ" },
-            { "oe", "オエ" },
-            { "oi", "オイ" },
-            { "oo", "オー" },
-            { "u", "ウ" },
-            { "ua", "ウア" },
-            { "uay", "ウアイ" },
-            { "ue", "ウエ" },
-            { "ui", "ウイ" },
-            { "uo", "ウオ" },
-            { "uoi", "ウオイ" },
-            { "uou", "ウオウ" },
-            { "uy", "ウイ" },
-            { "uye", "ウエ" },
-            { "uyen", "ウエン" },
-            { "uyu", "ウイウ" },
-            { "y", "イ" },
-            { "ye", "イエ" },
-            { "yeu", "イエウ" }
-        };
+            if (!string.IsNullOrWhiteSpace(key))
+            {
+                SyllableMap[key.Trim().ToLowerInvariant()] = val;
+            }
+        }
+
+        private static void AddConsonant(string key, string val)
+        {
+            if (!string.IsNullOrWhiteSpace(key))
+            {
+                ConsonantMap[key.Trim().ToLowerInvariant()] = val;
+            }
+        }
+
+        private static void AddVowel(string key, string val)
+        {
+            if (!string.IsNullOrWhiteSpace(key))
+            {
+                VowelMap[key.Trim().ToLowerInvariant()] = val;
+            }
+        }
 
         /// <summary>
         /// Chuyển đổi một tên hoặc chuỗi tiếng Việt thành Katakana
         /// </summary>
-        /// <param name="vietnameseText">Chuỗi tiếng Việt (vd: Nguyễn Văn A)</param>
+        /// <param name="vietnameseText">Chuỗi tiếng Việt (vd: Nguyễn Văn Ánh)</param>
         /// <param name="useMiddleDot">Sử dụng dấu chấm giữa (・) hay dấu cách</param>
         public static string ConvertToKatakana(string? vietnameseText, bool useMiddleDot = true)
         {

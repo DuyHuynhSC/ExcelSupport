@@ -122,6 +122,8 @@ namespace ExcelSupport
                 _excelApp.SheetActivate += ExcelApp_SheetActivate;
                 _excelApp.SheetDeactivate += ExcelApp_SheetDeactivate;
                 _excelApp.SheetChange += ExcelApp_SheetChange;
+                _excelApp.SheetSelectionChange += ExcelApp_SheetSelectionChange;
+                _excelApp.WorkbookBeforeSave += ExcelApp_WorkbookBeforeSave;
 
                 _excelApp.WindowActivate += ExcelApp_WindowActivate;
             }
@@ -149,6 +151,8 @@ namespace ExcelSupport
                 _excelApp.SheetActivate -= ExcelApp_SheetActivate;
                 _excelApp.SheetDeactivate -= ExcelApp_SheetDeactivate;
                 _excelApp.SheetChange -= ExcelApp_SheetChange;
+                _excelApp.SheetSelectionChange -= ExcelApp_SheetSelectionChange;
+                _excelApp.WorkbookBeforeSave -= ExcelApp_WorkbookBeforeSave;
 
                 _excelApp.WindowActivate -= ExcelApp_WindowActivate;
             }
@@ -157,12 +161,28 @@ namespace ExcelSupport
 
         private void ExcelApp_NewWorkbook(Workbook Wb) => QueueRefresh();
         private void ExcelApp_WorkbookOpen(Workbook Wb) => QueueRefresh();
-        private void ExcelApp_WorkbookBeforeClose(Workbook Wb, ref bool Cancel) => QueueRefresh();
+        private void ExcelApp_WorkbookBeforeClose(Workbook Wb, ref bool Cancel)
+        {
+            Services.GridRulerService.OnWorkbookBeforeSave(Wb);
+            QueueRefresh();
+        }
+        private void ExcelApp_WorkbookBeforeSave(Workbook Wb, bool SaveAsUI, ref bool Cancel)
+        {
+            Services.GridRulerService.OnWorkbookBeforeSave(Wb);
+        }
         private void ExcelApp_WorkbookAfterSave(Workbook Wb, bool Success) => QueueRefresh();
         private void ExcelApp_WorkbookNewSheet(Workbook Wb, object Sh) => QueueRefresh();
-        private void ExcelApp_SheetActivate(object Sh) => QueueRefresh();
+        private void ExcelApp_SheetActivate(object Sh)
+        {
+            QueueRefresh();
+            Services.GridRulerService.OnSheetActivate(Sh as _Worksheet);
+        }
         private void ExcelApp_SheetDeactivate(object Sh) => QueueRefresh();
         private void ExcelApp_SheetChange(object Sh, Range Target) => QueueActiveSelectionSync();
+        private void ExcelApp_SheetSelectionChange(object Sh, Range Target)
+        {
+            Services.GridRulerService.OnSheetSelectionChange(Sh as _Worksheet, Target);
+        }
         private void ExcelApp_WorkbookActivate(Workbook Wb) => QueueRefresh();
         private void ExcelApp_WorkbookDeactivate(Workbook Wb) => QueueRefresh();
         private void ExcelApp_WindowActivate(Workbook Wb, Window Wn)
@@ -393,6 +413,132 @@ namespace ExcelSupport
             }));
         }
 
+        #region Win32 Window Activation APIs (Multi-Monitor & Taskbar Support)
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr ProcessId);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+        [DllImport("kernel32.dll")]
+        private static extern uint GetCurrentThreadId();
+
+        [DllImport("user32.dll")]
+        private static extern void SwitchToThisWindow(IntPtr hWnd, bool fAltTab);
+
+        private const int SW_RESTORE = 9;
+        private const int SW_SHOW = 5;
+
+        private static void BringWindowToFront(IntPtr hWnd)
+        {
+            if (hWnd == IntPtr.Zero) return;
+
+            try
+            {
+                if (IsIconic(hWnd))
+                {
+                    ShowWindow(hWnd, SW_RESTORE);
+                }
+                else
+                {
+                    ShowWindow(hWnd, SW_SHOW);
+                }
+
+                IntPtr foregroundHwnd = GetForegroundWindow();
+                uint foregroundThread = GetWindowThreadProcessId(foregroundHwnd, IntPtr.Zero);
+                uint currentThread = GetCurrentThreadId();
+
+                if (foregroundThread != currentThread && foregroundThread != 0)
+                {
+                    AttachThreadInput(currentThread, foregroundThread, true);
+                    SetForegroundWindow(hWnd);
+                    AttachThreadInput(currentThread, foregroundThread, false);
+                }
+                else
+                {
+                    SetForegroundWindow(hWnd);
+                }
+
+                SwitchToThisWindow(hWnd, true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"BringWindowToFront error: {ex.Message}");
+            }
+        }
+
+        private void ActivateWorkbookAndWindow(Workbook? targetWb)
+        {
+            if (targetWb == null) return;
+
+            try
+            {
+                targetWb.Activate();
+
+                // Kích hoạt cửa sổ SDI riêng biệt của Workbook (đặc biệt hữu dụng khi dùng nhiều màn hình hoặc cửa sổ bị minimize vào taskbar)
+                Windows? windows = null;
+                try
+                {
+                    windows = targetWb.Windows;
+                    if (windows != null && windows.Count > 0)
+                    {
+                        Window? win = null;
+                        try
+                        {
+                            win = windows[1];
+                            if (win != null)
+                            {
+                                win.Visible = true;
+                                if (win.WindowState == XlWindowState.xlMinimized)
+                                {
+                                    win.WindowState = XlWindowState.xlNormal;
+                                }
+                                win.Activate();
+
+                                IntPtr winHwnd = (IntPtr)win.Hwnd;
+                                if (winHwnd != IntPtr.Zero)
+                                {
+                                    BringWindowToFront(winHwnd);
+                                }
+                            }
+                        }
+                        catch { }
+                        finally
+                        {
+                            if (win != null) Marshal.ReleaseComObject(win);
+                        }
+                    }
+                }
+                catch { }
+                finally
+                {
+                    if (windows != null) Marshal.ReleaseComObject(windows);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ActivateWorkbookAndWindow error: {ex.Message}");
+            }
+        }
+
+        #endregion
+
         private void OnRequestActivateWorkbook(string workbookName)
         {
             if (_excelApp == null) return;
@@ -407,7 +553,7 @@ namespace ExcelSupport
                 }
                 if (targetWb != null)
                 {
-                    targetWb.Activate();
+                    ActivateWorkbookAndWindow(targetWb);
                 }
             }
             catch (Exception ex)
@@ -435,7 +581,8 @@ namespace ExcelSupport
 
                 if (targetWb != null)
                 {
-                    targetWb.Activate();
+                    ActivateWorkbookAndWindow(targetWb);
+
                     dynamic? ws = null;
                     try { ws = targetWb.Worksheets[sheetName]; } catch { }
                     if (ws == null)

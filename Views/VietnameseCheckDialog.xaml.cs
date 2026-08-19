@@ -46,28 +46,35 @@ namespace ExcelSupport.Views
 
         internal static void ShowWindow(bool isDarkTheme = false)
         {
-            if (_currentInstance != null && _currentInstance.IsLoaded)
-            {
-                _currentInstance.IsDarkTheme = isDarkTheme;
-                _currentInstance.Activate();
-                _currentInstance.ExecuteScan();
-                return;
-            }
-
-            _currentInstance = new VietnameseCheckDialog(isDarkTheme);
-            _currentInstance.Closed += (s, e) => _currentInstance = null;
-
             try
             {
-                var addIn = AddInEvents.Instance;
-                if (addIn?.ExcelAppInstance != null)
+                if (_currentInstance != null && _currentInstance.IsLoaded)
                 {
-                    new System.Windows.Interop.WindowInteropHelper(_currentInstance).Owner = (IntPtr)addIn.ExcelAppInstance.Hwnd;
+                    _currentInstance.IsDarkTheme = isDarkTheme;
+                    _currentInstance.Activate();
+                    return;
                 }
-            }
-            catch { }
 
-            _currentInstance.Show();
+                _currentInstance = new VietnameseCheckDialog(isDarkTheme);
+
+                try
+                {
+                    var addIn = AddInEvents.Instance;
+                    if (addIn?.ExcelAppInstance != null)
+                    {
+                        new System.Windows.Interop.WindowInteropHelper(_currentInstance).Owner = (IntPtr)addIn.ExcelAppInstance.Hwnd;
+                    }
+                }
+                catch { }
+
+                _currentInstance.ShowDialog();
+                _currentInstance = null;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Lỗi mở màn hình Kiểm tra tiếng Việt:\n{ex.Message}", "Lỗi Khởi Tạo",
+                                   MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private bool _isInitialized = false;

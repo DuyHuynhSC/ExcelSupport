@@ -48,31 +48,39 @@ namespace ExcelSupport.Views
 
         internal static void ShowWindow(string? defaultWb1Name = null, bool isDarkTheme = false)
         {
-            if (_currentInstance != null && _currentInstance.IsLoaded)
-            {
-                _currentInstance.IsDarkTheme = isDarkTheme;
-                if (!string.IsNullOrEmpty(defaultWb1Name) && _currentInstance.CboWorkbook1.Items.Contains(defaultWb1Name))
-                {
-                    _currentInstance.CboWorkbook1.SelectedItem = defaultWb1Name;
-                }
-                _currentInstance.Activate();
-                return;
-            }
-
-            _currentInstance = new WorkbookCompareDialog(defaultWb1Name, isDarkTheme);
-            _currentInstance.Closed += (s, e) => _currentInstance = null;
-
             try
             {
-                var addIn = AddInEvents.Instance;
-                if (addIn?.ExcelAppInstance != null)
+                if (_currentInstance != null && _currentInstance.IsLoaded)
                 {
-                    new System.Windows.Interop.WindowInteropHelper(_currentInstance).Owner = (IntPtr)addIn.ExcelAppInstance.Hwnd;
+                    _currentInstance.IsDarkTheme = isDarkTheme;
+                    if (!string.IsNullOrEmpty(defaultWb1Name))
+                    {
+                        _currentInstance.CboWorkbook1.SelectedItem = defaultWb1Name;
+                    }
+                    _currentInstance.Activate();
+                    return;
                 }
-            }
-            catch { }
 
-            _currentInstance.Show();
+                _currentInstance = new WorkbookCompareDialog(defaultWb1Name, isDarkTheme);
+
+                try
+                {
+                    var addIn = AddInEvents.Instance;
+                    if (addIn?.ExcelAppInstance != null)
+                    {
+                        new System.Windows.Interop.WindowInteropHelper(_currentInstance).Owner = (IntPtr)addIn.ExcelAppInstance.Hwnd;
+                    }
+                }
+                catch { }
+
+                _currentInstance.ShowDialog();
+                _currentInstance = null;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Lỗi mở màn hình So sánh Workbook:\n{ex.Message}", "Lỗi Khởi Tạo",
+                                   MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public WorkbookCompareDialog(string? defaultWb1Name = null, bool isDarkTheme = false)

@@ -114,10 +114,26 @@ namespace ExcelSupport.Ribbon
                   screentip='Kiểm tra &amp; Định vị Tiếng Việt'
                   supertip='Quét toàn bộ ô, tên Sheet và ghi chú để tìm và nhảy tới các vị trí chứa tiếng Việt có dấu.'
                   onAction='OnCheckVietnamese' />
+
+          <button id='btnExternalLinks'
+                  label='Quản Lý Link Ngoài'
+                  size='large'
+                  image='link_icon'
+                  screentip='Kiểm Tra &amp; Xử Lý Liên Kết Ngoài (Break Link)'
+                  supertip='Quét và xử lý toàn bộ các công thức liên kết tới file ngoài không tồn tại, hỗ trợ bẻ gãy link, đóng băng giá trị, đổi file nguồn.'
+                  onAction='OnExternalLinksManager' />
         </group>
 
         <!-- Group 4: Xử Lý Dữ Liệu -->
         <group id='grpDataTools' label='Xử Lý Dữ Liệu'>
+          <button id='btnAdvancedFilter'
+                  label='Bộ Lọc Nâng Cao'
+                  size='large'
+                  image='filter_icon'
+                  screentip='Bộ Lọc Dữ Liệu Nâng Cao (Smart Advanced Filter)'
+                  supertip='Lọc đa điều kiện (AND/OR), lọc danh sách paste từ clipboard, biểu thức số phức tạp, tô màu và trích xuất dữ liệu.'
+                  onAction='OnAdvancedFilter' />
+
           <button id='btnDataCleaner'
                   label='Dọn Dẹp Dữ Liệu'
                   size='large'
@@ -133,6 +149,56 @@ namespace ExcelSupport.Ribbon
                   screentip='Tìm &amp; Xử Lý Dữ Liệu Trùng Lặp Nâng Cao'
                   supertip='Tìm kiếm và gom nhóm các dòng trùng lặp theo 1 hoặc nhiều cột khóa, so khớp chính xác/mờ, tô màu và tách sheet.'
                   onAction='OnDuplicateFinder' />
+
+          <button id='btnBatchBlankCleaner'
+                  label='Xóa Dòng Trống'
+                  size='large'
+                  image='blank_cleaner_icon'
+                  screentip='Xóa Dòng &amp; Cột Trống Hàng Loạt'
+                  supertip='Quét và xóa/ẩn các dòng hoặc cột hoàn toàn trống (hoặc trống theo cột khóa) trên 1 hoặc nhiều Sheet/Workbook.'
+                  onAction='OnBatchBlankCleaner' />
+
+          <button id='btnSafeMergeConsolidate'
+                  label='Gộp Ô &amp; Sheet'
+                  size='large'
+                  image='merge_icon'
+                  screentip='Gộp Ô &amp; Gộp Nhiều Sheet Bảo Toàn Dữ Liệu'
+                  supertip='Gộp các ô không mất dữ liệu với dấu phân cách tùy chọn, gom dữ liệu từ nhiều Sheet thành 1 Sheet Tổng Hợp.'
+                  onAction='OnSafeMergeConsolidate' />
+        </group>
+
+        <!-- Group 5: Thước Ngắm & Hiển Thị -->
+        <group id='grpViewTools' label='Thước Ngắm &amp; Hiển Thị'>
+          <toggleButton id='btnToggleGridRuler'
+                        label='Thước Ngắm Dòng/Cột'
+                        size='large'
+                        image='ruler_icon'
+                        screentip='Thước Ngắm Giao Điểm Dòng &amp; Cột (Grid Ruler / Crosshair)'
+                        supertip='Tự động tạo dải màu bán trong suốt làm nổi bật dòng và cột của ô đang chọn, giúp chống hoa mắt khi xem bảng tính lớn.'
+                        onAction='OnToggleGridRuler'
+                        getPressed='GetGridRulerPressed' />
+
+          <menu id='mnuGridRulerOptions'
+                label='Tùy Chỉnh Thước'
+                size='large'
+                image='ruler_settings_icon'
+                screentip='Đổi Màu Sắc &amp; Chế Độ Thước Ngắm'
+                supertip='Tùy chỉnh màu sắc nổi bật và chế độ hiển thị (Cả dòng &amp; cột, Chỉ dòng, Chỉ cột)'>
+            
+            <menuSeparator id='sepRulerColor' title='Màu Sắc Thước Ngắm' />
+            <button id='btnColorYellow' label='Vàng Dịu' image='color_yellow_icon' onAction='OnSelectRulerColor' tag='Yellow' />
+            <button id='btnColorSky' label='Xanh Biển Lơ' image='color_sky_icon' onAction='OnSelectRulerColor' tag='Sky' />
+            <button id='btnColorEmerald' label='Xanh Ngọc Lục' image='color_emerald_icon' onAction='OnSelectRulerColor' tag='Emerald' />
+            <button id='btnColorOrange' label='Cam Đào' image='color_orange_icon' onAction='OnSelectRulerColor' tag='Orange' />
+            <button id='btnColorPurple' label='Tím Lavender' image='color_purple_icon' onAction='OnSelectRulerColor' tag='Purple' />
+            <button id='btnColorPink' label='Hồng Phấn' image='color_pink_icon' onAction='OnSelectRulerColor' tag='Pink' />
+            <button id='btnColorGray' label='Xám Thanh Lịch' image='color_gray_icon' onAction='OnSelectRulerColor' tag='Gray' />
+
+            <menuSeparator id='sepRulerMode' title='Chế Độ Thước' />
+            <button id='btnModeBoth' label='Cả Dòng &amp;&amp; Cột (Chữ Thập)' image='mode_both_icon' onAction='OnSelectRulerMode' tag='Both' />
+            <button id='btnModeRow' label='Chỉ Dòng (Row Only)' image='mode_row_icon' onAction='OnSelectRulerMode' tag='Row' />
+            <button id='btnModeCol' label='Chỉ Cột (Column Only)' image='mode_col_icon' onAction='OnSelectRulerMode' tag='Col' />
+          </menu>
         </group>
 
       </tab>
@@ -158,6 +224,70 @@ namespace ExcelSupport.Ribbon
             if (imageId == "duplicate_icon")
             {
                 return CreateDuplicateBitmap();
+            }
+            if (imageId == "link_icon")
+            {
+                return CreateLinkBitmap();
+            }
+            if (imageId == "filter_icon")
+            {
+                return CreateFilterBitmap();
+            }
+            if (imageId == "blank_cleaner_icon")
+            {
+                return CreateBlankCleanerBitmap();
+            }
+            if (imageId == "merge_icon")
+            {
+                return CreateMergeBitmap();
+            }
+            if (imageId == "ruler_icon")
+            {
+                return CreateRulerBitmap();
+            }
+            if (imageId == "ruler_settings_icon")
+            {
+                return CreateRulerSettingsBitmap();
+            }
+            if (imageId == "color_yellow_icon")
+            {
+                return CreateColorSwatchBitmap(Color.FromArgb(253, 224, 71), Color.FromArgb(234, 179, 8));
+            }
+            if (imageId == "color_sky_icon")
+            {
+                return CreateColorSwatchBitmap(Color.FromArgb(56, 189, 248), Color.FromArgb(2, 132, 199));
+            }
+            if (imageId == "color_emerald_icon")
+            {
+                return CreateColorSwatchBitmap(Color.FromArgb(74, 222, 128), Color.FromArgb(22, 163, 74));
+            }
+            if (imageId == "color_orange_icon")
+            {
+                return CreateColorSwatchBitmap(Color.FromArgb(251, 146, 60), Color.FromArgb(234, 88, 12));
+            }
+            if (imageId == "color_purple_icon")
+            {
+                return CreateColorSwatchBitmap(Color.FromArgb(192, 132, 252), Color.FromArgb(147, 51, 234));
+            }
+            if (imageId == "color_pink_icon")
+            {
+                return CreateColorSwatchBitmap(Color.FromArgb(244, 114, 182), Color.FromArgb(219, 39, 119));
+            }
+            if (imageId == "color_gray_icon")
+            {
+                return CreateColorSwatchBitmap(Color.FromArgb(148, 163, 184), Color.FromArgb(100, 116, 139));
+            }
+            if (imageId == "mode_both_icon")
+            {
+                return CreateModeIcon("Both");
+            }
+            if (imageId == "mode_row_icon")
+            {
+                return CreateModeIcon("Row");
+            }
+            if (imageId == "mode_col_icon")
+            {
+                return CreateModeIcon("Col");
             }
             return base.LoadImage(imageId);
         }
@@ -431,6 +561,16 @@ namespace ExcelSupport.Ribbon
             Views.VietnameseCheckDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
+        public void OnExternalLinksManager(IRibbonControl control)
+        {
+            Views.ExternalLinksManagerDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnAdvancedFilter(IRibbonControl control)
+        {
+            Views.AdvancedFilterDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
         public void OnDataCleaner(IRibbonControl control)
         {
             Views.DataCleaningWizardDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
@@ -439,6 +579,56 @@ namespace ExcelSupport.Ribbon
         public void OnDuplicateFinder(IRibbonControl control)
         {
             Views.DuplicateFinderDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnBatchBlankCleaner(IRibbonControl control)
+        {
+            Views.BatchCleanerAndMergeDialog.ShowWindow(0, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnSafeMergeConsolidate(IRibbonControl control)
+        {
+            Views.BatchCleanerAndMergeDialog.ShowWindow(1, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnToggleGridRuler(IRibbonControl control, bool pressed)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            Services.GridRulerService.Toggle(app);
+            _ribbon?.InvalidateControl("btnToggleGridRuler");
+        }
+
+        public bool GetGridRulerPressed(IRibbonControl control)
+        {
+            return Services.GridRulerService.IsEnabled;
+        }
+
+        public void OnSelectRulerColor(IRibbonControl control)
+        {
+            string colorKey = control.Tag ?? "Yellow";
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            Services.GridRulerService.SetColor(colorKey, app);
+            if (!Services.GridRulerService.IsEnabled)
+            {
+                Services.GridRulerService.Toggle(app);
+                _ribbon?.InvalidateControl("btnToggleGridRuler");
+            }
+        }
+
+        public void OnSelectRulerMode(IRibbonControl control)
+        {
+            string modeTag = control.Tag ?? "Both";
+            var mode = Services.GridRulerMode.BothRowAndCol;
+            if (modeTag == "Row") mode = Services.GridRulerMode.RowOnly;
+            else if (modeTag == "Col") mode = Services.GridRulerMode.ColOnly;
+
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            Services.GridRulerService.SetMode(mode, app);
+            if (!Services.GridRulerService.IsEnabled)
+            {
+                Services.GridRulerService.Toggle(app);
+                _ribbon?.InvalidateControl("btnToggleGridRuler");
+            }
         }
 
         private Bitmap CreateCleanerBitmap()
@@ -543,6 +733,401 @@ namespace ExcelSupport.Ribbon
                 {
                     g.DrawLine(equalPen, 21, 22, 26, 22);
                     g.DrawLine(equalPen, 21, 25, 26, 25);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateLinkBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient xanh dương đậm chuyên nghiệp
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(2, 132, 199), Color.FromArgb(3, 105, 161), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Viền ngoài
+                using (var pen = new Pen(Color.FromArgb(2, 84, 130), 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Vẽ 2 mắt xích liên kết (Chain Links) xoay nghiêng 45 độ
+                using (var linkPen = new Pen(Color.White, 2.5f))
+                {
+                    linkPen.StartCap = LineCap.Round;
+                    linkPen.EndCap = LineCap.Round;
+
+                    // Mắt xích 1: góc trên bên trái
+                    g.DrawArc(linkPen, 6, 8, 10, 10, 135, 180);
+                    g.DrawLine(linkPen, 9, 8, 14, 13);
+                    g.DrawLine(linkPen, 6, 12, 11, 17);
+
+                    // Mắt xích 2: góc dưới bên phải
+                    g.DrawArc(linkPen, 15, 13, 10, 10, -45, 180);
+                    g.DrawLine(linkPen, 20, 14, 15, 19);
+                    g.DrawLine(linkPen, 24, 18, 19, 23);
+                }
+
+                // Huy hiệu tia chớp cam (Fix/Break Link Badge)
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                using (var badgePen = new Pen(Color.White, 1.2f))
+                {
+                    g.FillEllipse(badgeBrush, 17, 17, 13, 13);
+                    g.DrawEllipse(badgePen, 17, 17, 13, 13);
+                }
+
+                // Biểu tượng tia sét bên trong huy hiệu
+                using (var boltBrush = new SolidBrush(Color.White))
+                {
+                    var pts = new PointF[]
+                    {
+                        new PointF(25f, 19f),
+                        new PointF(21f, 24f),
+                        new PointF(24f, 24f),
+                        new PointF(22f, 28f),
+                        new PointF(27f, 23f),
+                        new PointF(24f, 23f)
+                    };
+                    g.FillPolygon(boltBrush, pts);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateFilterBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient tím - chàm hiện đại
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(99, 102, 241), Color.FromArgb(67, 56, 202), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Viền ngoài
+                using (var pen = new Pen(Color.FromArgb(49, 46, 129), 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Vẽ Phễu lọc (Funnel) màu trắng
+                using (var funnelBrush = new SolidBrush(Color.White))
+                using (var funnelPen = new Pen(Color.White, 1.5f))
+                {
+                    funnelPen.LineJoin = LineJoin.Round;
+
+                    var funnelPts = new PointF[]
+                    {
+                        new PointF(6f, 7f),
+                        new PointF(26f, 7f),
+                        new PointF(18f, 17f),
+                        new PointF(18f, 24f),
+                        new PointF(14f, 26f),
+                        new PointF(14f, 17f)
+                    };
+                    g.FillPolygon(funnelBrush, funnelPts);
+                }
+
+                // Các vạch dòng dữ liệu bên trên phễu
+                using (var linePen = new Pen(Color.FromArgb(200, 255, 255, 255), 1.5f))
+                {
+                    g.DrawLine(linePen, 9, 10, 23, 10);
+                    g.DrawLine(linePen, 11, 13, 21, 13);
+                }
+
+                // Huy hiệu tia chớp cam / Smart Filter Badge
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                using (var badgePen = new Pen(Color.White, 1.2f))
+                {
+                    g.FillEllipse(badgeBrush, 17, 17, 13, 13);
+                    g.DrawEllipse(badgePen, 17, 17, 13, 13);
+                }
+
+                // Biểu tượng tia chớp
+                using (var boltBrush = new SolidBrush(Color.White))
+                {
+                    var pts = new PointF[]
+                    {
+                        new PointF(25f, 19f),
+                        new PointF(21f, 24f),
+                        new PointF(24f, 24f),
+                        new PointF(22f, 28f),
+                        new PointF(27f, 23f),
+                        new PointF(24f, 23f)
+                    };
+                    g.FillPolygon(boltBrush, pts);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateRulerBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient xanh ngọc (Teal Gradient)
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(13, 148, 136), Color.FromArgb(15, 118, 110), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Viền ngoài
+                using (var pen = new Pen(Color.FromArgb(17, 94, 89), 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Vẽ lưới ô bảng tính mờ
+                using (var gridPen = new Pen(Color.FromArgb(90, 255, 255, 255), 1f))
+                {
+                    g.DrawRectangle(gridPen, 5, 5, 22, 22);
+                    g.DrawLine(gridPen, 16, 5, 16, 27);
+                    g.DrawLine(gridPen, 5, 16, 27, 16);
+                }
+
+                // Dải thước ngang (Row Ruler) màu vàng bán trong suốt
+                using (var hBrush = new SolidBrush(Color.FromArgb(200, 253, 224, 71)))
+                {
+                    g.FillRectangle(hBrush, 4, 13, 24, 6);
+                }
+
+                // Dải thước dọc (Column Ruler) màu vàng bán trong suốt
+                using (var vBrush = new SolidBrush(Color.FromArgb(200, 253, 224, 71)))
+                {
+                    g.FillRectangle(vBrush, 13, 4, 6, 24);
+                }
+
+                // Ô giao điểm (Active Cell Focus) viền đỏ cam rực rỡ
+                using (var focusPen = new Pen(Color.FromArgb(239, 68, 68), 2f))
+                {
+                    g.DrawRectangle(focusPen, 13, 13, 6, 6);
+                }
+
+                // Điểm tâm chữ thập màu trắng
+                using (var centerBrush = new SolidBrush(Color.White))
+                {
+                    g.FillEllipse(centerBrush, 14, 14, 4, 4);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateRulerSettingsBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient tím - hồng cao cấp
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(168, 85, 247), Color.FromArgb(236, 72, 153), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                using (var pen = new Pen(Color.FromArgb(147, 51, 234), 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Bảng màu tròn (Color Palette Shape)
+                using (var paletteBrush = new SolidBrush(Color.White))
+                {
+                    g.FillEllipse(paletteBrush, 5, 5, 22, 22);
+                }
+
+                // Các chấm màu trên bảng màu
+                using (var yBrush = new SolidBrush(Color.FromArgb(234, 179, 8))) // Vàng
+                using (var bBrush = new SolidBrush(Color.FromArgb(2, 132, 199))) // Xanh dương
+                using (var gBrush = new SolidBrush(Color.FromArgb(22, 163, 74))) // Xanh lá
+                using (var rBrush = new SolidBrush(Color.FromArgb(239, 68, 68))) // Đỏ
+                {
+                    g.FillEllipse(yBrush, 9, 8, 5, 5);
+                    g.FillEllipse(bBrush, 17, 8, 5, 5);
+                    g.FillEllipse(gBrush, 9, 16, 5, 5);
+                    g.FillEllipse(rBrush, 17, 16, 5, 5);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateColorSwatchBitmap(Color fill, Color border)
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                using (var b = new SolidBrush(fill))
+                {
+                    g.FillEllipse(b, 1, 1, 13, 13);
+                }
+                using (var p = new Pen(border, 1.5f))
+                {
+                    g.DrawEllipse(p, 1, 1, 13, 13);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateModeIcon(string mode)
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                using (var bgBrush = new SolidBrush(Color.FromArgb(241, 245, 249)))
+                using (var borderPen = new Pen(Color.FromArgb(203, 213, 225), 1f))
+                {
+                    g.FillRectangle(bgBrush, 0, 0, 15, 15);
+                    g.DrawRectangle(borderPen, 0, 0, 15, 15);
+                }
+
+                using (var hBrush = new SolidBrush(Color.FromArgb(253, 224, 71)))
+                using (var linePen = new Pen(Color.FromArgb(234, 179, 8), 1.5f))
+                {
+                    if (mode == "Both" || mode == "Row")
+                    {
+                        g.FillRectangle(hBrush, 1, 6, 14, 4);
+                        g.DrawLine(linePen, 1, 8, 14, 8);
+                    }
+                    if (mode == "Both" || mode == "Col")
+                    {
+                        g.FillRectangle(hBrush, 6, 1, 4, 14);
+                        g.DrawLine(linePen, 8, 1, 8, 14);
+                    }
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateBlankCleanerBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient đỏ cam (Crimson - Red)
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(239, 68, 68), Color.FromArgb(185, 28, 28), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                using (var pen = new Pen(Color.FromArgb(153, 27, 27), 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // Dòng 1 (có dữ liệu - màu trắng)
+                using (var rowBrush = new SolidBrush(Color.White))
+                {
+                    g.FillRectangle(rowBrush, 6, 7, 20, 3);
+                }
+
+                // Dòng 2 (dòng trống bị đứt đoạn / mờ)
+                using (var dashPen = new Pen(Color.FromArgb(254, 202, 202), 1.5f))
+                {
+                    dashPen.DashPattern = new float[] { 2, 2 };
+                    g.DrawLine(dashPen, 6, 14, 26, 14);
+                }
+
+                // Dòng 3 (có dữ liệu - màu trắng)
+                using (var rowBrush = new SolidBrush(Color.White))
+                {
+                    g.FillRectangle(rowBrush, 6, 19, 20, 3);
+                }
+
+                // Huy hiệu dấu trừ tròn đỏ nổi bật
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(220, 38, 38)))
+                using (var badgePen = new Pen(Color.White, 1.2f))
+                {
+                    g.FillEllipse(badgeBrush, 17, 17, 13, 13);
+                    g.DrawEllipse(badgePen, 17, 17, 13, 13);
+                }
+
+                // Biểu tượng dấu trừ (-) màu trắng
+                using (var whitePen = new Pen(Color.White, 2f))
+                {
+                    g.DrawLine(whitePen, 20, 23, 27, 23);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateMergeBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient tím chàm (Indigo Gradient)
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(99, 102, 241), Color.FromArgb(67, 56, 202), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                using (var pen = new Pen(Color.FromArgb(55, 48, 163), 1f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // 2 ô ghép lại thành 1 ô lớn ở giữa
+                using (var cellBrush = new SolidBrush(Color.FromArgb(224, 231, 255)))
+                using (var cellPen = new Pen(Color.White, 1.2f))
+                {
+                    g.FillRectangle(cellBrush, 5, 8, 22, 16);
+                    g.DrawRectangle(cellPen, 5, 8, 22, 16);
+                }
+
+                // Hai mũi tên hướng vào nhau (--> <--) màu tím đậm
+                using (var arrowPen = new Pen(Color.FromArgb(79, 70, 229), 2f))
+                {
+                    // Mũi tên trái ->
+                    g.DrawLine(arrowPen, 8, 16, 13, 16);
+                    g.DrawLine(arrowPen, 11, 13, 14, 16);
+                    g.DrawLine(arrowPen, 11, 19, 14, 16);
+
+                    // Mũi tên phải <-
+                    g.DrawLine(arrowPen, 24, 16, 19, 16);
+                    g.DrawLine(arrowPen, 21, 13, 18, 16);
+                    g.DrawLine(arrowPen, 21, 19, 18, 16);
                 }
             }
             return bmp;

@@ -101,10 +101,24 @@
             </Style.Triggers>
         </Style>
 
+        <!-- DataGrid Row Style -->
+        <Style TargetType="{x:Type DataGridRow}">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- DataGrid Cell Style -->
         <Style x:Key="EditorCellStyle" TargetType="{x:Type DataGridCell}">
             <Setter Property="Padding" Value="8,6"/>
             <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type DataGridCell}">
@@ -121,6 +135,27 @@
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="#EFF6FF"/>
                     <Setter Property="Foreground" Value="#1E40AF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Editable TextBox Style inside DataGrid -->
+        <Style x:Key="EditorDataGridTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#2563EB"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -179,14 +214,77 @@
 
                 <!-- Badges -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="#E0F2FE" CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
-                        <TextBlock x:Name="TxtDirectionBadge" Text="🇯🇵 ➔ 🇻🇳 Nhật ➔ Việt" FontSize="11" FontWeight="SemiBold" Foreground="#0369A1"/>
+                    <Border CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#E0F2FE"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#0C4A6E"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock x:Name="TxtDirectionBadge" Text="🇯🇵 ➔ 🇻🇳 Nhật ➔ Việt" FontSize="11" FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0369A1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#38BDF8"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Border>
-                    <Border Background="#F1F5F9" CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
-                        <TextBlock x:Name="TxtCountBadge" Text="0 ô cần chèn" FontSize="11" FontWeight="SemiBold" Foreground="#475569"/>
+                    <Border CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock x:Name="TxtCountBadge" Text="0 ô cần chèn" FontSize="11" FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#475569"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#E2E8F0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Border>
-                    <Border Background="#DCFCE7" CornerRadius="12" Padding="10,4">
-                        <TextBlock x:Name="TxtTargetColBadge" Text="Ghi sang cột bên phải" FontSize="11" FontWeight="SemiBold" Foreground="#15803D"/>
+                    <Border CornerRadius="12" Padding="10,4">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#DCFCE7"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#064E3B"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock x:Name="TxtTargetColBadge" Text="Ghi sang cột bên phải" FontSize="11" FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#15803D"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#4ADE80"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Border>
                 </StackPanel>
             </Grid>
@@ -260,11 +358,13 @@
                 <DataGrid.Style>
                     <Style TargetType="DataGrid">
                         <Setter Property="Background" Value="#FFFFFF"/>
+                        <Setter Property="RowBackground" Value="#FFFFFF"/>
                         <Setter Property="BorderBrush" Value="#E2E8F0"/>
                         <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
                                 <Setter Property="Background" Value="#1E293B"/>
+                                <Setter Property="RowBackground" Value="#1E293B"/>
                                 <Setter Property="BorderBrush" Value="#334155"/>
                                 <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
                             </DataTrigger>
@@ -277,8 +377,29 @@
                     <DataGridTemplateColumn Header="Địa Chỉ Ô" Width="95" IsReadOnly="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Border Background="#F1F5F9" CornerRadius="4" Padding="6,3" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,2,0,0">
-                                    <TextBlock Text="{Binding Address}" FontWeight="Bold" FontSize="11.5" Foreground="#475569"/>
+                                <Border CornerRadius="4" Padding="6,3" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,2,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#F1F5F9"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Background" Value="#0F172A"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Address}" FontWeight="Bold" FontSize="11.5">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#475569"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </Border>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -288,7 +409,18 @@
                     <DataGridTemplateColumn Header="Văn Bản Gốc (Source)" Width="4*" IsReadOnly="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding OriginalText}" TextWrapping="Wrap" Margin="4,2" FontSize="12" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding OriginalText}" TextWrapping="Wrap" Margin="4,2" FontSize="12">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#475569"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#CBD5E1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -298,21 +430,8 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding TranslatedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                         TextWrapping="Wrap" AcceptsReturn="True"
-                                         Padding="6,4" FontSize="12.5" FontWeight="Medium"
-                                         BorderThickness="1" BorderBrush="#CBD5E1" Background="#FFFFFF">
-                                    <TextBox.Style>
-                                        <Style TargetType="TextBox">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                    <Setter Property="Background" Value="#0F172A"/>
-                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
-                                                    <Setter Property="BorderBrush" Value="#475569"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBox.Style>
-                                </TextBox>
+                                         Style="{StaticResource EditorDataGridTextBoxStyle}"
+                                         TextWrapping="Wrap" AcceptsReturn="True"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
