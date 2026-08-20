@@ -541,69 +541,72 @@ namespace ExcelSupport
 
         private void OnRequestActivateWorkbook(string workbookName)
         {
-            if (_excelApp == null) return;
+            if (_excelApp == null || string.IsNullOrEmpty(workbookName)) return;
 
-            try
+            ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
             {
-                dynamic app = _excelApp;
-                dynamic? targetWb = null;
-                if (!string.IsNullOrEmpty(workbookName))
+                try
                 {
+                    dynamic app = _excelApp;
+                    dynamic? targetWb = null;
                     try { targetWb = app.Workbooks[workbookName]; } catch { }
+                    if (targetWb != null)
+                    {
+                        ActivateWorkbookAndWindow(targetWb);
+                    }
                 }
-                if (targetWb != null)
+                catch (Exception ex)
                 {
-                    ActivateWorkbookAndWindow(targetWb);
+                    System.Diagnostics.Debug.WriteLine($"Activate Workbook error: {ex.Message}");
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Activate Workbook error: {ex.Message}");
-            }
+            });
         }
 
         private void OnRequestActivateWorksheet(string workbookName, string sheetName)
         {
-            if (_excelApp == null) return;
+            if (_excelApp == null || string.IsNullOrEmpty(sheetName)) return;
 
-            try
+            ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
             {
-                dynamic app = _excelApp;
-                dynamic? targetWb = null;
-                if (!string.IsNullOrEmpty(workbookName))
+                try
                 {
-                    try { targetWb = app.Workbooks[workbookName]; } catch { }
-                }
-                if (targetWb == null)
-                {
-                    try { targetWb = app.ActiveWorkbook; } catch { }
-                }
-
-                if (targetWb != null)
-                {
-                    ActivateWorkbookAndWindow(targetWb);
-
-                    dynamic? ws = null;
-                    try { ws = targetWb.Worksheets[sheetName]; } catch { }
-                    if (ws == null)
+                    dynamic app = _excelApp;
+                    dynamic? targetWb = null;
+                    if (!string.IsNullOrEmpty(workbookName))
                     {
-                        try { ws = targetWb.Sheets[sheetName]; } catch { }
+                        try { targetWb = app.Workbooks[workbookName]; } catch { }
+                    }
+                    if (targetWb == null)
+                    {
+                        try { targetWb = app.ActiveWorkbook; } catch { }
                     }
 
-                    if (ws != null)
+                    if (targetWb != null)
                     {
-                        if ((int)ws.Visible != (int)XlSheetVisibility.xlSheetVisible)
+                        ActivateWorkbookAndWindow(targetWb);
+
+                        dynamic? ws = null;
+                        try { ws = targetWb.Worksheets[sheetName]; } catch { }
+                        if (ws == null)
                         {
-                            ws.Visible = (int)XlSheetVisibility.xlSheetVisible;
+                            try { ws = targetWb.Sheets[sheetName]; } catch { }
                         }
-                        ws.Activate();
+
+                        if (ws != null)
+                        {
+                            if ((int)ws.Visible != (int)XlSheetVisibility.xlSheetVisible)
+                            {
+                                ws.Visible = (int)XlSheetVisibility.xlSheetVisible;
+                            }
+                            ws.Activate();
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Activate Sheet error: {ex.Message}");
-            }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Activate Sheet error: {ex.Message}");
+                }
+            });
         }
 
         private void OnRequestCloseWorkbook(string workbookName)
@@ -867,6 +870,82 @@ namespace ExcelSupport
                                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             }
             return false;
+        }
+
+        public string GetActiveSheetContextSummary()
+        {
+            if (_excelApp == null) return string.Empty;
+
+            _Worksheet? ws = null;
+            Range? usedRange = null;
+            try
+            {
+                ws = _excelApp.ActiveSheet as _Worksheet;
+                if (ws == null) return string.Empty;
+
+                var sb = new StringBuilder();
+                sb.AppendLine($"Tên Sheet: {ws.Name}");
+
+                usedRange = ws.UsedRange;
+                if (usedRange != null && usedRange.Rows.Count > 0 && usedRange.Columns.Count > 0)
+                {
+                    int startCol = usedRange.Column;
+                    int totalCols = Math.Min(usedRange.Columns.Count, 30);
+                    int numRows = Math.Min(usedRange.Rows.Count, 4);
+
+                    object? rawVal = usedRange.Value2;
+                    if (rawVal is object[,] allVals)
+                    {
+                        sb.AppendLine("Cấu trúc các cột dữ liệu trên Sheet:");
+                        for (int c = 1; c <= totalCols; c++)
+                        {
+                            int colIndex = startCol + c - 1;
+                            string colLetter = ConvertColIndexToLetter(colIndex);
+                            string header = allVals[1, c]?.ToString()?.Trim() ?? string.Empty;
+
+                            var samples = new List<string>();
+                            for (int r = 2; r <= numRows; r++)
+                            {
+                                string sample = allVals[r, c]?.ToString()?.Trim() ?? string.Empty;
+                                if (!string.IsNullOrEmpty(sample) && samples.Count < 2) samples.Add(sample);
+                            }
+
+                            string sampleStr = samples.Count > 0 ? $" (Giá trị mẫu: {string.Join(", ", samples)})" : "";
+                            sb.AppendLine($"• Cột {colLetter}: {(!string.IsNullOrEmpty(header) ? header : "(Không tên)")}{sampleStr}");
+                        }
+                    }
+                }
+
+                Range? activeCell = _excelApp.ActiveCell;
+                if (activeCell != null)
+                {
+                    sb.AppendLine($"Tọa độ ô đang chọn: {activeCell.Address[false, false]}");
+                    Marshal.ReleaseComObject(activeCell);
+                }
+
+                return sb.ToString();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+            finally
+            {
+                if (usedRange != null) Marshal.ReleaseComObject(usedRange);
+                if (ws != null) Marshal.ReleaseComObject(ws);
+            }
+        }
+
+        private static string ConvertColIndexToLetter(int colIndex)
+        {
+            string colLetter = string.Empty;
+            while (colIndex > 0)
+            {
+                int modulo = (colIndex - 1) % 26;
+                colLetter = Convert.ToChar('A' + modulo) + colLetter;
+                colIndex = (colIndex - modulo) / 26;
+            }
+            return colLetter;
         }
 
         public List<CellTextItem> GetSelectedCellsText(int maxCells = 500)

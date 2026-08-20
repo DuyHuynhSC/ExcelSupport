@@ -505,7 +505,17 @@
                         <TextBox Grid.Column="1" 
                                  Text="{Binding WorkbookSearchText, UpdateSourceTrigger=PropertyChanged}" 
                                  BorderThickness="0" Background="Transparent" 
-                                 VerticalAlignment="Center" FontSize="11.5">
+                                 VerticalAlignment="Center" FontSize="11.5"
+                                 ToolTip="Tìm kiếm Workbook (hỗ trợ A|B|C để lọc nhiều file)">
+                            <TextBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="✂️ Cắt (Cut)" Command="ApplicationCommands.Cut"/>
+                                    <MenuItem Header="📋 Sao chép (Copy)" Command="ApplicationCommands.Copy"/>
+                                    <MenuItem Header="📥 Dán (Paste)" Command="ApplicationCommands.Paste"/>
+                                    <Separator/>
+                                    <MenuItem Header="🔘 Chọn tất cả (Select All)" Command="ApplicationCommands.SelectAll"/>
+                                </ContextMenu>
+                            </TextBox.ContextMenu>
                             <TextBox.Style>
                                 <Style TargetType="TextBox">
                                     <Setter Property="Foreground" Value="#1E293B"/>
@@ -532,6 +542,7 @@
                          ItemsSource="{Binding WorkbooksView}"
                          SelectedItem="{Binding SelectedWorkbook, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource WorkbookItemContainerStyle}"
+                         PreviewMouseLeftButtonDown="OnWorkbookListBoxPreviewMouseLeftButtonDown"
                          PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown"
                          Background="Transparent"
                          BorderThickness="0"
@@ -872,7 +883,17 @@
                         <TextBox Grid.Column="1" 
                                  Text="{Binding SheetSearchText, UpdateSourceTrigger=PropertyChanged}" 
                                  BorderThickness="0" Background="Transparent" 
-                                 VerticalAlignment="Center" FontSize="11.5">
+                                 VerticalAlignment="Center" FontSize="11.5"
+                                 ToolTip="Tìm kiếm Sheet (hỗ trợ A|B|C để lọc nhiều sheet)">
+                            <TextBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="✂️ Cắt (Cut)" Command="ApplicationCommands.Cut"/>
+                                    <MenuItem Header="📋 Sao chép (Copy)" Command="ApplicationCommands.Copy"/>
+                                    <MenuItem Header="📥 Dán (Paste)" Command="ApplicationCommands.Paste"/>
+                                    <Separator/>
+                                    <MenuItem Header="🔘 Chọn tất cả (Select All)" Command="ApplicationCommands.SelectAll"/>
+                                </ContextMenu>
+                            </TextBox.ContextMenu>
                             <TextBox.Style>
                                 <Style TargetType="TextBox">
                                     <Setter Property="Foreground" Value="#1E293B"/>
@@ -899,6 +920,7 @@
                          ItemsSource="{Binding SheetsView}"
                          SelectedItem="{Binding SelectedWorksheet, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource WorksheetItemContainerStyle}"
+                         PreviewMouseLeftButtonDown="OnWorksheetListBoxPreviewMouseLeftButtonDown"
                          PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown"
                          Background="Transparent"
                          BorderThickness="0"

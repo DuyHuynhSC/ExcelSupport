@@ -16,6 +16,82 @@ namespace ExcelSupport.Views
             InitializeComponent();
         }
 
+        protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb)
+                {
+                    if (e.Key == Key.X)
+                    {
+                        tb.Cut();
+                        e.Handled = true;
+                    }
+                    else if (e.Key == Key.C)
+                    {
+                        tb.Copy();
+                        e.Handled = true;
+                    }
+                    else if (e.Key == Key.V)
+                    {
+                        tb.Paste();
+                        e.Handled = true;
+                    }
+                    else if (e.Key == Key.A)
+                    {
+                        tb.SelectAll();
+                        e.Handled = true;
+                    }
+                    else if (e.Key == Key.Z)
+                    {
+                        if (tb.CanUndo) tb.Undo();
+                        e.Handled = true;
+                    }
+                    else if (e.Key == Key.Y)
+                    {
+                        if (tb.CanRedo) tb.Redo();
+                        e.Handled = true;
+                    }
+                }
+            }
+        }
+
+        private void OnWorksheetListBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is DependencyObject dep)
+            {
+                var item = FindAncestor<ListBoxItem>(dep);
+                if (item != null && item.DataContext is WorksheetNodeViewModel ws)
+                {
+                    item.IsSelected = true;
+                    if (DataContext is TaskPaneViewModel vm)
+                    {
+                        vm.SelectedWorksheet = ws;
+                        vm.ActivateWorksheetCommand.Execute(ws);
+                    }
+                }
+            }
+        }
+
+        private void OnWorkbookListBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is DependencyObject dep)
+            {
+                var item = FindAncestor<ListBoxItem>(dep);
+                if (item != null && item.DataContext is WorkbookNodeViewModel wb)
+                {
+                    item.IsSelected = true;
+                    if (DataContext is TaskPaneViewModel vm)
+                    {
+                        vm.SelectedWorkbook = wb;
+                        vm.ActivateWorkbookCommand.Execute(wb);
+                    }
+                }
+            }
+        }
+
         private void OnListBoxPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.OriginalSource is DependencyObject dep)

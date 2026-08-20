@@ -34,6 +34,21 @@ namespace ExcelSupport.ViewModels
         private string _cellInspectorSummary = string.Empty;
         private string _chatPrompt = string.Empty;
         private string _chatResponse = string.Empty;
+        private string _fixedFormula = string.Empty;
+
+        public string FixedFormula
+        {
+            get => _fixedFormula;
+            private set
+            {
+                if (SetProperty(ref _fixedFormula, value))
+                {
+                    OnPropertyChanged(nameof(HasFixedFormula));
+                }
+            }
+        }
+
+        public bool HasFixedFormula => !string.IsNullOrWhiteSpace(FixedFormula);
 
         public int SelectedSubTab
         {
@@ -92,8 +107,16 @@ namespace ExcelSupport.ViewModels
         public string TranslationSummary
         {
             get => _translationSummary;
-            private set => SetProperty(ref _translationSummary, value);
+            private set
+            {
+                if (SetProperty(ref _translationSummary, value))
+                {
+                    OnPropertyChanged(nameof(HasTranslationSummary));
+                }
+            }
         }
+
+        public bool HasTranslationSummary => !string.IsNullOrWhiteSpace(TranslationSummary);
 
         public int TranslatedCellCount
         {
@@ -110,8 +133,16 @@ namespace ExcelSupport.ViewModels
         public string FormulaResponse
         {
             get => _formulaResponse;
-            private set => SetProperty(ref _formulaResponse, value);
+            private set
+            {
+                if (SetProperty(ref _formulaResponse, value))
+                {
+                    OnPropertyChanged(nameof(HasFormulaResponse));
+                }
+            }
         }
+
+        public bool HasFormulaResponse => !string.IsNullOrWhiteSpace(FormulaResponse);
 
         public string ExtractedFormula
         {
@@ -150,8 +181,16 @@ namespace ExcelSupport.ViewModels
         public string CellInspectorSummary
         {
             get => _cellInspectorSummary;
-            private set => SetProperty(ref _cellInspectorSummary, value);
+            private set
+            {
+                if (SetProperty(ref _cellInspectorSummary, value))
+                {
+                    OnPropertyChanged(nameof(HasCellInspectorSummary));
+                }
+            }
         }
+
+        public bool HasCellInspectorSummary => !string.IsNullOrWhiteSpace(CellInspectorSummary);
 
         public string ChatPrompt
         {
@@ -162,8 +201,16 @@ namespace ExcelSupport.ViewModels
         public string ChatResponse
         {
             get => _chatResponse;
-            private set => SetProperty(ref _chatResponse, value);
+            private set
+            {
+                if (SetProperty(ref _chatResponse, value))
+                {
+                    OnPropertyChanged(nameof(HasChatResponse));
+                }
+            }
         }
+
+        public bool HasChatResponse => !string.IsNullOrWhiteSpace(ChatResponse);
 
         // --- Commands ---
         public ICommand TranslateJaToViCommand { get; }
@@ -174,9 +221,11 @@ namespace ExcelSupport.ViewModels
         public ICommand CopyFormulaCommand { get; }
         public ICommand ReadActiveCellCommand { get; }
         public ICommand DebugActiveCellCommand { get; }
+        public ICommand ApplyFixFormulaCommand { get; }
         public ICommand SendChatCommand { get; }
         public ICommand ClearFormulaCommand { get; }
         public ICommand ClearChatCommand { get; }
+        public ICommand CopyChatResponseCommand { get; }
 
         public AiAssistantViewModel()
         {
@@ -196,9 +245,11 @@ namespace ExcelSupport.ViewModels
             CopyFormulaCommand = new RelayCommand(_ => ExecuteCopyFormula());
             ReadActiveCellCommand = new RelayCommand(_ => ExecuteReadActiveCell());
             DebugActiveCellCommand = new RelayCommand(async _ => await ExecuteDebugActiveCellAsync(), _ => !IsBusy);
+            ApplyFixFormulaCommand = new RelayCommand(_ => ExecuteApplyFixFormula());
             SendChatCommand = new RelayCommand(async _ => await ExecuteSendChatAsync(), _ => !IsBusy && !string.IsNullOrWhiteSpace(ChatPrompt));
             ClearFormulaCommand = new RelayCommand(_ => ExecuteClearFormula());
             ClearChatCommand = new RelayCommand(_ => ExecuteClearChat());
+            CopyChatResponseCommand = new RelayCommand(_ => ExecuteCopyChatResponse());
         }
 
         #region Translation Logic (Japanese <-> Vietnamese)
@@ -392,13 +443,18 @@ namespace ExcelSupport.ViewModels
             try
             {
                 var config = AiConfigManager.Current;
+                string sheetContext = AddInEvents.Instance?.GetActiveSheetContextSummary() ?? string.Empty;
+                string contextPart = !string.IsNullOrEmpty(sheetContext) ? $"\n\n[NGỮ CẢNH BẢNG TÍNH HIỆN TẠI]:\n{sheetContext}" : "";
+
                 string systemPrompt = "Bạn là chuyên gia Excel hàng đầu thế giới. Người dùng sẽ yêu cầu bạn tạo một công thức Excel từ mô tả tiếng Việt.\n" +
                                       "Yêu cầu:\n" +
                                       "1. Đưa ra công thức Excel CHUẨN XÁC NHẤT bắt đầu bằng dấu '=' và đặt bên trong khối code: ```excel\n=CÔNG_THỨC\n```\n" +
-                                      "2. Ngay bên dưới khối code, hãy giải thích ngắn gọn, dễ hiểu bằng tiếng Việt về cách hoạt động của từng tham số trong công thức.\n" +
-                                      "3. Ưu tiên các hàm hiện đại như XLOOKUP, SUMIFS, FILTER, UNIQUE, TEXTJOIN nếu phù hợp.";
+                                      "2. Sử dụng chính xác chữ cái cột (A, B, C, ...) dựa trên cấu trúc bảng tính được cung cấp.\n" +
+                                      "3. Ngay bên dưới khối code, hãy giải thích ngắn gọn, dễ hiểu bằng tiếng Việt về cách hoạt động của từng tham số trong công thức.\n" +
+                                      "4. Ưu tiên các hàm hiện đại như XLOOKUP, SUMIFS, FILTER, UNIQUE, TEXTJOIN nếu phù hợp.";
 
-                string response = await Task.Run(() => OpenAiClientService.SendChatAsync(config, FormulaPrompt, systemPrompt));
+                string fullPrompt = FormulaPrompt + contextPart;
+                string response = await Task.Run(() => OpenAiClientService.SendChatAsync(config, fullPrompt, systemPrompt));
 
                 FormulaResponse = response;
                 ExtractedFormula = ExtractFormula(response);
@@ -426,14 +482,21 @@ namespace ExcelSupport.ViewModels
                 return codeMatch.Groups[1].Value.Trim();
             }
 
-            // 2. Tìm dòng bất kỳ bắt đầu bằng '=' có chứa hàm Excel
+            // 2. Tìm dòng có dạng 🛠️ Công thức sửa: =...
+            var fixMatch = Regex.Match(response, @"(?:Công thức sửa|Công thức đề xuất|Công thức)\s*:\s*(=[A-Z_]+(?:\.[A-Z_]+)?\(.*?\)|=[^\r\n]+)", RegexOptions.IgnoreCase);
+            if (fixMatch.Success)
+            {
+                return fixMatch.Groups[1].Value.Trim();
+            }
+
+            // 3. Tìm dòng bất kỳ bắt đầu bằng '=' có chứa hàm Excel
             var lineMatch = Regex.Match(response, @"(?m)^\s*(=[A-Z_]+(?:\.[A-Z_]+)?\(.*?\))\s*$", RegexOptions.Multiline);
             if (lineMatch.Success)
             {
                 return lineMatch.Groups[1].Value.Trim();
             }
 
-            // 3. Tìm bất kỳ biểu thức =FUNCTION(...)
+            // 4. Tìm bất kỳ biểu thức =FUNCTION(...)
             var funcMatch = Regex.Match(response, @"(=[A-Z_]{2,}\([^\r\n]*\))");
             if (funcMatch.Success)
             {
@@ -462,6 +525,22 @@ namespace ExcelSupport.ViewModels
                 if (ok)
                 {
                     StatusMessage = "⚡ Đã chèn công thức vào ô đang chọn!";
+                }
+            }
+        }
+
+        private void ExecuteApplyFixFormula()
+        {
+            if (string.IsNullOrWhiteSpace(FixedFormula)) return;
+
+            var addIn = AddInEvents.Instance;
+            if (addIn != null)
+            {
+                bool ok = addIn.InsertFormulaToActiveCell(FixedFormula);
+                if (ok)
+                {
+                    StatusMessage = "🛠️ Đã áp dụng công thức sửa lỗi vào ô Excel thành công!";
+                    ExecuteReadActiveCell(); // Cập nhật lại trạng thái ô
                 }
             }
         }
@@ -527,22 +606,35 @@ namespace ExcelSupport.ViewModels
             IsBusy = true;
             StatusMessage = "AI đang kiểm tra và phân tích ô tính... ⏳";
             ChatResponse = string.Empty;
+            FixedFormula = string.Empty;
 
             try
             {
                 var config = AiConfigManager.Current;
+                string sheetContext = AddInEvents.Instance?.GetActiveSheetContextSummary() ?? string.Empty;
+                string contextPart = !string.IsNullOrEmpty(sheetContext) ? $"\n\n[NGỮ CẢNH BẢNG TÍNH]:\n{sheetContext}" : "";
+
                 string prompt = $"Phân tích và gỡ lỗi ô Excel sau:\n" +
                                $"- Sheet: {ActiveCell.SheetName}\n" +
                                $"- Tọa độ ô: {ActiveCell.CellAddress}\n" +
                                $"- Công thức: {ActiveCell.Formula}\n" +
                                $"- Giá trị hiển thị: {ActiveCell.Value}\n" +
-                               $"- Lỗi: {(ActiveCell.HasError ? ActiveCell.ErrorText : "Không có")}\n\n" +
-                               $"Hãy giải thích nguyên nhân gây ra lỗi (nếu có) và đưa ra công thức sửa lại hoàn chỉnh.";
+                               $"- Lỗi: {(ActiveCell.HasError ? ActiveCell.ErrorText : "Không có")}{contextPart}\n\n" +
+                               $"Hãy giải thích nguyên nhân và đưa ra công thức sửa lại hoàn chỉnh.";
 
-                string systemPrompt = "Bạn là chuyên gia gỡ lỗi công thức Excel. Hãy đưa ra nguyên nhân lỗi rõ ràng và công thức khắc phục chuẩn xác bằng tiếng Việt.";
+                string systemPrompt = 
+                    "Bạn là chuyên gia kiểm tra và gỡ lỗi công thức Excel trên thanh công cụ TaskPane.\n" +
+                    "YÊU CẦU ĐỊNH DẠNG (BẮT BUỘC):\n" +
+                    "1. Trả lời CỰC KỲ NGẮN GỌN (dưới 8 dòng), đi thẳng vào vấn đề.\n" +
+                    "2. KHÔNG dùng cú pháp markdown thô (như ###, ```, **).\n" +
+                    "3. Trình bày trực quan với biểu tượng:\n" +
+                    "   🔍 Phân tích: (ngắn gọn 1-2 câu)\n" +
+                    "   🛠️ Công thức sửa: =CÔNG_THỨC (công thức Excel chuẩn để người dùng áp dụng ngay)\n" +
+                    "   💡 Giải thích: (1 câu lý do ngắn gọn)";
 
                 string reply = await Task.Run(() => OpenAiClientService.SendChatAsync(config, prompt, systemPrompt));
-                ChatResponse = reply;
+                ChatResponse = FormatAiResponseForUi(reply);
+                FixedFormula = ExtractFormula(reply);
                 SelectedSubTab = 2; // Chuyển sang xem phản hồi ở tab Gỡ lỗi
             }
             catch (Exception ex)
@@ -561,15 +653,39 @@ namespace ExcelSupport.ViewModels
             if (string.IsNullOrWhiteSpace(ChatPrompt)) return;
 
             IsBusy = true;
-            StatusMessage = "AI đang trả lời... ⏳";
+            StatusMessage = "AI đang suy nghĩ và trả lời... ⏳";
             ChatResponse = string.Empty;
 
             try
             {
                 var config = AiConfigManager.Current;
-                string systemPrompt = "Bạn là trợ lý AI chuyên nghiệp về Excel, bảng tính và phân tích dữ liệu. Hãy trả lời câu hỏi của người dùng ngắn gọn, chính xác, dễ hiểu bằng tiếng Việt.";
-                string reply = await Task.Run(() => OpenAiClientService.SendChatAsync(config, ChatPrompt, systemPrompt));
-                ChatResponse = reply;
+                string systemPrompt = 
+                    "Bạn là trợ lý AI thông minh chuyên về Excel trên thanh công cụ hỗ trợ người dùng.\n" +
+                    "YÊU CẦU ĐỊNH DẠNG & TRÌNH BÀY (BẮT BUỘC):\n" +
+                    "1. Trả lời CỰC KỲ NGẮN GỌN, súc tích (khoảng 3 - 6 dòng), đi thẳng vào câu trả lời, không chào hỏi dài dòng.\n" +
+                    "2. KHÔNG sử dụng ký tự Markdown thô (như ###, ```, **, *).\n" +
+                    "3. Trình bày trực quan, rõ ràng bằng các biểu tượng:\n" +
+                    "   📌 Ý nghĩa: (1-2 câu giải thích ngắn gọn)\n" +
+                    "   🔢 Kết quả: (nêu kết quả với dữ liệu hiện tại nếu có)\n" +
+                    "   💡 Lưu ý: (mẹo hoặc lưu ý quan trọng nếu có)\n" +
+                    "4. Dùng tiếng Việt chuẩn, tự nhiên, dễ hiểu.";
+
+                // Tự động đính kèm ngữ cảnh ô đang chọn nếu có
+                var addIn = AddInEvents.Instance;
+                var currentCell = addIn?.GetActiveCellInfo() ?? ActiveCell;
+                string contextInfo = "";
+                if (currentCell != null && (!string.IsNullOrEmpty(currentCell.Formula) || !string.IsNullOrEmpty(currentCell.Value)))
+                {
+                    contextInfo = $"\n\n[NGỮ CẢNH Ô ĐANG CHỌN TRÊN EXCEL]:\n" +
+                                  $"- Tọa độ ô: [{currentCell.SheetName}!{currentCell.CellAddress}]\n" +
+                                  $"- Công thức trong ô: {(!string.IsNullOrEmpty(currentCell.Formula) ? currentCell.Formula : "(Không có công thức)")}\n" +
+                                  $"- Giá trị hiển thị: {(!string.IsNullOrEmpty(currentCell.Value) ? currentCell.Value : "(Trống)")}\n" +
+                                  $"{(currentCell.HasError ? $"- Trạng thái lỗi: {currentCell.ErrorText}\n" : "")}";
+                }
+
+                string fullPrompt = ChatPrompt + contextInfo;
+                string reply = await Task.Run(() => OpenAiClientService.SendChatAsync(config, fullPrompt, systemPrompt));
+                ChatResponse = FormatAiResponseForUi(reply);
             }
             catch (Exception ex)
             {
@@ -582,11 +698,57 @@ namespace ExcelSupport.ViewModels
             }
         }
 
+        private void ExecuteCopyChatResponse()
+        {
+            if (!string.IsNullOrWhiteSpace(ChatResponse))
+            {
+                try
+                {
+                    System.Windows.Clipboard.SetText(ChatResponse);
+                    StatusMessage = "📋 Đã sao chép phản hồi vào Clipboard!";
+                }
+                catch { }
+            }
+        }
+
         private void ExecuteClearChat()
         {
             ChatPrompt = string.Empty;
             ChatResponse = string.Empty;
             StatusMessage = string.Empty;
+        }
+
+        public static string FormatAiResponseForUi(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+            string s = text!;
+
+            // 1. Chuyển đổi khối code markdown
+            s = Regex.Replace(s, @"```(?:excel|plaintext)?\s*\n?(=[^\r\n`]+)\s*\n?```", "👉 $1", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"```[a-zA-Z]*\s*\n?([\s\S]*?)\n?```", "$1");
+
+            // 2. Chuyển đổi các tiêu đề Markdown thành icon trực quan
+            s = Regex.Replace(s, @"(?m)^\s*#{1,4}\s*(?:Ý nghĩa|Mục đích)[:\s]*", "📌 Ý nghĩa:\n", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"(?m)^\s*#{1,4}\s*(?:Với giá trị hiện tại|Giá trị hiện tại|Cách tính)[:\s]*", "🔢 Giá trị & Cách tính:\n", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"(?m)^\s*#{1,4}\s*(?:Lưu ý|Chú ý)[:\s]*", "💡 Lưu ý:\n", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"(?m)^\s*#{1,4}\s*(?:Gợi ý|Đề xuất)[:\s]*", "⚡ Gợi ý:\n", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"(?m)^\s*#{1,4}\s*(?:Nguyên nhân|Lỗi)[:\s]*", "🔍 Nguyên nhân:\n", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"(?m)^\s*#{1,4}\s*(?:Cách khắc phục|Sửa lỗi)[:\s]*", "🛠️ Cách khắc phục:\n", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"(?m)^\s*#{1,4}\s*(.*?)\s*$", "🔹 $1:", RegexOptions.Multiline);
+
+            // 3. Chuyển đổi gạch đầu dòng markdown thành bullet đẹp
+            s = Regex.Replace(s, @"(?m)^\s*[\-\*]\s+", "  • ", RegexOptions.Multiline);
+
+            // 4. Loại bỏ dấu in đậm và code thô
+            s = Regex.Replace(s, @"\*\*([^\*]+)\*\*", "$1");
+            s = Regex.Replace(s, @"\*([^\*]+)\*", "$1");
+            s = Regex.Replace(s, @"`([^`]+)`", "$1");
+
+            // 5. Rút gọn dòng trống liên tiếp
+            s = Regex.Replace(s, @"(\r?\n){3,}", "\n\n");
+
+            return s.Trim();
         }
 
         #endregion

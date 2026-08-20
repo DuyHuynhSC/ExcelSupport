@@ -357,7 +357,7 @@ namespace ExcelSupport.ViewModels
             if (string.IsNullOrWhiteSpace(WorkbookSearchText)) return true;
             if (item is WorkbookNodeViewModel wb)
             {
-                return wb.WorkbookName.IndexOf(WorkbookSearchText, StringComparison.OrdinalIgnoreCase) >= 0;
+                return IsTextMatchingTokens(wb.WorkbookName, WorkbookSearchText);
             }
             return true;
         }
@@ -368,9 +368,37 @@ namespace ExcelSupport.ViewModels
             {
                 if (!_showHiddenSheets && ws.IsHidden) return false;
                 if (string.IsNullOrWhiteSpace(SheetSearchText)) return true;
-                return ws.SheetName.IndexOf(SheetSearchText, StringComparison.OrdinalIgnoreCase) >= 0;
+                return IsTextMatchingTokens(ws.SheetName, SheetSearchText);
             }
             return true;
+        }
+
+        private static bool IsTextMatchingTokens(string? text, string? searchText)
+        {
+            if (string.IsNullOrEmpty(text)) return false;
+            if (string.IsNullOrWhiteSpace(searchText)) return true;
+
+            string search = searchText!;
+            string target = text!;
+
+            // Hỗ trợ tìm kiếm OR đa từ khóa phân cách bởi dấu '|' (Ví dụ: A|B|C)
+            if (search.Contains("|"))
+            {
+                var tokens = search.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+                if (tokens.Length == 0) return true;
+
+                foreach (var token in tokens)
+                {
+                    var trimmed = token.Trim();
+                    if (!string.IsNullOrEmpty(trimmed) && target.IndexOf(trimmed, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            return target.IndexOf(search.Trim(), StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void UpdateSheetsView()

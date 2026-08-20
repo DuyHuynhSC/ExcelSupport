@@ -89,6 +89,71 @@ namespace ExcelSupport.Host
             }
         }
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            // Chuyển tiếp các phím tắt chỉnh sửa văn bản (Ctrl+X Cut, Ctrl+C Copy, Ctrl+V Paste, Ctrl+A SelectAll, Ctrl+Z Undo, Ctrl+Y Redo)
+            // tới ô TextBox/PasswordBox đang focus trong TaskPane WPF thay vì để Excel chặn bắt
+            if (keyData == (Keys.Control | Keys.X) ||
+                keyData == (Keys.Control | Keys.C) ||
+                keyData == (Keys.Control | Keys.V) ||
+                keyData == (Keys.Control | Keys.A) ||
+                keyData == (Keys.Control | Keys.Z) ||
+                keyData == (Keys.Control | Keys.Y) ||
+                keyData == (Keys.Shift | Keys.Delete) ||
+                keyData == (Keys.Control | Keys.Insert) ||
+                keyData == (Keys.Shift | Keys.Insert))
+            {
+                if (System.Windows.Input.Keyboard.FocusedElement is System.Windows.Controls.TextBox tb)
+                {
+                    if (keyData == (Keys.Control | Keys.X) || keyData == (Keys.Shift | Keys.Delete))
+                    {
+                        tb.Cut();
+                        return true;
+                    }
+                    if (keyData == (Keys.Control | Keys.C) || keyData == (Keys.Control | Keys.Insert))
+                    {
+                        tb.Copy();
+                        return true;
+                    }
+                    if (keyData == (Keys.Control | Keys.V) || keyData == (Keys.Shift | Keys.Insert))
+                    {
+                        tb.Paste();
+                        return true;
+                    }
+                    if (keyData == (Keys.Control | Keys.A))
+                    {
+                        tb.SelectAll();
+                        return true;
+                    }
+                    if (keyData == (Keys.Control | Keys.Z))
+                    {
+                        if (tb.CanUndo) tb.Undo();
+                        return true;
+                    }
+                    if (keyData == (Keys.Control | Keys.Y))
+                    {
+                        if (tb.CanRedo) tb.Redo();
+                        return true;
+                    }
+                }
+                else if (System.Windows.Input.Keyboard.FocusedElement is System.Windows.Controls.PasswordBox pb)
+                {
+                    if (keyData == (Keys.Control | Keys.V) || keyData == (Keys.Shift | Keys.Insert))
+                    {
+                        pb.Paste();
+                        return true;
+                    }
+                    if (keyData == (Keys.Control | Keys.A))
+                    {
+                        pb.SelectAll();
+                        return true;
+                    }
+                }
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)

@@ -687,22 +687,23 @@ namespace ExcelSupport.Services
 
                 extractedRowsCount = matchedRowIndices.Count;
 
-                // Tạo mảng trích xuất gồm dòng tiêu đề + các dòng thỏa
-                object[,] extractedData = new object[matchedRowIndices.Count + 1, totalCols];
+                // Tạo mảng trích xuất gồm dòng tiêu đề + các dòng thỏa (mảng 2D 0-based trong C#)
+                int outputRows = matchedRowIndices.Count + 1;
+                object[,] extractedData = new object[outputRows, totalCols];
 
                 // Copy tiêu đề (dòng 1)
-                for (int c = 1; c <= totalCols; c++)
+                for (int c = 0; c < totalCols; c++)
                 {
-                    extractedData[1, c] = allValues[1, c];
+                    extractedData[0, c] = allValues[1, c + 1];
                 }
 
                 // Copy các dòng thỏa mãn
                 for (int i = 0; i < matchedRowIndices.Count; i++)
                 {
                     int srcRow = matchedRowIndices[i];
-                    for (int c = 1; c <= totalCols; c++)
+                    for (int c = 0; c < totalCols; c++)
                     {
-                        extractedData[i + 2, c] = allValues[srcRow, c];
+                        extractedData[i + 1, c] = allValues[srcRow, c + 1];
                     }
                 }
 
@@ -732,7 +733,7 @@ namespace ExcelSupport.Services
                 if (newSheet == null) return false;
                 newSheet.Name = sheetName;
 
-                Range destRange = newSheet.Range[newSheet.Cells[1, 1], newSheet.Cells[matchedRowIndices.Count + 1, totalCols]];
+                Range destRange = newSheet.Range[newSheet.Cells[1, 1], newSheet.Cells[outputRows, totalCols]];
                 destRange.Value2 = extractedData;
 
                 // Định dạng tiêu đề nổi bật

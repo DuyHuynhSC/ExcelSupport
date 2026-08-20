@@ -76,6 +76,8 @@ namespace ExcelSupport.Views
             }
         }
 
+        private static AdvancedFilterSavedState _savedState = new AdvancedFilterSavedState();
+
         private readonly ExcelApp? _excelApp;
         private Workbook? _targetWb;
         private _Worksheet? _targetWs;
@@ -100,11 +102,43 @@ namespace ExcelSupport.Views
             catch { }
 
             Loaded += OnDialogLoaded;
+            Closing += (s, e) => SaveCurrentDialogState();
         }
 
         private void OnDialogLoaded(object sender, RoutedEventArgs e)
         {
             InitializeSheetData();
+        }
+
+        private void SaveCurrentDialogState()
+        {
+            try
+            {
+                _savedState.SelectedTabIndex = MainTabControl.SelectedIndex;
+
+                // Tab 1
+                _savedState.BatchRawText = TxtBatchPaste.Text;
+                if (CboBatchColumn.SelectedItem is ColumnHeaderItem bCol)
+                {
+                    _savedState.BatchTargetColumnIndex = bCol.ColumnIndex;
+                    _savedState.BatchTargetColumnName = bCol.HeaderText;
+                }
+                _savedState.BatchExcludeList = (RbBlacklist.IsChecked == true);
+                _savedState.BatchIsExactMatch = (ChkBatchExact.IsChecked == true);
+                _savedState.BatchMatchCase = (ChkBatchCase.IsChecked == true);
+
+                // Tab 2
+                _savedState.VisualCriteria = _visualCriteria;
+
+                // Tab 3
+                _savedState.QuickExpressionText = TxtQuickExpression.Text;
+                if (CboQuickColumn.SelectedItem is ColumnHeaderItem qCol)
+                {
+                    _savedState.QuickTargetColumnIndex = qCol.ColumnIndex;
+                    _savedState.QuickTargetColumnName = qCol.HeaderText;
+                }
+            }
+            catch { }
         }
 
         private void InitializeSheetData()
@@ -130,13 +164,56 @@ namespace ExcelSupport.Views
 
                 // Nạp vào ComboBox Tab 1 & Tab 3
                 CboBatchColumn.ItemsSource = _columns;
-                CboBatchColumn.SelectedIndex = 0;
-
                 CboQuickColumn.ItemsSource = _columns;
-                CboQuickColumn.SelectedIndex = 0;
 
-                // Khởi tạo nhóm điều kiện mặc định cho Tab 2 (Visual Builder)
-                InitDefaultVisualGroups();
+                // Khôi phục Tab đã chọn trước đó
+                if (_savedState.SelectedTabIndex >= 0 && _savedState.SelectedTabIndex < MainTabControl.Items.Count)
+                {
+                    MainTabControl.SelectedIndex = _savedState.SelectedTabIndex;
+                }
+
+                // Khôi phục giá trị đã lọc trước đó cho Tab 1 (Batch List)
+                if (!string.IsNullOrEmpty(_savedState.BatchRawText))
+                {
+                    TxtBatchPaste.Text = _savedState.BatchRawText;
+                    _batchCriteria.RawPasteText = _savedState.BatchRawText;
+                    _batchCriteria.ParsedItems = AdvancedFilterService.ParseBatchList(_savedState.BatchRawText);
+                    TxtBatchCountBadge.Text = $"{_batchCriteria.ParsedItems.Count:N0} giá trị duy nhất";
+                }
+                _batchCriteria.ExcludeList = _savedState.BatchExcludeList;
+                _batchCriteria.IsExactMatch = _savedState.BatchIsExactMatch;
+                _batchCriteria.MatchCase = _savedState.BatchMatchCase;
+                RbWhitelist.IsChecked = !_savedState.BatchExcludeList;
+                RbBlacklist.IsChecked = _savedState.BatchExcludeList;
+                ChkBatchExact.IsChecked = _savedState.BatchIsExactMatch;
+                ChkBatchCase.IsChecked = _savedState.BatchMatchCase;
+
+                int batchColIdx = _columns.FindIndex(c => c.ColumnIndex == _savedState.BatchTargetColumnIndex || (!string.IsNullOrEmpty(_savedState.BatchTargetColumnName) && c.HeaderText == _savedState.BatchTargetColumnName));
+                CboBatchColumn.SelectedIndex = batchColIdx >= 0 ? batchColIdx : 0;
+                if (CboBatchColumn.SelectedItem is ColumnHeaderItem curBCol)
+                {
+                    _batchCriteria.TargetColumnIndex = curBCol.ColumnIndex;
+                    _batchCriteria.TargetColumnName = curBCol.HeaderText;
+                }
+
+                // Khôi phục Tab 2 (Visual Builder)
+                if (_savedState.VisualCriteria != null && _savedState.VisualCriteria.Groups.Count > 0)
+                {
+                    _visualCriteria = _savedState.VisualCriteria;
+                    RenderVisualGroupsUI();
+                }
+                else
+                {
+                    InitDefaultVisualGroups();
+                }
+
+                // Khôi phục Tab 3 (Quick Expression)
+                if (!string.IsNullOrEmpty(_savedState.QuickExpressionText))
+                {
+                    TxtQuickExpression.Text = _savedState.QuickExpressionText;
+                }
+                int quickColIdx = _columns.FindIndex(c => c.ColumnIndex == _savedState.QuickTargetColumnIndex || (!string.IsNullOrEmpty(_savedState.QuickTargetColumnName) && c.HeaderText == _savedState.QuickTargetColumnName));
+                CboQuickColumn.SelectedIndex = quickColIdx >= 0 ? quickColIdx : 0;
 
                 // Đọc mảng 2D vào bộ nhớ đệm phục vụ Live Preview siêu tốc
                 CacheSheetData();
@@ -719,5 +796,26 @@ namespace ExcelSupport.Views
         }
 
         #endregion
+    }
+
+    public class AdvancedFilterSavedState
+    {
+        public int SelectedTabIndex { get; set; } = 0;
+
+        // Tab 1: Batch List
+        public string BatchRawText { get; set; } = string.Empty;
+        public int BatchTargetColumnIndex { get; set; } = 1;
+        public string BatchTargetColumnName { get; set; } = string.Empty;
+        public bool BatchExcludeList { get; set; } = false;
+        public bool BatchIsExactMatch { get; set; } = true;
+        public bool BatchMatchCase { get; set; } = false;
+
+        // Tab 2: Visual Builder
+        public AdvancedFilterCriteria? VisualCriteria { get; set; }
+
+        // Tab 3: Quick Expression
+        public string QuickExpressionText { get; set; } = string.Empty;
+        public int QuickTargetColumnIndex { get; set; } = 1;
+        public string QuickTargetColumnName { get; set; } = string.Empty;
     }
 }

@@ -21,4 +21,8 @@
     <Reference Include="System.Net.Http" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="USER_MANUAL.md" />
+  </ItemGroup>
+
 </Project>
