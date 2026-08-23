@@ -32,6 +32,124 @@ namespace ExcelSupport.Models
         MissingInB  // Only in A
     }
 
+    public class OracleConnectionProfile : INotifyPropertyChanged
+    {
+        private string _id = Guid.NewGuid().ToString();
+        private string _name = "Oracle Connection";
+        private string _host = "localhost";
+        private int _port = 1521;
+        private string _serviceNameOrSid = "ORCL";
+        private OracleServiceNameType _serviceType = OracleServiceNameType.ServiceName;
+        private string _username = "";
+        private string _password = "";
+        private string _defaultSchema = "";
+        private string _defaultTable = "";
+        private string _defaultWhereClause = "";
+
+        public string Id
+        {
+            get => _id;
+            set { _id = value; OnPropertyChanged(nameof(Id)); }
+        }
+
+        public string Name
+        {
+            get => _name;
+            set { _name = value; OnPropertyChanged(nameof(Name)); }
+        }
+
+        public string Host
+        {
+            get => _host;
+            set { _host = value; OnPropertyChanged(nameof(Host)); }
+        }
+
+        public int Port
+        {
+            get => _port;
+            set { _port = value; OnPropertyChanged(nameof(Port)); }
+        }
+
+        public string ServiceNameOrSid
+        {
+            get => _serviceNameOrSid;
+            set { _serviceNameOrSid = value; OnPropertyChanged(nameof(ServiceNameOrSid)); }
+        }
+
+        public OracleServiceNameType ServiceType
+        {
+            get => _serviceType;
+            set { _serviceType = value; OnPropertyChanged(nameof(ServiceType)); }
+        }
+
+        public string Username
+        {
+            get => _username;
+            set { _username = value; OnPropertyChanged(nameof(Username)); }
+        }
+
+        public string Password
+        {
+            get => _password;
+            set { _password = value; OnPropertyChanged(nameof(Password)); }
+        }
+
+        public string DefaultSchema
+        {
+            get => _defaultSchema;
+            set { _defaultSchema = value; OnPropertyChanged(nameof(DefaultSchema)); }
+        }
+
+        public string DefaultTable
+        {
+            get => _defaultTable;
+            set { _defaultTable = value; OnPropertyChanged(nameof(DefaultTable)); }
+        }
+
+        public string DefaultWhereClause
+        {
+            get => _defaultWhereClause;
+            set { _defaultWhereClause = value; OnPropertyChanged(nameof(DefaultWhereClause)); }
+        }
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string DisplaySummary => $"{Username}@{Host}:{Port}/{(ServiceType == OracleServiceNameType.SID ? "SID:" : "")}{ServiceNameOrSid}";
+
+        public OracleConnectionConfig ToConnectionConfig()
+        {
+            return new OracleConnectionConfig
+            {
+                Host = this.Host,
+                Port = this.Port,
+                ServiceNameOrSid = this.ServiceNameOrSid,
+                ServiceType = this.ServiceType,
+                Username = this.Username,
+                Password = this.Password
+            };
+        }
+
+        public OracleConnectionProfile Clone()
+        {
+            return new OracleConnectionProfile
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = $"{this.Name} (Copy)",
+                Host = this.Host,
+                Port = this.Port,
+                ServiceNameOrSid = this.ServiceNameOrSid,
+                ServiceType = this.ServiceType,
+                Username = this.Username,
+                Password = this.Password,
+                DefaultSchema = this.DefaultSchema,
+                DefaultTable = this.DefaultTable,
+                DefaultWhereClause = this.DefaultWhereClause
+            };
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     public class OracleConnectionConfig : INotifyPropertyChanged
     {
         private string _host = "localhost";

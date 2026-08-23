@@ -7,8 +7,8 @@
         xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         mc:Ignorable="d"
         Title="{loc:Loc Oracle_WindowTitle}" 
-        Height="820" Width="1180"
-        MinHeight="650" MinWidth="950"
+        Height="840" Width="1200"
+        MinHeight="680" MinWidth="980"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Display"
@@ -161,18 +161,42 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- TabControl Style -->
+        <Style x:Key="ModernTabItemStyle" TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="tabBorder" Background="Transparent" BorderBrush="Transparent" BorderThickness="0,0,0,3" Padding="16,10" Margin="0,0,4,0" Cursor="Hand">
+                            <ContentPresenter x:Name="tabContent" ContentSource="Header" TextBlock.FontWeight="Medium" TextBlock.FontSize="13" TextBlock.Foreground="#64748B"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="tabBorder" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#1E293B"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="#2563EB"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.FontWeight" Value="Bold"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#2563EB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="#F8FAFC">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Header -->
-            <RowDefinition Height="*"/>    <!-- Main Body -->
+            <RowDefinition Height="*"/>    <!-- Main Body TabControl -->
             <RowDefinition Height="Auto"/> <!-- Status & Progress Bar -->
             <RowDefinition Height="Auto"/> <!-- Footer Controls -->
         </Grid.RowDefinitions>
 
         <!-- 1. HEADER BANNER -->
-        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="20,12">
+        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="20,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -201,351 +225,443 @@
             </Grid>
         </Border>
 
-        <!-- 2. MAIN BODY (TabControl / Split Panels) -->
-        <Grid Grid.Row="1" Margin="16,12,16,8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- Connection & Setup Cards -->
-                <RowDefinition Height="*"/>    <!-- Diff Results Grid -->
-            </Grid.RowDefinitions>
-
-            <!-- CONNECTION CONFIG CARDS (TOP SECTION) -->
-            <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
-                <Grid>
+        <!-- 2. MAIN BODY (TAB CONTROL) -->
+        <TabControl Grid.Row="1" x:Name="mainTabControl" Background="Transparent" BorderThickness="0" Margin="16,6,16,6">
+            
+            <!-- TAB 1: SO SÁNH DỮ LIỆU -->
+            <TabItem Header="{loc:Loc Oracle_TabCompare}" Style="{StaticResource ModernTabItemStyle}">
+                <Grid Margin="0,8,0,0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/> <!-- Connection & Setup Cards -->
+                        <RowDefinition Height="*"/>    <!-- Diff Results Grid -->
                     </Grid.RowDefinitions>
 
-                    <!-- Row 0: DB A vs DB B Split Columns -->
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- DB A CARD (GỐC) -->
-                        <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,10">
-                            <StackPanel Orientation="Vertical">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-                                    <Border Background="#3B82F6" CornerRadius="3" Width="4" Height="14" Margin="0,0,6,0"/>
-                                    <TextBlock Text="{loc:Loc Oracle_SecDbA}" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
-                                    <TextBlock x:Name="txtStatusBadgeA" Text="{loc:Loc Oracle_NotConnected}" FontSize="11" Foreground="#64748B" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-
-                                <!-- Host & Port -->
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="3*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="1*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Loc Oracle_Host}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtHostA" Text="localhost" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{loc:Loc Oracle_Port}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtPortA" Text="1521" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Service Name / SID -->
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Loc Oracle_ServiceName}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtServiceA" Text="ORCL" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="8,0,0,4">
-                                        <RadioButton x:Name="rbServiceA" Content="Service" IsChecked="True" FontSize="11" Margin="0,0,6,0"/>
-                                        <RadioButton x:Name="rbSidA" Content="SID" FontSize="11"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- User & Password -->
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Loc Oracle_User}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtUserA" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{loc:Loc Oracle_Password}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <PasswordBox x:Name="txtPassA" Style="{StaticResource FormPasswordStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Test Conn & Table selection -->
-                                <Grid Margin="0,2,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="1.5*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" x:Name="btnTestA" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource DialogSecondaryButtonStyle}" Click="BtnTestA_Click" VerticalAlignment="Bottom"/>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{loc:Loc Oracle_Schema}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <ComboBox x:Name="cboSchemaA" IsEditable="True" Height="26" SelectionChanged="CboSchemaA_SelectionChanged"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="4">
-                                        <TextBlock Text="{loc:Loc Oracle_Table}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <ComboBox x:Name="cboTableA" IsEditable="True" Height="26" SelectionChanged="CboTableA_SelectionChanged"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- DB B CARD (ĐỐI CHIẾU) -->
-                        <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,10">
-                            <StackPanel Orientation="Vertical">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-                                    <Border Background="#10B981" CornerRadius="3" Width="4" Height="14" Margin="0,0,6,0"/>
-                                    <TextBlock Text="{loc:Loc Oracle_SecDbB}" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
-                                    <TextBlock x:Name="txtStatusBadgeB" Text="{loc:Loc Oracle_NotConnected}" FontSize="11" Foreground="#64748B" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-
-                                <!-- Host & Port -->
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="3*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="1*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Loc Oracle_Host}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtHostB" Text="localhost" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{loc:Loc Oracle_Port}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtPortB" Text="1521" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Service Name / SID -->
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Loc Oracle_ServiceName}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtServiceB" Text="ORCL" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="8,0,0,4">
-                                        <RadioButton x:Name="rbServiceB" Content="Service" IsChecked="True" FontSize="11" Margin="0,0,6,0"/>
-                                        <RadioButton x:Name="rbSidB" Content="SID" FontSize="11"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- User & Password -->
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Loc Oracle_User}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <TextBox x:Name="txtUserB" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{loc:Loc Oracle_Password}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <PasswordBox x:Name="txtPassB" Style="{StaticResource FormPasswordStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Test Conn & Table selection -->
-                                <Grid Margin="0,2,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="1.5*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" x:Name="btnTestB" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource DialogSecondaryButtonStyle}" Click="BtnTestB_Click" VerticalAlignment="Bottom"/>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{loc:Loc Oracle_Schema}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <ComboBox x:Name="cboSchemaB" IsEditable="True" Height="26" SelectionChanged="CboSchemaB_SelectionChanged"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="4">
-                                        <TextBlock Text="{loc:Loc Oracle_Table}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
-                                        <ComboBox x:Name="cboTableB" IsEditable="True" Height="26"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-
-                    <!-- Row 1: Comparison Options & Key Selector (Collapsible / Compact) -->
-                    <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,8,0,0">
+                    <!-- TOP SECTION: CONNECTION PROFILES & WHERE FILTERS -->
+                    <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
                         <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/> <!-- DB A vs DB B Split Columns -->
+                                <RowDefinition Height="Auto"/> <!-- Comparison Options Bar -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Row 0: DB A vs DB B Split Columns -->
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- DB A CARD (GỐC) -->
+                                <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                    <StackPanel Orientation="Vertical">
+                                        <Grid Margin="0,0,0,8">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Background="#3B82F6" CornerRadius="3" Width="4" Height="14" Margin="0,0,6,0"/>
+                                                <TextBlock Text="{loc:Loc Oracle_SecDbA}" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
+                                                <TextBlock x:Name="txtStatusBadgeA" Text="{loc:Loc Oracle_NotConnected}" FontSize="11" Foreground="#64748B" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <Button x:Name="btnManageProfilesA" Content="{loc:Loc Oracle_BtnManageProfiles}" Style="{StaticResource DialogSecondaryButtonStyle}" HorizontalAlignment="Right" Padding="8,3" FontSize="11" Click="BtnManageProfiles_Click"/>
+                                        </Grid>
+
+                                        <!-- Profile Selector & Connect Button -->
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc Oracle_SavedProfile}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                <ComboBox x:Name="cboProfileA" Height="26" DisplayMemberPath="Name" SelectionChanged="CboProfileA_SelectionChanged"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="2" x:Name="btnConnectA" Content="{loc:Loc Oracle_BtnConnect}" Style="{StaticResource DialogSecondaryButtonStyle}" Click="BtnConnectA_Click" VerticalAlignment="Bottom" Height="26" Padding="10,3"/>
+                                        </Grid>
+
+                                        <!-- Schema & Table selection -->
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="1.5*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc Oracle_Schema}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                <ComboBox x:Name="cboSchemaA" IsEditable="True" Height="26" SelectionChanged="CboSchemaA_SelectionChanged"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="{loc:Loc Oracle_Table}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                <ComboBox x:Name="cboTableA" IsEditable="True" Height="26" SelectionChanged="CboTableA_SelectionChanged"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- WHERE Clause Filter for DB A (User Requested) -->
+                                        <StackPanel Margin="0,0,0,2">
+                                            <TextBlock Text="{loc:Loc Oracle_WhereClause}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                            <TextBox x:Name="txtWhereA" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_WhereClauseTip}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- DB B CARD (ĐỐI CHIẾU) -->
+                                <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                                    <StackPanel Orientation="Vertical">
+                                        <Grid Margin="0,0,0,8">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Background="#10B981" CornerRadius="3" Width="4" Height="14" Margin="0,0,6,0"/>
+                                                <TextBlock Text="{loc:Loc Oracle_SecDbB}" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
+                                                <TextBlock x:Name="txtStatusBadgeB" Text="{loc:Loc Oracle_NotConnected}" FontSize="11" Foreground="#64748B" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <Button x:Name="btnManageProfilesB" Content="{loc:Loc Oracle_BtnManageProfiles}" Style="{StaticResource DialogSecondaryButtonStyle}" HorizontalAlignment="Right" Padding="8,3" FontSize="11" Click="BtnManageProfiles_Click"/>
+                                        </Grid>
+
+                                        <!-- Profile Selector & Connect Button -->
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc Oracle_SavedProfile}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                <ComboBox x:Name="cboProfileB" Height="26" DisplayMemberPath="Name" SelectionChanged="CboProfileB_SelectionChanged"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="2" x:Name="btnConnectB" Content="{loc:Loc Oracle_BtnConnect}" Style="{StaticResource DialogSecondaryButtonStyle}" Click="BtnConnectB_Click" VerticalAlignment="Bottom" Height="26" Padding="10,3"/>
+                                        </Grid>
+
+                                        <!-- Schema & Table selection -->
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="1.5*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc Oracle_Schema}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                <ComboBox x:Name="cboSchemaB" IsEditable="True" Height="26" SelectionChanged="CboSchemaB_SelectionChanged"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="{loc:Loc Oracle_Table}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                <ComboBox x:Name="cboTableB" IsEditable="True" Height="26"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- WHERE Clause Filter for DB B (User Requested) -->
+                                        <StackPanel Margin="0,0,0,2">
+                                            <TextBlock Text="{loc:Loc Oracle_WhereClause}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                                            <TextBox x:Name="txtWhereB" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_WhereClauseTip}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Row 1: Comparison Options & Key Selector -->
+                            <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,8,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Mode Selector -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{loc:Loc Oracle_SecCompareMode}" FontWeight="SemiBold" FontSize="12" Foreground="#334155" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <RadioButton x:Name="rbModeKey" Content="{loc:Loc Oracle_ModeByKey}" IsChecked="True" FontSize="12" Margin="0,0,12,0" Checked="RbMode_Checked"/>
+                                        <RadioButton x:Name="rbModeSeq" Content="{loc:Loc Oracle_ModeBySeq}" FontSize="12" Margin="0,0,16,0" Checked="RbMode_Checked"/>
+                                    </StackPanel>
+
+                                    <!-- Key Columns Chips / Selector -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                                        <TextBlock Text="{loc:Loc Oracle_KeyColumnsHeader}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" MaxHeight="30">
+                                            <ItemsControl x:Name="icKeyColumns">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox Content="{Binding DisplayText}" IsChecked="{Binding IsSelectedKey}" Margin="0,0,8,0" FontSize="11" VerticalAlignment="Center"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </StackPanel>
+
+                                    <!-- Extra Options (Ignore spaces, Limit Rows) -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <CheckBox x:Name="chkIgnoreSpaces" Content="{loc:Loc Oracle_IgnoreSpaces}" IsChecked="True" FontSize="11" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <CheckBox x:Name="chkIgnoreCase" Content="{loc:Loc Oracle_IgnoreCase}" IsChecked="False" FontSize="11" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Loc Oracle_LimitRows}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBox x:Name="txtMaxRows" Text="0" Width="55" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_LimitRowsTip}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- DIFF RESULTS & STATS VIEW (BOTTOM SECTION) -->
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/> <!-- Statistics Badges & Filter Tabs -->
+                            <RowDefinition Height="*"/>    <!-- DataGrid -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Statistics & Filter Tabs -->
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Mode Selector -->
+                            <!-- Filter Tabs -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="{loc:Loc Oracle_SecCompareMode}" FontWeight="SemiBold" FontSize="12" Foreground="#334155" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                <RadioButton x:Name="rbModeKey" Content="{loc:Loc Oracle_ModeByKey}" IsChecked="True" FontSize="12" Margin="0,0,12,0" Checked="RbMode_Checked"/>
-                                <RadioButton x:Name="rbModeSeq" Content="{loc:Loc Oracle_ModeBySeq}" FontSize="12" Margin="0,0,16,0" Checked="RbMode_Checked"/>
+                                <RadioButton x:Name="rbFilterAll" Content="{loc:Loc Oracle_FilterAll}" IsChecked="True" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
+                                <RadioButton x:Name="rbFilterDiff" Content="{loc:Loc Oracle_FilterDiff}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
+                                <RadioButton x:Name="rbFilterMissingB" Content="{loc:Loc Oracle_FilterMissingB}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
+                                <RadioButton x:Name="rbFilterMissingA" Content="{loc:Loc Oracle_FilterMissingA}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
+                                <RadioButton x:Name="rbFilterMatch" Content="{loc:Loc Oracle_FilterMatch}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Checked="Filter_Checked"/>
                             </StackPanel>
 
-                            <!-- Key Columns Chips / Selector -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
-                                <TextBlock Text="{loc:Loc Oracle_KeyColumnsHeader}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" MaxHeight="30">
-                                    <ItemsControl x:Name="icKeyColumns">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal"/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <CheckBox Content="{Binding DisplayText}" IsChecked="{Binding IsSelectedKey}" Margin="0,0,8,0" FontSize="11" VerticalAlignment="Center"/>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
+                            <!-- Quick Search Box -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0">
+                                <TextBlock Text="🔍" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBox x:Name="txtSearchFilter" Width="180" Style="{StaticResource FormInputStyle}" TextChanged="TxtSearchFilter_TextChanged"/>
                             </StackPanel>
 
-                            <!-- Extra Options (Ignore spaces, Limit Rows) -->
+                            <!-- Summary Stats Badges -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <CheckBox x:Name="chkIgnoreSpaces" Content="{loc:Loc Oracle_IgnoreSpaces}" IsChecked="True" FontSize="11" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                <CheckBox x:Name="chkIgnoreCase" Content="{loc:Loc Oracle_IgnoreCase}" IsChecked="False" FontSize="11" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{loc:Loc Oracle_LimitRows}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                <TextBox x:Name="txtMaxRows" Text="0" Width="55" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_LimitRowsTip}"/>
+                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                                    <TextBlock x:Name="txtStatTotal" Text="Tổng: 0 dòng" FontSize="11" FontWeight="SemiBold" Foreground="#1E40AF"/>
+                                </Border>
+                                <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                                    <TextBlock x:Name="txtStatDiff" Text="Sai lệch: 0" FontSize="11" FontWeight="SemiBold" Foreground="#B45309"/>
+                                </Border>
+                                <Border Background="#DCFCE7" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="4" Padding="8,4">
+                                    <TextBlock x:Name="txtStatMatch" Text="Khớp: 0" FontSize="11" FontWeight="SemiBold" Foreground="#15803D"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- DataGrid View -->
+                        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6">
+                            <DataGrid x:Name="dgDiffResults"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      IsReadOnly="True"
+                                      GridLinesVisibility="All"
+                                      HorizontalGridLinesBrush="#E2E8F0"
+                                      VerticalGridLinesBrush="#E2E8F0"
+                                      RowHeight="26"
+                                      HeadersVisibility="Column"
+                                      SelectionMode="Extended"
+                                      SelectionUnit="FullRow"
+                                      FontSize="12"
+                                      Background="#FFFFFF"
+                                      BorderThickness="0">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontSize" Value="11"/>
+                                        <Setter Property="Padding" Value="8,6"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding RowNumber}" Width="50"/>
+                                    <DataGridTextColumn Header="{loc:Loc Oracle_ColKeyRecord}" Binding="{Binding KeyDisplay}" Width="160" FontWeight="SemiBold"/>
+                                    
+                                    <!-- Status Badge Template -->
+                                    <DataGridTemplateColumn Header="{loc:Loc Oracle_ColStatus}" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Identical">
+                                                                    <Setter Property="Background" Value="#DCFCE7"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Modified">
+                                                                    <Setter Property="Background" Value="#FEF3C7"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="MissingInA">
+                                                                    <Setter Property="Background" Value="#DBEAFE"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="MissingInB">
+                                                                    <Setter Property="Background" Value="#FEE2E2"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding StatusBadge}" FontWeight="SemiBold" FontSize="11" Foreground="{Binding StatusColor}"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="{loc:Loc Oracle_ColDifferingSummary}" Binding="{Binding DifferingColumnsSummary}" Width="180" Foreground="#B45309"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 2: CÀI ĐẶT QUẢN LÝ KẾT NỐI (User Requested) -->
+            <TabItem Header="{loc:Loc Oracle_TabSettings}" Style="{StaticResource ModernTabItemStyle}">
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="340"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- LEFT: PROFILES LIST -->
+                    <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/> <!-- Header -->
+                                <RowDefinition Height="*"/>    <!-- Profiles ListBox -->
+                                <RowDefinition Height="Auto"/> <!-- Action Buttons -->
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="{loc:Loc Oracle_ProfilesListHeader}" FontWeight="Bold" FontSize="13" Foreground="#1E293B" Margin="0,0,0,8"/>
+
+                            <ListBox Grid.Row="1" x:Name="lstProfiles" SelectionChanged="LstProfiles_SelectionChanged" BorderThickness="1" BorderBrush="#E2E8F0" Background="#F8FAFC">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="8,6" CornerRadius="4">
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" Foreground="#1E293B"/>
+                                                <TextBlock Text="{Binding DisplaySummary}" FontSize="11" Foreground="#64748B" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <!-- Profile Action Buttons -->
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button x:Name="btnNewProfile" Content="{loc:Loc Oracle_BtnAddProfile}" Style="{StaticResource DialogPrimaryButtonStyle}" Padding="10,5" Margin="0,0,6,0" Click="BtnNewProfile_Click"/>
+                                <Button x:Name="btnCloneProfile" Content="{loc:Loc Oracle_BtnCloneProfile}" Style="{StaticResource DialogSecondaryButtonStyle}" Padding="10,5" Margin="0,0,6,0" Click="BtnCloneProfile_Click"/>
+                                <Button x:Name="btnDeleteProfile" Content="{loc:Loc Oracle_BtnDeleteProfile}" Style="{StaticResource DialogSecondaryButtonStyle}" Padding="10,5" Click="BtnDeleteProfile_Click"/>
                             </StackPanel>
                         </Grid>
                     </Border>
+
+                    <!-- RIGHT: PROFILE DETAIL EDITOR -->
+                    <Border Grid.Column="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="{loc:Loc Oracle_ProfileDetailHeader}" FontWeight="Bold" FontSize="14" Foreground="#1E293B" Margin="0,0,0,12"/>
+
+                                <!-- Profile Name -->
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="{loc:Loc Oracle_ProfileName}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                    <TextBox x:Name="txtSettingProfileName" Style="{StaticResource FormInputStyle}"/>
+                                </StackPanel>
+
+                                <!-- Host & Port -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="1*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{loc:Loc Oracle_Host}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="txtSettingHost" Style="{StaticResource FormInputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{loc:Loc Oracle_Port}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="txtSettingPort" Text="1521" Style="{StaticResource FormInputStyle}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Service Name / SID -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{loc:Loc Oracle_ServiceName}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="txtSettingService" Style="{StaticResource FormInputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="12,0,0,5">
+                                        <RadioButton x:Name="rbSettingService" Content="Service" IsChecked="True" FontSize="11" Margin="0,0,8,0"/>
+                                        <RadioButton x:Name="rbSettingSid" Content="SID" FontSize="11"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- User & Password -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{loc:Loc Oracle_User}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="txtSettingUser" Style="{StaticResource FormInputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{loc:Loc Oracle_Password}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                        <PasswordBox x:Name="txtSettingPass" Style="{StaticResource FormPasswordStyle}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Default Schema & Table (Optional) -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{loc:Loc Oracle_DefaultSchema}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="txtSettingDefaultSchema" Style="{StaticResource FormInputStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{loc:Loc Oracle_DefaultTable}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="txtSettingDefaultTable" Style="{StaticResource FormInputStyle}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Default Where Clause (Optional) -->
+                                <StackPanel Margin="0,0,0,16">
+                                    <TextBlock Text="{loc:Loc Oracle_WhereClause}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
+                                    <TextBox x:Name="txtSettingDefaultWhere" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_WhereClauseTip}"/>
+                                </StackPanel>
+
+                                <!-- Bottom Action Buttons for Profile -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0" x:Name="btnSettingSave" Content="{loc:Loc Oracle_BtnSaveProfile}" Style="{StaticResource DialogSuccessButtonStyle}" Padding="16,7" Click="BtnSettingSave_Click"/>
+                                    <Button Grid.Column="2" x:Name="btnSettingTest" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource DialogSecondaryButtonStyle}" Padding="14,7" Click="BtnSettingTest_Click"/>
+                                    <TextBlock Grid.Column="3" x:Name="txtSettingStatus" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11" Foreground="#16A34A" TextWrapping="Wrap"/>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
                 </Grid>
-            </Border>
-
-            <!-- DIFF RESULTS & STATS VIEW (BOTTOM SECTION) -->
-            <Grid Grid.Row="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/> <!-- Statistics Badges & Filter Tabs -->
-                    <RowDefinition Height="*"/>    <!-- DataGrid -->
-                </Grid.RowDefinitions>
-
-                <!-- Statistics & Filter Tabs -->
-                <Grid Grid.Row="0" Margin="0,0,0,6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Filter Tabs -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <RadioButton x:Name="rbFilterAll" Content="{loc:Loc Oracle_FilterAll}" IsChecked="True" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
-                        <RadioButton x:Name="rbFilterDiff" Content="{loc:Loc Oracle_FilterDiff}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
-                        <RadioButton x:Name="rbFilterMissingB" Content="{loc:Loc Oracle_FilterMissingB}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
-                        <RadioButton x:Name="rbFilterMissingA" Content="{loc:Loc Oracle_FilterMissingA}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Margin="0,0,4,0" Checked="Filter_Checked"/>
-                        <RadioButton x:Name="rbFilterMatch" Content="{loc:Loc Oracle_FilterMatch}" GroupName="DiffFilter" Style="{StaticResource {x:Type ToggleButton}}" Padding="10,4" Checked="Filter_Checked"/>
-                    </StackPanel>
-
-                    <!-- Quick Search Box -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0">
-                        <TextBlock Text="🔍" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBox x:Name="txtSearchFilter" Width="180" Style="{StaticResource FormInputStyle}" TextChanged="TxtSearchFilter_TextChanged"/>
-                    </StackPanel>
-
-                    <!-- Summary Stats Badges -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
-                            <TextBlock x:Name="txtStatTotal" Text="Tổng: 0 dòng" FontSize="11" FontWeight="SemiBold" Foreground="#1E40AF"/>
-                        </Border>
-                        <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
-                            <TextBlock x:Name="txtStatDiff" Text="Sai lệch: 0" FontSize="11" FontWeight="SemiBold" Foreground="#B45309"/>
-                        </Border>
-                        <Border Background="#DCFCE7" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="4" Padding="8,4">
-                            <TextBlock x:Name="txtStatMatch" Text="Khớp: 0" FontSize="11" FontWeight="SemiBold" Foreground="#15803D"/>
-                        </Border>
-                    </StackPanel>
-                </Grid>
-
-                <!-- DataGrid View -->
-                <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6">
-                    <DataGrid x:Name="dgDiffResults"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              IsReadOnly="True"
-                              GridLinesVisibility="All"
-                              HorizontalGridLinesBrush="#E2E8F0"
-                              VerticalGridLinesBrush="#E2E8F0"
-                              RowHeight="26"
-                              HeadersVisibility="Column"
-                              SelectionMode="Extended"
-                              SelectionUnit="FullRow"
-                              FontSize="12"
-                              Background="#FFFFFF"
-                              BorderThickness="0">
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="#1E293B"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="FontSize" Value="11"/>
-                                <Setter Property="Padding" Value="8,6"/>
-                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                                <Setter Property="BorderThickness" Value="0,0,1,1"/>
-                                <Setter Property="BorderBrush" Value="#334155"/>
-                            </Style>
-                        </DataGrid.ColumnHeaderStyle>
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="#" Binding="{Binding RowNumber}" Width="50"/>
-                            <DataGridTextColumn Header="{loc:Loc Oracle_ColKeyRecord}" Binding="{Binding KeyDisplay}" Width="160" FontWeight="SemiBold"/>
-                            
-                            <!-- Status Badge Template -->
-                            <DataGridTemplateColumn Header="{loc:Loc Oracle_ColStatus}" Width="130">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Identical">
-                                                            <Setter Property="Background" Value="#DCFCE7"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Modified">
-                                                            <Setter Property="Background" Value="#FEF3C7"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="MissingInA">
-                                                            <Setter Property="Background" Value="#DBEAFE"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="MissingInB">
-                                                            <Setter Property="Background" Value="#FEE2E2"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{Binding StatusBadge}" FontWeight="SemiBold" FontSize="11" Foreground="{Binding StatusColor}"/>
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-
-                            <DataGridTextColumn Header="{loc:Loc Oracle_ColDifferingSummary}" Binding="{Binding DifferingColumnsSummary}" Width="180" Foreground="#B45309"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
-            </Grid>
-        </Grid>
+            </TabItem>
+        </TabControl>
 
         <!-- 3. STATUS & PROGRESS BAR -->
         <Border Grid.Row="2" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="16,6">

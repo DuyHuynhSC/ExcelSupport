@@ -14,6 +14,7 @@ using ExcelSupport.Services;
 using WpfMessageBox = System.Windows.MessageBox;
 using WpfMessageBoxButton = System.Windows.MessageBoxButton;
 using WpfMessageBoxImage = System.Windows.MessageBoxImage;
+using WpfMessageBoxResult = System.Windows.MessageBoxResult;
 using MediaColor = System.Windows.Media.Color;
 using WpfBinding = System.Windows.Data.Binding;
 using WpfClipboard = System.Windows.Clipboard;
@@ -23,10 +24,15 @@ namespace ExcelSupport.Views
     public partial class OracleTableCompareDialog : Window
     {
         private readonly ObservableCollection<OracleTableColumnInfo> _tableColumns = new ObservableCollection<OracleTableColumnInfo>();
+        private readonly ObservableCollection<OracleConnectionProfile> _profiles = new ObservableCollection<OracleConnectionProfile>();
         private OracleCompareResult? _lastResult;
         private List<OracleRowDiffItem> _allDiffItems = new List<OracleRowDiffItem>();
         private bool _isComparing = false;
         private readonly bool _isDarkTheme;
+
+        // Cached active configs
+        private OracleConnectionConfig? _activeConfigA;
+        private OracleConnectionConfig? _activeConfigB;
 
         public OracleTableCompareDialog(bool isDarkTheme = false)
         {
@@ -34,6 +40,9 @@ namespace ExcelSupport.Views
             _isDarkTheme = isDarkTheme;
 
             icKeyColumns.ItemsSource = _tableColumns;
+
+            // Load saved connection profiles
+            RefreshProfilesList();
 
             if (_isDarkTheme)
             {
@@ -80,295 +89,572 @@ namespace ExcelSupport.Views
             RootGrid.Background = new SolidColorBrush(MediaColor.FromRgb(15, 23, 42)); // Slate 900
         }
 
+        #region Profile Management
+
+        private void RefreshProfilesList()
+        {
+            var list = OracleConnectionManager.GetProfiles();
+            _profiles.Clear();
+            foreach (var p in list)
+            {
+                _profiles.Add(p);
+            }
+
+            cboProfileA.ItemsSource = null;
+            cboProfileA.ItemsSource = _profiles;
+
+            cboProfileB.ItemsSource = null;
+            cboProfileB.ItemsSource = _profiles;
+
+            lstProfiles.ItemsSource = null;
+            lstProfiles.ItemsSource = _profiles;
+
+            if (_profiles.Count > 0)
+            {
+                if (cboProfileA.SelectedIndex < 0) cboProfileA.SelectedIndex = 0;
+                if (cboProfileB.SelectedIndex < 0) cboProfileB.SelectedIndex = _profiles.Count > 1 ? 1 : 0;
+                if (lstProfiles.SelectedIndex < 0) lstProfiles.SelectedIndex = 0;
+            }
+        }
+
+        private void BtnManageProfiles_Click(object sender, RoutedEventArgs e)
+        {
+            mainTabControl.SelectedIndex = 1; // Switch to Tab Settings
+        }
+
+        private void CboProfileA_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            if (cboProfileA.SelectedItem is OracleConnectionProfile p)
+            {
+                _activeConfigA = p.ToConnectionConfig();
+                txtStatusBadgeA.Text = "⚪ Sẵn sàng kết nối";
+                txtStatusBadgeA.Foreground = new SolidColorBrush(MediaColor.FromRgb(100, 116, 139));
+                if (!string.IsNullOrWhiteSpace(p.DefaultWhereClause) && string.IsNullOrWhiteSpace(txtWhereA.Text))
+                {
+                    txtWhereA.Text = p.DefaultWhereClause;
+                }
+            }
+        }
+
+        private void CboProfileB_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            if (cboProfileB.SelectedItem is OracleConnectionProfile p)
+            {
+                _activeConfigB = p.ToConnectionConfig();
+                txtStatusBadgeB.Text = "⚪ Sẵn sàng kết nối";
+                txtStatusBadgeB.Foreground = new SolidColorBrush(MediaColor.FromRgb(100, 116, 139));
+                if (!string.IsNullOrWhiteSpace(p.DefaultWhereClause) && string.IsNullOrWhiteSpace(txtWhereB.Text))
+                {
+                    txtWhereB.Text = p.DefaultWhereClause;
+                }
+            }
+        }
+
+        private void LstProfiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
+            {
+                txtSettingProfileName.Text = p.Name;
+                txtSettingHost.Text = p.Host;
+                txtSettingPort.Text = p.Port.ToString();
+                txtSettingService.Text = p.ServiceNameOrSid;
+                rbSettingService.IsChecked = p.ServiceType == OracleServiceNameType.ServiceName;
+                rbSettingSid.IsChecked = p.ServiceType == OracleServiceNameType.SID;
+                txtSettingUser.Text = p.Username;
+                txtSettingPass.Password = p.Password;
+                txtSettingDefaultSchema.Text = p.DefaultSchema;
+                txtSettingDefaultTable.Text = p.DefaultTable;
+                txtSettingDefaultWhere.Text = p.DefaultWhereClause;
+                txtSettingStatus.Text = string.Empty;
+            }
+        }
+
+        private void BtnNewProfile_Click(object sender, RoutedEventArgs e)
+        {
+            var newProfile = new OracleConnectionProfile
+            {
+                Name = $"Connection {_profiles.Count + 1}",
+                Host = "localhost",
+                Port = 1521,
+                ServiceNameOrSid = "ORCL",
+                ServiceType = OracleServiceNameType.ServiceName,
+                Username = "",
+                Password = ""
+            };
+
+            OracleConnectionManager.AddOrUpdateProfile(newProfile);
+            RefreshProfilesList();
+            lstProfiles.SelectedItem = _profiles.FirstOrDefault(p => p.Id == newProfile.Id);
+        }
+
+        private void BtnCloneProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
+            {
+                var clone = p.Clone();
+                OracleConnectionManager.AddOrUpdateProfile(clone);
+                RefreshProfilesList();
+                lstProfiles.SelectedItem = _profiles.FirstOrDefault(x => x.Id == clone.Id);
+            }
+        }
+
+        private void BtnDeleteProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
+            {
+                var confirm = WpfMessageBox.Show(
+                    $"Bạn có chắc chắn muốn xóa cấu hình kết nối '{p.Name}' không?",
+                    "Xác nhận xóa", WpfMessageBoxButton.YesNo, WpfMessageBoxImage.Question);
+
+                if (confirm == WpfMessageBoxResult.Yes)
+                {
+                    OracleConnectionManager.DeleteProfile(p.Id);
+                    RefreshProfilesList();
+                }
+            }
+        }
+
+        private void BtnSettingSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
+            {
+                int.TryParse(txtSettingPort.Text, out int port);
+                if (port <= 0) port = 1521;
+
+                p.Name = string.IsNullOrWhiteSpace(txtSettingProfileName.Text) ? "Connection" : txtSettingProfileName.Text.Trim();
+                p.Host = txtSettingHost.Text.Trim();
+                p.Port = port;
+                p.ServiceNameOrSid = txtSettingService.Text.Trim();
+                p.ServiceType = (rbSettingSid.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName;
+                p.Username = txtSettingUser.Text.Trim();
+                p.Password = txtSettingPass.Password;
+                p.DefaultSchema = txtSettingDefaultSchema.Text.Trim();
+                p.DefaultTable = txtSettingDefaultTable.Text.Trim();
+                p.DefaultWhereClause = txtSettingDefaultWhere.Text.Trim();
+
+                OracleConnectionManager.AddOrUpdateProfile(p);
+                RefreshProfilesList();
+
+                txtSettingStatus.Text = "✅ Đã lưu cấu hình thành công!";
+                txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+            }
+        }
+
+        private async void BtnSettingTest_Click(object sender, RoutedEventArgs e)
+        {
+            btnSettingTest.IsEnabled = false;
+            txtSettingStatus.Text = "⏳ Đang kiểm tra kết nối...";
+            txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(217, 119, 6));
+
+            int.TryParse(txtSettingPort.Text, out int port);
+            if (port <= 0) port = 1521;
+
+            var config = new OracleConnectionConfig
+            {
+                Host = txtSettingHost.Text.Trim(),
+                Port = port,
+                ServiceNameOrSid = txtSettingService.Text.Trim(),
+                ServiceType = (rbSettingSid.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName,
+                Username = txtSettingUser.Text.Trim(),
+                Password = txtSettingPass.Password
+            };
+
+            var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
+            btnSettingTest.IsEnabled = true;
+
+            if (success)
+            {
+                txtSettingStatus.Text = $"🟢 Kết nối thành công! Phiên bản: {version}";
+                txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+            }
+            else
+            {
+                txtSettingStatus.Text = $"🔴 {msg}";
+                txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
+            }
+        }
+
+        #endregion
+
         #region Connection Testing & Metadata Loading
 
-        private OracleConnectionConfig BuildConfigA()
+        private async void BtnConnectA_Click(object sender, RoutedEventArgs e)
         {
-            int.TryParse(txtPortA.Text, out int port);
-            if (port <= 0) port = 1521;
-
-            return new OracleConnectionConfig
+            if (cboProfileA.SelectedItem is not OracleConnectionProfile p)
             {
-                Host = txtHostA.Text.Trim(),
-                Port = port,
-                ServiceNameOrSid = txtServiceA.Text.Trim(),
-                ServiceType = (rbSidA.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName,
-                Username = txtUserA.Text.Trim(),
-                Password = txtPassA.Password
-            };
-        }
+                WpfMessageBox.Show("Vui lòng chọn một cấu hình kết nối cho Database A.", "Thông báo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
 
-        private OracleConnectionConfig BuildConfigB()
-        {
-            int.TryParse(txtPortB.Text, out int port);
-            if (port <= 0) port = 1521;
-
-            return new OracleConnectionConfig
-            {
-                Host = txtHostB.Text.Trim(),
-                Port = port,
-                ServiceNameOrSid = txtServiceB.Text.Trim(),
-                ServiceType = (rbSidB.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName,
-                Username = txtUserB.Text.Trim(),
-                Password = txtPassB.Password
-            };
-        }
-
-        private async void BtnTestA_Click(object sender, RoutedEventArgs e)
-        {
-            btnTestA.IsEnabled = false;
+            btnConnectA.IsEnabled = false;
             txtStatusBadgeA.Text = "⏳ Đang kết nối...";
-            txtStatusBadgeA.Foreground = new SolidColorBrush(MediaColor.FromRgb(217, 119, 6)); // Amber
+            txtStatusBadgeA.Foreground = new SolidColorBrush(MediaColor.FromRgb(217, 119, 6));
 
-            var config = BuildConfigA();
-            var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
+            _activeConfigA = p.ToConnectionConfig();
+            var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(_activeConfigA);
 
-            btnTestA.IsEnabled = true;
+            btnConnectA.IsEnabled = true;
             if (success)
             {
                 txtStatusBadgeA.Text = $"🟢 {version}";
-                txtStatusBadgeA.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74)); // Green
+                txtStatusBadgeA.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
                 txtStatus.Text = $"DB A kết nối thành công: {version}";
 
-                await LoadSchemasAAsync(config);
+                await LoadSchemasAAsync(_activeConfigA, p.DefaultSchema, p.DefaultTable);
             }
             else
             {
                 txtStatusBadgeA.Text = "🔴 Thất bại";
-                txtStatusBadgeA.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38)); // Red
+                txtStatusBadgeA.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
                 txtStatus.Text = msg;
                 WpfMessageBox.Show(msg, "Lỗi kết nối Database A", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
         }
 
-        private async void BtnTestB_Click(object sender, RoutedEventArgs e)
+        private async void BtnConnectB_Click(object sender, RoutedEventArgs e)
         {
-            btnTestB.IsEnabled = false;
+            if (cboProfileB.SelectedItem is not OracleConnectionProfile p)
+            {
+                WpfMessageBox.Show("Vui lòng chọn một cấu hình kết nối cho Database B.", "Thông báo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            btnConnectB.IsEnabled = false;
             txtStatusBadgeB.Text = "⏳ Đang kết nối...";
-            txtStatusBadgeB.Foreground = new SolidColorBrush(MediaColor.FromRgb(217, 119, 6)); // Amber
+            txtStatusBadgeB.Foreground = new SolidColorBrush(MediaColor.FromRgb(217, 119, 6));
 
-            var config = BuildConfigB();
-            var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
+            _activeConfigB = p.ToConnectionConfig();
+            var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(_activeConfigB);
 
-            btnTestB.IsEnabled = true;
+            btnConnectB.IsEnabled = true;
             if (success)
             {
                 txtStatusBadgeB.Text = $"🟢 {version}";
-                txtStatusBadgeB.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74)); // Green
+                txtStatusBadgeB.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
                 txtStatus.Text = $"DB B kết nối thành công: {version}";
 
-                await LoadSchemasBAsync(config);
+                await LoadSchemasBAsync(_activeConfigB, p.DefaultSchema, p.DefaultTable);
             }
             else
             {
                 txtStatusBadgeB.Text = "🔴 Thất bại";
-                txtStatusBadgeB.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38)); // Red
+                txtStatusBadgeB.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
                 txtStatus.Text = msg;
                 WpfMessageBox.Show(msg, "Lỗi kết nối Database B", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
         }
 
-        private async Task LoadSchemasAAsync(OracleConnectionConfig config)
+        private async Task LoadSchemasAAsync(OracleConnectionConfig config, string? defaultSchema = null, string? defaultTable = null)
         {
-            var schemas = await OracleDataCompareService.GetSchemasAsync(config);
-            cboSchemaA.ItemsSource = schemas;
-            if (schemas.Contains(config.Username.ToUpperInvariant()))
+            try
             {
-                cboSchemaA.SelectedItem = config.Username.ToUpperInvariant();
+                txtStatus.Text = "Đang tải danh sách Schema từ Database A...";
+                var schemas = await OracleDataCompareService.GetSchemasAsync(config);
+                cboSchemaA.ItemsSource = schemas;
+
+                string userUpper = !string.IsNullOrWhiteSpace(defaultSchema) ? defaultSchema.ToUpperInvariant() : config.Username.ToUpperInvariant();
+                var matched = schemas.FirstOrDefault(s => s.Equals(userUpper, StringComparison.OrdinalIgnoreCase));
+                if (matched != null)
+                {
+                    cboSchemaA.SelectedItem = matched;
+                }
+                else if (schemas.Count > 0)
+                {
+                    cboSchemaA.SelectedIndex = 0;
+                }
+
+                if (!string.IsNullOrWhiteSpace(defaultTable))
+                {
+                    cboTableA.Text = defaultTable;
+                }
             }
-            else if (schemas.Count > 0)
+            catch (Exception ex)
             {
-                cboSchemaA.SelectedIndex = 0;
+                txtStatus.Text = $"Lỗi tải schema: {ex.Message}";
             }
         }
 
-        private async Task LoadSchemasBAsync(OracleConnectionConfig config)
+        private async Task LoadSchemasBAsync(OracleConnectionConfig config, string? defaultSchema = null, string? defaultTable = null)
         {
-            var schemas = await OracleDataCompareService.GetSchemasAsync(config);
-            cboSchemaB.ItemsSource = schemas;
-            if (schemas.Contains(config.Username.ToUpperInvariant()))
+            try
             {
-                cboSchemaB.SelectedItem = config.Username.ToUpperInvariant();
+                txtStatus.Text = "Đang tải danh sách Schema từ Database B...";
+                var schemas = await OracleDataCompareService.GetSchemasAsync(config);
+                cboSchemaB.ItemsSource = schemas;
+
+                string userUpper = !string.IsNullOrWhiteSpace(defaultSchema) ? defaultSchema.ToUpperInvariant() : config.Username.ToUpperInvariant();
+                var matched = schemas.FirstOrDefault(s => s.Equals(userUpper, StringComparison.OrdinalIgnoreCase));
+                if (matched != null)
+                {
+                    cboSchemaB.SelectedItem = matched;
+                }
+                else if (schemas.Count > 0)
+                {
+                    cboSchemaB.SelectedIndex = 0;
+                }
+
+                if (!string.IsNullOrWhiteSpace(defaultTable))
+                {
+                    cboTableB.Text = defaultTable;
+                }
             }
-            else if (schemas.Count > 0)
+            catch (Exception ex)
             {
-                cboSchemaB.SelectedIndex = 0;
+                txtStatus.Text = $"Lỗi tải schema: {ex.Message}";
             }
         }
 
         private async void CboSchemaA_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string? schema = cboSchemaA.SelectedItem as string ?? cboSchemaA.Text;
-            if (string.IsNullOrWhiteSpace(schema)) return;
+            if (!IsLoaded) return;
+            string schema = cboSchemaA.SelectedItem?.ToString() ?? cboSchemaA.Text;
+            if (string.IsNullOrWhiteSpace(schema) || _activeConfigA == null) return;
 
-            var config = BuildConfigA();
-            var tables = await OracleDataCompareService.GetTablesAndViewsAsync(config, schema);
-            cboTableA.ItemsSource = tables;
-            if (tables.Count > 0) cboTableA.SelectedIndex = 0;
+            try
+            {
+                txtStatus.Text = $"Đang tải danh sách bảng từ Schema [{schema}] (DB A)...";
+                var tables = await OracleDataCompareService.GetTablesAndViewsAsync(_activeConfigA, schema);
+                cboTableA.ItemsSource = tables;
+                if (tables.Count > 0)
+                {
+                    cboTableA.SelectedIndex = 0;
+                }
+                txtStatus.Text = $"Đã tải {tables.Count} bảng/view từ DB A.";
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi tải bảng DB A: {ex.Message}";
+            }
         }
 
         private async void CboSchemaB_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string? schema = cboSchemaB.SelectedItem as string ?? cboSchemaB.Text;
-            if (string.IsNullOrWhiteSpace(schema)) return;
+            if (!IsLoaded) return;
+            string schema = cboSchemaB.SelectedItem?.ToString() ?? cboSchemaB.Text;
+            if (string.IsNullOrWhiteSpace(schema) || _activeConfigB == null) return;
 
-            var config = BuildConfigB();
-            var tables = await OracleDataCompareService.GetTablesAndViewsAsync(config, schema);
-            cboTableB.ItemsSource = tables;
-            if (tables.Count > 0) cboTableB.SelectedIndex = 0;
+            try
+            {
+                txtStatus.Text = $"Đang tải danh sách bảng từ Schema [{schema}] (DB B)...";
+                var tables = await OracleDataCompareService.GetTablesAndViewsAsync(_activeConfigB, schema);
+                cboTableB.ItemsSource = tables;
+
+                // Sync with table A selection if matched
+                string tableA = cboTableA.SelectedItem?.ToString() ?? cboTableA.Text;
+                var matchedTable = tables.FirstOrDefault(t => t.Equals(tableA, StringComparison.OrdinalIgnoreCase));
+                if (matchedTable != null)
+                {
+                    cboTableB.SelectedItem = matchedTable;
+                }
+                else if (tables.Count > 0)
+                {
+                    cboTableB.SelectedIndex = 0;
+                }
+                txtStatus.Text = $"Đã tải {tables.Count} bảng/view từ DB B.";
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi tải bảng DB B: {ex.Message}";
+            }
         }
 
         private async void CboTableA_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string? schema = cboSchemaA.SelectedItem as string ?? cboSchemaA.Text;
-            string? table = cboTableA.SelectedItem as string ?? cboTableA.Text;
-            if (string.IsNullOrWhiteSpace(table)) return;
+            if (!IsLoaded) return;
+            string table = cboTableA.SelectedItem?.ToString() ?? cboTableA.Text;
+            string schema = cboSchemaA.SelectedItem?.ToString() ?? cboSchemaA.Text;
+            if (string.IsNullOrWhiteSpace(table) || _activeConfigA == null) return;
 
-            // Đồng bộ tên bảng sang DB B nếu DB B chưa chọn
-            if (string.IsNullOrWhiteSpace(cboTableB.Text) && cboTableB.Items.Contains(table))
+            // Auto-select same table in DB B if available
+            if (cboTableB.ItemsSource is List<string> bTables)
             {
-                cboTableB.SelectedItem = table;
+                var matched = bTables.FirstOrDefault(t => t.Equals(table, StringComparison.OrdinalIgnoreCase));
+                if (matched != null) cboTableB.SelectedItem = matched;
             }
 
-            var config = BuildConfigA();
-            var cols = await OracleDataCompareService.GetTableColumnsAsync(config, schema ?? "", table);
-            _tableColumns.Clear();
-            foreach (var col in cols)
+            try
             {
-                _tableColumns.Add(col);
+                txtStatus.Text = $"Đang lấy thông tin cột của bảng [{table}]...";
+                var cols = await OracleDataCompareService.GetTableColumnsAsync(_activeConfigA, schema, table);
+                _tableColumns.Clear();
+                foreach (var c in cols)
+                {
+                    _tableColumns.Add(c);
+                }
+                txtStatus.Text = $"Bảng [{table}] có {cols.Count} cột. (Đã tự động chọn Primary Key).";
             }
-        }
-
-        private void RbMode_Checked(object sender, RoutedEventArgs e)
-        {
-            if (!IsLoaded || icKeyColumns == null || rbModeKey == null) return;
-            icKeyColumns.Visibility = (rbModeKey.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi lấy cấu trúc cột: {ex.Message}";
+            }
         }
 
         #endregion
 
-        #region Comparison Execution
+        #region Start Comparison
 
         private async void BtnStartCompare_Click(object sender, RoutedEventArgs e)
         {
             if (_isComparing) return;
 
-            string schemaA = cboSchemaA.Text.Trim();
-            string tableA = cboTableA.Text.Trim();
-            string schemaB = cboSchemaB.Text.Trim();
-            string tableB = cboTableB.Text.Trim();
+            // Switch to Compare tab if on settings tab
+            mainTabControl.SelectedIndex = 0;
+
+            if (_activeConfigA == null)
+            {
+                if (cboProfileA.SelectedItem is OracleConnectionProfile pA) _activeConfigA = pA.ToConnectionConfig();
+            }
+            if (_activeConfigB == null)
+            {
+                if (cboProfileB.SelectedItem is OracleConnectionProfile pB) _activeConfigB = pB.ToConnectionConfig();
+            }
+
+            if (_activeConfigA == null || _activeConfigB == null)
+            {
+                WpfMessageBox.Show("Vui lòng chọn cấu hình và kết nối thành công tới cả 2 Database.", "Cảnh báo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            string tableA = cboTableA.SelectedItem?.ToString() ?? cboTableA.Text.Trim();
+            string tableB = cboTableB.SelectedItem?.ToString() ?? cboTableB.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(tableA) || string.IsNullOrWhiteSpace(tableB))
             {
-                WpfMessageBox.Show("Vui lòng chọn bảng dữ liệu cho cả Database A và Database B trước khi so sánh.",
-                                   "Thiếu thông tin bảng", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                WpfMessageBox.Show("Vui lòng chọn hoặc nhập tên Bảng cần so sánh cho cả 2 Database.", "Cảnh báo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
                 return;
             }
 
-            var configA = BuildConfigA();
-            var configB = BuildConfigB();
+            string schemaA = cboSchemaA.SelectedItem?.ToString() ?? cboSchemaA.Text.Trim();
+            string schemaB = cboSchemaB.SelectedItem?.ToString() ?? cboSchemaB.Text.Trim();
 
-            if (string.IsNullOrWhiteSpace(configA.Username) || string.IsNullOrWhiteSpace(configB.Username))
-            {
-                WpfMessageBox.Show("Vui lòng nhập đầy đủ thông tin đăng nhập cho cả 2 Database.",
-                                   "Thiếu thông tin kết nối", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
-            }
+            int.TryParse(txtMaxRows.Text, out int maxRows);
 
             var options = new OracleCompareOptions
             {
-                Mode = (rbModeKey.IsChecked == true) ? OracleCompareMode.ByKeyColumns : OracleCompareMode.Sequential,
+                Mode = (rbModeSeq.IsChecked == true) ? OracleCompareMode.Sequential : OracleCompareMode.ByKeyColumns,
                 IgnoreWhitespace = chkIgnoreSpaces.IsChecked == true,
                 IgnoreCase = chkIgnoreCase.IsChecked == true,
-                SelectedKeyColumns = _tableColumns.Where(c => c.IsSelectedKey).Select(c => c.ColumnName).ToList(),
-                SelectedCompareColumns = _tableColumns.Where(c => c.IsSelectedCompare).Select(c => c.ColumnName).ToList()
+                MaxRows = maxRows,
+                WhereClauseA = txtWhereA.Text.Trim(),
+                WhereClauseB = txtWhereB.Text.Trim()
             };
 
-            if (int.TryParse(txtMaxRows.Text, out int maxR) && maxR > 0)
+            if (options.Mode == OracleCompareMode.ByKeyColumns)
             {
-                options.MaxRows = maxR;
-            }
+                options.SelectedKeyColumns = _tableColumns.Where(c => c.IsSelectedKey).Select(c => c.ColumnName).ToList();
+                if (options.SelectedKeyColumns.Count == 0)
+                {
+                    var confirm = WpfMessageBox.Show(
+                        "Chưa có Cột Khóa chính nào được chọn để so khớp bản ghi!\n\nBạn có muốn chuyển sang so sánh theo Thứ Tự Dòng (Sequential) không?",
+                        "Chưa chọn Khóa", WpfMessageBoxButton.YesNo, WpfMessageBoxImage.Question);
 
-            if (options.Mode == OracleCompareMode.ByKeyColumns && options.SelectedKeyColumns.Count == 0)
-            {
-                WpfMessageBox.Show("Chế độ so sánh theo Khóa yêu cầu ít nhất 1 cột khóa được chọn. Vui lòng tích chọn cột làm khóa ở danh sách bên dưới.",
-                                   "Chưa chọn Cột Khóa", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
+                    if (confirm == WpfMessageBoxResult.Yes)
+                    {
+                        rbModeSeq.IsChecked = true;
+                        options.Mode = OracleCompareMode.Sequential;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
             }
 
             _isComparing = true;
             btnStartCompare.IsEnabled = false;
             pbProgress.Visibility = Visibility.Visible;
+            pbProgress.IsIndeterminate = false;
             pbProgress.Value = 0;
+            txtStatus.Text = "Đang trích xuất dữ liệu từ cả 2 Database và tiến hành so sánh...";
 
-            var progressReporter = new Progress<(string StatusText, double ProgressPercent)>(report =>
+            var progress = new Progress<(string StatusText, double ProgressPercent)>(p =>
             {
-                txtStatus.Text = report.StatusText;
-                pbProgress.Value = report.ProgressPercent;
+                txtStatus.Text = p.StatusText;
+                if (p.ProgressPercent > 0)
+                {
+                    pbProgress.Value = p.ProgressPercent;
+                }
             });
 
             try
             {
-                var result = await OracleDataCompareService.CompareTablesAsync(configA, configB, schemaA, tableA, schemaB, tableB, options, progressReporter);
+                var result = await OracleDataCompareService.CompareTablesAsync(
+                    _activeConfigA,
+                    _activeConfigB,
+                    schemaA, tableA,
+                    schemaB, tableB,
+                    options, progress);
+
                 _lastResult = result;
                 _allDiffItems = result.DiffItems;
 
-                UpdateStatisticsAndGrid(result);
-                txtStatus.Text = $"Hoàn tất đối soát trong {result.ExecutionTime.TotalSeconds:F2}s. Khớp: {result.MatchCount:N0} dòng, Sai lệch: {result.ModifiedCount:N0} dòng, Chỉ có ở A: {result.MissingInBCount:N0}, Chỉ có ở B: {result.MissingInACount:N0}.";
+                // Build Dynamic Columns in DataGrid
+                BuildDataGridColumns(result.Columns);
+
+                // Apply initial filter
+                ApplyFilter();
+
+                // Update summary badges
+                txtStatTotal.Text = $"Tổng: {result.DiffItems.Count:N0} dòng";
+                txtStatDiff.Text = $"Sai lệch: {result.ModifiedCount:N0}";
+                txtStatMatch.Text = $"Khớp: {result.MatchCount:N0}";
+
+                txtStatus.Text = $"So sánh hoàn tất sau {result.ExecutionTime.TotalSeconds:N1}s. Tìm thấy {result.ModifiedCount} dòng sai lệch.";
+
+                if (result.ModifiedCount == 0 && result.MissingInACount == 0 && result.MissingInBCount == 0)
+                {
+                    WpfMessageBox.Show("Tuyệt vời! Dữ liệu của 2 bảng hoàn toàn khớp 100% không có bất kỳ sai lệch nào.",
+                                       "Khớp Hoàn Hảo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                }
             }
             catch (Exception ex)
             {
-                txtStatus.Text = $"Lỗi: {ex.Message}";
-                WpfMessageBox.Show(ex.Message, "Lỗi đối soát dữ liệu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                txtStatus.Text = $"Lỗi so sánh: {ex.Message}";
+                WpfMessageBox.Show($"Quá trình đối soát phát sinh lỗi:\n{ex.Message}", "Lỗi So Sánh", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
             finally
             {
                 _isComparing = false;
                 btnStartCompare.IsEnabled = true;
                 pbProgress.Visibility = Visibility.Collapsed;
+                pbProgress.IsIndeterminate = false;
             }
         }
 
-        private void UpdateStatisticsAndGrid(OracleCompareResult result)
+        private void BuildDataGridColumns(List<string> columns)
         {
-            txtStatTotal.Text = $"Tổng: {result.DiffItems.Count:N0} dòng (A: {result.TotalRowsA:N0} | B: {result.TotalRowsB:N0})";
-            txtStatDiff.Text = $"Sai lệch: {result.ModifiedCount:N0} (A: -{result.MissingInBCount:N0}, B: +{result.MissingInACount:N0})";
-            txtStatMatch.Text = $"Khớp: {result.MatchCount:N0}";
-
-            // Rebuild dynamic columns in DataGrid
+            // Retain the first 4 fixed columns (#, Key, Status, Summary)
             while (dgDiffResults.Columns.Count > 4)
             {
                 dgDiffResults.Columns.RemoveAt(dgDiffResults.Columns.Count - 1);
             }
 
-            foreach (var col in result.Columns)
+            foreach (var col in columns)
             {
-                // Col in DB A
                 var colA = new DataGridTextColumn
                 {
                     Header = $"{col} (A)",
                     Binding = new WpfBinding($"RowValuesA[{col}]"),
-                    Width = new DataGridLength(1, DataGridLengthUnitType.Auto)
+                    Width = new DataGridLength(110)
                 };
 
-                // Col in DB B
                 var colB = new DataGridTextColumn
                 {
                     Header = $"{col} (B)",
                     Binding = new WpfBinding($"RowValuesB[{col}]"),
-                    Width = new DataGridLength(1, DataGridLengthUnitType.Auto)
+                    Width = new DataGridLength(110)
                 };
 
                 dgDiffResults.Columns.Add(colA);
                 dgDiffResults.Columns.Add(colB);
             }
-
-            ApplyFilter();
         }
 
         #endregion
 
-        #region Filtering & Search
+        #region Filter & Search Results
 
         private void Filter_Checked(object sender, RoutedEventArgs e)
         {
@@ -384,56 +670,60 @@ namespace ExcelSupport.Views
 
         private void ApplyFilter()
         {
-            if (dgDiffResults == null) return;
+            if (_allDiffItems == null || _allDiffItems.Count == 0) return;
 
-            if (_allDiffItems == null || _allDiffItems.Count == 0)
-            {
-                dgDiffResults.ItemsSource = null;
-                return;
-            }
+            IEnumerable<OracleRowDiffItem> filtered = _allDiffItems;
 
-            IEnumerable<OracleRowDiffItem> query = _allDiffItems;
-
-            if (rbFilterDiff?.IsChecked == true)
+            if (rbFilterDiff.IsChecked == true)
             {
-                query = query.Where(r => r.Status == OracleRowDiffStatus.Modified);
+                filtered = filtered.Where(i => i.Status == OracleRowDiffStatus.Modified);
             }
-            else if (rbFilterMissingB?.IsChecked == true)
+            else if (rbFilterMissingB.IsChecked == true)
             {
-                query = query.Where(r => r.Status == OracleRowDiffStatus.MissingInB);
+                filtered = filtered.Where(i => i.Status == OracleRowDiffStatus.MissingInB);
             }
-            else if (rbFilterMissingA?.IsChecked == true)
+            else if (rbFilterMissingA.IsChecked == true)
             {
-                query = query.Where(r => r.Status == OracleRowDiffStatus.MissingInA);
+                filtered = filtered.Where(i => i.Status == OracleRowDiffStatus.MissingInA);
             }
-            else if (rbFilterMatch?.IsChecked == true)
+            else if (rbFilterMatch.IsChecked == true)
             {
-                query = query.Where(r => r.Status == OracleRowDiffStatus.Identical);
+                filtered = filtered.Where(i => i.Status == OracleRowDiffStatus.Identical);
             }
 
-            string filterText = txtSearchFilter?.Text?.Trim() ?? string.Empty;
-            if (!string.IsNullOrEmpty(filterText))
+            string search = txtSearchFilter.Text.Trim();
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(r =>
-                    r.KeyDisplay.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    r.DifferingColumnsSummary.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    r.RowValuesA.Values.Any(v => v != null && v.ToString()!.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                    r.RowValuesB.Values.Any(v => v != null && v.ToString()!.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0));
+                filtered = filtered.Where(i =>
+                    (i.KeyDisplay != null && i.KeyDisplay.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (i.DifferingColumnsSummary != null && i.DifferingColumnsSummary.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    i.CellDiffs.Any(c =>
+                        (c.ValueADisplay != null && c.ValueADisplay.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                        (c.ValueBDisplay != null && c.ValueBDisplay.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)));
             }
 
-            dgDiffResults.ItemsSource = query.ToList();
+            dgDiffResults.ItemsSource = filtered.ToList();
+        }
+
+        private void RbMode_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            if (icKeyColumns != null)
+            {
+                icKeyColumns.Visibility = (rbModeKey.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         #endregion
 
-        #region Actions & Excel Output
+        #region Export Actions
 
         private void BtnInsertActiveSelection_Click(object sender, RoutedEventArgs e)
         {
-            if (_lastResult == null || _lastResult.DiffItems.Count == 0)
+            if (_lastResult == null)
             {
-                WpfMessageBox.Show("Vui lòng tiến hành so sánh dữ liệu trước khi chèn vào Excel.",
-                                   "Chưa có kết quả", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                WpfMessageBox.Show("Chưa có kết quả so sánh để chèn vào Excel. Vui lòng nhấn 'Tiến Hành So Sánh' trước.",
+                                   "Chưa có dữ liệu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
                 return;
             }
 
@@ -442,27 +732,29 @@ namespace ExcelSupport.Views
                 var app = AddInEvents.Instance?.ExcelAppInstance;
                 if (app == null)
                 {
-                    WpfMessageBox.Show("Không thể kết nối với tiến trình Excel.", "Lỗi Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                    WpfMessageBox.Show("Không thể kết nối với ứng dụng Excel.", "Lỗi", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
                     return;
                 }
 
-                OracleDataCompareService.InsertDiffToActiveSelection(_lastResult, app, highlightOnlyDiffs: false);
-                txtStatus.Text = "Đã chèn dữ liệu so sánh và tô màu trực tiếp vào vị trí đang chọn trong Excel!";
-                WpfMessageBox.Show("Đã chèn bảng kết quả so sánh và tô màu nổi bật các ô sai lệch vào vị trí đang chọn thành công!",
-                                   "Thành công", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                txtStatus.Text = "Đang chèn dữ liệu so sánh vào vùng chọn hiện tại...";
+                OracleDataCompareService.InsertDiffToActiveSelection(_lastResult, app);
+
+                txtStatus.Text = "Đã chèn và tô màu sai lệch vào vị trí đang chọn thành công!";
+                WpfMessageBox.Show("Dữ liệu so sánh đã được ghi thẳng vào vùng ô đang chọn và tô màu sai lệch thành công!",
+                                   "Hoàn tất chèn dữ liệu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show(ex.Message, "Lỗi chèn vào Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                WpfMessageBox.Show($"Lỗi chèn dữ liệu: {ex.Message}", "Lỗi Excel Interop", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
         }
 
         private void BtnExportExcel_Click(object sender, RoutedEventArgs e)
         {
-            if (_lastResult == null || _lastResult.DiffItems.Count == 0)
+            if (_lastResult == null)
             {
-                WpfMessageBox.Show("Vui lòng tiến hành so sánh dữ liệu trước khi xuất báo cáo Excel.",
-                                   "Chưa có kết quả", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                WpfMessageBox.Show("Chưa có kết quả so sánh để xuất Excel. Vui lòng nhấn 'Tiến Hành So Sánh' trước.",
+                                   "Chưa có dữ liệu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
                 return;
             }
 
@@ -471,18 +763,20 @@ namespace ExcelSupport.Views
                 var app = AddInEvents.Instance?.ExcelAppInstance;
                 if (app == null)
                 {
-                    WpfMessageBox.Show("Không thể kết nối với tiến trình Excel.", "Lỗi Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                    WpfMessageBox.Show("Không thể kết nối với ứng dụng Excel.", "Lỗi", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
                     return;
                 }
 
-                OracleDataCompareService.ExportDiffReportToExcel(_lastResult, app, highlightOnlyDiffs: false);
-                txtStatus.Text = "Đã xuất báo cáo đối soát ra Sheet mới trong Excel thành công!";
-                WpfMessageBox.Show("Đã tạo Sheet báo cáo đối soát dữ liệu Oracle và tô màu nổi bật các ô sai lệch thành công!",
-                                   "Thành công", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                txtStatus.Text = "Đang tạo Sheet báo cáo và tô màu sai lệch trên Excel...";
+                OracleDataCompareService.ExportDiffReportToExcel(_lastResult, app);
+
+                txtStatus.Text = "Xuất báo cáo Excel thành công!";
+                WpfMessageBox.Show("Báo cáo so sánh dữ liệu Oracle đã được tạo thành công trên Sheet mới với đầy đủ định dạng màu sắc!",
+                                   "Xuất Báo Cáo Thành Công", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show(ex.Message, "Lỗi xuất báo cáo Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                WpfMessageBox.Show($"Lỗi xuất Excel: {ex.Message}", "Lỗi Excel Interop", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
         }
 
@@ -490,24 +784,30 @@ namespace ExcelSupport.Views
         {
             if (_lastResult == null)
             {
-                WpfMessageBox.Show("Chưa có kết quả để sao chép.", "Thông báo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                WpfMessageBox.Show("Chưa có kết quả so sánh để sao chép.", "Chưa có dữ liệu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
                 return;
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine("=== BÁO CÁO ĐỐI SOÁT BẢNG ORACLE DATABASE ===");
-            sb.AppendLine($"Database A (Gốc): {_lastResult.SchemaA}.{_lastResult.TableA} ({_lastResult.TotalRowsA:N0} dòng)");
-            sb.AppendLine($"Database B (Đối chiếu): {_lastResult.SchemaB}.{_lastResult.TableB} ({_lastResult.TotalRowsB:N0} dòng)");
-            sb.AppendLine($"Thời gian xử lý: {_lastResult.ExecutionTime.TotalSeconds:F2} giây");
-            sb.AppendLine("-------------------------------------------------");
-            sb.AppendLine($"✅ Trùng khớp: {_lastResult.MatchCount:N0} dòng");
-            sb.AppendLine($"⚠️ Sai lệch giá trị: {_lastResult.ModifiedCount:N0} dòng");
-            sb.AppendLine($"➖ Chỉ có ở DB A (Thiếu ở B): {_lastResult.MissingInBCount:N0} dòng");
-            sb.AppendLine($"➕ Chỉ có ở DB B (Thiếu ở A): {_lastResult.MissingInACount:N0} dòng");
-            sb.AppendLine("=================================================");
+            sb.AppendLine("=== KẾT QUẢ ĐỐI SOÁT DỮ LIỆU ORACLE ===");
+            sb.AppendLine($"Database A: {_activeConfigA?.Host}/{_activeConfigA?.ServiceNameOrSid} - Bảng: {cboTableA.Text}");
+            sb.AppendLine($"Database B: {_activeConfigB?.Host}/{_activeConfigB?.ServiceNameOrSid} - Bảng: {cboTableB.Text}");
+            sb.AppendLine($"Tổng số dòng đối soát: {_lastResult.DiffItems.Count:N0}");
+            sb.AppendLine($"Dòng khớp hoàn toàn: {_lastResult.MatchCount:N0}");
+            sb.AppendLine($"Dòng có sai lệch giá trị: {_lastResult.ModifiedCount:N0}");
+            sb.AppendLine($"Dòng chỉ có ở A: {_lastResult.MissingInBCount:N0}");
+            sb.AppendLine($"Dòng chỉ có ở B: {_lastResult.MissingInACount:N0}");
+            sb.AppendLine($"Thời gian thực thi: {_lastResult.ExecutionTime.TotalSeconds:N2} giây");
 
-            WpfClipboard.SetText(sb.ToString());
-            txtStatus.Text = "Đã sao chép tóm tắt kết quả vào Clipboard!";
+            try
+            {
+                WpfClipboard.SetText(sb.ToString());
+                txtStatus.Text = "Đã sao chép tóm tắt kết quả vào Clipboard!";
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi sao chép: {ex.Message}";
+            }
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
