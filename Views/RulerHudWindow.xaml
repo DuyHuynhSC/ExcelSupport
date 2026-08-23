@@ -1,6 +1,7 @@
 <Window x:Class="ExcelSupport.Views.RulerHudWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         Title="Ruler Plus Quick Stats HUD"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -114,12 +115,12 @@
 
                 <!-- Right: Font Size +/- and Close buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Cỡ chữ:" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <Button Content="A-" Style="{StaticResource HudMiniBtnStyle}" ToolTip="Thu nhỏ cỡ chữ" Click="OnDecreaseFontSizeClick"/>
+                    <TextBlock Text="{loc:Loc Hud_FontSize}" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <Button Content="A-" Style="{StaticResource HudMiniBtnStyle}" ToolTip="{loc:Loc Hud_DecreaseFontSize}" Click="OnDecreaseFontSizeClick"/>
                     <TextBlock x:Name="TxtFontSizeDisplay" Text="14" FontSize="10" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center" Margin="2,0"/>
-                    <Button Content="A+" Style="{StaticResource HudMiniBtnStyle}" ToolTip="Phóng to cỡ chữ" Click="OnIncreaseFontSizeClick"/>
+                    <Button Content="A+" Style="{StaticResource HudMiniBtnStyle}" ToolTip="{loc:Loc Hud_IncreaseFontSize}" Click="OnIncreaseFontSizeClick"/>
                     <Rectangle Width="1" Height="12" Fill="#475569" Margin="6,0"/>
-                    <Button Content="✕" Style="{StaticResource HudMiniBtnStyle}" ToolTip="Đóng thanh nổi" Click="OnCloseHudClick"/>
+                    <Button Content="✕" Style="{StaticResource HudMiniBtnStyle}" ToolTip="{loc:Loc Hud_Close}" Click="OnCloseHudClick"/>
                 </StackPanel>
             </Grid>
 
@@ -141,30 +142,30 @@
                     <WrapPanel VerticalAlignment="Center">
                         <!-- Row Identifier -->
                         <Border Background="#F59E0B" CornerRadius="4" Padding="6,2" Margin="0,0,8,2">
-                            <TextBlock x:Name="TxtRowLabel" Text="DÒNG 1" FontWeight="Bold" Foreground="#FFFFFF" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock x:Name="TxtRowLabel" Text="ROW 1" FontWeight="Bold" Foreground="#FFFFFF" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </Border>
 
                         <!-- Row Sum -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,10,2" VerticalAlignment="Center">
-                            <TextBlock Text="Tổng: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_Sum}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtRowSum" Text="0" FontWeight="Bold" Foreground="#10B981" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
 
                         <!-- Row Avg -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,10,2" VerticalAlignment="Center">
-                            <TextBlock Text="TB: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_Avg}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtRowAvg" Text="0" FontWeight="Bold" Foreground="#38BDF8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
 
                         <!-- Row Count -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,10,2" VerticalAlignment="Center">
-                            <TextBlock Text="Số ô: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_Count}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtRowCount" Text="0" FontWeight="Bold" Foreground="#C084FC" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
 
                         <!-- Row Max/Min -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,6,2" VerticalAlignment="Center">
-                            <TextBlock Text="Max/Min: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_MaxMin}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtRowMaxMin" Text="0 / 0" FontWeight="SemiBold" Foreground="#F43F5E" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
                     </WrapPanel>
@@ -185,30 +186,30 @@
                     <WrapPanel VerticalAlignment="Center">
                         <!-- Col Identifier -->
                         <Border Background="#6366F1" CornerRadius="4" Padding="6,2" Margin="0,0,8,2">
-                            <TextBlock x:Name="TxtColLabel" Text="CỘT A" FontWeight="Bold" Foreground="#FFFFFF" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock x:Name="TxtColLabel" Text="COL A" FontWeight="Bold" Foreground="#FFFFFF" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </Border>
 
                         <!-- Col Sum -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,10,2" VerticalAlignment="Center">
-                            <TextBlock Text="Tổng: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_Sum}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtColSum" Text="0" FontWeight="Bold" Foreground="#10B981" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
 
                         <!-- Col Avg -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,10,2" VerticalAlignment="Center">
-                            <TextBlock Text="TB: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_Avg}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtColAvg" Text="0" FontWeight="Bold" Foreground="#38BDF8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
 
                         <!-- Col Count -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,10,2" VerticalAlignment="Center">
-                            <TextBlock Text="Số ô: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_Count}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtColCount" Text="0" FontWeight="Bold" Foreground="#C084FC" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
 
                         <!-- Col Max/Min -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,6,2" VerticalAlignment="Center">
-                            <TextBlock Text="Max/Min: " Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <TextBlock Text="{loc:Loc Hud_MaxMin}" Foreground="#94A3B8" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             <TextBlock x:Name="TxtColMaxMin" Text="0 / 0" FontWeight="SemiBold" Foreground="#F43F5E" FontSize="{Binding DynamicFontSize, RelativeSource={RelativeSource AncestorType=Window}}"/>
                         </StackPanel>
                     </WrapPanel>

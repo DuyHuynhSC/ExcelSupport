@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="clr-namespace:ExcelSupport.Models"
-        Title="Quản Lý Thuật Ngữ Chuyên Ngành (Glossary)" 
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        Title="{loc:Loc Glossary_WindowTitle}" 
         Height="560" Width="860" 
         MinHeight="420" MinWidth="700"
         WindowStartupLocation="CenterScreen"
@@ -127,7 +128,7 @@
                 <StackPanel Grid.Column="0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="📖 " FontSize="16" VerticalAlignment="Center"/>
-                        <TextBlock Text="Từ Điển Thuật Ngữ Chuyên Ngành (Glossary)" FontWeight="Bold" FontSize="14" VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Loc Gloss_Title}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#0F172A"/>
@@ -140,7 +141,7 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
-                    <TextBlock Text="Định nghĩa các cặp từ vựng Nhật ⇋ Việt để AI bắt buộc sử dụng khi dịch bảng tính Excel." 
+                    <TextBlock Text="{loc:Loc Gloss_SubTitle}" 
                                FontSize="11" Margin="0,3,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -170,7 +171,7 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <TextBlock x:Name="TxtTotalCount" Text="0 thuật ngữ" FontWeight="Bold" FontSize="11.5">
+                    <TextBlock x:Name="TxtTotalCount" Text="0" FontWeight="Bold" FontSize="11.5">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#166534"/>
@@ -248,10 +249,10 @@
 
                 <!-- Các nút Thao tác -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button Content="➕ Thêm Thuật Ngữ" Click="OnAddRowClick" Padding="10,5" Margin="0,0,6,0" Cursor="Hand" FontWeight="SemiBold" Background="#107C41" Foreground="#FFFFFF"/>
-                    <Button Content="📥 Import (CSV/JSON)" Click="OnImportClick" Padding="10,5" Margin="0,0,6,0" Cursor="Hand" FontWeight="SemiBold" Background="#2563EB" Foreground="#FFFFFF"/>
-                    <Button Content="📤 Export (CSV/JSON)" Click="OnExportClick" Padding="10,5" Margin="0,0,6,0" Cursor="Hand" FontWeight="SemiBold"/>
-                    <Button Content="🗑️ Xóa Hết" Click="OnClearAllClick" Padding="10,5" Cursor="Hand" FontWeight="SemiBold" Foreground="#DC2626"/>
+                    <Button Content="{loc:Loc Gloss_BtnAdd}" Click="OnAddRowClick" Padding="10,5" Margin="0,0,6,0" Cursor="Hand" FontWeight="SemiBold" Background="#107C41" Foreground="#FFFFFF"/>
+                    <Button Content="{loc:Loc Gloss_BtnImport}" Click="OnImportClick" Padding="10,5" Margin="0,0,6,0" Cursor="Hand" FontWeight="SemiBold" Background="#2563EB" Foreground="#FFFFFF"/>
+                    <Button Content="{loc:Loc Gloss_BtnExport}" Click="OnExportClick" Padding="10,5" Margin="0,0,6,0" Cursor="Hand" FontWeight="SemiBold"/>
+                    <Button Content="{loc:Loc Gloss_BtnClearAll}" Click="OnClearAllClick" Padding="10,5" Cursor="Hand" FontWeight="SemiBold" Foreground="#DC2626"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -285,19 +286,19 @@
             </DataGrid.Style>
             <DataGrid.Columns>
                 <!-- Cột 1: Tiếng Nhật -->
-                <DataGridTextColumn Header="🇯🇵 Tiếng Nhật (Japanese)" Binding="{Binding Japanese, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2*" FontWeight="SemiBold"/>
+                <DataGridTextColumn Header="{loc:Loc Gloss_ColJapanese}" Binding="{Binding Japanese, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2*" FontWeight="SemiBold"/>
 
                 <!-- Cột 2: Tiếng Việt -->
-                <DataGridTextColumn Header="🇻🇳 Tiếng Việt (Vietnamese)" Binding="{Binding Vietnamese, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2*" FontWeight="SemiBold"/>
+                <DataGridTextColumn Header="{loc:Loc Gloss_ColVietnamese}" Binding="{Binding Vietnamese, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2*" FontWeight="SemiBold"/>
 
                 <!-- Cột 3: Ghi chú -->
-                <DataGridTextColumn Header="📝 Ghi Chú Ngữ Cảnh" Binding="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.5*"/>
+                <DataGridTextColumn Header="{loc:Loc Gloss_ColNote}" Binding="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="1.5*"/>
 
                 <!-- Cột 4: Nút Xóa dòng -->
-                <DataGridTemplateColumn Header="Thao Tác" Width="70">
+                <DataGridTemplateColumn Header="{loc:Loc Gloss_ColActions}" Width="70">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="🗑️ Xóa" Click="OnDeleteRowClick" 
+                            <Button Content="{loc:Loc Gloss_BtnDeleteRow}" Click="OnDeleteRowClick" 
                                     Padding="4,1" FontSize="10.5" Cursor="Hand"
                                     Background="Transparent" BorderThickness="0" Foreground="#DC2626"/>
                         </DataTemplate>
@@ -328,15 +329,15 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Thông báo trạng thái -->
-                <TextBlock Grid.Column="0" x:Name="TxtStatus" Text="Nhập trực tiếp vào bảng hoặc bấm Import từ file CSV / JSON." 
+                <TextBlock Grid.Column="0" x:Name="TxtStatus" Text="{loc:Loc Gloss_FooterTip}" 
                            FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
 
                 <!-- Nút Lưu & Đóng -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="💾 Lưu &amp; Áp Dụng" Click="OnSaveAndCloseClick" 
+                    <Button Content="{loc:Loc Gloss_BtnSaveApply}" Click="OnSaveAndCloseClick" 
                             Background="#107C41" Foreground="#FFFFFF" FontWeight="Bold" 
                             Padding="14,6" Height="30" Margin="0,0,8,0" Cursor="Hand"/>
-                    <Button Content="Hủy" Click="OnCancelClick" 
+                    <Button Content="{loc:Loc Common_Cancel}" Click="OnCancelClick" 
                             Padding="12,6" Height="30" Cursor="Hand"/>
                 </StackPanel>
             </Grid>

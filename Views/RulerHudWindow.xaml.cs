@@ -151,36 +151,37 @@ namespace ExcelSupport.Views
             TxtCellBadge.Text = !string.IsNullOrEmpty(stats.CellAddress) ? stats.CellAddress : $"[{stats.RowIndex}, {stats.ColLetter}]";
 
             // Row Stats
-            TxtRowLabel.Text = $"DÒNG {stats.RowIndex}";
+            TxtRowLabel.Text = string.Format(LocalizationService.Get("Hud_RowLabelFormat"), stats.RowIndex);
+            string totalWord = LocalizationService.Get("Hud_Total");
             if (stats.RowNumericCount > 0)
             {
                 TxtRowSum.Text = FormatNumber(stats.RowSum);
                 TxtRowAvg.Text = FormatNumber(stats.RowAvg);
-                TxtRowCount.Text = $"{stats.RowNumericCount:N0} (Tổng {stats.RowNonEmptyCount})";
+                TxtRowCount.Text = $"{stats.RowNumericCount:N0} ({totalWord} {stats.RowNonEmptyCount})";
                 TxtRowMaxMin.Text = $"{FormatNumber(stats.RowMax)} / {FormatNumber(stats.RowMin)}";
             }
             else
             {
                 TxtRowSum.Text = "—";
                 TxtRowAvg.Text = "—";
-                TxtRowCount.Text = $"{stats.RowNonEmptyCount:N0} ô text";
+                TxtRowCount.Text = string.Format(LocalizationService.Get("Hud_TextCellsFormat"), stats.RowNonEmptyCount);
                 TxtRowMaxMin.Text = "—";
             }
 
             // Col Stats
-            TxtColLabel.Text = $"CỘT {stats.ColLetter}";
+            TxtColLabel.Text = string.Format(LocalizationService.Get("Hud_ColLabelFormat"), stats.ColLetter);
             if (stats.ColNumericCount > 0)
             {
                 TxtColSum.Text = FormatNumber(stats.ColSum);
                 TxtColAvg.Text = FormatNumber(stats.ColAvg);
-                TxtColCount.Text = $"{stats.ColNumericCount:N0} (Tổng {stats.ColNonEmptyCount})";
+                TxtColCount.Text = $"{stats.ColNumericCount:N0} ({totalWord} {stats.ColNonEmptyCount})";
                 TxtColMaxMin.Text = $"{FormatNumber(stats.ColMax)} / {FormatNumber(stats.ColMin)}";
             }
             else
             {
                 TxtColSum.Text = "—";
                 TxtColAvg.Text = "—";
-                TxtColCount.Text = $"{stats.ColNonEmptyCount:N0} ô text";
+                TxtColCount.Text = string.Format(LocalizationService.Get("Hud_TextCellsFormat"), stats.ColNonEmptyCount);
                 TxtColMaxMin.Text = "—";
             }
         }

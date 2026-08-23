@@ -6,9 +6,6 @@ using ExcelDna.Integration.CustomUI;
 using ExcelSupport.ViewModels;
 using ExcelWindow = Microsoft.Office.Interop.Excel.Window;
 using ExcelApp = Microsoft.Office.Interop.Excel.Application;
-using WpfMessageBox = System.Windows.MessageBox;
-using WpfMessageBoxButton = System.Windows.MessageBoxButton;
-using WpfMessageBoxImage = System.Windows.MessageBoxImage;
 
 namespace ExcelSupport.Host
 {
@@ -21,7 +18,12 @@ namespace ExcelSupport.Host
 
     public static class TaskPaneRegistry
     {
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWindow(IntPtr hWnd);
+
         private static readonly List<WindowPaneInfo> _panes = new List<WindowPaneInfo>();
+        private static readonly object _lock = new object();
 
         public static event Action<bool>? VisibilityChanged;
 
@@ -30,7 +32,15 @@ namespace ExcelSupport.Host
             get
             {
                 var info = GetPaneInfoForActiveWindow();
-                return info != null && info.Pane.Visible;
+                if (info == null) return false;
+                try
+                {
+                    return info.Pane.Visible;
+                }
+                catch
+                {
+                    return false;
+                }
             }
         }
 
@@ -47,13 +57,16 @@ namespace ExcelSupport.Host
 
                     int activeHwnd = activeWindow.Hwnd;
 
-                    CleanUpDeadPanes();
-
-                    foreach (var info in _panes)
+                    lock (_lock)
                     {
-                        if (info.WindowHwnd == activeHwnd)
+                        CleanUpDeadPanes();
+
+                        foreach (var info in _panes)
                         {
-                            return info;
+                            if (info.WindowHwnd == activeHwnd)
+                            {
+                                return info;
+                            }
                         }
                     }
                 }
@@ -72,20 +85,13 @@ namespace ExcelSupport.Host
             for (int i = _panes.Count - 1; i >= 0; i--)
             {
                 var item = _panes[i];
-                try
+                if (!IsWindow((IntPtr)item.WindowHwnd))
                 {
-                    var win = item.Pane.Window as ExcelWindow;
-                    if (win == null)
+                    try
                     {
-                        _panes.RemoveAt(i);
-                        continue;
+                        item.Pane.Visible = false;
                     }
-
-                    int testHwnd = win.Hwnd;
-                }
-                catch
-                {
-                    try { item.Pane.Delete(); } catch { }
+                    catch { }
                     _panes.RemoveAt(i);
                 }
             }
@@ -129,17 +135,27 @@ namespace ExcelSupport.Host
 
                         newPane.VisibleStateChange += ctp =>
                         {
-                            // Lưu lại trạng thái người dùng (kể cả khi bấm dấu X trên Task Pane)
-                            AppSettings.IsTaskPaneAutoOpen = ctp.Visible;
-                            VisibilityChanged?.Invoke(ctp.Visible);
+                            try
+                            {
+                                var currentActiveInfo = GetPaneInfoForActiveWindow();
+                                if (currentActiveInfo != null && currentActiveInfo.Pane == ctp)
+                                {
+                                    AppSettings.IsTaskPaneAutoOpen = ctp.Visible;
+                                    VisibilityChanged?.Invoke(ctp.Visible);
+                                }
+                            }
+                            catch { }
                         };
 
-                        _panes.Add(new WindowPaneInfo
+                        lock (_lock)
                         {
-                            WindowHwnd = activeHwnd,
-                            Pane = newPane,
-                            HostControl = hostControl
-                        });
+                            _panes.Add(new WindowPaneInfo
+                            {
+                                WindowHwnd = activeHwnd,
+                                Pane = newPane,
+                                HostControl = hostControl
+                            });
+                        }
 
                         return newPane;
                     }
@@ -151,8 +167,7 @@ namespace ExcelSupport.Host
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show($"Không thể tạo Task Pane cho cửa sổ này:\n{ex.Message}",
-                                   "Excel-DNA Task Pane", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Error creating CustomTaskPane: {ex.Message}");
             }
 
             return null;
@@ -160,40 +175,56 @@ namespace ExcelSupport.Host
 
         public static void ToggleTaskPane(TaskPaneViewModel viewModel, bool show)
         {
+            AppSettings.IsTaskPaneAutoOpen = show;
             var pane = EnsureCreatedForActiveWindow(viewModel);
             if (pane != null)
             {
-                pane.Visible = show;
-                AppSettings.IsTaskPaneAutoOpen = show;
+                try
+                {
+                    if (pane.Visible != show)
+                    {
+                        pane.Visible = show;
+                    }
+                }
+                catch { }
                 VisibilityChanged?.Invoke(show);
             }
         }
 
         public static void AutoRestoreForActiveWindow(TaskPaneViewModel viewModel)
         {
-            if (AppSettings.IsTaskPaneAutoOpen)
+            if (!AppSettings.IsTaskPaneAutoOpen) return;
+
+            var pane = EnsureCreatedForActiveWindow(viewModel);
+            if (pane != null)
             {
-                var pane = EnsureCreatedForActiveWindow(viewModel);
-                if (pane != null && !pane.Visible)
+                try
                 {
-                    pane.Visible = true;
-                    VisibilityChanged?.Invoke(true);
+                    if (!pane.Visible)
+                    {
+                        pane.Visible = true;
+                        VisibilityChanged?.Invoke(true);
+                    }
                 }
+                catch { }
             }
         }
 
         public static void DetachTaskPane()
         {
-            foreach (var info in _panes.ToArray())
+            lock (_lock)
             {
-                try
+                foreach (var info in _panes.ToArray())
                 {
-                    info.Pane.Visible = false;
-                    info.Pane.Delete();
+                    try
+                    {
+                        info.Pane.Visible = false;
+                        info.Pane.Delete();
+                    }
+                    catch { }
                 }
-                catch { }
+                _panes.Clear();
             }
-            _panes.Clear();
         }
     }
 }

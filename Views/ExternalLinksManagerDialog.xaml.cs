@@ -114,10 +114,10 @@ namespace ExcelSupport.Views
                 _scanResult = ExternalLinksService.ScanWorkbook(_targetWb);
 
                 // Cập nhật thẻ thống kê
-                TxtStatSources.Text = $"{_scanResult.Sources.Count} file";
-                TxtStatBroken.Text = $"{_scanResult.TotalBrokenLinksCount} lỗi";
-                TxtStatCells.Text = $"{_scanResult.FormulaCells.Count} ô";
-                TxtStatNames.Text = $"{_scanResult.NamedRanges.Count} tên";
+                TxtStatSources.Text = _scanResult.Sources.Count.ToString();
+                TxtStatBroken.Text = _scanResult.TotalBrokenLinksCount.ToString();
+                TxtStatCells.Text = _scanResult.FormulaCells.Count.ToString();
+                TxtStatNames.Text = _scanResult.NamedRanges.Count.ToString();
 
                 // Đổ dữ liệu vào Collections
                 _sourcesList = new ObservableCollection<ExternalSourceItem>(_scanResult.Sources);

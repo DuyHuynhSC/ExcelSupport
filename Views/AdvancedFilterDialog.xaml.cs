@@ -178,7 +178,7 @@ namespace ExcelSupport.Views
                     TxtBatchPaste.Text = _savedState.BatchRawText;
                     _batchCriteria.RawPasteText = _savedState.BatchRawText;
                     _batchCriteria.ParsedItems = AdvancedFilterService.ParseBatchList(_savedState.BatchRawText);
-                    TxtBatchCountBadge.Text = $"{_batchCriteria.ParsedItems.Count:N0} giá trị duy nhất";
+                    TxtBatchCountBadge.Text = LocalizationService.Get("Filter_BatchCountBadge", _batchCriteria.ParsedItems.Count);
                 }
                 _batchCriteria.ExcludeList = _savedState.BatchExcludeList;
                 _batchCriteria.IsExactMatch = _savedState.BatchIsExactMatch;
@@ -274,7 +274,7 @@ namespace ExcelSupport.Views
             _batchCriteria.RawPasteText = raw;
             _batchCriteria.ParsedItems = AdvancedFilterService.ParseBatchList(raw);
 
-            TxtBatchCountBadge.Text = $"{_batchCriteria.ParsedItems.Count:N0} giá trị duy nhất";
+            TxtBatchCountBadge.Text = LocalizationService.Get("Filter_BatchCountBadge", _batchCriteria.ParsedItems.Count);
             UpdateLivePreview();
         }
 
@@ -325,12 +325,12 @@ namespace ExcelSupport.Views
             string defaultName = _columns.Count > 0 ? _columns[0].HeaderText : "";
 
             // Tạo nhóm 1 mặc định: > 0 và < 50
-            var g1 = new FilterRuleGroup { GroupTitle = "Nhóm Điều Kiện 1", InnerOperator = LogicalOperator.And };
+            var g1 = new FilterRuleGroup { GroupTitle = LocalizationService.Get("Filter_GroupTitle", 1), InnerOperator = LogicalOperator.And };
             g1.Rules.Add(new FilterRule { ColumnIndex = defaultCol, ColumnName = defaultName, Operator = FilterOperator.GreaterThan, Value1 = "0" });
             g1.Rules.Add(new FilterRule { ColumnIndex = defaultCol, ColumnName = defaultName, Operator = FilterOperator.LessThan, Value1 = "50" });
 
             // Tạo nhóm 2 mặc định: > 250
-            var g2 = new FilterRuleGroup { GroupTitle = "Nhóm Điều Kiện 2", InnerOperator = LogicalOperator.And };
+            var g2 = new FilterRuleGroup { GroupTitle = LocalizationService.Get("Filter_GroupTitle", 2), InnerOperator = LogicalOperator.And };
             g2.Rules.Add(new FilterRule { ColumnIndex = defaultCol, ColumnName = defaultName, Operator = FilterOperator.GreaterThan, Value1 = "250" });
 
             _visualCriteria.Groups.Add(g1);
@@ -371,7 +371,7 @@ namespace ExcelSupport.Views
 
                 var txtTitle = new TextBlock
                 {
-                    Text = $"📦 {group.GroupTitle}",
+                    Text = $"📦 " + LocalizationService.Get("Filter_GroupTitle", (gIdx + 1)),
                     FontWeight = FontWeights.Bold,
                     FontSize = 12.5,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -383,12 +383,12 @@ namespace ExcelSupport.Views
                 var cboInnerOp = new WpfComboBox
                 {
                     Height = 24,
-                    Width = 120,
+                    Width = 140,
                     VerticalContentAlignment = VerticalAlignment.Center,
                     FontSize = 11.5
                 };
-                cboInnerOp.Items.Add("VÀ (Tất cả)");
-                cboInnerOp.Items.Add("HOẶC (Bất kỳ)");
+                cboInnerOp.Items.Add(LocalizationService.Get("Filter_InnerAnd"));
+                cboInnerOp.Items.Add(LocalizationService.Get("Filter_InnerOr"));
                 cboInnerOp.SelectedIndex = group.InnerOperator == LogicalOperator.And ? 0 : 1;
                 cboInnerOp.SelectionChanged += (s, e) =>
                 {
@@ -400,7 +400,7 @@ namespace ExcelSupport.Views
                 // Nút Xóa nhóm
                 var btnDelGroup = new WpfButton
                 {
-                    Content = "❌ Xóa Nhóm",
+                    Content = LocalizationService.Get("Filter_BtnDelGroup"),
                     FontSize = 11,
                     Padding = new Thickness(8, 2, 8, 2),
                     Cursor = System.Windows.Input.Cursors.Hand,
@@ -467,7 +467,7 @@ namespace ExcelSupport.Views
                     var opList = Enum.GetValues(typeof(FilterOperator)).Cast<FilterOperator>().ToList();
                     foreach (var op in opList)
                     {
-                        cboOp.Items.Add(GetEnumDescription(op));
+                        cboOp.Items.Add(LocalizationService.GetOperatorDescription(op));
                     }
                     cboOp.SelectedIndex = opList.IndexOf(rule.Operator);
                     Grid.SetColumn(cboOp, 1);
@@ -507,7 +507,7 @@ namespace ExcelSupport.Views
 
                     cboOp.SelectionChanged += (s, e) =>
                     {
-                        if (cboOp.SelectedIndex >= 0)
+                        if (cboOp.SelectedIndex >= 0 && cboOp.SelectedIndex < opList.Count)
                         {
                             rule.Operator = opList[cboOp.SelectedIndex];
                             txtVal2.Visibility = rule.IsBetweenOperator ? Visibility.Visible : Visibility.Collapsed;
@@ -519,10 +519,9 @@ namespace ExcelSupport.Views
                     // Nút Xóa rule
                     var btnDelRule = new WpfButton
                     {
-                        Content = "✕",
-                        Width = 24,
-                        Height = 24,
-                        Padding = new Thickness(0),
+                        Content = "❌",
+                        FontSize = 10,
+                        Padding = new Thickness(4, 2, 4, 2),
                         Cursor = System.Windows.Input.Cursors.Hand,
                         Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 38, 38)),
                         Style = (WpfStyle)FindResource("FilterSecondaryBtn")
@@ -549,7 +548,7 @@ namespace ExcelSupport.Views
                 // Nút Thêm điều kiện trong nhóm
                 var btnAddRule = new WpfButton
                 {
-                    Content = "➕ Thêm Điều Kiện Vào Nhóm",
+                    Content = LocalizationService.Get("Filter_BtnAddRule"),
                     HorizontalAlignment = WpfHorizontalAlignment.Left,
                     FontSize = 11,
                     Padding = new Thickness(8, 3, 8, 3),
@@ -596,7 +595,7 @@ namespace ExcelSupport.Views
             int defCol = _columns.Count > 0 ? _columns[0].ColumnIndex : 1;
             string defName = _columns.Count > 0 ? _columns[0].HeaderText : "";
 
-            var newG = new FilterRuleGroup { GroupTitle = $"Nhóm Điều Kiện {nextNum}", InnerOperator = LogicalOperator.And };
+            var newG = new FilterRuleGroup { GroupTitle = LocalizationService.Get("Filter_GroupTitle", nextNum), InnerOperator = LogicalOperator.And };
             newG.Rules.Add(new FilterRule { ColumnIndex = defCol, ColumnName = defName, Operator = FilterOperator.GreaterThan, Value1 = "0" });
 
             _visualCriteria.Groups.Add(newG);
@@ -683,7 +682,7 @@ namespace ExcelSupport.Views
                 GridPreview.ItemsSource = previewDt.DefaultView;
 
                 double pct = totalRows > 0 ? (double)matchedRows / totalRows * 100.0 : 0;
-                TxtPreviewBadge.Text = $"🎯 Thỏa mãn: {matchedRows:N0} / {totalRows:N0} dòng ({pct:F1}%)";
+                TxtPreviewBadge.Text = LocalizationService.Get("Filter_PreviewBadge", matchedRows, totalRows, pct);
 
                 if (matchedRows > 0)
                 {

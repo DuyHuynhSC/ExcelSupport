@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using ExcelSupport.Models;
+using ExcelSupport.Services;
 
 namespace ExcelSupport.Views
 {
@@ -55,9 +56,9 @@ namespace ExcelSupport.Views
             GridTranslations.ItemsSource = _view;
 
             // Setup Badges
-            TxtDirectionBadge.Text = isJaToVi ? "🇯🇵 ➔ 🇻🇳 Nhật ➔ Việt" : "🇻🇳 ➔ 🇯🇵 Việt ➔ Nhật";
-            TxtCountBadge.Text = $"{_sourceItems.Count} ô cần chèn";
-            TxtTargetColBadge.Text = writeToAdjacentColumn ? "Ghi sang cột bên phải" : "Ghi đè trực tiếp";
+            TxtDirectionBadge.Text = isJaToVi ? LocalizationService.Get("Ai_BtnJaToVi") : LocalizationService.Get("Ai_BtnViToJa");
+            TxtCountBadge.Text = string.Format(LocalizationService.Get("TransEdit_CountBadgeFormat"), _sourceItems.Count);
+            TxtTargetColBadge.Text = writeToAdjacentColumn ? LocalizationService.Get("TransEdit_TargetAdjacent") : LocalizationService.Get("TransEdit_TargetOverwrite");
         }
 
         private bool FilterItem(object obj)

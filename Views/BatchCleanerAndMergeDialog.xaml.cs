@@ -106,6 +106,8 @@ namespace ExcelSupport.Views
                         usedRange = activeWs.UsedRange;
                         int totalCols = usedRange?.Columns.Count ?? 26;
                         int startCol = usedRange?.Column ?? 1;
+                        string colPrefix = LocalizationService.CurrentLanguage == AppLanguage.Japanese ? "列 "
+                                         : (LocalizationService.CurrentLanguage == AppLanguage.English ? "Column " : "Cột ");
 
                         for (int c = startCol; c < startCol + totalCols; c++)
                         {
@@ -122,7 +124,7 @@ namespace ExcelSupport.Views
                             }
                             catch { }
 
-                            CboKeyColumn.Items.Add($"Cột {colLetter}{headerText}");
+                            CboKeyColumn.Items.Add($"{colPrefix}{colLetter}{headerText}");
                         }
                     }
                     catch { }
@@ -137,12 +139,12 @@ namespace ExcelSupport.Views
                     Range? sel = _excelApp.Selection as Range;
                     if (sel != null)
                     {
-                        TxtSelectionRangeInfo.Text = $"Vùng chọn: [{activeWs.Name}!{sel.Address[false, false]}] ({sel.Rows.Count:N0} dòng x {sel.Columns.Count:N0} cột)";
+                        TxtSelectionRangeInfo.Text = LocalizationService.Get("Blank_MergeSelectionInfo", activeWs.Name, sel.Address[false, false], sel.Rows.Count, sel.Columns.Count);
                         Marshal.ReleaseComObject(sel);
                     }
                     else
                     {
-                        TxtSelectionRangeInfo.Text = "Chưa có vùng chọn hợp lệ. Vui lòng bôi đen các ô trên Excel.";
+                        TxtSelectionRangeInfo.Text = LocalizationService.Get("Blank_MergeNoSelection");
                     }
 
                     Marshal.ReleaseComObject(activeWs);

@@ -70,7 +70,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                _currentInstance.Show();
+                _currentInstance.ShowDialog();
+                _currentInstance = null;
             }
             catch (Exception ex)
             {
@@ -94,6 +95,46 @@ namespace ExcelSupport.Views
 
             Loaded += OnDialogLoaded;
             Closed += (s, e) => _currentInstance = null;
+        }
+
+        protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+
+            if (System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
+            {
+                if (System.Windows.Input.Keyboard.FocusedElement is System.Windows.Controls.TextBox tb)
+                {
+                    if (e.Key == System.Windows.Input.Key.X) { tb.Cut(); e.Handled = true; return; }
+                    if (e.Key == System.Windows.Input.Key.C) { tb.Copy(); e.Handled = true; return; }
+                    if (e.Key == System.Windows.Input.Key.V) { tb.Paste(); e.Handled = true; return; }
+                    if (e.Key == System.Windows.Input.Key.A) { tb.SelectAll(); e.Handled = true; return; }
+                    if (e.Key == System.Windows.Input.Key.Z) { if (tb.CanUndo) tb.Undo(); e.Handled = true; return; }
+                    if (e.Key == System.Windows.Input.Key.Y) { if (tb.CanRedo) tb.Redo(); e.Handled = true; return; }
+                }
+            }
+
+            if (e.Key == System.Windows.Input.Key.Down || e.Key == System.Windows.Input.Key.Up)
+            {
+                if (ListChapters != null && ListChapters.Items.Count > 0)
+                {
+                    int currentIndex = ListChapters.SelectedIndex;
+                    if (e.Key == System.Windows.Input.Key.Down)
+                    {
+                        int next = Math.Min(ListChapters.Items.Count - 1, currentIndex + 1);
+                        ListChapters.SelectedIndex = next;
+                        ListChapters.ScrollIntoView(ListChapters.Items[next]);
+                        e.Handled = true;
+                    }
+                    else if (e.Key == System.Windows.Input.Key.Up)
+                    {
+                        int prev = Math.Max(0, currentIndex - 1);
+                        ListChapters.SelectedIndex = prev;
+                        ListChapters.ScrollIntoView(ListChapters.Items[prev]);
+                        e.Handled = true;
+                    }
+                }
+            }
         }
 
         private void OnDialogLoaded(object sender, RoutedEventArgs e)

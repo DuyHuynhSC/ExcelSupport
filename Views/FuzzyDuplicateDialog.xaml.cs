@@ -189,7 +189,7 @@ namespace ExcelSupport.Views
                 };
 
                 _currentClusters = FuzzyDuplicateService.ScanFuzzyDuplicates(ws, options);
-                TxtClusterCountBadge.Text = $"{_currentClusters.Count:N0} nhóm trùng";
+                TxtClusterCountBadge.Text = LocalizationService.Get("Fuzzy_ClusterBadge", _currentClusters.Count);
 
                 _displayItems = _currentClusters.SelectMany(c => c.Items).ToList();
                 GridClusters.ItemsSource = null;

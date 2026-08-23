@@ -248,4 +248,54 @@ Bấm nút **`📂 Chuyển Đổi File`** trên thanh Ribbon.
 
 ---
 
+## 16. Sao Chép & Dán Vùng Lọc (Copy & Paste Visible Cells Only)
+
+Khi một bảng tính đang được áp dụng Bộ lọc (Filter) hoặc có các dòng bị ẩn (Hidden Rows):
+
+### 16.1 Thao Tác 1-Click Nhanh Trên Ribbon
+* **📋 Copy Ô Hiển Thị (Copy Visible Only):**
+  1. Quét chọn vùng dữ liệu đang bật Filter.
+  2. Bấm nút mũi tên dưới **`Copy & Dán Vùng Lọc`** $\rightarrow$ Chọn **"📋 Copy Ô Hiển Thị"**.
+  3. Hệ thống chỉ sao chép các ô thực sự đang hiển thị trên màn hình vào Clipboard (loại bỏ hoàn toàn các dòng bị ẩn).
+* **⚡ Dán Vào Ô Hiển Thị (Paste to Visible Cells):**
+  1. Copy một danh sách dữ liệu (từ Excel hoặc nơi khác).
+  2. Chọn ô đầu tiên trên cột đích đang bật Filter.
+  3. Bấm nút mũi tên $\rightarrow$ Chọn **"⚡ Dán Vào Ô Hiển Thị"**.
+  4. Hệ thống sẽ tự động nhảy cóc qua các dòng bị ẩn/bị lọc và chỉ dán dữ liệu vào các dòng đang hiển thị. Dữ liệu ở các dòng ẩn được bảo vệ an toàn 100%.
+
+### 16.2 Hộp Thoại Hướng Dẫn Trực Quan (Filtered Copy & Paste Wizard)
+* Bấm trực tiếp vào nút **`Copy & Dán Vùng Lọc`** trên Ribbon.
+* Chọn **Vùng Nguồn (Source)** và **Vùng Đích (Destination)** trực tiếp bằng nút **"📍 Lấy Vùng Chọn"**.
+* Lựa chọn kiểu dán linh hoạt:
+  - **🔢 Chỉ Dán Giá Trị (Values Only):** Mặc định, giữ nguyên định dạng tại đích.
+  - **📐 Dán Công Thức (Formulas):** Dán công thức kèm điều chỉnh tham chiếu.
+  - **🎨 Chỉ Dán Định Dạng (Formats Only):** Dán màu nền, viền và font chữ.
+  - **📑 Dán Toàn Bộ (All):** Dán cả giá trị và định dạng.
+* Tùy chọn nâng cao:
+  - **🔄 Lặp lại nguồn nếu đích nhiều dòng hơn:** Tự động lặp lại chuỗi giá trị nguồn vào toàn bộ các dòng lọc tại đích.
+  - **⚪ Bỏ qua ô nguồn bị trống (Skip Blanks):** Không ghi đè nếu ô nguồn rỗng.
+* Bấm **"🚀 Thực Thi Sao Chép & Dán Ngay"** để hoàn tất tức thì.
+
+---
+
+## 17. Chuyển Đổi Ngôn Ngữ Thanh Ribbon (Language Settings)
+
+ExcelSupport Add-In hỗ trợ 3 ngôn ngữ giao diện chuẩn hóa:
+
+* 🇻🇳 **Tiếng Việt** (Ngôn ngữ mặc định, thân thiện, dễ hiểu).
+* 🇬🇧 **English** (Tiếng Anh chuyên ngành chuẩn Microsoft Office quốc tế).
+* 🇯🇵 **日本語** (Tiếng Nhật chuẩn hóa thuật ngữ Microsoft Excel doanh nghiệp).
+
+### Cách chuyển đổi ngôn ngữ:
+1. Trên thanh Ribbon Tab **`NAVIGATOR`**, tìm nhóm **`Ngôn Ngữ & Cài Đặt (Language & Settings)`** ở góc phải.
+2. Bấm vào nút menu **`🌐 Ngôn Ngữ (Language)`**.
+3. Chọn một trong ba ngôn ngữ:
+   - **🇻🇳 Tiếng Việt**
+   - **🇬🇧 English**
+   - **🇯🇵 日本語**
+4. Toàn bộ thanh Ribbon (tên nhóm, tên nút, Screentip tóm tắt và Supertip giải thích chi tiết) sẽ được **chuyển đổi ngôn ngữ ngay lập tức mà không cần khởi động lại Excel**.
+5. Cài đặt ngôn ngữ được tự động lưu và duy trì cho mọi phiên làm việc tiếp theo.
+
+---
+
 *Tài liệu được cập nhật liên tục cùng các phiên bản phát hành mới của **ExcelSupport Add-In**.*

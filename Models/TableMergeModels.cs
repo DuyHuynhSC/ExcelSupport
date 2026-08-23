@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ExcelSupport.Services;
 
 namespace ExcelSupport.Models
 {
@@ -22,7 +23,15 @@ namespace ExcelSupport.Models
         public int ColumnIndex { get; set; }
         public string ColumnLetter { get; set; } = string.Empty;
         public string HeaderText { get; set; } = string.Empty;
-        public string DisplayText => $"[{ColumnLetter}] {(!string.IsNullOrEmpty(HeaderText) ? HeaderText : "(Không tên)")}";
+        public string DisplayText
+        {
+            get
+            {
+                string unnamed = LocalizationService.CurrentLanguage == AppLanguage.Japanese ? "(無名)"
+                               : (LocalizationService.CurrentLanguage == AppLanguage.English ? "(Unnamed)" : "(Không tên)");
+                return $"[{ColumnLetter}] {(!string.IsNullOrEmpty(HeaderText) ? HeaderText : unnamed)}";
+            }
+        }
         public bool IsSelected { get; set; } = true;
         public string OutputHeaderName { get; set; } = string.Empty;
     }

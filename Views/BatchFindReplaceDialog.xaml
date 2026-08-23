@@ -1,7 +1,8 @@
 <Window x:Class="ExcelSupport.Views.BatchFindReplaceDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tìm &amp; Thay Thế Hàng Loạt Theo Bảng Tra Cứu (Batch Multi-Find &amp; Replace) — ExcelSupport"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        Title="{loc:Loc FindRep_WindowTitle}"
         Height="700" Width="1000"
         MinHeight="540" MinWidth="800"
         WindowStartupLocation="CenterScreen"
@@ -220,9 +221,9 @@
             <StackPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="🔄" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="TÌM &amp; THAY THẾ HÀNG LOẠT (BATCH MULTI-FIND &amp; REPLACE)" FontWeight="Bold" FontSize="15"/>
+                    <TextBlock Text="{loc:Loc FindRep_Title}" FontWeight="Bold" FontSize="15"/>
                 </StackPanel>
-                <TextBlock Text="Thay thế đồng thời hàng trăm từ khóa/mã sản phẩm theo bảng đối chiếu tra cứu trên một hoặc nhiều Sheet/File." 
+                <TextBlock Text="{loc:Loc FindRep_SubTitle}" 
                            FontSize="11.5" Foreground="#64748B" Margin="30,2,0,0"/>
             </StackPanel>
         </Border>
@@ -259,12 +260,12 @@
 
                     <StackPanel Grid.Row="0" Margin="0,0,0,8">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📖 Bảng Từ Điển Tra Cứu (Từ Cũ ➔ Từ Mới):" FontWeight="Bold" FontSize="12.5"/>
+                            <TextBlock Text="{loc:Loc FindRep_DictHeader}" FontWeight="Bold" FontSize="12.5"/>
                             <Border CornerRadius="10" Padding="8,2" Margin="10,0,0,0" Background="#E0F2FE">
-                                <TextBlock x:Name="TxtPairCountBadge" Text="0 cặp từ" FontSize="11" FontWeight="Bold" Foreground="#0369A1"/>
+                                <TextBlock x:Name="TxtPairCountBadge" Text="0" FontSize="11" FontWeight="Bold" Foreground="#0369A1"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="Mỗi dòng 1 cặp dạng: TừCũ => TừMới (hoặc cách nhau bởi Tab, dấu phẩy, dấu gạch đứng |)" 
+                        <TextBlock Text="{loc:Loc FindRep_DictSub}" 
                                    FontSize="11" Foreground="#64748B" Margin="0,3,0,0"/>
                     </StackPanel>
 
@@ -297,12 +298,12 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="0" Content="📍 Nạp Từ Vùng Bôi Đen Trên Excel" Style="{StaticResource DialogSecondaryBtn}"
+                        <Button Grid.Column="0" Content="{loc:Loc FindRep_BtnLoadSelection}" Style="{StaticResource DialogSecondaryBtn}"
                                 HorizontalAlignment="Left" Click="OnLoadFromSelectionClick"/>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Content="📋 Dán Clipboard" Style="{StaticResource DialogSecondaryBtn}" Margin="0,0,6,0" Click="OnPasteClipboardClick"/>
-                            <Button Content="🧹 Xóa Hết" Style="{StaticResource DialogSecondaryBtn}" Click="OnClearDictionaryClick"/>
+                            <Button Content="{loc:Loc FindRep_BtnPaste}" Style="{StaticResource DialogSecondaryBtn}" Margin="0,0,6,0" Click="OnPasteClipboardClick"/>
+                            <Button Content="{loc:Loc FindRep_BtnClear}" Style="{StaticResource DialogSecondaryBtn}" Click="OnClearDictionaryClick"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -332,12 +333,12 @@
                     </Border.Style>
 
                     <StackPanel>
-                        <TextBlock Text="📍 1. Phạm Vi Áp Dụng:" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
+                        <TextBlock Text="{loc:Loc Blank_SecScope}" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
                         <WrapPanel>
-                            <RadioButton x:Name="RbScopeSelection" GroupName="FindReplaceScopeGroup" Content="Vùng đang chọn" Cursor="Hand" Margin="0,0,20,4"/>
-                            <RadioButton x:Name="RbScopeActiveSheet" GroupName="FindReplaceScopeGroup" Content="Chỉ Sheet hiện tại" IsChecked="True" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,20,4"/>
-                            <RadioButton x:Name="RbScopeAllSheets" GroupName="FindReplaceScopeGroup" Content="Tất cả Sheets trong File" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,20,4"/>
-                            <RadioButton x:Name="RbScopeAllWorkbooks" GroupName="FindReplaceScopeGroup" Content="Tất cả các File Excel mở" Cursor="Hand" Margin="0,0,20,4"/>
+                            <RadioButton x:Name="RbScopeSelection" GroupName="FindReplaceScopeGroup" Content="{loc:Loc FindRep_ScopeSelection}" Cursor="Hand" Margin="0,0,20,4"/>
+                            <RadioButton x:Name="RbScopeActiveSheet" GroupName="FindReplaceScopeGroup" Content="{loc:Loc FindRep_ScopeSheet}" IsChecked="True" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,20,4"/>
+                            <RadioButton x:Name="RbScopeAllSheets" GroupName="FindReplaceScopeGroup" Content="{loc:Loc FindRep_ScopeWb}" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,20,4"/>
+                            <RadioButton x:Name="RbScopeAllWorkbooks" GroupName="FindReplaceScopeGroup" Content="{loc:Loc FindRep_ScopeAllWb}" Cursor="Hand" Margin="0,0,20,4"/>
                         </WrapPanel>
                     </StackPanel>
                 </Border>
@@ -358,11 +359,11 @@
                     </Border.Style>
 
                     <StackPanel>
-                        <TextBlock Text="⚙️ 2. Tùy Chọn Thay Thế:" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
+                        <TextBlock Text="{loc:Loc Comp_OptionsHeader}" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
                         <WrapPanel Margin="0,0,0,4">
-                            <CheckBox x:Name="ChkMatchEntireCell" Content="Khớp chính xác toàn bộ ô (Match Entire Cell)" Cursor="Hand" Margin="0,0,20,4"/>
-                            <CheckBox x:Name="ChkMatchCase" Content="Phân biệt chữ hoa / thường" Cursor="Hand" Margin="0,0,20,4"/>
-                            <CheckBox x:Name="ChkHighlight" Content="Tô màu Highlight ô sau khi sửa" IsChecked="True" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,20,4"/>
+                            <CheckBox x:Name="ChkMatchEntireCell" Content="{loc:Loc FindRep_MatchEntire}" Cursor="Hand" Margin="0,0,20,4"/>
+                            <CheckBox x:Name="ChkMatchCase" Content="{loc:Loc FindRep_CaseSensitive}" Cursor="Hand" Margin="0,0,20,4"/>
+                            <CheckBox x:Name="ChkHighlight" Content="{loc:Loc FindRep_Highlight}" IsChecked="True" FontWeight="SemiBold" Cursor="Hand" Margin="0,0,20,4"/>
                         </WrapPanel>
                     </StackPanel>
                 </Border>
@@ -388,7 +389,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Text="📊 Danh Sách Cặp Từ Tra Cứu Sẽ Thực Thi:" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
+                        <TextBlock Grid.Row="0" Text="{loc:Loc FindRep_PreviewList}" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
 
                         <DataGrid x:Name="GridPairs" Grid.Row="1"
                                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
@@ -412,10 +413,10 @@
                                 </Style>
                             </DataGrid.Style>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="STT" Binding="{Binding Index}" Width="50"/>
-                                <DataGridTextColumn Header="Từ Cần Tìm (Find)" Binding="{Binding FindText}" Width="*"/>
-                                <DataGridTextColumn Header="Thay Thế Bằng (Replace)" Binding="{Binding ReplaceText}" Width="*"/>
-                                <DataGridTextColumn Header="Số Lần Khớp" Binding="{Binding MatchCount}" Width="100"/>
+                                <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="50"/>
+                                <DataGridTextColumn Header="{loc:Loc FindRep_ColFind}" Binding="{Binding FindText}" Width="*"/>
+                                <DataGridTextColumn Header="{loc:Loc FindRep_ColReplace}" Binding="{Binding ReplaceText}" Width="*"/>
+                                <DataGridTextColumn Header="{loc:Loc FindRep_ColMatches}" Binding="{Binding MatchCount}" Width="100"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -444,12 +445,12 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock x:Name="TxtFooterStatus" Text="Sẵn sàng thực thi tìm &amp; thay thế..." 
+                <TextBlock x:Name="TxtFooterStatus" Text="" 
                            VerticalAlignment="Center" FontSize="12" Foreground="#64748B"/>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="⚡ Bắt Đầu Thay Thế Hàng Loạt" Style="{StaticResource DialogPrimaryBtn}" Margin="0,0,10,0" Click="OnExecuteReplaceClick"/>
-                    <Button Content="Đóng" Width="80" Style="{StaticResource DialogSecondaryBtn}" Click="OnCloseClick"/>
+                    <Button Content="{loc:Loc FindRep_BtnExecute}" Style="{StaticResource DialogPrimaryBtn}" Margin="0,0,10,0" Click="OnExecuteReplaceClick"/>
+                    <Button Content="{loc:Loc Common_Close}" Width="80" Style="{StaticResource DialogSecondaryBtn}" Click="OnCloseClick"/>
                 </StackPanel>
             </Grid>
         </Border>

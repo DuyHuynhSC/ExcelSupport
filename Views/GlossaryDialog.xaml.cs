@@ -82,7 +82,7 @@ namespace ExcelSupport.Views
         private void UpdateCountBadge()
         {
             int total = _items.Count;
-            TxtTotalCount.Text = $"{total} thuật ngữ";
+            TxtTotalCount.Text = string.Format(LocalizationService.Get("Gloss_TermsCountFormat"), total);
         }
 
         private void OnAddRowClick(object sender, RoutedEventArgs e)
@@ -97,7 +97,7 @@ namespace ExcelSupport.Views
             GridGlossary.SelectedItem = newItem;
             GridGlossary.ScrollIntoView(newItem);
             UpdateCountBadge();
-            TxtStatus.Text = "➕ Đã thêm dòng mới. Vui lòng nhập từ tiếng Nhật và tiếng Việt vào bảng.";
+            TxtStatus.Text = LocalizationService.Get("Gloss_StatusRowAdded");
         }
 
         private void OnDeleteRowClick(object sender, RoutedEventArgs e)
@@ -106,7 +106,7 @@ namespace ExcelSupport.Views
             {
                 _items.Remove(item);
                 UpdateCountBadge();
-                TxtStatus.Text = $"🗑️ Đã xóa thuật ngữ: [{item.Japanese} ⇋ {item.Vietnamese}]";
+                TxtStatus.Text = string.Format(LocalizationService.Get("Gloss_StatusRowDeleted"), item.Japanese, item.Vietnamese);
             }
         }
 
@@ -114,13 +114,13 @@ namespace ExcelSupport.Views
         {
             if (_items.Count == 0) return;
 
-            var confirm = MessageBox.Show("Bạn có chắc chắn muốn xóa toàn bộ danh sách thuật ngữ không?",
-                                          "Xác nhận xóa hết", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var confirm = MessageBox.Show(LocalizationService.Get("Gloss_MsgConfirmClear"),
+                                          LocalizationService.Get("Common_Notice"), MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (confirm == MessageBoxResult.Yes)
             {
                 _items.Clear();
                 UpdateCountBadge();
-                TxtStatus.Text = "🗑️ Đã xóa toàn bộ thuật ngữ.";
+                TxtStatus.Text = LocalizationService.Get("Gloss_StatusCleared");
             }
         }
 

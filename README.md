@@ -27,10 +27,11 @@
 | **🔍 Trộn & Ghép Nối Bảng** | **Visual XLOOKUP Wizard** | Ghép 2 bảng dữ liệu trực quan bằng Left Join, Inner Join, Full Outer Join mà không cần viết công thức phức tạp. |
 | **🧹 Trùng Lặp Ảo & Lỗi Gõ** | **Fuzzy Duplicate Cleaner** | Nhận diện lỗi chính tả, khác biệt dấu tiếng Việt, khoảng trắng vô hình bằng Levenshtein/Jaro-Winkler, chuẩn hóa 1-Click. |
 | **📂 Quản Trị & Đổi File** | **Batch File Converter** | Chuyển đổi định dạng hàng loạt (`.xlsx`, `.xls`, `.xlsb`, `.csv`, `.pdf`), tách sheet thành file riêng, gộp nhiều file vào 1. |
+| **📋 Sao Chép & Dán Vùng Lọc** | **Filtered Copy & Paste Wizard** | Chỉ copy và dán vào các dòng hiển thị (`Visible Cells Only`), tự động bỏ qua các dòng bị ẩn/bị lọc để bảo vệ dữ liệu 100%. |
 | **🎯 Thước Kẻ & Bảng Thống Kê** | **Ruler Plus & Dynamic HUD** | Thước ngắm chữ thập 7 màu dịu mắt, bảng HUD nổi hiển thị Tổng, Trung bình, Số lượng ô (chỉ tính dòng hiển thị) kèm chỉnh cỡ chữ động `[A-]` `[A+]`. |
 | **🤖 Trợ Lý AI & Dịch Thuật** | **AI Copilot & Formula Fixer** | Dịch thuật ô Nhật ⇋ Việt kèm từ điển Glossary bắt buộc, tự động viết công thức từ tiếng Việt, chẩn đoán & sửa lỗi công thức 1-Click. |
-| **🔗 Kiểm Soát & Rà Soát** | **External Links & VN Auditor** | Quản lý và cắt đứt liên kết ngoài (External Links), rà soát toàn bộ tiếng Việt có dấu trong nội dung ô, tên sheet và comment. |
 | **🌓 Giao Diện Hiện Đại** | **Dark / Light Theme** | Chuyển đổi linh hoạt giữa giao diện Sáng và Tối Slate (`#0F172A`), tương thích 100% trên toàn bộ các cửa sổ và hộp thoại. |
+| **🌐 Đa Ngôn Ngữ Ribbon** | **Multi-Language Ribbon** | Chuyển đổi tức thì 3 ngôn ngữ trên thanh Ribbon: **Tiếng Việt 🇻🇳**, **English 🇬🇧**, **日本語 🇯🇵** (tự động lưu cấu hình). |
 
 ---
 

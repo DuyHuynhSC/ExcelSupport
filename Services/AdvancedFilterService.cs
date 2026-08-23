@@ -784,14 +784,19 @@ namespace ExcelSupport.Services
                 object[,] allValues = (object[,])usedRange.Value2;
 
                 // Thêm cột số thứ tự dòng
-                dt.Columns.Add("Dòng", typeof(int));
+                string rowColName = LocalizationService.CurrentLanguage == AppLanguage.Japanese ? "行"
+                                  : (LocalizationService.CurrentLanguage == AppLanguage.English ? "Row" : "Dòng");
+                string colPrefix = LocalizationService.CurrentLanguage == AppLanguage.Japanese ? "列 "
+                                 : (LocalizationService.CurrentLanguage == AppLanguage.English ? "Column " : "Cột ");
+
+                dt.Columns.Add(rowColName, typeof(int));
 
                 // Thêm các cột dữ liệu
                 for (int c = 1; c <= totalCols; c++)
                 {
                     string colLetter = GetColumnLetter(startCol + c - 1);
                     string header = allValues[1, c]?.ToString()?.Trim() ?? string.Empty;
-                    string colName = string.IsNullOrEmpty(header) ? $"Cột {colLetter}" : $"{colLetter}: {header}";
+                    string colName = string.IsNullOrEmpty(header) ? $"{colPrefix}{colLetter}" : $"{colLetter}: {header}";
                     dt.Columns.Add(colName, typeof(string));
                 }
 
@@ -805,7 +810,7 @@ namespace ExcelSupport.Services
                         if (dt.Rows.Count < maxPreviewRows)
                         {
                             var row = dt.NewRow();
-                            row["Dòng"] = r;
+                            row[rowColName] = r;
                             for (int c = 1; c <= totalCols; c++)
                             {
                                 row[c] = allValues[r, c]?.ToString() ?? string.Empty;

@@ -4,6 +4,7 @@ using MediaColor = System.Windows.Media.Color;
 using MediaColorConverter = System.Windows.Media.ColorConverter;
 using SolidColorBrush = System.Windows.Media.SolidColorBrush;
 using WpfMessageBox = System.Windows.MessageBox;
+using ExcelSupport.Services;
 
 namespace ExcelSupport.Views
 {
@@ -15,7 +16,7 @@ namespace ExcelSupport.Views
         {
             InitializeComponent();
 
-            TxtPrompt.Text = $"Đổi tên cho sheet [{currentSheetName}]:";
+            TxtPrompt.Text = string.Format(LocalizationService.Get("RenameSheet_PromptFormat"), currentSheetName);
             TxtNewSheetName.Text = currentSheetName;
             TxtNewSheetName.SelectAll();
             TxtNewSheetName.Focus();
@@ -50,14 +51,14 @@ namespace ExcelSupport.Views
             string name = TxtNewSheetName.Text?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(name))
             {
-                WpfMessageBox.Show("Tên Sheet không được để trống.", "Đổi Tên Sheet", MessageBoxButton.OK, MessageBoxImage.Warning);
+                WpfMessageBox.Show(LocalizationService.Get("RenameSheet_MsgEmpty"), LocalizationService.Get("RenameSheet_WindowTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             char[] invalidChars = { '\\', '/', '?', '*', '[', ']', ':' };
             if (name.IndexOfAny(invalidChars) >= 0)
             {
-                WpfMessageBox.Show("Tên Sheet không được chứa các ký tự: \\ / ? * [ ] :", "Đổi Tên Sheet", MessageBoxButton.OK, MessageBoxImage.Warning);
+                WpfMessageBox.Show(LocalizationService.Get("RenameSheet_MsgInvalidChars"), LocalizationService.Get("RenameSheet_WindowTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

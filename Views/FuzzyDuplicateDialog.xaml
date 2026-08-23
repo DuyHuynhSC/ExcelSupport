@@ -1,7 +1,8 @@
 <Window x:Class="ExcelSupport.Views.FuzzyDuplicateDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Phát Hiện Dữ Liệu Bất Thường &amp; Trùng Lặp Ảo (Fuzzy Duplicate &amp; Data Cleaner) — ExcelSupport"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        Title="{loc:Loc Fuzzy_WindowTitle}"
         Height="700" Width="1050"
         MinHeight="540" MinWidth="850"
         WindowStartupLocation="CenterScreen"
@@ -290,9 +291,9 @@
             <StackPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="🧹" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="PHÁT HIỆN DỮ LIỆU BẤT THƯỜNG &amp; TRÙNG LẶP ẢO (FUZZY DUPLICATE &amp; CLEANER)" FontWeight="Bold" FontSize="15"/>
+                    <TextBlock Text="{loc:Loc Fuzzy_Title}" FontWeight="Bold" FontSize="15"/>
                 </StackPanel>
-                <TextBlock Text="Tìm kiếm các giá trị gần giống nhau (lỗi chính tả, khác biệt dấu tiếng Việt, khoảng trắng ẩn NBSP) và chuẩn hóa 1-Click." 
+                <TextBlock Text="{loc:Loc Fuzzy_SubTitle}" 
                            FontSize="11.5" Foreground="#64748B" Margin="30,2,0,0"/>
             </StackPanel>
         </Border>
@@ -321,17 +322,17 @@
                 </Border.Style>
 
                 <StackPanel>
-                    <TextBlock Text="📍 1. Vị Trí Cột Cần Rà Soát:" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,8"/>
+                    <TextBlock Text="{loc:Loc Fuzzy_SecCol}" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,8"/>
 
-                    <TextBlock Text="Sheet cần quét:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4"/>
+                    <TextBlock Text="{loc:Loc Fuzzy_SheetScan}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4"/>
                     <ComboBox x:Name="CboSheets" Style="{StaticResource ModernComboBoxStyle}" Margin="0,0,0,10" SelectionChanged="OnSheetSelectionChanged"/>
 
-                    <TextBlock Text="Cột dữ liệu kiểm tra:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4"/>
+                    <TextBlock Text="{loc:Loc Fuzzy_ColCheck}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4"/>
                     <ComboBox x:Name="CboColumns" Style="{StaticResource ModernComboBoxStyle}" Margin="0,0,0,14"/>
 
                     <Separator Margin="0,0,0,14"/>
 
-                    <TextBlock Text="⚙️ 2. Độ Tương Đồng (Fuzzy Threshold):" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
+                    <TextBlock Text="{loc:Loc Fuzzy_SecThreshold}" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
                     <Grid Margin="0,0,0,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -342,14 +343,14 @@
                             <TextBlock x:Name="TxtThresholdValue" Text="80%" FontWeight="Bold" Foreground="#FFFFFF" FontSize="12"/>
                         </Border>
                     </Grid>
-                    <TextBlock Text="• 80% - 85%: Phù hợp tìm lỗi gõ phím, khác biệt dấu tiếng Việt&#x0a;• 90% - 95%: Khớp rất chặt, chỉ khác 1-2 ký tự" FontSize="11" Foreground="#64748B" Margin="0,0,0,14"/>
+                    <TextBlock Text="{loc:Loc Fuzzy_ThresholdHelp}" FontSize="11" Foreground="#64748B" Margin="0,0,0,14"/>
 
-                    <TextBlock Text="🔍 3. Tùy Chọn Nhận Diện:" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
-                    <CheckBox x:Name="ChkCleanSpaces" Content="Xóa khoảng trắng vô hình (NBSP \u00A0, tab thừa)" IsChecked="True" Cursor="Hand" Margin="0,0,0,6"/>
-                    <CheckBox x:Name="ChkIgnoreAccent" Content="Bỏ qua dấu tiếng Việt (Nguyen Van A == Nguyễn Văn A)" IsChecked="True" Cursor="Hand" Margin="0,0,0,6"/>
-                    <CheckBox x:Name="ChkIgnoreCase" Content="Không phân biệt chữ HOA / thường" IsChecked="True" Cursor="Hand" Margin="0,0,0,14"/>
+                    <TextBlock Text="{loc:Loc Fuzzy_SecOptions}" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,6"/>
+                    <CheckBox x:Name="ChkCleanSpaces" Content="{loc:Loc Fuzzy_CleanSpaces}" IsChecked="True" Cursor="Hand" Margin="0,0,0,6"/>
+                    <CheckBox x:Name="ChkIgnoreAccent" Content="{loc:Loc Fuzzy_IgnoreAccent}" IsChecked="True" Cursor="Hand" Margin="0,0,0,6"/>
+                    <CheckBox x:Name="ChkIgnoreCase" Content="{loc:Loc Fuzzy_IgnoreCase}" IsChecked="True" Cursor="Hand" Margin="0,0,0,14"/>
 
-                    <Button Content="🔍 Bắt Đầu Quét Trùng Lặp Ảo" Style="{StaticResource DialogPrimaryBtn}" Margin="0,6,0,0" Click="OnStartScanClick"/>
+                    <Button Content="{loc:Loc Fuzzy_BtnScan}" Style="{StaticResource DialogPrimaryBtn}" Margin="0,6,0,0" Click="OnStartScanClick"/>
                 </StackPanel>
             </Border>
 
@@ -376,9 +377,9 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-                        <TextBlock Text="📊 Các Nhóm Giá Trị Bất Thường Phát Hiện Được:" FontWeight="Bold" FontSize="12.5"/>
+                        <TextBlock Text="{loc:Loc Fuzzy_ClustersHeader}" FontWeight="Bold" FontSize="12.5"/>
                         <Border CornerRadius="10" Padding="8,2" Margin="10,0,0,0" Background="#FEF3C7">
-                            <TextBlock x:Name="TxtClusterCountBadge" Text="0 nhóm" FontSize="11" FontWeight="Bold" Foreground="#B45309"/>
+                            <TextBlock x:Name="TxtClusterCountBadge" Text="0" FontSize="11" FontWeight="Bold" Foreground="#B45309"/>
                         </Border>
                     </StackPanel>
 
@@ -404,10 +405,10 @@
                             </Style>
                         </DataGrid.Style>
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="Chọn" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="50"/>
-                            <DataGridTextColumn Header="Ô Excel" Binding="{Binding CellAddress}" IsReadOnly="True" Width="70"/>
-                            <DataGridTextColumn Header="Giá Trị Gốc Trên Sheet" Binding="{Binding OriginalText}" IsReadOnly="True" Width="1.5*"/>
-                            <DataGridTextColumn Header="Độ Giống" Binding="{Binding SimilarityBadge}" IsReadOnly="True" Width="80"/>
+                            <DataGridCheckBoxColumn Header="{loc:Loc Common_Select}" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="50"/>
+                            <DataGridTextColumn Header="{loc:Loc Fuzzy_ColCell}" Binding="{Binding CellAddress}" IsReadOnly="True" Width="70"/>
+                            <DataGridTextColumn Header="{loc:Loc Fuzzy_ColOriginal}" Binding="{Binding OriginalText}" IsReadOnly="True" Width="1.5*"/>
+                            <DataGridTextColumn Header="{loc:Loc Fuzzy_ColSimilarity}" Binding="{Binding SimilarityBadge}" IsReadOnly="True" Width="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -418,8 +419,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <Button Content="⚡ Chuẩn Hóa Về Giá Trị Chuẩn" Style="{StaticResource DialogPrimaryBtn}" Margin="0,0,8,0" Click="OnStandardizeClick"/>
-                            <Button Content="🎨 Tô Màu Rà Soát" Style="{StaticResource DialogSecondaryBtn}" Click="OnHighlightClick"/>
+                            <Button Content="{loc:Loc Fuzzy_BtnStandardize}" Style="{StaticResource DialogPrimaryBtn}" Margin="0,0,8,0" Click="OnStandardizeClick"/>
+                            <Button Content="{loc:Loc Fuzzy_BtnHighlight}" Style="{StaticResource DialogSecondaryBtn}" Click="OnHighlightClick"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -447,10 +448,10 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock x:Name="TxtFooterStatus" Text="Sẵn sàng quét và chuẩn hóa dữ liệu trùng lặp ảo..." 
+                <TextBlock x:Name="TxtFooterStatus" Text="{loc:Loc Fuzzy_FooterReady}" 
                            VerticalAlignment="Center" FontSize="12" Foreground="#64748B"/>
 
-                <Button Grid.Column="1" Content="Đóng" Width="80" Style="{StaticResource DialogSecondaryBtn}" Click="OnCloseClick"/>
+                <Button Grid.Column="1" Content="{loc:Loc Common_Close}" Width="80" Style="{StaticResource DialogSecondaryBtn}" Click="OnCloseClick"/>
             </Grid>
         </Border>
     </Grid>

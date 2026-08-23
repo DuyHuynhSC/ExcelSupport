@@ -32,17 +32,11 @@ namespace ExcelSupport.Host
         protected override void OnVisibleChanged(EventArgs e)
         {
             base.OnVisibleChanged(e);
-            if (Visible)
-            {
-                Host?.Focus();
-                AddInEvents.Instance?.QueueRefresh();
-            }
         }
 
         protected override void OnGotFocus(EventArgs e)
         {
             base.OnGotFocus(e);
-            Host?.Focus();
         }
 
         private void InitializeBridge()

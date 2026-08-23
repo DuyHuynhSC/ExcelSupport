@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ExcelSupport.Views"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         mc:Ignorable="d"
-        Title="Tìm &amp; Xử Lý Dữ Liệu Trùng Lặp Nâng Cao — ExcelSupport" 
+        Title="{loc:Loc Dup_WindowTitle}" 
         Height="720" Width="1040"
         MinHeight="560" MinWidth="850"
         WindowStartupLocation="CenterScreen"
@@ -154,7 +155,7 @@
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="🔍" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="TÌM &amp; XỬ LÝ DỮ LIỆU TRÙNG LẶP NÂNG CAO" FontWeight="Bold" FontSize="15" VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Loc Dup_HeaderTitle}" FontWeight="Bold" FontSize="15" VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#0F172A"/>
@@ -167,17 +168,17 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
-                    <TextBlock Text="Quét và gom nhóm các bản ghi trùng lặp theo cột khóa, so khớp chính xác / mờ, tô màu và tách sheet" 
+                    <TextBlock Text="{loc:Loc Dup_HeaderDesc}" 
                                FontSize="11.5" Foreground="#64748B" Margin="26,2,0,0"/>
                 </StackPanel>
 
                 <!-- Statistics Badges -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Border CornerRadius="10" Padding="10,4" Margin="0,0,6,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1">
-                        <TextBlock x:Name="TxtTotalDuplicates" Text="0 dòng trùng" FontWeight="SemiBold" FontSize="11" Foreground="#92400E"/>
+                        <TextBlock x:Name="TxtTotalDuplicates" Text="0" FontWeight="SemiBold" FontSize="11" Foreground="#92400E"/>
                     </Border>
                     <Border CornerRadius="10" Padding="10,4" Margin="0,0,0,0" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1">
-                        <TextBlock x:Name="TxtTotalGroups" Text="0 nhóm trùng" FontWeight="SemiBold" FontSize="11" Foreground="#166534"/>
+                        <TextBlock x:Name="TxtTotalGroups" Text="0" FontWeight="SemiBold" FontSize="11" Foreground="#166534"/>
                     </Border>
                 </StackPanel>
             </Grid>
@@ -212,10 +213,10 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="📌 Cột Khóa So Sánh:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="ChkFirstRowHeader" Content="Dòng đầu là Tiêu đề cột" IsChecked="True" Margin="0,0,12,0" Checked="OnHeaderOptionChanged" Unchecked="OnHeaderOptionChanged"/>
-                        <Button Content="Tất cả" Padding="6,2" FontSize="10.5" Style="{StaticResource DupActionBtn}" Margin="0,0,4,0" Click="OnSelectAllColumnsClick"/>
-                        <Button Content="Bỏ chọn" Padding="6,2" FontSize="10.5" Style="{StaticResource DupActionBtn}" Margin="0,0,14,0" Click="OnDeselectAllColumnsClick"/>
+                        <TextBlock Text="{loc:Loc Dup_SecCompareCols}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="ChkFirstRowHeader" Content="{loc:Loc Dup_ChkHeaderRow}" IsChecked="True" Margin="0,0,12,0" Checked="OnHeaderOptionChanged" Unchecked="OnHeaderOptionChanged"/>
+                        <Button Content="{loc:Loc Common_All}" Padding="6,2" FontSize="10.5" Style="{StaticResource DupActionBtn}" Margin="0,0,4,0" Click="OnSelectAllColumnsClick"/>
+                        <Button Content="{loc:Loc Common_DeselectAll}" Padding="6,2" FontSize="10.5" Style="{StaticResource DupActionBtn}" Margin="0,0,14,0" Click="OnDeselectAllColumnsClick"/>
 
                         <!-- Danh sách các cột có thể tích chọn -->
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" MaxWidth="500">
@@ -234,20 +235,20 @@
                         </ScrollViewer>
                     </StackPanel>
 
-                    <Button Grid.Column="1" Content="🔍 Tìm Dòng Trùng" Style="{StaticResource DupPrimaryBtn}" Click="OnFindDuplicatesClick"/>
+                    <Button Grid.Column="1" Content="{loc:Loc Dup_BtnFind}" Style="{StaticResource DupPrimaryBtn}" Click="OnFindDuplicatesClick"/>
                 </Grid>
 
                 <!-- Dòng 2: Chế độ so khớp -->
                 <WrapPanel Grid.Row="1" VerticalAlignment="Center">
-                    <TextBlock Text="Chế độ:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <RadioButton x:Name="RbExactMatch" Content="Chính xác 100%" IsChecked="True" GroupName="DupMatchMode" Margin="0,0,14,0"/>
-                    <RadioButton x:Name="RbFuzzyMatch" Content="So khớp mờ (Fuzzy Match)" GroupName="DupMatchMode" Margin="0,0,8,0"/>
-                    <TextBlock Text="Độ tương đồng ≥" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="#64748B"/>
+                    <TextBlock Text="{loc:Loc Dup_LblMode}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="RbExactMatch" Content="{loc:Loc Dup_ExactMatch}" IsChecked="True" GroupName="DupMatchMode" Margin="0,0,14,0"/>
+                    <RadioButton x:Name="RbFuzzyMatch" Content="{loc:Loc Dup_FuzzyMatch}" GroupName="DupMatchMode" Margin="0,0,8,0"/>
+                    <TextBlock Text="{loc:Loc Dup_LblSimilarity}" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="#64748B"/>
                     <Slider x:Name="SliderThreshold" Minimum="0.7" Maximum="1.0" Value="0.85" SmallChange="0.05" LargeChange="0.1" Width="80" VerticalAlignment="Center" Margin="0,0,4,0"/>
                     <TextBlock Text="{Binding Value, ElementName=SliderThreshold, StringFormat={}{0:P0}}" FontWeight="Bold" FontSize="11" Margin="0,0,16,0" VerticalAlignment="Center" Foreground="#2563EB"/>
 
-                    <CheckBox x:Name="ChkIgnoreSpaces" Content="Bỏ qua khoảng trắng" IsChecked="True" Margin="0,0,12,0"/>
-                    <CheckBox x:Name="ChkIgnoreCase" Content="Không phân biệt HOA/thường" IsChecked="True"/>
+                    <CheckBox x:Name="ChkIgnoreSpaces" Content="{loc:Loc Dup_ChkIgnoreSpaces}" IsChecked="True" Margin="0,0,12,0"/>
+                    <CheckBox x:Name="ChkIgnoreCase" Content="{loc:Loc Dup_ChkIgnoreCase}" IsChecked="True"/>
                 </WrapPanel>
             </Grid>
         </Border>
@@ -275,9 +276,9 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Lọc:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <RadioButton x:Name="RbFilterAll" Content="Tất cả các dòng trong nhóm" IsChecked="True" GroupName="DupFilter" Margin="0,0,12,0" Checked="OnFilterChanged"/>
-                    <RadioButton x:Name="RbFilterDuplicatesOnly" Content="Chỉ xem dòng trùng (Bỏ dòng gốc)" GroupName="DupFilter" Margin="0,0,12,0" Checked="OnFilterChanged"/>
+                    <TextBlock Text="{loc:Loc Dup_LblFilter}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="RbFilterAll" Content="{loc:Loc Dup_FilterAll}" IsChecked="True" GroupName="DupFilter" Margin="0,0,12,0" Checked="OnFilterChanged"/>
+                    <RadioButton x:Name="RbFilterDuplicatesOnly" Content="{loc:Loc Dup_FilterDupsOnly}" GroupName="DupFilter" Margin="0,0,12,0" Checked="OnFilterChanged"/>
                 </StackPanel>
 
                 <!-- Search box -->
@@ -356,7 +357,7 @@
 
             <DataGrid.Columns>
                 <!-- Nhóm -->
-                <DataGridTemplateColumn Header="Nhóm" Width="85">
+                <DataGridTemplateColumn Header="{loc:Loc Dup_ColGroup}" Width="85">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Border Background="#EDE9FE" CornerRadius="4" Padding="6,2" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -367,7 +368,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Dòng Excel -->
-                <DataGridTextColumn Header="Vị Trí" Binding="{Binding RowDisplay}" Width="80">
+                <DataGridTextColumn Header="{loc:Loc Dup_ColPosition}" Binding="{Binding RowDisplay}" Width="80">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -379,7 +380,7 @@
                 </DataGridTextColumn>
 
                 <!-- Vai Trò (Master / Duplicate) -->
-                <DataGridTemplateColumn Header="Vai Trò" Width="150">
+                <DataGridTemplateColumn Header="{loc:Loc Dup_ColRole}" Width="150">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -415,7 +416,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Độ Khớp -->
-                <DataGridTextColumn Header="Độ Khớp" Binding="{Binding SimilarityPercentage}" Width="75">
+                <DataGridTextColumn Header="{loc:Loc Dup_ColMatch}" Binding="{Binding SimilarityPercentage}" Width="75">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -426,7 +427,7 @@
                 </DataGridTextColumn>
 
                 <!-- Nội dung dòng -->
-                <DataGridTextColumn Header="Nội Dung Dòng Dữ Liệu" Binding="{Binding RowValuesSummary}" Width="*">
+                <DataGridTextColumn Header="{loc:Loc Dup_ColRowContent}" Binding="{Binding RowValuesSummary}" Width="*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -437,10 +438,10 @@
                 </DataGridTextColumn>
 
                 <!-- Nút Đi tới dòng -->
-                <DataGridTemplateColumn Header="Hành Động" Width="90">
+                <DataGridTemplateColumn Header="{loc:Loc Dup_ColAction}" Width="90">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="🎯 Đi tới dòng" FontSize="10.5" Padding="6,3" Cursor="Hand"
+                            <Button Content="{loc:Loc VN_BtnGoTo}" FontSize="10.5" Padding="6,3" Cursor="Hand"
                                     Style="{StaticResource DupActionBtn}"
                                     Click="OnGoToRowClick"
                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -471,14 +472,14 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="Sẵn sàng quét dòng trùng." 
+                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="{loc:Loc Common_Ready}" 
                            VerticalAlignment="Center" FontSize="11.5" Foreground="#64748B"/>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="🎨 Tô Màu Nhóm" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnHighlightClick"/>
-                    <Button Content="🗑️ Xóa Dòng Trùng (Giữ dòng đầu)" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnDeleteDuplicatesClick"/>
-                    <Button Content="📋 Tách Ra Sheet Mới" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnExtractToSheetClick"/>
-                    <Button Content="Đóng" Width="70" Style="{StaticResource DupSecondaryBtn}" Click="OnCloseClick"/>
+                    <Button Content="{loc:Loc Dup_BtnColor}" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnHighlightClick"/>
+                    <Button Content="{loc:Loc Dup_BtnDelete}" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnDeleteDuplicatesClick"/>
+                    <Button Content="{loc:Loc Dup_BtnExtract}" Margin="0,0,8,0" Style="{StaticResource DupActionBtn}" Click="OnExtractToSheetClick"/>
+                    <Button Content="{loc:Loc Common_Close}" Width="70" Style="{StaticResource DupSecondaryBtn}" Click="OnCloseClick"/>
                 </StackPanel>
             </Grid>
         </Border>

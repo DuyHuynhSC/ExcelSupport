@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using ExcelSupport.Models;
+using ExcelSupport.Services;
 using MessageBox = System.Windows.MessageBox;
 
 namespace ExcelSupport.Views
@@ -130,14 +131,14 @@ namespace ExcelSupport.Views
             int total = _results.Count;
             if (total == 0)
             {
-                TxtTotalCount.Text = "0 vị trí (Không có tiếng Việt)";
+                TxtTotalCount.Text = LocalizationService.Get("VN_BadgeNoResults");
                 BadgeResult.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(IsDarkTheme ? "#064E3B" : "#DCFCE7"));
                 BadgeResult.BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(IsDarkTheme ? "#059669" : "#86EFAC"));
                 TxtTotalCount.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(IsDarkTheme ? "#6EE7B7" : "#166534"));
             }
             else
             {
-                TxtTotalCount.Text = $"{total} vị trí phát hiện";
+                TxtTotalCount.Text = LocalizationService.Get("VN_BadgeFound", total);
                 BadgeResult.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(IsDarkTheme ? "#78350F" : "#FEF3C7"));
                 BadgeResult.BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(IsDarkTheme ? "#D97706" : "#FCD34D"));
                 TxtTotalCount.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(IsDarkTheme ? "#FDE68A" : "#92400E"));
@@ -158,7 +159,7 @@ namespace ExcelSupport.Views
             if (RbActiveSheet.IsChecked == true) scope = AddInEvents.VietnameseScanScope.ActiveSheet;
             else if (RbAllWorkbooks.IsChecked == true) scope = AddInEvents.VietnameseScanScope.AllWorkbooks;
 
-            TxtStatus.Text = "⏳ Đang quét kiểm tra tiếng Việt...";
+            TxtStatus.Text = LocalizationService.Get("VN_Scanning");
             _results.Clear();
 
             var list = addIn.ScanVietnameseLocations(scope, msg =>
@@ -175,11 +176,11 @@ namespace ExcelSupport.Views
 
             if (list.Count == 0)
             {
-                TxtStatus.Text = "✅ Tuyệt vời! Không phát hiện bất kỳ ký tự tiếng Việt có dấu nào trong phạm vi đã quét.";
+                TxtStatus.Text = LocalizationService.Get("VN_NoVietnameseFound");
             }
             else
             {
-                TxtStatus.Text = $"⚠️ Tìm thấy {list.Count} vị trí có tiếng Việt. Click đúp vào dòng để chuyển đến ô tương ứng trong Excel.";
+                TxtStatus.Text = string.Format(LocalizationService.Get("VN_FoundCountFormat"), list.Count);
             }
         }
 
@@ -207,11 +208,11 @@ namespace ExcelSupport.Views
             bool ok = addIn.NavigateToCell(item.WorkbookName, item.SheetName, item.CellAddress);
             if (ok)
             {
-                TxtStatus.Text = $"🎯 Đã chuyển đến [{item.WorkbookName}] ➔ [{item.SheetName}] ➔ Ô: {item.CellAddress}";
+                TxtStatus.Text = string.Format(LocalizationService.Get("VN_NavigatedFormat"), item.WorkbookName, item.SheetName, item.CellAddress);
             }
             else
             {
-                TxtStatus.Text = $"❌ Không thể chuyển đến ô [{item.CellAddress}] trong [{item.SheetName}].";
+                TxtStatus.Text = string.Format(LocalizationService.Get("VN_NavigatedFailedFormat"), item.CellAddress, item.SheetName);
             }
         }
 

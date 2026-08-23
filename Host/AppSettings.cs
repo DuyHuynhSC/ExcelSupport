@@ -42,5 +42,41 @@ namespace ExcelSupport.Host
                 catch { }
             }
         }
+
+        private const string LanguageKey = "AppLanguage";
+
+        /// <summary>
+        /// Ngôn ngữ giao diện (vi = Tiếng Việt, en = English, ja = 日本語)
+        /// </summary>
+        public static string CurrentLanguage
+        {
+            get
+            {
+                try
+                {
+                    using (var key = Registry.CurrentUser.OpenSubKey(RegKeyPath))
+                    {
+                        if (key != null)
+                        {
+                            var val = key.GetValue(LanguageKey) as string;
+                            if (!string.IsNullOrEmpty(val)) return val!;
+                        }
+                    }
+                }
+                catch { }
+                return "vi"; // Mặc định là Tiếng Việt
+            }
+            set
+            {
+                try
+                {
+                    using (var key = Registry.CurrentUser.CreateSubKey(RegKeyPath))
+                    {
+                        key?.SetValue(LanguageKey, value ?? "vi", RegistryValueKind.String);
+                    }
+                }
+                catch { }
+            }
+        }
     }
 }

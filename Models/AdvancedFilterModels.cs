@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using ExcelSupport.Services;
 
 namespace ExcelSupport.Models
 {
@@ -70,9 +71,17 @@ namespace ExcelSupport.Models
         public string ColumnLetter { get; set; } = string.Empty;
         public string HeaderText { get; set; } = string.Empty;
 
-        public string DisplayName => string.IsNullOrWhiteSpace(HeaderText)
-            ? $"Cột {ColumnLetter}"
-            : $"{ColumnLetter}: {HeaderText}";
+        public string DisplayName
+        {
+            get
+            {
+                string colPrefix = LocalizationService.CurrentLanguage == AppLanguage.Japanese ? "列 "
+                                 : (LocalizationService.CurrentLanguage == AppLanguage.English ? "Column " : "Cột ");
+                return string.IsNullOrWhiteSpace(HeaderText)
+                    ? $"{colPrefix}{ColumnLetter}"
+                    : $"{ColumnLetter}: {HeaderText}";
+            }
+        }
 
         public override string ToString() => DisplayName;
     }

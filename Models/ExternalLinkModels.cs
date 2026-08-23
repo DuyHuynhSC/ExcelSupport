@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using ExcelSupport.Services;
 
 namespace ExcelSupport.Models
 {
@@ -27,7 +28,7 @@ namespace ExcelSupport.Models
         public bool Exists
         {
             get => _exists;
-            set { _exists = value; OnPropertyChanged(); }
+            set { _exists = value; OnPropertyChanged(); OnPropertyChanged(nameof(StatusDisplay)); }
         }
 
         public int FormulaCount
@@ -38,7 +39,27 @@ namespace ExcelSupport.Models
 
         public string StatusDisplay
         {
-            get => _statusDisplay;
+            get
+            {
+                if (_exists)
+                {
+                    return LocalizationService.CurrentLanguage switch
+                    {
+                        AppLanguage.Japanese => "⚠️ ファイルは存在します",
+                        AppLanguage.English => "⚠️ File exists on disk",
+                        _ => "⚠️ File tồn tại trên máy"
+                    };
+                }
+                else
+                {
+                    return LocalizationService.CurrentLanguage switch
+                    {
+                        AppLanguage.Japanese => "❌ ファイルが見つかりません (リンク切れ)",
+                        AppLanguage.English => "❌ File not found (Broken)",
+                        _ => "❌ File không tồn tại (Broken)"
+                    };
+                }
+            }
             set { _statusDisplay = value; OnPropertyChanged(); }
         }
 

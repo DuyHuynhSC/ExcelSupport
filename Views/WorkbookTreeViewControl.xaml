@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ExcelSupport.ViewModels"
              xmlns:views="clr-namespace:ExcelSupport.Views"
+             xmlns:loc="clr-namespace:ExcelSupport.Helpers"
              x:Name="RootControl"
              FontFamily="Segoe UI" FontSize="12">
     
@@ -275,8 +276,7 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="📋 " FontSize="10" VerticalAlignment="Center"/>
-                        <TextBlock Text="Sheet" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc Nav_TabExplorer}" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -301,8 +301,7 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="🤖 " FontSize="10" VerticalAlignment="Center"/>
-                        <TextBlock Text="AI Trợ Lý" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc Nav_TabAi}" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -327,8 +326,7 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="⚙️ " FontSize="10" VerticalAlignment="Center"/>
-                        <TextBlock Text="Cài Đặt" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc Nav_TabSettings}" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -450,7 +448,7 @@
                     <!-- Nút Sort A-Z dồn về trái -->
                     <Button Style="{StaticResource IconActionButtonStyle}"
                             Command="{Binding ToggleWorkbookSortCommand}"
-                            ToolTip="Sắp xếp danh sách Workbook (A-Z / Z-A)">
+                            ToolTip="{loc:Loc Nav_SortWorkbookTip}">
                         <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
                             <Border.Style>
                                 <Style TargetType="Border">
@@ -502,18 +500,20 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Foreground="#94A3B8" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" 
+                        <TextBox x:Name="TxtWorkbookSearch"
+                                 Grid.Column="1" 
                                  Text="{Binding WorkbookSearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 PreviewKeyDown="OnWorkbookSearchPreviewKeyDown"
                                  BorderThickness="0" Background="Transparent" 
                                  VerticalAlignment="Center" FontSize="11.5"
-                                 ToolTip="Tìm kiếm Workbook (hỗ trợ A|B|C để lọc nhiều file)">
+                                 ToolTip="{loc:Loc Nav_SearchWorkbookTip}">
                             <TextBox.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="✂️ Cắt (Cut)" Command="ApplicationCommands.Cut"/>
-                                    <MenuItem Header="📋 Sao chép (Copy)" Command="ApplicationCommands.Copy"/>
-                                    <MenuItem Header="📥 Dán (Paste)" Command="ApplicationCommands.Paste"/>
+                                    <MenuItem Header="{loc:Loc Common_Cut}" Command="ApplicationCommands.Cut"/>
+                                    <MenuItem Header="{loc:Loc Common_Copy}" Command="ApplicationCommands.Copy"/>
+                                    <MenuItem Header="{loc:Loc Common_Paste}" Command="ApplicationCommands.Paste"/>
                                     <Separator/>
-                                    <MenuItem Header="🔘 Chọn tất cả (Select All)" Command="ApplicationCommands.SelectAll"/>
+                                    <MenuItem Header="{loc:Loc Common_SelectAll}" Command="ApplicationCommands.SelectAll"/>
                                 </ContextMenu>
                             </TextBox.ContextMenu>
                             <TextBox.Style>
@@ -538,11 +538,13 @@
                 </Border>
 
                 <!-- ListBox Workbooks -->
-                <ListBox Grid.Row="2"
+                <ListBox x:Name="WorkbooksListBox"
+                         Grid.Row="2"
                          ItemsSource="{Binding WorkbooksView}"
                          SelectedItem="{Binding SelectedWorkbook, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource WorkbookItemContainerStyle}"
                          PreviewMouseLeftButtonDown="OnWorkbookListBoxPreviewMouseLeftButtonDown"
+                         SelectionChanged="OnWorkbookListBoxSelectionChanged"
                          PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown"
                          Background="Transparent"
                          BorderThickness="0"
@@ -552,22 +554,22 @@
                             <Grid Background="Transparent" ToolTip="{Binding FilePath}">
                                 <Grid.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="📋 Sao chép tên Workbook" Command="{Binding CopyNameCommand}"/>
-                                        <MenuItem Header="📁 Sao chép đường dẫn file" Command="{Binding CopyPathCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_CopyName}" Command="{Binding CopyNameCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_CopyPath}" Command="{Binding CopyPathCommand}"/>
                                         <Separator/>
-                                        <MenuItem Header="👁️ Hiện tất cả Sheet ẩn" Command="{Binding UnhideAllSheetsCommand}"/>
-                                        <MenuItem Header="📑 Tạo Bảng Mục Lục (Index Sheet)" Command="{Binding CreateTocCommand}"/>
-                                        <MenuItem Header="🇻🇳 Kiểm tra tiếng Việt trong Workbook..." Command="{Binding CheckVietnameseCommand}"/>
-                                        <MenuItem Header="📊 So sánh với Workbook khác..." Command="{Binding CompareWorkbookCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_UnhideAll}" Command="{Binding UnhideAllSheetsCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_CreateTOC}" Command="{Binding CreateTocCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_CheckVN}" Command="{Binding CheckVietnameseCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_Compare}" Command="{Binding CompareWorkbookCommand}"/>
                                         <Separator/>
-                                        <MenuItem Header="📤 Tách Sheets thành file riêng (.xlsx)..." Command="{Binding SplitWorkbookCommand}"/>
-                                        <MenuItem Header="📥 Gộp dữ liệu các Sheet..." Command="{Binding MergeSheetsCommand}"/>
-                                        <MenuItem Header="✏️ Đổi tên Sheet hàng loạt..." Command="{Binding BatchRenameCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_Split}" Command="{Binding SplitWorkbookCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_Merge}" Command="{Binding MergeSheetsCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_BatchRename}" Command="{Binding BatchRenameCommand}"/>
                                         <Separator/>
-                                        <MenuItem Header="🔤 Sắp xếp danh sách A-Z" Command="{Binding SortAscendingCommand}"/>
-                                        <MenuItem Header="🔤 Sắp xếp danh sách Z-A" Command="{Binding SortDescendingCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_SortAZ}" Command="{Binding SortAscendingCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_SortZA}" Command="{Binding SortDescendingCommand}"/>
                                         <Separator/>
-                                        <MenuItem Header="❌ Đóng Workbook này" 
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_CloseWb}" 
                                                   Foreground="#DC2626"
                                                   Command="{Binding CloseWorkbookCommand}"/>
                                     </ContextMenu>
@@ -738,11 +740,11 @@
                                 <TextBlock FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="Sheet Ẩn: Bật"/>
+                                            <Setter Property="Text" Value="{loc:Loc Nav_HiddenSheets_On}"/>
                                             <Setter Property="Foreground" Value="#16A34A"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ShowHiddenSheets}" Value="False">
-                                                    <Setter Property="Text" Value="Sheet Ẩn: Tắt"/>
+                                                    <Setter Property="Text" Value="{loc:Loc Nav_HiddenSheets_Off}"/>
                                                     <Setter Property="Foreground" Value="#94A3B8"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -756,7 +758,7 @@
                     <!-- Nút Tạo Mục Lục -->
                     <Button Style="{StaticResource IconActionButtonStyle}"
                             Command="{Binding CreateTocCommand}"
-                            ToolTip="Tạo bảng Mục Lục (Index Sheet) tự động với Hyperlink"
+                            ToolTip="{loc:Loc Nav_TocTip}"
                             Margin="0,0,4,0">
                         <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
                             <Border.Style>
@@ -773,7 +775,7 @@
                             </Border.Style>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="📑 " FontSize="10" VerticalAlignment="Center"/>
-                                <TextBlock Text="Mục Lục" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc Nav_TOC}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="#1E293B"/>
@@ -792,7 +794,7 @@
                     <!-- Nút Tách / Gộp Sheets -->
                     <Button Style="{StaticResource IconActionButtonStyle}"
                             Command="{Binding OpenToolsDialogCommand}"
-                            ToolTip="Công cụ Tách Sheets, Gộp Sheets, Đổi tên hàng loạt"
+                            ToolTip="{loc:Loc Nav_SplitMergeTip}"
                             Margin="0,0,4,0">
                         <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
                             <Border.Style>
@@ -809,7 +811,7 @@
                             </Border.Style>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="✂️ " FontSize="10" VerticalAlignment="Center"/>
-                                <TextBlock Text="Tách/Gộp" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc Nav_SplitMerge}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="#1E293B"/>
@@ -828,7 +830,7 @@
                     <!-- Nút Sort Sheet A-Z -->
                     <Button Style="{StaticResource IconActionButtonStyle}"
                             Command="{Binding ToggleSheetSortCommand}"
-                            ToolTip="Sắp xếp danh sách Sheet (A-Z / Z-A)">
+                            ToolTip="{loc:Loc Nav_SortSheetTip}">
                         <Border BorderThickness="1" CornerRadius="3" Padding="5,2">
                             <Border.Style>
                                 <Style TargetType="Border">
@@ -880,18 +882,20 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Foreground="#94A3B8" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" 
+                        <TextBox x:Name="TxtSheetSearch"
+                                 Grid.Column="1" 
                                  Text="{Binding SheetSearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 PreviewKeyDown="OnSheetSearchPreviewKeyDown"
                                  BorderThickness="0" Background="Transparent" 
                                  VerticalAlignment="Center" FontSize="11.5"
-                                 ToolTip="Tìm kiếm Sheet (hỗ trợ A|B|C để lọc nhiều sheet)">
+                                 ToolTip="{loc:Loc Nav_SearchSheetTip}">
                             <TextBox.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="✂️ Cắt (Cut)" Command="ApplicationCommands.Cut"/>
-                                    <MenuItem Header="📋 Sao chép (Copy)" Command="ApplicationCommands.Copy"/>
-                                    <MenuItem Header="📥 Dán (Paste)" Command="ApplicationCommands.Paste"/>
+                                    <MenuItem Header="{loc:Loc Common_Cut}" Command="ApplicationCommands.Cut"/>
+                                    <MenuItem Header="{loc:Loc Common_Copy}" Command="ApplicationCommands.Copy"/>
+                                    <MenuItem Header="{loc:Loc Common_Paste}" Command="ApplicationCommands.Paste"/>
                                     <Separator/>
-                                    <MenuItem Header="🔘 Chọn tất cả (Select All)" Command="ApplicationCommands.SelectAll"/>
+                                    <MenuItem Header="{loc:Loc Common_SelectAll}" Command="ApplicationCommands.SelectAll"/>
                                 </ContextMenu>
                             </TextBox.ContextMenu>
                             <TextBox.Style>
@@ -916,11 +920,13 @@
                 </Border>
 
                 <!-- ListBox Worksheets của Workbook được chọn -->
-                <ListBox Grid.Row="2"
+                <ListBox x:Name="WorksheetsListBox"
+                         Grid.Row="2"
                          ItemsSource="{Binding SheetsView}"
                          SelectedItem="{Binding SelectedWorksheet, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource WorksheetItemContainerStyle}"
                          PreviewMouseLeftButtonDown="OnWorksheetListBoxPreviewMouseLeftButtonDown"
+                         SelectionChanged="OnWorksheetListBoxSelectionChanged"
                          PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown"
                          Background="Transparent"
                          BorderThickness="0"
@@ -930,10 +936,10 @@
                             <Grid Background="Transparent">
                                 <Grid.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="📋 Sao chép tên Sheet" Command="{Binding CopyNameCommand}"/>
-                                        <MenuItem Header="✏️ Đổi tên Sheet..." Command="{Binding RenameSheetCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_CopyName}" Command="{Binding CopyNameCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_Rename}" Command="{Binding RenameSheetCommand}"/>
                                         <Separator/>
-                                        <MenuItem Header="👁️ Hiện Sheet này (Unhide)" 
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_Unhide}" 
                                                   Command="{Binding UnhideSheetCommand}">
                                             <MenuItem.Style>
                                                 <Style TargetType="MenuItem">
@@ -947,7 +953,7 @@
                                             </MenuItem.Style>
                                         </MenuItem>
 
-                                        <MenuItem Header="🙈 Ẩn Sheet này (Hide)" 
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_Hide}" 
                                                   Command="{Binding HideSheetCommand}">
                                             <MenuItem.Style>
                                                 <Style TargetType="MenuItem">
@@ -961,7 +967,7 @@
                                             </MenuItem.Style>
                                         </MenuItem>
 
-                                        <MenuItem Header="🔒 Ẩn sâu (Very Hidden)" 
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_VeryHidden}" 
                                                   Command="{Binding VeryHideSheetCommand}">
                                             <MenuItem.Style>
                                                 <Style TargetType="MenuItem">
@@ -976,15 +982,15 @@
                                         </MenuItem>
 
                                         <Separator/>
-                                        <MenuItem Header="🎨 Đổi màu Tab Sheet..." Command="{Binding PickCustomColorCommand}"/>
-                                        <MenuItem Header="✕ Xóa màu Tab (Mặc định)" Command="{Binding ClearColorCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_TabColor}" Command="{Binding PickCustomColorCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_ClearColor}" Command="{Binding ClearColorCommand}"/>
 
                                         <Separator/>
-                                        <MenuItem Header="📑 Tạo Bảng Mục Lục (Index Sheet)" Command="{Binding CreateTocCommand}"/>
-                                        <MenuItem Header="🇻🇳 Kiểm tra tiếng Việt..." Command="{Binding CheckVietnameseCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_CreateTOC}" Command="{Binding CreateTocCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_CheckVN}" Command="{Binding CheckVietnameseCommand}"/>
                                         <Separator/>
-                                        <MenuItem Header="🔤 Sắp xếp Sheet A-Z" Command="{Binding SortAscendingCommand}"/>
-                                        <MenuItem Header="🔤 Sắp xếp Sheet Z-A" Command="{Binding SortDescendingCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_SortAZ}" Command="{Binding SortAscendingCommand}"/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_SortZA}" Command="{Binding SortDescendingCommand}"/>
                                     </ContextMenu>
                                 </Grid.ContextMenu>
 
@@ -1058,7 +1064,6 @@
                                     </TextBlock.Style>
                                 </TextBlock>
 
-                                <!-- Biểu tượng Ổ khóa khi Sheet bị Protect -->
                                 <Border Grid.Column="3" 
                                         Background="#FEF2F2" 
                                         BorderBrush="#FECACA" 
@@ -1067,7 +1072,7 @@
                                         Padding="3,1" 
                                         Margin="3,0,2,0" 
                                         VerticalAlignment="Center"
-                                        ToolTip="Sheet này đang được bảo vệ (Protected Sheet)">
+                                        ToolTip="{loc:Loc Nav_ProtectedSheetTip}">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -1081,7 +1086,6 @@
                                     <TextBlock Text="🔒" FontSize="9.5" VerticalAlignment="Center"/>
                                 </Border>
 
-                                <!-- Badge Ẩn / Very Hidden -->
                                 <Border Grid.Column="4" 
                                         CornerRadius="3" 
                                         Padding="4,1" 
@@ -1121,7 +1125,6 @@
                                     </TextBlock>
                                 </Border>
 
-                                <!-- Badge Đang xem -->
                                 <Border Grid.Column="5" 
                                         Background="#DCFCE7" 
                                         BorderBrush="#86EFAC" 
@@ -1166,7 +1169,7 @@
                     </Border.Style>
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                         <TextBlock Text="🔍" FontSize="22" HorizontalAlignment="Center" Margin="0,0,0,4"/>
-                        <TextBlock Text="Chọn một Workbook ở phía trên để xem các Sheet" 
+                        <TextBlock Text="{loc:Loc Nav_SelectWorkbookPrompt}" 
                                    Foreground="#94A3B8" FontSize="11" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>

@@ -99,19 +99,19 @@ namespace ExcelSupport.Views
             {
                 PanelFormatOption.Visibility = Visibility.Visible;
                 PanelMergeFileName.Visibility = Visibility.Collapsed;
-                TxtModeHelp.Text = "💡 Chuyển đổi định dạng siêu tốc hàng loạt tập tin sang XLSX, XLS, XLSB, CSV, PDF.";
+                TxtModeHelp.Text = LocalizationService.Get("BFC_TipConvert");
             }
             else if (RbModeSplit.IsChecked == true)
             {
                 PanelFormatOption.Visibility = Visibility.Collapsed;
                 PanelMergeFileName.Visibility = Visibility.Collapsed;
-                TxtModeHelp.Text = "💡 Tách từng Sheet trong mỗi file Excel được chọn thành từng file .xlsx độc lập.";
+                TxtModeHelp.Text = LocalizationService.Get("BFC_TipSplit");
             }
             else if (RbModeMerge.IsChecked == true)
             {
                 PanelFormatOption.Visibility = Visibility.Collapsed;
                 PanelMergeFileName.Visibility = Visibility.Visible;
-                TxtModeHelp.Text = "💡 Gom toàn bộ các file Excel trong danh sách thành 1 file duy nhất (mỗi file nguồn tương ứng một Sheet).";
+                TxtModeHelp.Text = LocalizationService.Get("BFC_TipMerge");
             }
         }
 
@@ -119,7 +119,7 @@ namespace ExcelSupport.Views
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Chọn các tập tin Excel cần xử lý",
+                Title = "Select Excel Files",
                 Filter = "Excel Files (*.xlsx;*.xls;*.xlsb;*.xlsm;*.csv)|*.xlsx;*.xls;*.xlsb;*.xlsm;*.csv|All Files (*.*)|*.*",
                 Multiselect = true
             };
@@ -134,7 +134,7 @@ namespace ExcelSupport.Views
         {
             using (var dlg = new FolderBrowserDialog())
             {
-                dlg.Description = "Chọn thư mục chứa các file Excel cần xử lý";
+                dlg.Description = "Select Folder";
                 dlg.ShowNewFolderButton = false;
 
                 if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -150,7 +150,7 @@ namespace ExcelSupport.Views
                     }
                     catch (Exception ex)
                     {
-                        WpfMessageBox.Show($"Không thể quét thư mục:\n{ex.Message}", "Thông Báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        WpfMessageBox.Show($"Không thể quét thư mục:\n{ex.Message}", "ExcelSupport", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
             }
@@ -170,12 +170,12 @@ namespace ExcelSupport.Views
                     FilePath = path,
                     FileName = fi.Name,
                     FileSize = FormatFileSize(fi.Length),
-                    Status = "Sẵn sàng"
+                    Status = LocalizationService.Get("Common_Ready")
                 });
                 existing.Add(path);
             }
 
-            TxtFileCountBadge.Text = $"{_fileItems.Count:N0} file";
+            TxtFileCountBadge.Text = LocalizationService.Get("BFC_FileCountBadge", _fileItems.Count);
             GridFiles.ItemsSource = null;
             GridFiles.ItemsSource = _fileItems;
         }
@@ -190,7 +190,7 @@ namespace ExcelSupport.Views
         private void OnClearFilesClick(object sender, RoutedEventArgs e)
         {
             _fileItems.Clear();
-            TxtFileCountBadge.Text = "0 file";
+            TxtFileCountBadge.Text = LocalizationService.Get("BFC_FileCountBadge", 0);
             GridFiles.ItemsSource = null;
         }
 
@@ -208,18 +208,18 @@ namespace ExcelSupport.Views
             }
         }
 
-        private async void OnExecuteBatchClick(object sender, RoutedEventArgs e)
+        private void OnExecuteBatchClick(object sender, RoutedEventArgs e)
         {
             if (_excelApp == null || _fileItems.Count == 0)
             {
-                WpfMessageBox.Show("Vui lòng thêm ít nhất một tập tin vào danh sách cần xử lý.", "Thông Báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                WpfMessageBox.Show(this, "Vui lòng thêm ít nhất một tập tin vào danh sách cần xử lý.", "Thông Báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             string outDir = TxtOutputDir.Text.Trim();
             if (string.IsNullOrEmpty(outDir))
             {
-                WpfMessageBox.Show("Vui lòng chọn thư mục lưu kết quả.", "Thông Báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                WpfMessageBox.Show(this, "Vui lòng chọn thư mục lưu kết quả.", "Thông Báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -242,19 +242,18 @@ namespace ExcelSupport.Views
             ProgressBarConvert.Visibility = Visibility.Visible;
             ProgressBarConvert.Value = 0;
             TxtFooterStatus.Text = "⏳ Đang thực thi xử lý file hàng loạt...";
+            BtnExecute.IsEnabled = false;
+            BtnClose.IsEnabled = false;
+
+            AllowUiThreadToRender();
 
             try
             {
-                var result = await Task.Run(() =>
+                var result = BatchFileConverterService.ExecuteBatchConversion(_excelApp, options, (current, total, fileName) =>
                 {
-                    return BatchFileConverterService.ExecuteBatchConversion(_excelApp, options, (current, total, fileName) =>
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            ProgressBarConvert.Value = (double)current / total * 100.0;
-                            TxtFooterStatus.Text = $"⏳ Đang xử lý ({current}/{total}): {fileName}...";
-                        });
-                    });
+                    ProgressBarConvert.Value = (double)current / total * 100.0;
+                    TxtFooterStatus.Text = $"⏳ Đang xử lý ({current}/{total}): {fileName}...";
+                    AllowUiThreadToRender();
                 });
 
                 ProgressBarConvert.Visibility = Visibility.Collapsed;
@@ -263,6 +262,7 @@ namespace ExcelSupport.Views
                 if (result.Success)
                 {
                     var openFolder = WpfMessageBox.Show(
+                        this,
                         $"{result.Message}\n\n• Thành công: {result.SuccessCount:N0} file\n• Thất bại: {result.FailCount:N0} file\n\nBạn có muốn mở thư mục kết quả ngay không?",
                         "Xử Lý Hoàn Tất",
                         MessageBoxButton.YesNo,
@@ -275,15 +275,29 @@ namespace ExcelSupport.Views
                 }
                 else
                 {
-                    WpfMessageBox.Show(result.Message, "Thông Báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    WpfMessageBox.Show(this, result.Message, "Thông Báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
             {
                 ProgressBarConvert.Visibility = Visibility.Collapsed;
-                WpfMessageBox.Show($"Lỗi xử lý file:\n{ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                WpfMessageBox.Show(this, $"Lỗi xử lý file:\n{ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 TxtFooterStatus.Text = "❌ Đã xảy ra lỗi trong quá trình xử lý file.";
             }
+            finally
+            {
+                BtnExecute.IsEnabled = true;
+                BtnClose.IsEnabled = true;
+            }
+        }
+
+        private void AllowUiThreadToRender()
+        {
+            try
+            {
+                Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Render, new Action(() => { }));
+            }
+            catch { }
         }
 
         private void OnCloseClick(object sender, RoutedEventArgs e)

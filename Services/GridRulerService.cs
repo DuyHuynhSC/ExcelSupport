@@ -77,11 +77,13 @@ namespace ExcelSupport.Services
 
         public static Color CurrentColor => ColorPalette.TryGetValue(CurrentColorKey, out var c) ? c : ColorPalette["Yellow"];
 
+        private static bool _isUpdating = false;
+
         #region Event Handlers
 
         public static void OnSheetSelectionChange(_Worksheet? ws, Range? target)
         {
-            if (!IsEnabled || ws == null || target == null) return;
+            if (!IsEnabled || ws == null || target == null || _isUpdating) return;
 
             try
             {
@@ -95,7 +97,7 @@ namespace ExcelSupport.Services
 
         public static void OnSheetActivate(_Worksheet? ws)
         {
-            if (!IsEnabled || ws == null) return;
+            if (!IsEnabled || ws == null || _isUpdating) return;
 
             try
             {
@@ -126,12 +128,11 @@ namespace ExcelSupport.Services
 
         public static void UpdateRuler(_Worksheet ws, Range target)
         {
-            if (ws == null || target == null || !IsEnabled) return;
+            if (ws == null || target == null || !IsEnabled || _isUpdating) return;
 
+            _isUpdating = true;
             try
             {
-                ws.Application.ScreenUpdating = false;
-
                 int oleColor = ColorTranslator.ToOle(CurrentColor);
 
                 // Tính toán vùng bao phủ của cửa sổ hiển thị
@@ -154,10 +155,19 @@ namespace ExcelSupport.Services
                 }
                 catch { }
 
-                double targetTop = (double)target.Top;
-                double targetHeight = (double)target.Height;
-                double targetLeft = (double)target.Left;
-                double targetWidth = (double)target.Width;
+                double targetTop = 0;
+                double targetHeight = 20;
+                double targetLeft = 0;
+                double targetWidth = 80;
+
+                try
+                {
+                    targetTop = Convert.ToDouble(target.Top);
+                    targetHeight = Convert.ToDouble(target.Height);
+                    targetLeft = Convert.ToDouble(target.Left);
+                    targetWidth = Convert.ToDouble(target.Width);
+                }
+                catch { }
 
                 // 1. Thước Ngang (Row Ruler)
                 if (CurrentMode == GridRulerMode.BothRowAndCol || CurrentMode == GridRulerMode.RowOnly)
@@ -165,12 +175,19 @@ namespace ExcelSupport.Services
                     var rowShape = GetOrCreateShape(ws, RowShapeName, leftBound, targetTop, fullWidth, targetHeight, oleColor);
                     if (rowShape != null)
                     {
-                        rowShape.Top = (float)targetTop;
-                        rowShape.Height = (float)targetHeight;
-                        rowShape.Left = (float)leftBound;
-                        rowShape.Width = (float)fullWidth;
-                        rowShape.Visible = MsoTriState.msoTrue;
-                        Marshal.ReleaseComObject(rowShape);
+                        try
+                        {
+                            rowShape.Top = (float)targetTop;
+                            rowShape.Height = (float)targetHeight;
+                            rowShape.Left = (float)leftBound;
+                            rowShape.Width = (float)fullWidth;
+                            rowShape.Visible = MsoTriState.msoTrue;
+                        }
+                        catch { }
+                        finally
+                        {
+                            Marshal.ReleaseComObject(rowShape);
+                        }
                     }
                 }
                 else
@@ -184,12 +201,19 @@ namespace ExcelSupport.Services
                     var colShape = GetOrCreateShape(ws, ColShapeName, targetLeft, topBound, targetWidth, fullHeight, oleColor);
                     if (colShape != null)
                     {
-                        colShape.Left = (float)targetLeft;
-                        colShape.Width = (float)targetWidth;
-                        colShape.Top = (float)topBound;
-                        colShape.Height = (float)fullHeight;
-                        colShape.Visible = MsoTriState.msoTrue;
-                        Marshal.ReleaseComObject(colShape);
+                        try
+                        {
+                            colShape.Left = (float)targetLeft;
+                            colShape.Width = (float)targetWidth;
+                            colShape.Top = (float)topBound;
+                            colShape.Height = (float)fullHeight;
+                            colShape.Visible = MsoTriState.msoTrue;
+                        }
+                        catch { }
+                        finally
+                        {
+                            Marshal.ReleaseComObject(colShape);
+                        }
                     }
                 }
                 else
@@ -224,7 +248,7 @@ namespace ExcelSupport.Services
             }
             finally
             {
-                try { ws.Application.ScreenUpdating = true; } catch { }
+                _isUpdating = false;
             }
         }
 
@@ -249,131 +273,51 @@ namespace ExcelSupport.Services
                 int numRows = usedRange.Rows.Count;
                 int numCols = usedRange.Columns.Count;
 
+                var wf = ws.Application.WorksheetFunction;
+
                 // 1. TÍNH TOÁN THEO DÒNG (Chỉ tính các ô hiển thị - Bỏ qua cột bị ẩn)
                 Range? rowRange = null;
-                Range? rowVisible = null;
                 try
                 {
                     rowRange = ws.Range[ws.Cells[stats.RowIndex, startCol], ws.Cells[stats.RowIndex, startCol + numCols - 1]];
-                    try
+                    
+                    stats.RowNonEmptyCount = Convert.ToInt32(wf.Subtotal(103, rowRange)); // COUNTA visible
+                    stats.RowNumericCount = Convert.ToInt32(wf.Subtotal(102, rowRange));  // COUNT visible numbers
+
+                    if (stats.RowNumericCount > 0)
                     {
-                        rowVisible = rowRange.SpecialCells(XlCellType.xlCellTypeVisible);
-                    }
-                    catch
-                    {
-                        rowVisible = rowRange;
-                    }
-
-                    if (rowVisible != null)
-                    {
-                        int rowNonEmpty = 0;
-                        int rowNumeric = 0;
-                        double rowSum = 0;
-                        double rowMax = 0;
-                        double rowMin = 0;
-                        bool firstNum = true;
-
-                        foreach (Range area in rowVisible.Areas)
-                        {
-                            object? rawVal = area.Value2;
-                            if (rawVal is object[,] val2D)
-                            {
-                                int areaRows = val2D.GetLength(0);
-                                int areaCols = val2D.GetLength(1);
-                                for (int r = 1; r <= areaRows; r++)
-                                {
-                                    for (int c = 1; c <= areaCols; c++)
-                                    {
-                                        ProcessStatValue(val2D[r, c], ref rowNonEmpty, ref rowNumeric, ref rowSum, ref rowMax, ref rowMin, ref firstNum);
-                                    }
-                                }
-                            }
-                            else if (rawVal != null)
-                            {
-                                ProcessStatValue(rawVal, ref rowNonEmpty, ref rowNumeric, ref rowSum, ref rowMax, ref rowMin, ref firstNum);
-                            }
-                            Marshal.ReleaseComObject(area);
-                        }
-
-                        stats.RowNonEmptyCount = rowNonEmpty;
-                        stats.RowNumericCount = rowNumeric;
-                        stats.RowSum = rowSum;
-                        stats.RowMax = rowMax;
-                        stats.RowMin = rowMin;
-
-                        if (stats.RowNumericCount > 0)
-                        {
-                            stats.RowAvg = stats.RowSum / stats.RowNumericCount;
-                        }
+                        stats.RowSum = Convert.ToDouble(wf.Subtotal(109, rowRange)); // SUM visible
+                        stats.RowAvg = Convert.ToDouble(wf.Subtotal(101, rowRange)); // AVERAGE visible
+                        stats.RowMax = Convert.ToDouble(wf.Subtotal(104, rowRange)); // MAX visible
+                        stats.RowMin = Convert.ToDouble(wf.Subtotal(105, rowRange)); // MIN visible
                     }
                 }
+                catch { }
                 finally
                 {
-                    if (rowVisible != null && rowVisible != rowRange) Marshal.ReleaseComObject(rowVisible);
                     if (rowRange != null) Marshal.ReleaseComObject(rowRange);
                 }
 
                 // 2. TÍNH TOÁN THEO CỘT (Chỉ tính các ô hiển thị - Bỏ qua các dòng bị ẩn hoặc bị lọc bởi AutoFilter)
                 Range? colRange = null;
-                Range? colVisible = null;
                 try
                 {
                     colRange = ws.Range[ws.Cells[startRow, stats.ColIndex], ws.Cells[startRow + numRows - 1, stats.ColIndex]];
-                    try
+
+                    stats.ColNonEmptyCount = Convert.ToInt32(wf.Subtotal(103, colRange)); // COUNTA visible
+                    stats.ColNumericCount = Convert.ToInt32(wf.Subtotal(102, colRange));  // COUNT visible numbers
+
+                    if (stats.ColNumericCount > 0)
                     {
-                        colVisible = colRange.SpecialCells(XlCellType.xlCellTypeVisible);
-                    }
-                    catch
-                    {
-                        colVisible = colRange;
-                    }
-
-                    if (colVisible != null)
-                    {
-                        int colNonEmpty = 0;
-                        int colNumeric = 0;
-                        double colSum = 0;
-                        double colMax = 0;
-                        double colMin = 0;
-                        bool firstNum = true;
-
-                        foreach (Range area in colVisible.Areas)
-                        {
-                            object? rawVal = area.Value2;
-                            if (rawVal is object[,] val2D)
-                            {
-                                int areaRows = val2D.GetLength(0);
-                                int areaCols = val2D.GetLength(1);
-                                for (int r = 1; r <= areaRows; r++)
-                                {
-                                    for (int c = 1; c <= areaCols; c++)
-                                    {
-                                        ProcessStatValue(val2D[r, c], ref colNonEmpty, ref colNumeric, ref colSum, ref colMax, ref colMin, ref firstNum);
-                                    }
-                                }
-                            }
-                            else if (rawVal != null)
-                            {
-                                ProcessStatValue(rawVal, ref colNonEmpty, ref colNumeric, ref colSum, ref colMax, ref colMin, ref firstNum);
-                            }
-                            Marshal.ReleaseComObject(area);
-                        }
-
-                        stats.ColNonEmptyCount = colNonEmpty;
-                        stats.ColNumericCount = colNumeric;
-                        stats.ColSum = colSum;
-                        stats.ColMax = colMax;
-                        stats.ColMin = colMin;
-
-                        if (stats.ColNumericCount > 0)
-                        {
-                            stats.ColAvg = stats.ColSum / stats.ColNumericCount;
-                        }
+                        stats.ColSum = Convert.ToDouble(wf.Subtotal(109, colRange)); // SUM visible
+                        stats.ColAvg = Convert.ToDouble(wf.Subtotal(101, colRange)); // AVERAGE visible
+                        stats.ColMax = Convert.ToDouble(wf.Subtotal(104, colRange)); // MAX visible
+                        stats.ColMin = Convert.ToDouble(wf.Subtotal(105, colRange)); // MIN visible
                     }
                 }
+                catch { }
                 finally
                 {
-                    if (colVisible != null && colVisible != colRange) Marshal.ReleaseComObject(colVisible);
                     if (colRange != null) Marshal.ReleaseComObject(colRange);
                 }
             }
@@ -459,19 +403,15 @@ namespace ExcelSupport.Services
         {
             Shape? foundShape = null;
 
+            // Truy xuất trực tiếp Shape theo tên, KHÔNG duyệt qua Shapes để tránh giải phóng nhầm AutoFilter Dropdown của Excel
             try
             {
-                foreach (Shape s in ws.Shapes)
-                {
-                    if (string.Equals(s.Name, shapeName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        foundShape = s;
-                        break;
-                    }
-                    Marshal.ReleaseComObject(s);
-                }
+                foundShape = ws.Shapes.Item(shapeName);
             }
-            catch { }
+            catch
+            {
+                foundShape = null;
+            }
 
             if (foundShape == null)
             {
@@ -505,13 +445,11 @@ namespace ExcelSupport.Services
         {
             try
             {
-                foreach (Shape s in ws.Shapes)
+                var shape = ws.Shapes.Item(shapeName);
+                if (shape != null)
                 {
-                    if (string.Equals(s.Name, shapeName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        s.Visible = MsoTriState.msoFalse;
-                    }
-                    Marshal.ReleaseComObject(s);
+                    shape.Visible = MsoTriState.msoFalse;
+                    Marshal.ReleaseComObject(shape);
                 }
             }
             catch { }
@@ -522,25 +460,27 @@ namespace ExcelSupport.Services
             if (ws == null) return;
             try
             {
-                var toDelete = new List<Shape>();
-                foreach (Shape s in ws.Shapes)
+                try
                 {
-                    if (string.Equals(s.Name, RowShapeName, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(s.Name, ColShapeName, StringComparison.OrdinalIgnoreCase))
+                    var sRow = ws.Shapes.Item(RowShapeName);
+                    if (sRow != null)
                     {
-                        toDelete.Add(s);
-                    }
-                    else
-                    {
-                        Marshal.ReleaseComObject(s);
+                        sRow.Delete();
+                        Marshal.ReleaseComObject(sRow);
                     }
                 }
+                catch { }
 
-                foreach (var s in toDelete)
+                try
                 {
-                    try { s.Delete(); } catch { }
-                    Marshal.ReleaseComObject(s);
+                    var sCol = ws.Shapes.Item(ColShapeName);
+                    if (sCol != null)
+                    {
+                        sCol.Delete();
+                        Marshal.ReleaseComObject(sCol);
+                    }
                 }
+                catch { }
 
                 try { ws.Application.StatusBar = false; } catch { }
             }

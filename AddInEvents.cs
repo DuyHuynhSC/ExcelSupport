@@ -75,6 +75,18 @@ namespace ExcelSupport
                 MainViewModel = null;
             }
 
+            lock (_refreshLock)
+            {
+                _refreshDebounceTimer?.Dispose();
+                _refreshDebounceTimer = null;
+            }
+
+            lock (_selectionLock)
+            {
+                _selectionDebounceTimer?.Dispose();
+                _selectionDebounceTimer = null;
+            }
+
             TaskPaneRegistry.DetachTaskPane();
 
             if (_excelApp != null)
@@ -185,35 +197,53 @@ namespace ExcelSupport
         }
         private void ExcelApp_WorkbookActivate(Workbook Wb) => QueueRefresh();
         private void ExcelApp_WorkbookDeactivate(Workbook Wb) => QueueRefresh();
-        private void ExcelApp_WindowActivate(Workbook Wb, Window Wn)
-        {
-            QueueRefresh();
-            ExcelSupport.Ribbon.RibbonController.Instance?.InvalidateRibbon();
-        }
+        private void ExcelApp_WindowActivate(Workbook Wb, Window Wn) => QueueRefresh();
+
+        private System.Threading.Timer? _refreshDebounceTimer;
+        private readonly object _refreshLock = new object();
 
         public void QueueRefresh()
         {
             if (_isBatchProcessing) return;
-            ExcelAsyncUtil.QueueAsMacro(() =>
+
+            lock (_refreshLock)
             {
-                if (_isBatchProcessing) return;
-                RefreshWorkbookTree();
-                if (MainViewModel != null)
+                _refreshDebounceTimer?.Dispose();
+                _refreshDebounceTimer = new System.Threading.Timer(_ =>
                 {
-                    TaskPaneRegistry.AutoRestoreForActiveWindow(MainViewModel);
-                }
-                ExcelSupport.Ribbon.RibbonController.Instance?.InvalidateRibbon();
-            });
+                    ExcelAsyncUtil.QueueAsMacro(() =>
+                    {
+                        if (_isBatchProcessing) return;
+                        RefreshWorkbookTree();
+                        if (MainViewModel != null && AppSettings.IsTaskPaneAutoOpen)
+                        {
+                            TaskPaneRegistry.AutoRestoreForActiveWindow(MainViewModel);
+                        }
+                        ExcelSupport.Ribbon.RibbonController.Instance?.InvalidateControl("btnToggleTaskPane");
+                    });
+                }, null, 80, System.Threading.Timeout.Infinite);
+            }
         }
+
+        private System.Threading.Timer? _selectionDebounceTimer;
+        private readonly object _selectionLock = new object();
 
         private void QueueActiveSelectionSync()
         {
             if (_isBatchProcessing) return;
-            ExcelAsyncUtil.QueueAsMacro(() =>
+
+            lock (_selectionLock)
             {
-                if (_isBatchProcessing) return;
-                UpdateActiveSheetState();
-            });
+                _selectionDebounceTimer?.Dispose();
+                _selectionDebounceTimer = new System.Threading.Timer(_ =>
+                {
+                    ExcelAsyncUtil.QueueAsMacro(() =>
+                    {
+                        if (_isBatchProcessing) return;
+                        UpdateActiveSheetState();
+                    });
+                }, null, 50, System.Threading.Timeout.Infinite);
+            }
         }
 
         private void RefreshWorkbookTree()
@@ -598,7 +628,11 @@ namespace ExcelSupport
                             {
                                 ws.Visible = (int)XlSheetVisibility.xlSheetVisible;
                             }
-                            ws.Activate();
+                            try { ws.Select(Type.Missing); } catch { }
+                            try { ws.Activate(); } catch { }
+
+                            // Đồng bộ ngay huy hiệu Active trên giao diện
+                            MainViewModel?.SetActiveSelection(targetWb.Name, sheetName);
                         }
                     }
                 }

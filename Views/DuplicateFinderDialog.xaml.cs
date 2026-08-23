@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using ExcelSupport.Models;
+using ExcelSupport.Services;
 using WpfMessageBox = System.Windows.MessageBox;
 
 namespace ExcelSupport.Views
@@ -139,12 +140,12 @@ namespace ExcelSupport.Views
 
             if (options.SelectedColumnIndices.Count == 0)
             {
-                WpfMessageBox.Show("Vui lòng tích chọn ít nhất 1 cột làm khóa so sánh.", "Thông Báo",
+                WpfMessageBox.Show(LocalizationService.Get("Dup_MsgSelectAtLeastOneCol"), LocalizationService.Get("Common_Notice"),
                                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            TxtStatus.Text = "⏳ Đang quét và phân tích dữ liệu...";
+            TxtStatus.Text = LocalizationService.Get("Dup_ScanningData");
             AllDuplicates.Clear();
 
             var results = addIn.FindDuplicateGroups(options, msg => Dispatcher.Invoke(() => TxtStatus.Text = msg));
@@ -155,8 +156,8 @@ namespace ExcelSupport.Views
             }
 
             int groupCount = results.Select(r => r.GroupId).Distinct().Count();
-            TxtTotalDuplicates.Text = $"{results.Count} dòng trùng";
-            TxtTotalGroups.Text = $"{groupCount} nhóm trùng";
+            TxtTotalDuplicates.Text = string.Format(LocalizationService.Get("Dup_TotalRowsFormat"), results.Count);
+            TxtTotalGroups.Text = string.Format(LocalizationService.Get("Dup_TotalGroupsFormat"), groupCount);
 
             _duplicatesView.Refresh();
         }

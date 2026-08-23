@@ -24,241 +24,305 @@ namespace ExcelSupport.Ribbon
 <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='OnRibbonLoaded' loadImage='LoadImage'>
   <ribbon>
     <tabs>
-      <tab id='tabWorkbookNav' label='NAVIGATOR' insertBeforeMso='TabHome'>
+      <tab id='tabWorkbookNav' getLabel='GetRibbonLabel' insertBeforeMso='TabHome'>
         
         <!-- Group 1: Bảng điều khiển chính -->
-        <group id='grpNavExplorer' label='Điều Hướng'>
+        <group id='grpNavExplorer' getLabel='GetRibbonLabel'>
           <toggleButton id='btnToggleTaskPane' 
-                        label='Sheet Navigator' 
                         size='large' 
                         image='navigator_icon' 
-                        screentip='Bật / Tắt Sheet Navigator'
-                        supertip='Mở Custom Task Pane hiển thị cây điều hướng toàn bộ Workbooks và Worksheets theo 2 vùng chuyên nghiệp.'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
                         getPressed='GetTaskPanePressed' 
                         onAction='OnToggleTaskPane' />
           
           <button id='btnRefreshTree'
-                  label='Làm Mới'
                   size='large'
                   imageMso='Refresh' 
-                  screentip='Làm Mới Danh Sách'
-                  supertip='Quét lại toàn bộ các file Excel và danh sách Sheet đang mở để cập nhật tức thì.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnRefreshTree' />
         </group>
 
         <!-- Group 2: Thao tác sắp xếp & tiện ích -->
-        <group id='grpQuickTools' label='Thao Tác Nhanh'>
+        <group id='grpQuickTools' getLabel='GetRibbonLabel'>
           <button id='btnCreateTOC'
-                  label='Tạo Mục Lục'
                   size='normal'
                   imageMso='TableOfContentsInsert'
-                  screentip='Tạo Mục Lục Sheet'
-                  supertip='Tự động tạo Sheet Mục Lục chứa bảng danh sách tất cả các sheet và liên kết Hyperlink đến từng sheet.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnCreateTOC' />
 
           <button id='btnSplitSheets'
-                  label='Tách Sheet'
                   size='normal'
                   imageMso='ExportExcelPath'
-                  screentip='Tách Sheet thành file riêng'
-                  supertip='Tách các sheet trong Workbook thành từng file .xlsx độc lập.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnSplitSheets' />
 
           <button id='btnMergeSheets'
-                  label='Gộp Sheet'
                   size='normal'
                   imageMso='Consolidate'
-                  screentip='Gộp Sheet'
-                  supertip='Gộp dữ liệu từ nhiều sheet thành 1 sheet tổng hợp hoặc gom sheet từ nhiều file vào Workbook.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnMergeSheets' />
 
           <button id='btnQuickSortAZ'
-                  label='Sắp xếp A-Z'
                   size='normal'
                   imageMso='SortAscendingExcel'
-                  screentip='Sắp xếp danh sách A-Z'
-                  supertip='Sắp xếp toàn bộ Workbook và Sheet theo thứ tự bảng chữ cái A-Z.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnSortAZ' />
 
           <button id='btnQuickSortZA'
-                  label='Sắp xếp Z-A'
                   size='normal'
                   imageMso='SortDescendingExcel'
-                  screentip='Sắp xếp danh sách Z-A'
-                  supertip='Sắp xếp toàn bộ Workbook và Sheet theo thứ tự ngược Z-A.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnSortZA' />
 
           <button id='btnCloseCurrentWb'
-                  label='Đóng File Này'
                   size='normal'
                   imageMso='FileClose'
-                  screentip='Đóng Workbook Hiện Tại'
-                  supertip='Đóng file Excel đang được kích hoạt.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnCloseCurrentWorkbook' />
         </group>
 
         <!-- Group 3: Kiểm Tra & Đối Soát -->
-        <group id='grpAuditTools' label='Kiểm Tra &amp; Đối Soát'>
+        <group id='grpAuditTools' getLabel='GetRibbonLabel'>
           <button id='btnCompareWorkbooks'
-                  label='So Sánh Workbooks'
                   size='large'
                   image='compare_icon'
-                  screentip='So Sánh 2 Workbooks / Sheets'
-                  supertip='Đối chiếu sai khác dữ liệu giữa 2 file Excel hoặc 2 Sheet, tô màu trực quan và xuất báo cáo chi tiết.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnCompareWorkbooks' />
 
           <button id='btnCheckVietnamese'
-                  label='Kiểm Tra Tiếng Việt'
                   size='large'
                   imageMso='Spelling'
-                  screentip='Kiểm tra &amp; Định vị Tiếng Việt'
-                  supertip='Quét toàn bộ ô, tên Sheet và ghi chú để tìm và nhảy tới các vị trí chứa tiếng Việt có dấu.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnCheckVietnamese' />
 
           <button id='btnExternalLinks'
-                  label='Quản Lý Link Ngoài'
                   size='large'
                   image='link_icon'
-                  screentip='Kiểm Tra &amp; Xử Lý Liên Kết Ngoài (Break Link)'
-                  supertip='Quét và xử lý toàn bộ các công thức liên kết tới file ngoài không tồn tại, hỗ trợ bẻ gãy link, đóng băng giá trị, đổi file nguồn.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnExternalLinksManager' />
+
+          <button id='btnOracleTableCompare'
+                  size='large'
+                  image='oracle_compare_icon'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnOracleTableCompare' />
         </group>
 
         <!-- Group 4: Xử Lý Dữ Liệu -->
-        <group id='grpDataTools' label='Xử Lý Dữ Liệu'>
+        <group id='grpDataTools' getLabel='GetRibbonLabel'>
           <button id='btnAdvancedFilter'
-                  label='Bộ Lọc Nâng Cao'
-                  size='large'
+                  size='normal'
                   image='filter_icon'
-                  screentip='Bộ Lọc Dữ Liệu Nâng Cao (Smart Advanced Filter)'
-                  supertip='Lọc đa điều kiện (AND/OR), lọc danh sách paste từ clipboard, biểu thức số phức tạp, tô màu và trích xuất dữ liệu.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnAdvancedFilter' />
 
           <button id='btnDataCleaner'
-                  label='Dọn Dẹp Dữ Liệu'
-                  size='large'
+                  size='normal'
                   image='cleaner_icon'
-                  screentip='Trình Dọn Dẹp &amp; Chuẩn Hóa Dữ Liệu'
-                  supertip='Xóa khoảng trắng thừa, chuẩn hóa chữ hoa/thường, xóa dấu tiếng Việt, chuyển sang Katakana, sửa số lưu dạng text, điền ô trống...'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnDataCleaner' />
 
           <button id='btnDuplicateFinder'
-                  label='Tìm Trùng Lặp'
-                  size='large'
+                  size='normal'
                   image='duplicate_icon'
-                  screentip='Tìm &amp; Xử Lý Dữ Liệu Trùng Lặp Nâng Cao'
-                  supertip='Tìm kiếm và gom nhóm các dòng trùng lặp theo 1 hoặc nhiều cột khóa, so khớp chính xác/mờ, tô màu và tách sheet.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnDuplicateFinder' />
 
           <button id='btnBatchBlankCleaner'
-                  label='Xóa Dòng Trống'
-                  size='large'
+                  size='normal'
                   image='blank_cleaner_icon'
-                  screentip='Xóa Dòng &amp; Cột Trống Hàng Loạt'
-                  supertip='Quét và xóa/ẩn các dòng hoặc cột hoàn toàn trống (hoặc trống theo cột khóa) trên 1 hoặc nhiều Sheet/Workbook.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnBatchBlankCleaner' />
 
           <button id='btnBatchFindReplace'
-                  label='Tìm &amp; Thay Thế'
-                  size='large'
+                  size='normal'
                   image='find_replace_icon'
-                  screentip='Tìm &amp; Thay Thế Hàng Loạt Theo Bảng Tra Cứu'
-                  supertip='Quét và thay thế đồng thời hàng trăm từ khóa/mã sản phẩm theo bảng đối chiếu tra cứu trên 1 hoặc nhiều Sheet/File.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnBatchFindReplace' />
 
           <button id='btnVisualTableMerge'
-                  label='Ghép Bảng (Join)'
-                  size='large'
+                  size='normal'
                   image='table_merge_icon'
-                  screentip='Trộn &amp; Ghép Nối Dữ Liệu Trực Quan (Visual XLOOKUP Wizard)'
-                  supertip='Ghép 2 bảng dữ liệu dễ dàng theo Mã Khóa chung (Left Join, Inner Join, Full Outer Join) mà không cần viết công thức phức tạp.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnVisualTableMerge' />
 
           <button id='btnFuzzyDuplicate'
-                  label='Trùng Lặp Ảo'
-                  size='large'
+                  size='normal'
                   image='fuzzy_duplicate_icon'
-                  screentip='Phát Hiện Dữ Liệu Bất Thường &amp; Trùng Lặp Ảo'
-                  supertip='Tìm kiếm các giá trị gần giống nhau (lỗi chính tả, khác biệt dấu tiếng Việt, khoảng trắng ẩn NBSP) và chuẩn hóa 1-Click.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnFuzzyDuplicate' />
 
           <button id='btnSafeMergeConsolidate'
-                  label='Gộp Ô &amp; Sheet'
-                  size='large'
+                  size='normal'
                   image='merge_icon'
-                  screentip='Gộp Ô &amp; Gộp Nhiều Sheet Bảo Toàn Dữ Liệu'
-                  supertip='Gộp các ô không mất dữ liệu với dấu phân cách tùy chọn, gom dữ liệu từ nhiều Sheet thành 1 Sheet Tổng Hợp.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnSafeMergeConsolidate' />
+
+          <splitButton id='splitFilteredCopyPaste' size='normal'>
+            <button id='btnFilteredCopyPasteWizard'
+                    image='filtered_paste_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnFilteredCopyPasteWizard' />
+            <menu id='mnuFilteredCopyPaste'>
+              <button id='btnCopyVisibleOnly'
+                      imageMso='Copy'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnCopyVisibleOnly' />
+              <button id='btnPasteToVisibleOnly'
+                      imageMso='Paste'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnPasteToVisibleOnly' />
+              <menuSeparator id='sepFilteredPaste' />
+              <button id='btnOpenFilteredPasteWizard'
+                      image='filtered_paste_icon'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnFilteredCopyPasteWizard' />
+            </menu>
+          </splitButton>
         </group>
 
         <!-- Group 5: Quản Trị Tập Tin -->
-        <group id='grpFileTools' label='Tập Tin Hàng Loạt'>
+        <group id='grpFileTools' getLabel='GetRibbonLabel'>
           <button id='btnBatchFileConverter'
-                  label='Chuyển Đổi File'
                   size='large'
                   image='file_converter_icon'
-                  screentip='Bộ Quản Trị &amp; Chuyển Đổi File Excel Hàng Loạt'
-                  supertip='Chuyển đổi định dạng hàng loạt (.xlsx, .xls, .xlsb, .csv, .pdf), tách sheet thành file riêng hoặc gộp nhiều file vào một.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnBatchFileConverter' />
         </group>
 
         <!-- Group 6: Thước Ngắm & Hiển Thị -->
-        <group id='grpViewTools' label='Thước Ngắm &amp; Hiển Thị'>
+        <group id='grpViewTools' getLabel='GetRibbonLabel'>
           <toggleButton id='btnToggleGridRuler'
-                        label='Thước Ngắm Dòng/Cột'
                         size='large'
                         image='ruler_icon'
-                        screentip='Thước Ngắm Giao Điểm Dòng &amp; Cột (Grid Ruler / Crosshair)'
-                        supertip='Tự động tạo dải màu bán trong suốt làm nổi bật dòng và cột của ô đang chọn, giúp chống hoa mắt khi xem bảng tính lớn.'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
                         onAction='OnToggleGridRuler'
                         getPressed='GetGridRulerPressed' />
 
           <menu id='mnuGridRulerOptions'
-                label='Tùy Chỉnh Thước'
                 size='large'
                 image='ruler_settings_icon'
-                screentip='Đổi Màu Sắc &amp; Chế Độ Thước Ngắm'
-                supertip='Tùy chỉnh màu sắc nổi bật và chế độ hiển thị (Cả dòng &amp; cột, Chỉ dòng, Chỉ cột)'>
+                getLabel='GetRibbonLabel'
+                getScreentip='GetRibbonScreentip'
+                getSupertip='GetRibbonSupertip'>
             
-            <menuSeparator id='sepRulerColor' title='Màu Sắc Thước Ngắm' />
-            <button id='btnColorYellow' label='Vàng Dịu' image='color_yellow_icon' onAction='OnSelectRulerColor' tag='Yellow' />
-            <button id='btnColorSky' label='Xanh Biển Lơ' image='color_sky_icon' onAction='OnSelectRulerColor' tag='Sky' />
-            <button id='btnColorEmerald' label='Xanh Ngọc Lục' image='color_emerald_icon' onAction='OnSelectRulerColor' tag='Emerald' />
-            <button id='btnColorOrange' label='Cam Đào' image='color_orange_icon' onAction='OnSelectRulerColor' tag='Orange' />
-            <button id='btnColorPurple' label='Tím Lavender' image='color_purple_icon' onAction='OnSelectRulerColor' tag='Purple' />
-            <button id='btnColorPink' label='Hồng Phấn' image='color_pink_icon' onAction='OnSelectRulerColor' tag='Pink' />
-            <button id='btnColorGray' label='Xám Thanh Lịch' image='color_gray_icon' onAction='OnSelectRulerColor' tag='Gray' />
+            <menuSeparator id='sepRulerColor' getTitle='GetRibbonLabel' />
+            <button id='btnColorYellow' getLabel='GetRibbonLabel' image='color_yellow_icon' onAction='OnSelectRulerColor' tag='Yellow' />
+            <button id='btnColorSky' getLabel='GetRibbonLabel' image='color_sky_icon' onAction='OnSelectRulerColor' tag='Sky' />
+            <button id='btnColorEmerald' getLabel='GetRibbonLabel' image='color_emerald_icon' onAction='OnSelectRulerColor' tag='Emerald' />
+            <button id='btnColorOrange' getLabel='GetRibbonLabel' image='color_orange_icon' onAction='OnSelectRulerColor' tag='Orange' />
+            <button id='btnColorPurple' getLabel='GetRibbonLabel' image='color_purple_icon' onAction='OnSelectRulerColor' tag='Purple' />
+            <button id='btnColorPink' getLabel='GetRibbonLabel' image='color_pink_icon' onAction='OnSelectRulerColor' tag='Pink' />
+            <button id='btnColorGray' getLabel='GetRibbonLabel' image='color_gray_icon' onAction='OnSelectRulerColor' tag='Gray' />
 
-            <menuSeparator id='sepRulerMode' title='Chế Độ Thước' />
-            <button id='btnModeBoth' label='Cả Dòng &amp;&amp; Cột (Chữ Thập)' image='mode_both_icon' onAction='OnSelectRulerMode' tag='Both' />
-            <button id='btnModeRow' label='Chỉ Dòng (Row Only)' image='mode_row_icon' onAction='OnSelectRulerMode' tag='Row' />
-            <button id='btnModeCol' label='Chỉ Cột (Column Only)' image='mode_col_icon' onAction='OnSelectRulerMode' tag='Col' />
+            <menuSeparator id='sepRulerMode' getTitle='GetRibbonLabel' />
+            <button id='btnModeBoth' getLabel='GetRibbonLabel' image='mode_both_icon' onAction='OnSelectRulerMode' tag='Both' />
+            <button id='btnModeRow' getLabel='GetRibbonLabel' image='mode_row_icon' onAction='OnSelectRulerMode' tag='Row' />
+            <button id='btnModeCol' getLabel='GetRibbonLabel' image='mode_col_icon' onAction='OnSelectRulerMode' tag='Col' />
 
-            <menuSeparator id='sepRulerHud' title='Bảng Thống Kê Nổi (HUD)' />
-            <button id='btnToggleHud' label='Bảng Thống Kê Nổi (Chỉnh Cỡ Chữ Động)' image='hud_icon' onAction='OnToggleRulerHud' />
+            <menuSeparator id='sepRulerHud' getTitle='GetRibbonLabel' />
+            <button id='btnToggleHud' getLabel='GetRibbonLabel' getScreentip='GetRibbonScreentip' image='hud_icon' onAction='OnToggleRulerHud' />
           </menu>
         </group>
 
-        <!-- Group 7: Trợ Lý AI -->
-        <group id='grpAiTools' label='Trợ Lý AI'>
+        <!-- Group 7: Trợ Lý AI & Hướng Dẫn -->
+        <group id='grpAiTools' getLabel='GetRibbonLabel'>
           <button id='btnAiFormula'
-                  label='AI Công Thức'
                   size='large'
                   image='ai_formula_icon'
-                  screentip='AI Viết &amp; Sửa Lỗi Công Thức 1-Click'
-                  supertip='Mở Trợ lý AI để tự động sinh công thức Excel chuẩn xác từ tiếng Việt hoặc chẩn đoán và sửa lỗi ô công thức đang chọn.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnAiFormula' />
-        </group>
 
-        <!-- Group 8: Hướng Dẫn & Trợ Giúp -->
-        <group id='grpHelpTools' label='Hướng Dẫn'>
           <button id='btnUserManual'
-                  label='Hướng Dẫn (Manual)'
                   size='large'
                   image='manual_icon'
-                  screentip='Sách Hướng Dẫn Sử Dụng Toàn Diện'
-                  supertip='Mở cẩm nang tra cứu và hướng dẫn chi tiết từ A-Z cho tất cả các tính năng của Add-in ExcelSupport.'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
                   onAction='OnUserManual' />
+        </group>
+
+        <!-- Group 8: Cài Đặt & Ngôn Ngữ -->
+        <group id='grpSettings' getLabel='GetRibbonLabel'>
+          <menu id='mnuLanguage'
+                size='large'
+                image='globe_lang_icon'
+                getLabel='GetRibbonLabel'
+                getScreentip='GetRibbonScreentip'
+                getSupertip='GetRibbonSupertip'>
+            <button id='btnLangVi'
+                    image='flag_vi_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    onAction='OnSelectLanguage'
+                    tag='vi' />
+            <button id='btnLangEn'
+                    image='flag_en_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    onAction='OnSelectLanguage'
+                    tag='en' />
+            <button id='btnLangJa'
+                    image='flag_ja_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    onAction='OnSelectLanguage'
+                    tag='ja' />
+          </menu>
         </group>
 
       </tab>
@@ -276,6 +340,10 @@ namespace ExcelSupport.Ribbon
             if (imageId == "compare_icon")
             {
                 return CreateCompareBitmap();
+            }
+            if (imageId == "oracle_compare_icon")
+            {
+                return CreateOracleCompareBitmap();
             }
             if (imageId == "cleaner_icon")
             {
@@ -321,9 +389,29 @@ namespace ExcelSupport.Ribbon
             {
                 return CreateFileConverterBitmap();
             }
+            if (imageId == "filtered_paste_icon")
+            {
+                return CreateFilteredPasteBitmap();
+            }
             if (imageId == "manual_icon")
             {
                 return CreateManualBitmap();
+            }
+            if (imageId == "globe_lang_icon")
+            {
+                return CreateGlobeLangBitmap();
+            }
+            if (imageId == "flag_vi_icon")
+            {
+                return CreateFlagViBitmap();
+            }
+            if (imageId == "flag_en_icon")
+            {
+                return CreateFlagEnBitmap();
+            }
+            if (imageId == "flag_ja_icon")
+            {
+                return CreateFlagJaBitmap();
             }
             if (imageId == "ruler_icon")
             {
@@ -464,6 +552,75 @@ namespace ExcelSupport.Ribbon
             return bmp;
         }
 
+        private Bitmap CreateOracleCompareBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // 1. Database A (Bên trái - Màu Đỏ Cam thương hiệu Oracle #EA580C / #C2410C)
+                using (var brushDbA = new LinearGradientBrush(new Rectangle(2, 4, 13, 22),
+                    Color.FromArgb(234, 88, 12), Color.FromArgb(180, 50, 8), 45f))
+                {
+                    FillRoundedRectangle(g, brushDbA, new Rectangle(2, 4, 13, 22), 2);
+                }
+                using (var penDbA = new Pen(Color.FromArgb(154, 52, 18), 1f))
+                {
+                    DrawRoundedRectangle(g, penDbA, new Rectangle(2, 4, 13, 22), 2);
+                }
+                // Các vạch đĩa Database A
+                using (var diskPenA = new Pen(Color.FromArgb(254, 215, 170), 1f))
+                {
+                    g.DrawLine(diskPenA, 4, 10, 13, 10);
+                    g.DrawLine(diskPenA, 4, 16, 13, 16);
+                    g.DrawLine(diskPenA, 4, 21, 13, 21);
+                }
+
+                // 2. Database B (Bên phải - Màu Xanh Đậm / Xanh Ngọc #0284C7 / #0369A1)
+                using (var brushDbB = new LinearGradientBrush(new Rectangle(17, 4, 13, 22),
+                    Color.FromArgb(2, 132, 199), Color.FromArgb(3, 105, 161), 45f))
+                {
+                    FillRoundedRectangle(g, brushDbB, new Rectangle(17, 4, 13, 22), 2);
+                }
+                using (var penDbB = new Pen(Color.FromArgb(7, 89, 133), 1f))
+                {
+                    DrawRoundedRectangle(g, penDbB, new Rectangle(17, 4, 13, 22), 2);
+                }
+                // Các vạch đĩa Database B
+                using (var diskPenB = new Pen(Color.FromArgb(186, 230, 253), 1f))
+                {
+                    g.DrawLine(diskPenB, 19, 10, 28, 10);
+                    g.DrawLine(diskPenB, 19, 16, 28, 16);
+                    g.DrawLine(diskPenB, 19, 21, 28, 21);
+                }
+
+                // 3. Vòng tròn Badge Mũi tên so sánh ở giữa phía dưới
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11))) // Amber
+                {
+                    g.FillEllipse(badgeBrush, 9, 17, 14, 14);
+                }
+                using (var badgePen = new Pen(Color.White, 1.2f))
+                {
+                    g.DrawEllipse(badgePen, 9, 17, 14, 14);
+                }
+
+                // Mũi tên 2 chiều ⇋
+                using (var arrowPen = new Pen(Color.White, 1.5f))
+                {
+                    // Mũi tên trên: ->
+                    g.DrawLine(arrowPen, 11, 22, 19, 22);
+                    g.DrawLine(arrowPen, 17, 20, 20, 22);
+                    // Mũi tên dưới: <-
+                    g.DrawLine(arrowPen, 13, 26, 21, 26);
+                    g.DrawLine(arrowPen, 15, 28, 12, 26);
+                }
+            }
+            return bmp;
+        }
+
         private Bitmap CreateNavigatorBitmap()
         {
             // Tạo icon độ phân giải cao 32x32 với khử răng cưa chuẩn Office
@@ -562,11 +719,49 @@ namespace ExcelSupport.Ribbon
             {
                 _ribbon?.InvalidateControl("btnToggleTaskPane");
             };
+
+            Services.LocalizationService.LanguageChanged += lang =>
+            {
+                _ribbon?.Invalidate();
+            };
+        }
+
+        public string GetRibbonLabel(IRibbonControl control)
+        {
+            return Services.LocalizationService.GetLabel(control.Id);
+        }
+
+        public string GetRibbonScreentip(IRibbonControl control)
+        {
+            return Services.LocalizationService.GetScreentip(control.Id);
+        }
+
+        public string GetRibbonSupertip(IRibbonControl control)
+        {
+            return Services.LocalizationService.GetSupertip(control.Id);
+        }
+
+        public void OnSelectLanguage(IRibbonControl control)
+        {
+            string tag = control.Tag ?? "vi";
+            var lang = tag switch
+            {
+                "en" => Services.AppLanguage.English,
+                "ja" => Services.AppLanguage.Japanese,
+                _ => Services.AppLanguage.Vietnamese
+            };
+            Services.LocalizationService.CurrentLanguage = lang;
+            _ribbon?.Invalidate();
         }
 
         public void InvalidateRibbon()
         {
-            _ribbon?.InvalidateControl("btnToggleTaskPane");
+            _ribbon?.Invalidate();
+        }
+
+        public void InvalidateControl(string controlId)
+        {
+            _ribbon?.InvalidateControl(controlId);
         }
 
         public bool GetTaskPanePressed(IRibbonControl control)
@@ -654,6 +849,11 @@ namespace ExcelSupport.Ribbon
             Views.ExternalLinksManagerDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
+        public void OnOracleTableCompare(IRibbonControl control)
+        {
+            Views.OracleTableCompareDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
         public void OnAdvancedFilter(IRibbonControl control)
         {
             Views.AdvancedFilterDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
@@ -697,6 +897,35 @@ namespace ExcelSupport.Ribbon
         public void OnSafeMergeConsolidate(IRibbonControl control)
         {
             Views.BatchCleanerAndMergeDialog.ShowWindow(1, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnFilteredCopyPasteWizard(IRibbonControl control)
+        {
+            Views.FilteredCopyPasteDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnCopyVisibleOnly(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            var result = Services.FilteredCopyPasteService.CopyVisibleCells(app);
+            if (!result.Success)
+            {
+                System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+
+        public void OnPasteToVisibleOnly(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            var result = Services.FilteredCopyPasteService.PasteToVisibleCells(app);
+            if (result.Success)
+            {
+                System.Windows.MessageBox.Show(result.Message, "Dán Dữ Liệu Thành Công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
         }
 
         public void OnAiFormula(IRibbonControl control)
@@ -1525,6 +1754,248 @@ namespace ExcelSupport.Ribbon
                     g.DrawLine(linePen, 19, 10, 26, 10);
                     g.DrawLine(linePen, 19, 14, 26, 14);
                     g.DrawLine(linePen, 19, 18, 26, 18);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateFilteredPasteBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Bìa Clipboard màu xanh lục đậm #107C41
+                using (var brush = new LinearGradientBrush(new Rectangle(3, 3, 26, 26),
+                    Color.FromArgb(16, 124, 65), Color.FromArgb(10, 85, 42), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(3, 3, 26, 26), 4);
+                }
+
+                // Tờ giấy trắng trên clipboard
+                using (var paperBrush = new SolidBrush(Color.White))
+                {
+                    FillRoundedRectangle(g, paperBrush, new Rectangle(6, 7, 20, 20), 2);
+                }
+
+                // Kẹp giấy màu vàng cam ở trên
+                using (var clipBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                {
+                    FillRoundedRectangle(g, clipBrush, new Rectangle(11, 2, 10, 5), 2);
+                }
+
+                // Dòng kẻ dữ liệu xám nhạt
+                using (var lineBrush = new SolidBrush(Color.FromArgb(203, 213, 225)))
+                {
+                    g.FillRectangle(lineBrush, 8, 10, 12, 2);
+                    g.FillRectangle(lineBrush, 8, 14, 10, 2);
+                    g.FillRectangle(lineBrush, 8, 18, 8, 2);
+                }
+
+                // Biểu tượng phễu lọc màu xanh lam ở góc dưới bên phải
+                using (var funnelBrush = new SolidBrush(Color.FromArgb(37, 99, 235)))
+                {
+                    var pts = new PointF[]
+                    {
+                        new PointF(16f, 15f),
+                        new PointF(29f, 15f),
+                        new PointF(24f, 21f),
+                        new PointF(24f, 29f),
+                        new PointF(21f, 27f),
+                        new PointF(21f, 21f)
+                    };
+                    g.FillPolygon(funnelBrush, pts);
+                }
+
+                // Viền phễu trắng sắc nét
+                using (var funnelPen = new Pen(Color.White, 1.2f))
+                {
+                    var pts = new PointF[]
+                    {
+                        new PointF(16f, 15f),
+                        new PointF(29f, 15f),
+                        new PointF(24f, 21f),
+                        new PointF(24f, 29f),
+                        new PointF(21f, 27f),
+                        new PointF(21f, 21f)
+                    };
+                    g.DrawPolygon(funnelPen, pts);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateGlobeLangBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Quả địa cầu tròn màu xanh dương biển
+                using (var globeBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(14, 165, 233), Color.FromArgb(2, 132, 199), 45f))
+                {
+                    g.FillEllipse(globeBrush, 2, 2, 28, 28);
+                }
+
+                // Viền ngoài địa cầu
+                using (var borderPen = new Pen(Color.FromArgb(3, 105, 161), 1.2f))
+                {
+                    g.DrawEllipse(borderPen, 2, 2, 28, 28);
+                }
+
+                // Các đường kinh tuyến & vĩ tuyến màu trắng mờ
+                using (var linePen = new Pen(Color.FromArgb(220, 255, 255, 255), 1.2f))
+                {
+                    // Xích đạo ngang
+                    g.DrawLine(linePen, 2, 16, 30, 16);
+                    // Vĩ tuyến trên và dưới
+                    g.DrawArc(linePen, 4, 7, 24, 8, 0, 180);
+                    g.DrawArc(linePen, 4, 17, 24, 8, 180, 180);
+                    // Kinh tuyến đứng
+                    g.DrawLine(linePen, 16, 2, 16, 30);
+                    // Kinh tuyến cong
+                    g.DrawEllipse(linePen, 9, 2, 14, 28);
+                }
+
+                // Huy hiệu bong bóng hội thoại ở góc dưới bên phải
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                using (var badgePen = new Pen(Color.White, 1.2f))
+                {
+                    g.FillEllipse(badgeBrush, 16, 16, 14, 14);
+                    g.DrawEllipse(badgePen, 16, 16, 14, 14);
+                }
+
+                // Chữ "A" nhỏ bên trong huy hiệu
+                using (var font = new System.Drawing.Font("Segoe UI", 7.5f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    var sf = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
+                    g.DrawString("A", font, textBrush, new RectangleF(16, 16, 14, 14), sf);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateFlagViBitmap()
+        {
+            var bmp = new Bitmap(24, 18);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền đỏ cờ Việt Nam
+                using (var redBrush = new SolidBrush(Color.FromArgb(218, 37, 29)))
+                {
+                    FillRoundedRectangle(g, redBrush, new Rectangle(0, 0, 24, 18), 3);
+                }
+                using (var pen = new Pen(Color.FromArgb(180, 20, 20), 0.8f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(0, 0, 23, 17), 3);
+                }
+
+                // Ngôi sao vàng 5 cánh ở giữa
+                float cx = 12f, cy = 9f, rOuter = 5.5f, rInner = 2.2f;
+                var pts = new PointF[10];
+                for (int i = 0; i < 10; i++)
+                {
+                    double angle = -Math.PI / 2 + i * Math.PI / 5;
+                    float r = (i % 2 == 0) ? rOuter : rInner;
+                    pts[i] = new PointF(cx + (float)(r * Math.Cos(angle)), cy + (float)(r * Math.Sin(angle)));
+                }
+
+                using (var starBrush = new SolidBrush(Color.FromArgb(255, 255, 0)))
+                {
+                    g.FillPolygon(starBrush, pts);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateFlagEnBitmap()
+        {
+            var bmp = new Bitmap(24, 18);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền xanh Navy
+                using (var blueBrush = new SolidBrush(Color.FromArgb(1, 33, 105)))
+                {
+                    FillRoundedRectangle(g, blueBrush, new Rectangle(0, 0, 24, 18), 3);
+                }
+
+                // Chữ thập chéo trắng
+                using (var whiteDiagPen = new Pen(Color.White, 3f))
+                {
+                    g.DrawLine(whiteDiagPen, 0, 0, 24, 18);
+                    g.DrawLine(whiteDiagPen, 0, 18, 24, 0);
+                }
+                // Chữ thập chéo đỏ
+                using (var redDiagPen = new Pen(Color.FromArgb(200, 16, 46), 1.2f))
+                {
+                    g.DrawLine(redDiagPen, 0, 0, 24, 18);
+                    g.DrawLine(redDiagPen, 0, 18, 24, 0);
+                }
+
+                // Chữ thập thẳng trắng
+                using (var whiteCross = new SolidBrush(Color.White))
+                {
+                    g.FillRectangle(whiteCross, 9, 0, 6, 18);
+                    g.FillRectangle(whiteCross, 0, 6, 24, 6);
+                }
+                // Chữ thập thẳng đỏ
+                using (var redCross = new SolidBrush(Color.FromArgb(200, 16, 46)))
+                {
+                    g.FillRectangle(redCross, 10, 0, 4, 18);
+                    g.FillRectangle(redCross, 0, 7, 24, 4);
+                }
+
+                using (var pen = new Pen(Color.FromArgb(150, 150, 150), 0.8f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(0, 0, 23, 17), 3);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateFlagJaBitmap()
+        {
+            var bmp = new Bitmap(24, 18);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền trắng cờ Nhật Bản
+                using (var whiteBrush = new SolidBrush(Color.White))
+                {
+                    FillRoundedRectangle(g, whiteBrush, new Rectangle(0, 0, 24, 18), 3);
+                }
+                using (var pen = new Pen(Color.FromArgb(203, 213, 225), 0.8f))
+                {
+                    DrawRoundedRectangle(g, pen, new Rectangle(0, 0, 23, 17), 3);
+                }
+
+                // Vòng tròn đỏ mặt trời ở giữa
+                using (var sunBrush = new SolidBrush(Color.FromArgb(188, 0, 45)))
+                {
+                    g.FillEllipse(sunBrush, 7, 4, 10, 10);
                 }
             }
             return bmp;

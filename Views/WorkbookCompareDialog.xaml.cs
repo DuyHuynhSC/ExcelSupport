@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using ExcelSupport.Models;
+using ExcelSupport.Services;
 using Microsoft.Win32;
 using WpfMessageBox = System.Windows.MessageBox;
 using WpfButton = System.Windows.Controls.Button;
@@ -102,10 +103,12 @@ namespace ExcelSupport.Views
         private void InitKeyColumns()
         {
             CboKeyColumn.Items.Clear();
+            string colPrefix = LocalizationService.CurrentLanguage == AppLanguage.Japanese ? "列 " 
+                             : (LocalizationService.CurrentLanguage == AppLanguage.English ? "Column " : "Cột ");
             for (int i = 1; i <= 26; i++)
             {
                 string colLetter = ((char)('A' + (i - 1))).ToString();
-                CboKeyColumn.Items.Add($"Cột {colLetter} ({i})");
+                CboKeyColumn.Items.Add($"{colPrefix}{colLetter} ({i})");
             }
             CboKeyColumn.SelectedIndex = 0; // Default Column A
         }
@@ -174,7 +177,7 @@ namespace ExcelSupport.Views
 
             string wbName = CboWorkbook1.SelectedItem?.ToString() ?? string.Empty;
             CboSheet1.Items.Clear();
-            CboSheet1.Items.Add("(Tất cả Sheet cùng tên)");
+            CboSheet1.Items.Add(LocalizationService.Get("Comp_AllMatchingSheets"));
 
             if (!string.IsNullOrEmpty(wbName))
             {
@@ -195,7 +198,7 @@ namespace ExcelSupport.Views
 
             string wbName = CboWorkbook2.SelectedItem?.ToString() ?? string.Empty;
             CboSheet2.Items.Clear();
-            CboSheet2.Items.Add("(Tất cả Sheet cùng tên)");
+            CboSheet2.Items.Add(LocalizationService.Get("Comp_AllMatchingSheets"));
 
             if (!string.IsNullOrEmpty(wbName))
             {

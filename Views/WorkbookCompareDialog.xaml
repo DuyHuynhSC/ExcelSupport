@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ExcelSupport.Views"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         mc:Ignorable="d"
-        Title="So Sánh 2 Workbooks / Sheets — ExcelSupport" 
+        Title="{loc:Loc Comp_WindowTitle}" 
         Height="740" Width="1080"
         MinHeight="580" MinWidth="900"
         WindowStartupLocation="CenterScreen"
@@ -172,7 +173,7 @@
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="📊" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="SO SÁNH WORKBOOKS / SHEETS" FontWeight="Bold" FontSize="15" VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Loc Comp_Title}" FontWeight="Bold" FontSize="15" VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#0F172A"/>
@@ -185,7 +186,7 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </StackPanel>
-                    <TextBlock Text="Đối chiếu sai khác dữ liệu giữa 2 phiên bản file Excel, thuật toán LCS thông minh và xuất báo cáo" 
+                    <TextBlock Text="{loc:Loc Comp_SubTitle}" 
                                FontSize="11.5" Margin="26,2,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -203,13 +204,13 @@
                 <!-- Statistics Badges -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Border x:Name="BadgeModified" CornerRadius="10" Padding="10,4" Margin="0,0,6,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1">
-                        <TextBlock x:Name="TxtCountModified" Text="0 thay đổi" FontWeight="SemiBold" FontSize="11" Foreground="#92400E"/>
+                        <TextBlock x:Name="TxtCountModified" Text="0" FontWeight="SemiBold" FontSize="11" Foreground="#92400E"/>
                     </Border>
                     <Border x:Name="BadgeAdded" CornerRadius="10" Padding="10,4" Margin="0,0,6,0" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1">
-                        <TextBlock x:Name="TxtCountAdded" Text="0 thêm mới" FontWeight="SemiBold" FontSize="11" Foreground="#166534"/>
+                        <TextBlock x:Name="TxtCountAdded" Text="0" FontWeight="SemiBold" FontSize="11" Foreground="#166534"/>
                     </Border>
                     <Border x:Name="BadgeDeleted" CornerRadius="10" Padding="10,4" Margin="0,0,0,0" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1">
-                        <TextBlock x:Name="TxtCountDeleted" Text="0 đã xóa" FontWeight="SemiBold" FontSize="11" Foreground="#991B1B"/>
+                        <TextBlock x:Name="TxtCountDeleted" Text="0" FontWeight="SemiBold" FontSize="11" Foreground="#991B1B"/>
                     </Border>
                 </StackPanel>
             </Grid>
@@ -248,7 +249,7 @@
 
                     <!-- Nguồn A (File Gốc) -->
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="📁 File A (Gốc / Bản cũ):" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
+                        <TextBlock Text="{loc:Loc Comp_FileA}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#334155"/>
@@ -276,7 +277,7 @@
 
                     <!-- Nguồn B (File Mới) -->
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="📁 File B (Mới / Cần đối soát):" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
+                        <TextBlock Text="{loc:Loc Comp_FileB}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#334155"/>
@@ -299,13 +300,13 @@
                     </StackPanel>
 
                     <!-- Nút Quét So Sánh -->
-                    <Button Grid.Column="3" Content="🔍 So Sánh Ngay" Height="28" Margin="14,18,0,0" 
+                    <Button Grid.Column="3" Content="{loc:Loc Comp_BtnCompareNow}" Height="28" Margin="14,18,0,0" 
                             Style="{StaticResource DialogPrimaryButtonStyle}" Click="OnCompareClick"/>
                 </Grid>
 
                 <!-- Dòng 2: Thuật toán so sánh (LCS / Tọa độ / Cột Khóa) -->
                 <WrapPanel Grid.Row="1" Margin="0,0,0,8" VerticalAlignment="Center">
-                    <TextBlock Text="Thuật toán:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <TextBlock Text="{loc:Loc Comp_AlgoHeader}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#475569"/>
@@ -317,17 +318,17 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <RadioButton x:Name="RbLcsRows" Content="LCS theo Dòng (Bắt dòng chèn/xóa)" IsChecked="True" GroupName="CompMode" Margin="0,0,12,0"/>
-                    <RadioButton x:Name="RbLcsCols" Content="LCS theo Cột (Bắt cột chèn/xóa)" GroupName="CompMode" Margin="0,0,12,0"/>
-                    <RadioButton x:Name="RbLcs2D" Content="LCS 2 Chiều (Cả Dòng &amp; Cột)" GroupName="CompMode" Margin="0,0,12,0"/>
-                    <RadioButton x:Name="RbCellByCell" Content="Tọa độ ô cố định (A1 ↔ A1)" GroupName="CompMode" Margin="0,0,12,0"/>
-                    <RadioButton x:Name="RbKeyColumn" Content="Theo Cột Khóa:" GroupName="CompMode" Margin="0,0,4,0"/>
+                    <RadioButton x:Name="RbLcsRows" Content="{loc:Loc Comp_LcsRows}" IsChecked="True" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbLcsCols" Content="{loc:Loc Comp_LcsCols}" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbLcs2D" Content="{loc:Loc Comp_Lcs2D}" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbCellByCell" Content="{loc:Loc Comp_CellByCell}" GroupName="CompMode" Margin="0,0,12,0"/>
+                    <RadioButton x:Name="RbKeyColumn" Content="{loc:Loc Comp_KeyColumn}" GroupName="CompMode" Margin="0,0,4,0"/>
                     <ComboBox x:Name="CboKeyColumn" Width="95" Height="24" Margin="0,0,8,0" FontSize="11"/>
                 </WrapPanel>
 
                 <!-- Dòng 3: Tùy chọn lọc chuỗi so sánh -->
                 <WrapPanel Grid.Row="2" VerticalAlignment="Center">
-                    <TextBlock Text="Tùy chọn:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <TextBlock Text="{loc:Loc Comp_OptionsHeader}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#475569"/>
@@ -339,9 +340,9 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <CheckBox x:Name="ChkIgnoreWhitespace" Content="Bỏ qua khoảng trắng thừa" IsChecked="True" Margin="0,0,16,0"/>
-                    <CheckBox x:Name="ChkCaseInsensitive" Content="Không phân biệt HOA / thường" Margin="0,0,16,0"/>
-                    <CheckBox x:Name="ChkCompareFormulas" Content="So sánh Công thức (thay vì Giá trị)" Margin="0,0,0,0"/>
+                    <CheckBox x:Name="ChkIgnoreWhitespace" Content="{loc:Loc Comp_IgnoreWhitespace}" IsChecked="True" Margin="0,0,16,0"/>
+                    <CheckBox x:Name="ChkCaseInsensitive" Content="{loc:Loc Comp_IgnoreCase}" Margin="0,0,16,0"/>
+                    <CheckBox x:Name="ChkCompareFormulas" Content="{loc:Loc Comp_CompareFormulas}" Margin="0,0,0,0"/>
                 </WrapPanel>
             </Grid>
         </Border>
@@ -370,7 +371,7 @@
 
                 <!-- Bộ lọc theo loại sai khác -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Lọc kết quả:" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <TextBlock Text="{loc:Loc Comp_FilterHeader}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#334155"/>
@@ -383,10 +384,10 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <RadioButton x:Name="RbFilterAll" Content="Tất cả" IsChecked="True" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
-                    <RadioButton x:Name="RbFilterModified" Content="Chỉ ô thay đổi" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
-                    <RadioButton x:Name="RbFilterAdded" Content="Chỉ ô thêm mới" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
-                    <RadioButton x:Name="RbFilterDeleted" Content="Chỉ ô đã xóa" GroupName="DiffFilter" Margin="0,0,0,0" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterAll" Content="{loc:Loc Comp_FilterAll}" IsChecked="True" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterModified" Content="{loc:Loc Comp_FilterModified}" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterAdded" Content="{loc:Loc Comp_FilterAdded}" GroupName="DiffFilter" Margin="0,0,10,0" Checked="OnDiffFilterChanged"/>
+                    <RadioButton x:Name="RbFilterDeleted" Content="{loc:Loc Comp_FilterDeleted}" GroupName="DiffFilter" Margin="0,0,0,0" Checked="OnDiffFilterChanged"/>
                 </StackPanel>
 
                 <!-- Ô tìm kiếm -->
@@ -449,15 +450,17 @@
             <DataGrid.Style>
                 <Style TargetType="DataGrid">
                     <Setter Property="Background" Value="#FFFFFF"/>
-                    <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
+                    <Setter Property="Foreground" Value="#0F172A"/>
                     <Setter Property="RowBackground" Value="#FFFFFF"/>
                     <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+                    <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
                             <Setter Property="Background" Value="#0F172A"/>
-                            <Setter Property="HorizontalGridLinesBrush" Value="#1E293B"/>
+                            <Setter Property="Foreground" Value="#F8FAFC"/>
                             <Setter Property="RowBackground" Value="#0F172A"/>
                             <Setter Property="AlternatingRowBackground" Value="#1E293B"/>
+                            <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -465,7 +468,7 @@
 
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">
-                    <Setter Property="Background" Value="#F1F5F9"/>
+                    <Setter Property="Background" Value="#F8FAFC"/>
                     <Setter Property="Foreground" Value="#475569"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
                     <Setter Property="FontSize" Value="11.5"/>
@@ -484,7 +487,7 @@
 
             <DataGrid.Columns>
                 <!-- STT -->
-                <DataGridTextColumn Header="STT" Binding="{Binding Index}" Width="55">
+                <DataGridTextColumn Header="{loc:Loc Comp_ColSTT}" Binding="{Binding Index}" Width="55">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -496,7 +499,7 @@
                 </DataGridTextColumn>
 
                 <!-- Tên Sheet -->
-                <DataGridTextColumn Header="Tên Sheet" Binding="{Binding SheetName}" Width="110">
+                <DataGridTextColumn Header="{loc:Loc Comp_ColSheet}" Binding="{Binding SheetName}" Width="110">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -513,7 +516,7 @@
                 </DataGridTextColumn>
 
                 <!-- Vị trí / Khóa -->
-                <DataGridTextColumn Header="Vị Trí / Khóa" Binding="{Binding KeyIdentifier}" Width="130">
+                <DataGridTextColumn Header="{loc:Loc Comp_ColKey}" Binding="{Binding KeyIdentifier}" Width="130">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="FontFamily" Value="Consolas, Segoe UI"/>
@@ -526,7 +529,7 @@
                 </DataGridTextColumn>
 
                 <!-- Loại Sai Khác (Badge) -->
-                <DataGridTemplateColumn Header="Loại Sai Khác" Width="130">
+                <DataGridTemplateColumn Header="{loc:Loc Comp_ColDiffType}" Width="130">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -568,7 +571,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Giá trị File A (Gốc) có tô đỏ phần khác biệt -->
-                <DataGridTemplateColumn Header="Giá Trị File A (Gốc)" Width="*">
+                <DataGridTemplateColumn Header="{loc:Loc Comp_ColValA}" Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock local:InlineDiffHelper.DiffSegments="{Binding OldValueSegments}"
@@ -589,7 +592,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Giá trị File B (Mới) có tô đỏ phần khác biệt (ví dụ số 1) -->
-                <DataGridTemplateColumn Header="Giá Trị File B (Mới)" Width="*">
+                <DataGridTemplateColumn Header="{loc:Loc Comp_ColValB}" Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock local:InlineDiffHelper.DiffSegments="{Binding NewValueSegments}"
@@ -611,10 +614,10 @@
                 </DataGridTemplateColumn>
 
                 <!-- Cột Hành Động (Đi tới ô) -->
-                <DataGridTemplateColumn Header="Hành Động" Width="90">
+                <DataGridTemplateColumn Header="{loc:Loc Comp_ColAction}" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="🎯 Đi tới ô" FontSize="10.5" Padding="6,3" Cursor="Hand"
+                            <Button Content="{loc:Loc Comp_BtnGoTo}" FontSize="10.5" Padding="6,3" Cursor="Hand"
                                      Style="{StaticResource DialogActionButtonStyle}"
                                      Click="OnGoToCellClick"
                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -646,7 +649,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Status Message -->
-                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="Sẵn sàng so sánh." 
+                <TextBlock x:Name="TxtStatus" Grid.Column="0" Text="{loc:Loc Common_Ready}" 
                            VerticalAlignment="Center" FontSize="11.5">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
@@ -662,19 +665,19 @@
 
                 <!-- Action Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="🎨 Tô Màu Nổi Bật (Sheet B)" Margin="0,0,8,0"
+                    <Button Content="{loc:Loc Comp_BtnHighlight}" Margin="0,0,8,0"
                             Style="{StaticResource DialogActionButtonStyle}"
                             Click="OnHighlightClick"/>
 
-                    <Button Content="📋 Tạo Sheet Báo Cáo" Margin="0,0,8,0"
+                    <Button Content="{loc:Loc Comp_BtnReportSheet}" Margin="0,0,8,0"
                             Style="{StaticResource DialogActionButtonStyle}"
                             Click="OnCreateReportSheetClick"/>
 
-                    <Button Content="📤 Xuất CSV..." Margin="0,0,8,0"
+                    <Button Content="{loc:Loc Comp_BtnExportCsv}" Margin="0,0,8,0"
                             Style="{StaticResource DialogActionButtonStyle}"
                             Click="OnExportCsvClick"/>
 
-                    <Button Content="Đóng" Width="70"
+                    <Button Content="{loc:Loc Common_Close}" Width="70"
                             Style="{StaticResource DialogSecondaryButtonStyle}"
                             Click="OnCloseClick"/>
                 </StackPanel>
