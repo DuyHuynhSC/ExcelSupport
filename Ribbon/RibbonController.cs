@@ -134,99 +134,105 @@ namespace ExcelSupport.Ribbon
 
         <!-- Group 4: Xử Lý Dữ Liệu -->
         <group id='grpDataTools' getLabel='GetRibbonLabel'>
-          <button id='btnAdvancedFilter'
-                  size='normal'
-                  image='filter_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnAdvancedFilter' />
-
-          <button id='btnDataCleaner'
-                  size='normal'
-                  image='cleaner_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnDataCleaner' />
-
-          <button id='btnDuplicateFinder'
-                  size='normal'
-                  image='duplicate_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnDuplicateFinder' />
-
-          <button id='btnBatchBlankCleaner'
-                  size='normal'
-                  image='blank_cleaner_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnBatchBlankCleaner' />
-
-          <button id='btnBatchFindReplace'
-                  size='normal'
-                  image='find_replace_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnBatchFindReplace' />
-
-          <button id='btnVisualTableMerge'
-                  size='normal'
-                  image='table_merge_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnVisualTableMerge' />
-
-          <button id='btnFuzzyDuplicate'
-                  size='normal'
-                  image='fuzzy_duplicate_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnFuzzyDuplicate' />
-
-          <button id='btnSafeMergeConsolidate'
-                  size='normal'
-                  image='merge_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnSafeMergeConsolidate' />
-
-          <splitButton id='splitFilteredCopyPaste' size='normal'>
-            <button id='btnFilteredCopyPasteWizard'
-                    image='filtered_paste_icon'
+          <box id='boxDataCol1' boxStyle='vertical'>
+            <button id='btnAdvancedFilter'
+                    size='normal'
+                    image='filter_icon'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
-                    onAction='OnFilteredCopyPasteWizard' />
-            <menu id='mnuFilteredCopyPaste'>
-              <button id='btnCopyVisibleOnly'
-                      imageMso='Copy'
-                      getLabel='GetRibbonLabel'
-                      getScreentip='GetRibbonScreentip'
-                      getSupertip='GetRibbonSupertip'
-                      onAction='OnCopyVisibleOnly' />
-              <button id='btnPasteToVisibleOnly'
-                      imageMso='Paste'
-                      getLabel='GetRibbonLabel'
-                      getScreentip='GetRibbonScreentip'
-                      getSupertip='GetRibbonSupertip'
-                      onAction='OnPasteToVisibleOnly' />
-              <menuSeparator id='sepFilteredPaste' />
-              <button id='btnOpenFilteredPasteWizard'
+                    onAction='OnAdvancedFilter' />
+
+            <button id='btnDataCleaner'
+                    size='normal'
+                    image='cleaner_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnDataCleaner' />
+
+            <splitButton id='splitFilteredCopyPaste' size='normal'>
+              <button id='btnFilteredCopyPasteWizard'
                       image='filtered_paste_icon'
                       getLabel='GetRibbonLabel'
                       getScreentip='GetRibbonScreentip'
                       getSupertip='GetRibbonSupertip'
                       onAction='OnFilteredCopyPasteWizard' />
-            </menu>
-          </splitButton>
+              <menu id='mnuFilteredCopyPaste'>
+                <button id='btnCopyVisibleOnly'
+                        imageMso='Copy'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnCopyVisibleOnly' />
+                <button id='btnPasteToVisibleOnly'
+                        imageMso='Paste'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnPasteToVisibleOnly' />
+                <menuSeparator id='sepFilteredPaste' />
+                <button id='btnOpenFilteredPasteWizard'
+                        image='filtered_paste_icon'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnFilteredCopyPasteWizard' />
+              </menu>
+            </splitButton>
+          </box>
+
+          <box id='boxDataCol2' boxStyle='vertical'>
+            <button id='btnDuplicateFinder'
+                    size='normal'
+                    image='duplicate_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnDuplicateFinder' />
+
+            <button id='btnBatchBlankCleaner'
+                    size='normal'
+                    image='blank_cleaner_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnBatchBlankCleaner' />
+
+            <button id='btnBatchFindReplace'
+                    size='normal'
+                    image='find_replace_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnBatchFindReplace' />
+          </box>
+
+          <box id='boxDataCol3' boxStyle='vertical'>
+            <button id='btnVisualTableMerge'
+                    size='normal'
+                    image='table_merge_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnVisualTableMerge' />
+
+            <button id='btnFuzzyDuplicate'
+                    size='normal'
+                    image='fuzzy_duplicate_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnFuzzyDuplicate' />
+
+            <button id='btnSafeMergeConsolidate'
+                    size='normal'
+                    image='merge_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnSafeMergeConsolidate' />
+          </box>
         </group>
 
         <!-- Group 5: Quản Trị Tập Tin -->
@@ -277,7 +283,7 @@ namespace ExcelSupport.Ribbon
           </menu>
         </group>
 
-        <!-- Group 7: Trợ Lý AI & Hướng Dẫn -->
+        <!-- Group 7: Trợ Lý AI & Năng Suất -->
         <group id='grpAiTools' getLabel='GetRibbonLabel'>
           <button id='btnAiFormula'
                   size='large'
@@ -286,6 +292,22 @@ namespace ExcelSupport.Ribbon
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnAiFormula' />
+
+          <button id='btnAiFormulaDoctor'
+                  size='large'
+                  image='doctor_formula_icon'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnAiFormulaDoctor' />
+
+          <button id='btnSnapshotRollback'
+                  size='large'
+                  image='snapshot_rollback_icon'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnSnapshotRollback' />
 
           <button id='btnUserManual'
                   size='large'
@@ -344,6 +366,14 @@ namespace ExcelSupport.Ribbon
             if (imageId == "oracle_compare_icon")
             {
                 return CreateOracleCompareBitmap();
+            }
+            if (imageId == "doctor_formula_icon")
+            {
+                return CreateDoctorFormulaBitmap();
+            }
+            if (imageId == "snapshot_rollback_icon")
+            {
+                return CreateSnapshotRollbackBitmap();
             }
             if (imageId == "cleaner_icon")
             {
@@ -616,6 +646,105 @@ namespace ExcelSupport.Ribbon
                     // Mũi tên dưới: <-
                     g.DrawLine(arrowPen, 13, 26, 21, 26);
                     g.DrawLine(arrowPen, 15, 28, 12, 26);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateDoctorFormulaBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // 1. Nền thẻ Bác sĩ công thức (Gradient Xanh Dương Y Tế #0284C7 / #0369A1)
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(2, 132, 199), Color.FromArgb(3, 105, 161), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(7, 89, 133), 1f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // 2. Chữ "fx" màu trắng sáng
+                using (var font = new System.Drawing.Font("Georgia", 11f, System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    g.DrawString("fx", font, textBrush, new PointF(4, 5));
+                }
+
+                // 3. Huy hiệu Chữ Thập Y Tế / Cứu Hộ ở góc dưới bên phải (Vòng tròn Đỏ/Trắng)
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(239, 68, 68))) // Red 500
+                {
+                    g.FillEllipse(badgeBrush, 16, 16, 14, 14);
+                }
+                using (var badgePen = new Pen(Color.White, 1.2f))
+                {
+                    g.DrawEllipse(badgePen, 16, 16, 14, 14);
+                }
+
+                // Chữ thập y tế màu trắng bên trong
+                using (var crossBrush = new SolidBrush(Color.White))
+                {
+                    g.FillRectangle(crossBrush, 21, 18, 4, 10);
+                    g.FillRectangle(crossBrush, 18, 21, 10, 4);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateSnapshotRollbackBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // 1. Khung Sheet tài liệu nền (Slate Dark #0F172A / #1E293B)
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(30, 41, 59), Color.FromArgb(15, 23, 42), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 4);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(51, 65, 85), 1f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 4);
+                }
+
+                // 2. Các vạch bảng tính mờ màu xanh nhạt
+                using (var gridPen = new Pen(Color.FromArgb(100, 148, 163, 184), 1f))
+                {
+                    g.DrawLine(gridPen, 6, 8, 26, 8);
+                    g.DrawLine(gridPen, 6, 13, 26, 13);
+                    g.DrawLine(gridPen, 6, 18, 14, 18);
+                    g.DrawLine(gridPen, 6, 23, 14, 23);
+                }
+
+                // 3. Biểu tượng Đồng Hồ / Mũi Tên Rollback Xoay Ngược màu Xanh Lục Ngọc #10B981
+                using (var circleBrush = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                {
+                    g.FillEllipse(circleBrush, 15, 15, 15, 15);
+                }
+                using (var circlePen = new Pen(Color.White, 1.2f))
+                {
+                    g.DrawEllipse(circlePen, 15, 15, 15, 15);
+                }
+
+                // Mũi tên quay ngược (Rewind / Undo arrow)
+                using (var arrowPen = new Pen(Color.White, 1.5f))
+                {
+                    // Vòng cung kim đồng hồ
+                    g.DrawArc(arrowPen, 18, 18, 9, 9, 45, 260);
+                    // Đầu mũi tên quay ngược
+                    g.DrawLine(arrowPen, 21, 17, 18, 20);
+                    g.DrawLine(arrowPen, 21, 23, 18, 20);
                 }
             }
             return bmp;
@@ -939,6 +1068,16 @@ namespace ExcelSupport.Ribbon
                     AddInEvents.MainViewModel.AiAssistant.SelectedSubTab = 1; // Sub-Tab Sinh Công Thức
                 }
             }
+        }
+
+        public void OnAiFormulaDoctor(IRibbonControl control)
+        {
+            Views.AiFormulaDoctorDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnSnapshotRollback(IRibbonControl control)
+        {
+            Views.SheetSnapshotDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnUserManual(IRibbonControl control)
