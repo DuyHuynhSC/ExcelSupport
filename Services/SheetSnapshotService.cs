@@ -360,12 +360,7 @@ namespace ExcelSupport.Services
 
         private static bool SheetExists(Workbook wb, string name)
         {
-            foreach (Worksheet ws in wb.Worksheets)
-            {
-                if (string.Equals(ws.Name, name, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-            return false;
+            return wb.Worksheets.Cast<Worksheet>().Any(ws => string.Equals(ws.Name, name, StringComparison.OrdinalIgnoreCase));
         }
 
         private static string GetExcelAddress(int row, int col)

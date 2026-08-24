@@ -282,9 +282,17 @@ namespace ExcelSupport.Models
         protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
+    public enum OracleReportLayout
+    {
+        StackedTopBottom, // Table A at top, Table B at bottom
+        SideBySide        // Side by side columns
+    }
+
     public class OracleCompareOptions
     {
         public OracleCompareMode Mode { get; set; } = OracleCompareMode.ByKeyColumns;
+        public OracleReportLayout ReportLayout { get; set; } = OracleReportLayout.StackedTopBottom;
+        public string HighlightColorHex { get; set; } = "#EF4444"; // Red coral default
         public List<string> SelectedKeyColumns { get; set; } = new List<string>();
         public List<string> SelectedCompareColumns { get; set; } = new List<string>();
         public string WhereClauseA { get; set; } = string.Empty;
@@ -347,8 +355,11 @@ namespace ExcelSupport.Models
     {
         public string SchemaA { get; set; } = string.Empty;
         public string TableA { get; set; } = string.Empty;
+        public string ConnectionNameA { get; set; } = string.Empty;
         public string SchemaB { get; set; } = string.Empty;
         public string TableB { get; set; } = string.Empty;
+        public string ConnectionNameB { get; set; } = string.Empty;
+        public OracleCompareOptions Options { get; set; } = new OracleCompareOptions();
         public List<string> Columns { get; set; } = new List<string>();
         public List<string> KeyColumns { get; set; } = new List<string>();
         public List<OracleRowDiffItem> DiffItems { get; set; } = new List<OracleRowDiffItem>();

@@ -18,7 +18,26 @@ namespace ExcelSupport.Services
         private static LocalizationService? _instance;
         public static LocalizationService Instance => _instance ??= new LocalizationService();
 
-        private static AppLanguage _currentLanguage = AppLanguage.Vietnamese;
+        private static AppLanguage _currentLanguage = LoadSavedLanguage();
+
+        private static AppLanguage LoadSavedLanguage()
+        {
+            try
+            {
+                string saved = Host.AppSettings.CurrentLanguage;
+                return saved?.ToLowerInvariant() switch
+                {
+                    "en" => AppLanguage.English,
+                    "ja" => AppLanguage.Japanese,
+                    _ => AppLanguage.Vietnamese
+                };
+            }
+            catch
+            {
+                return AppLanguage.Vietnamese;
+            }
+        }
+
         public static AppLanguage CurrentLanguage
         {
             get => _currentLanguage;
@@ -27,6 +46,18 @@ namespace ExcelSupport.Services
                 if (_currentLanguage != value)
                 {
                     _currentLanguage = value;
+
+                    try
+                    {
+                        Host.AppSettings.CurrentLanguage = value switch
+                        {
+                            AppLanguage.English => "en",
+                            AppLanguage.Japanese => "ja",
+                            _ => "vi"
+                        };
+                    }
+                    catch { }
+
                     LanguageChanged?.Invoke(_currentLanguage);
                     Instance.OnPropertyChanged(string.Empty);
                 }
@@ -906,6 +937,18 @@ namespace ExcelSupport.Services
             ["Oracle_BtnExportExcel"] = new() { [AppLanguage.Vietnamese] = "Xuất Sheet Báo Cáo & Tô Màu", [AppLanguage.English] = "Export Report Sheet & Highlight", [AppLanguage.Japanese] = "新規シートに出力＆色付け" },
             ["Oracle_BtnInsertActiveSelection"] = new() { [AppLanguage.Vietnamese] = "Chèn vào vị trí đang chọn", [AppLanguage.English] = "Insert at Active Selection", [AppLanguage.Japanese] = "選択位置に挿入＆色付け" },
             ["Oracle_BtnCopyDiff"] = new() { [AppLanguage.Vietnamese] = "Sao Chép Tóm Tắt", [AppLanguage.English] = "Copy Summary", [AppLanguage.Japanese] = "概要をコピー" },
+
+            ["Oracle_OptHighlightColor"] = new() { [AppLanguage.Vietnamese] = "Màu sai khác:", [AppLanguage.English] = "Highlight Color:", [AppLanguage.Japanese] = "差異色:" },
+            ["Oracle_ColorRed"] = new() { [AppLanguage.Vietnamese] = "Đỏ (Red)", [AppLanguage.English] = "Red", [AppLanguage.Japanese] = "赤 (Red)" },
+            ["Oracle_ColorYellow"] = new() { [AppLanguage.Vietnamese] = "Vàng (Yellow)", [AppLanguage.English] = "Yellow", [AppLanguage.Japanese] = "黄 (Yellow)" },
+            ["Oracle_ColorBlue"] = new() { [AppLanguage.Vietnamese] = "Xanh dương (Blue)", [AppLanguage.English] = "Blue", [AppLanguage.Japanese] = "青 (Blue)" },
+            ["Oracle_ColorPurple"] = new() { [AppLanguage.Vietnamese] = "Tím (Purple)", [AppLanguage.English] = "Purple", [AppLanguage.Japanese] = "紫 (Purple)" },
+            ["Oracle_ColorGreen"] = new() { [AppLanguage.Vietnamese] = "Xanh lá (Green)", [AppLanguage.English] = "Green", [AppLanguage.Japanese] = "緑 (Green)" },
+            ["Oracle_ColorOrange"] = new() { [AppLanguage.Vietnamese] = "Cam (Orange)", [AppLanguage.English] = "Orange", [AppLanguage.Japanese] = "オレンジ (Orange)" },
+
+            ["Oracle_OptLayout"] = new() { [AppLanguage.Vietnamese] = "Bố cục:", [AppLanguage.English] = "Layout:", [AppLanguage.Japanese] = "配置:" },
+            ["Oracle_LayoutStacked"] = new() { [AppLanguage.Vietnamese] = "Trên - Dưới (Khuyên dùng)", [AppLanguage.English] = "Top - Bottom (Recommended)", [AppLanguage.Japanese] = "上下配置 (推奨)" },
+            ["Oracle_LayoutSideBySide"] = new() { [AppLanguage.Vietnamese] = "Song Song (Side-by-Side)", [AppLanguage.English] = "Side-by-Side", [AppLanguage.Japanese] = "左右並列" },
 
             ["Oracle_FilterAll"] = new() { [AppLanguage.Vietnamese] = "Tất cả", [AppLanguage.English] = "All", [AppLanguage.Japanese] = "すべて" },
             ["Oracle_FilterDiff"] = new() { [AppLanguage.Vietnamese] = "⚠️ Sai lệch", [AppLanguage.English] = "⚠️ Differences", [AppLanguage.Japanese] = "⚠️ 差異あり" },

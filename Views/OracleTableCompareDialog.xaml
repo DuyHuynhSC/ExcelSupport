@@ -390,12 +390,58 @@
                                         </ScrollViewer>
                                     </StackPanel>
 
-                                    <!-- Extra Options (Ignore spaces, Limit Rows) -->
+                                    <!-- Extra Options (Color, Layout, Ignore spaces, Limit Rows) -->
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{loc:Loc Oracle_OptHighlightColor}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <ComboBox x:Name="cboHighlightColor" Height="24" Width="140" Margin="0,0,10,0" FontSize="11" SelectedIndex="0">
+                                            <ComboBoxItem Tag="#EF4444">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="12" Height="12" CornerRadius="6" Background="#EF4444" BorderBrush="#B91C1C" BorderThickness="1" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{loc:Loc Oracle_ColorRed}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </ComboBoxItem>
+                                            <ComboBoxItem Tag="#FEF08A">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="12" Height="12" CornerRadius="6" Background="#FEF08A" BorderBrush="#CA8A04" BorderThickness="1" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{loc:Loc Oracle_ColorYellow}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </ComboBoxItem>
+                                            <ComboBoxItem Tag="#93C5FD">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="12" Height="12" CornerRadius="6" Background="#93C5FD" BorderBrush="#2563EB" BorderThickness="1" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{loc:Loc Oracle_ColorBlue}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </ComboBoxItem>
+                                            <ComboBoxItem Tag="#D8B4FE">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="12" Height="12" CornerRadius="6" Background="#D8B4FE" BorderBrush="#7C3AED" BorderThickness="1" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{loc:Loc Oracle_ColorPurple}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </ComboBoxItem>
+                                            <ComboBoxItem Tag="#A7F3D0">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="12" Height="12" CornerRadius="6" Background="#A7F3D0" BorderBrush="#059669" BorderThickness="1" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{loc:Loc Oracle_ColorGreen}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </ComboBoxItem>
+                                            <ComboBoxItem Tag="#FED7AA">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="12" Height="12" CornerRadius="6" Background="#FED7AA" BorderBrush="#EA580C" BorderThickness="1" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{loc:Loc Oracle_ColorOrange}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </ComboBoxItem>
+                                        </ComboBox>
+
+                                        <TextBlock Text="{loc:Loc Oracle_OptLayout}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <ComboBox x:Name="cboReportLayout" Height="24" Width="130" Margin="0,0,10,0" FontSize="11" SelectedIndex="0">
+                                            <ComboBoxItem Content="{loc:Loc Oracle_LayoutStacked}" Tag="Stacked"/>
+                                            <ComboBoxItem Content="{loc:Loc Oracle_LayoutSideBySide}" Tag="SideBySide"/>
+                                        </ComboBox>
+
                                         <CheckBox x:Name="chkIgnoreSpaces" Content="{loc:Loc Oracle_IgnoreSpaces}" IsChecked="True" FontSize="11" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                        <CheckBox x:Name="chkIgnoreCase" Content="{loc:Loc Oracle_IgnoreCase}" IsChecked="False" FontSize="11" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                        <CheckBox x:Name="chkIgnoreCase" Content="{loc:Loc Oracle_IgnoreCase}" IsChecked="False" FontSize="11" Margin="0,0,10,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="{loc:Loc Oracle_LimitRows}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <TextBox x:Name="txtMaxRows" Text="0" Width="55" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_LimitRowsTip}"/>
+                                        <TextBox x:Name="txtMaxRows" Text="0" Width="45" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_LimitRowsTip}"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>

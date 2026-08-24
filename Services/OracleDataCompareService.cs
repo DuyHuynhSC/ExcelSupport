@@ -2,49 +2,39 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
-using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using ExcelSupport.Models;
+using Microsoft.Office.Interop.Excel;
 using Oracle.ManagedDataAccess.Client;
 using ExcelApp = Microsoft.Office.Interop.Excel.Application;
-using ExcelWorksheet = Microsoft.Office.Interop.Excel._Worksheet;
 using ExcelRange = Microsoft.Office.Interop.Excel.Range;
+using ExcelWorksheet = Microsoft.Office.Interop.Excel.Worksheet;
 
 namespace ExcelSupport.Services
 {
     public static class OracleDataCompareService
     {
-        #region Database Metadata & Connection Testing
+        #region Connection Testing & Schema Metadata Discovery
 
         public static async Task<(bool Success, string Message, string ServerVersion)> TestConnectionAsync(OracleConnectionConfig config)
         {
+            string connStr = config.BuildConnectionString();
             return await Task.Run(() =>
             {
                 try
                 {
-                    string connStr = config.BuildConnectionString();
-                    using var conn = new OracleConnection(connStr);
-                    conn.Open();
-
-                    string version = conn.ServerVersion ?? "Oracle Database";
-                    string banner = version;
-
-                    try
+                    using (var conn = new OracleConnection(connStr))
                     {
-                        using var cmd = conn.CreateCommand();
-                        cmd.CommandText = "SELECT BANNER FROM V$VERSION WHERE ROWNUM = 1";
-                        var result = cmd.ExecuteScalar();
-                        if (result != null && result != DBNull.Value)
-                        {
-                            banner = result.ToString() ?? version;
-                        }
+                        conn.Open();
+                        string version = conn.ServerVersion;
+                        return (true, "Kết nối thành công!", version);
                     }
-                    catch { }
-
-                    return (true, "Kết nối thành công!", banner);
+                }
+                catch (OracleException oex)
+                {
+                    return (false, $"Lỗi Oracle (ORA-{oex.Number}): {oex.Message}", string.Empty);
                 }
                 catch (Exception ex)
                 {
@@ -55,26 +45,29 @@ namespace ExcelSupport.Services
 
         public static async Task<List<string>> GetSchemasAsync(OracleConnectionConfig config)
         {
+            string connStr = config.BuildConnectionString();
             return await Task.Run(() =>
             {
                 var schemas = new List<string>();
                 try
                 {
-                    string connStr = config.BuildConnectionString();
-                    using var conn = new OracleConnection(connStr);
-                    conn.Open();
-
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = "SELECT USERNAME FROM ALL_USERS ORDER BY USERNAME";
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    using (var conn = new OracleConnection(connStr))
                     {
-                        schemas.Add(reader.GetString(0));
+                        conn.Open();
+                        string sql = "SELECT username FROM all_users ORDER BY username";
+                        using (var cmd = new OracleCommand(sql, conn))
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                schemas.Add(reader.GetString(0));
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"GetSchemas error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[GetSchemasAsync] Error: {ex.Message}");
                 }
                 return schemas;
             });
@@ -82,43 +75,39 @@ namespace ExcelSupport.Services
 
         public static async Task<List<string>> GetTablesAndViewsAsync(OracleConnectionConfig config, string schema)
         {
+            string connStr = config.BuildConnectionString();
             return await Task.Run(() =>
             {
                 var tables = new List<string>();
+                if (string.IsNullOrWhiteSpace(schema)) return tables;
+
                 try
                 {
-                    string connStr = config.BuildConnectionString();
-                    using var conn = new OracleConnection(connStr);
-                    conn.Open();
-
-                    using var cmd = conn.CreateCommand();
-                    if (!string.IsNullOrWhiteSpace(schema))
+                    using (var conn = new OracleConnection(connStr))
                     {
-                        cmd.CommandText = @"
-                            SELECT TABLE_NAME FROM ALL_TABLES WHERE OWNER = :pOwner
+                        conn.Open();
+                        string sql = @"
+                            SELECT table_name FROM all_tables WHERE owner = :owner
                             UNION
-                            SELECT VIEW_NAME AS TABLE_NAME FROM ALL_VIEWS WHERE OWNER = :pOwner
+                            SELECT view_name FROM all_views WHERE owner = :owner
                             ORDER BY 1";
-                        cmd.Parameters.Add(new OracleParameter("pOwner", schema.Trim().ToUpperInvariant()));
-                    }
-                    else
-                    {
-                        cmd.CommandText = @"
-                            SELECT TABLE_NAME FROM USER_TABLES
-                            UNION
-                            SELECT VIEW_NAME AS TABLE_NAME FROM USER_VIEWS
-                            ORDER BY 1";
-                    }
 
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        tables.Add(reader.GetString(0));
+                        using (var cmd = new OracleCommand(sql, conn))
+                        {
+                            cmd.Parameters.Add(new OracleParameter("owner", schema.ToUpperInvariant()));
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    tables.Add(reader.GetString(0));
+                                }
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"GetTablesAndViews error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[GetTablesAndViewsAsync] Error: {ex.Message}");
                 }
                 return tables;
             });
@@ -126,76 +115,84 @@ namespace ExcelSupport.Services
 
         public static async Task<List<OracleTableColumnInfo>> GetTableColumnsAsync(OracleConnectionConfig config, string schema, string tableName)
         {
+            string connStr = config.BuildConnectionString();
             return await Task.Run(() =>
             {
                 var columns = new List<OracleTableColumnInfo>();
+                if (string.IsNullOrWhiteSpace(schema) || string.IsNullOrWhiteSpace(tableName)) return columns;
+
                 try
                 {
-                    string connStr = config.BuildConnectionString();
-                    using var conn = new OracleConnection(connStr);
-                    conn.Open();
-
-                    string owner = string.IsNullOrWhiteSpace(schema) ? config.Username.Trim().ToUpperInvariant() : schema.Trim().ToUpperInvariant();
-                    string tbl = tableName.Trim().ToUpperInvariant();
-
-                    // 1. Get Primary Key Columns
-                    var pkCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    try
+                    using (var conn = new OracleConnection(connStr))
                     {
-                        using var pkCmd = conn.CreateCommand();
-                        pkCmd.CommandText = @"
-                            SELECT cols.COLUMN_NAME
-                            FROM ALL_CONSTRAINTS cons
-                            JOIN ALL_CONS_COLUMNS cols ON cons.CONSTRAINT_NAME = cols.CONSTRAINT_NAME AND cons.OWNER = cols.OWNER
-                            WHERE cons.CONSTRAINT_TYPE = 'P'
-                              AND cons.OWNER = :pOwner
-                              AND cons.TABLE_NAME = :pTable
-                            ORDER BY cols.POSITION";
-                        pkCmd.Parameters.Add(new OracleParameter("pOwner", owner));
-                        pkCmd.Parameters.Add(new OracleParameter("pTable", tbl));
+                        conn.Open();
 
-                        using var pkReader = pkCmd.ExecuteReader();
-                        while (pkReader.Read())
+                        // 1. Lấy Primary Keys của bảng
+                        var pkCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        string pkSql = @"
+                            SELECT cols.column_name
+                            FROM all_constraints cons
+                            JOIN all_cons_columns cols 
+                              ON cons.constraint_name = cols.constraint_name 
+                             AND cons.owner = cols.owner
+                            WHERE cons.constraint_type = 'P'
+                              AND cons.owner = :owner
+                              AND cons.table_name = :tname
+                            ORDER BY cols.position";
+
+                        using (var pkCmd = new OracleCommand(pkSql, conn))
                         {
-                            pkCols.Add(pkReader.GetString(0));
+                            pkCmd.Parameters.Add(new OracleParameter("owner", schema.ToUpperInvariant()));
+                            pkCmd.Parameters.Add(new OracleParameter("tname", tableName.ToUpperInvariant()));
+                            using (var reader = pkCmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    pkCols.Add(reader.GetString(0));
+                                }
+                            }
                         }
-                    }
-                    catch { }
 
-                    // 2. Get Column Definitions
-                    using var colCmd = conn.CreateCommand();
-                    colCmd.CommandText = @"
-                        SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE
-                        FROM ALL_TAB_COLUMNS
-                        WHERE OWNER = :pOwner AND TABLE_NAME = :pTable
-                        ORDER BY COLUMN_ID";
-                    colCmd.Parameters.Add(new OracleParameter("pOwner", owner));
-                    colCmd.Parameters.Add(new OracleParameter("pTable", tbl));
+                        // 2. Lấy thông tin cấu trúc cột
+                        string colSql = @"
+                            SELECT column_name, data_type, data_length, nullable, column_id
+                            FROM all_tab_columns
+                            WHERE owner = :owner AND table_name = :tname
+                            ORDER BY column_id";
 
-                    using var colReader = colCmd.ExecuteReader();
-                    while (colReader.Read())
-                    {
-                        string colName = colReader.GetString(0);
-                        string dataType = colReader.GetString(1);
-                        int dataLength = Convert.ToInt32(colReader.GetValue(2));
-                        string nullable = colReader.GetString(3);
-
-                        bool isPk = pkCols.Contains(colName);
-                        columns.Add(new OracleTableColumnInfo
+                        using (var colCmd = new OracleCommand(colSql, conn))
                         {
-                            ColumnName = colName,
-                            DataType = dataType,
-                            DataLength = dataLength,
-                            Nullable = (nullable == "Y"),
-                            IsPrimaryKey = isPk,
-                            IsSelectedKey = isPk,
-                            IsSelectedCompare = true
-                        });
+                            colCmd.Parameters.Add(new OracleParameter("owner", schema.ToUpperInvariant()));
+                            colCmd.Parameters.Add(new OracleParameter("tname", tableName.ToUpperInvariant()));
+                            using (var reader = colCmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    string colName = reader.GetString(0);
+                                    string dataType = reader.GetString(1);
+                                    int dataLen = Convert.ToInt32(reader.GetValue(2));
+                                    string nullableStr = reader.GetString(3);
+
+                                    bool isPk = pkCols.Contains(colName);
+
+                                    columns.Add(new OracleTableColumnInfo
+                                    {
+                                        ColumnName = colName,
+                                        DataType = dataType,
+                                        DataLength = dataLen,
+                                        Nullable = (nullableStr == "Y"),
+                                        IsPrimaryKey = isPk,
+                                        IsSelectedKey = isPk,
+                                        IsSelectedCompare = true
+                                    });
+                                }
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"GetTableColumns error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[GetTableColumnsAsync] Error: {ex.Message}");
                 }
                 return columns;
             });
@@ -213,7 +210,9 @@ namespace ExcelSupport.Services
             string schemaB,
             string tableB,
             OracleCompareOptions options,
-            IProgress<(string StatusText, double ProgressPercent)>? progress = null)
+            IProgress<(string StatusText, double ProgressPercent)>? progress = null,
+            string connectionNameA = "",
+            string connectionNameB = "")
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -234,10 +233,13 @@ namespace ExcelSupport.Services
             {
                 SchemaA = schemaA,
                 TableA = tableA,
+                ConnectionNameA = connectionNameA,
                 SchemaB = schemaB,
                 TableB = tableB,
+                ConnectionNameB = connectionNameB,
                 TotalRowsA = dtA.Rows.Count,
-                TotalRowsB = dtB.Rows.Count
+                TotalRowsB = dtB.Rows.Count,
+                Options = options
             };
 
             // Xác định danh sách cột chung cần so sánh
@@ -258,334 +260,358 @@ namespace ExcelSupport.Services
             result.Columns = compareCols;
             result.KeyColumns = options.SelectedKeyColumns;
 
-            var diffItems = new List<OracleRowDiffItem>();
-
+            // Thực thi thuật toán so sánh
             if (options.Mode == OracleCompareMode.ByKeyColumns && options.SelectedKeyColumns.Count > 0)
             {
-                // SO SÁNH THEO KHÓA CHÍNH (PRIMARY KEY / COMPOSITE KEY)
-                var keyCols = options.SelectedKeyColumns.Intersect(commonCols, StringComparer.OrdinalIgnoreCase).ToList();
-                if (keyCols.Count == 0)
-                {
-                    keyCols = new List<string> { commonCols.First() };
-                }
-
-                var mapA = new Dictionary<string, DataRow>(StringComparer.OrdinalIgnoreCase);
-                foreach (DataRow row in dtA.Rows)
-                {
-                    string k = BuildKeyString(row, keyCols, options);
-                    if (!mapA.ContainsKey(k)) mapA[k] = row;
-                }
-
-                var mapB = new Dictionary<string, DataRow>(StringComparer.OrdinalIgnoreCase);
-                foreach (DataRow row in dtB.Rows)
-                {
-                    string k = BuildKeyString(row, keyCols, options);
-                    if (!mapB.ContainsKey(k)) mapB[k] = row;
-                }
-
-                var allKeys = new HashSet<string>(mapA.Keys, StringComparer.OrdinalIgnoreCase);
-                allKeys.UnionWith(mapB.Keys);
-
-                int rowNum = 1;
-                int totalKeys = allKeys.Count;
-                int processed = 0;
-
-                foreach (var k in allKeys)
-                {
-                    processed++;
-                    if (processed % 500 == 0)
-                    {
-                        double p = 60 + (35.0 * processed / totalKeys);
-                        progress?.Report(($"Đang so khớp bản ghi ({processed}/{totalKeys})...", p));
-                    }
-
-                    bool inA = mapA.TryGetValue(k, out var rowA);
-                    bool inB = mapB.TryGetValue(k, out var rowB);
-
-                    var item = new OracleRowDiffItem
-                    {
-                        RowNumber = rowNum++,
-                        KeyDisplay = k
-                    };
-
-                    if (inA && inB)
-                    {
-                        PopulateRowData(item.RowValuesA, rowA!, commonCols);
-                        PopulateRowData(item.RowValuesB, rowB!, commonCols);
-
-                        bool hasDiff = false;
-                        foreach (var col in compareCols)
-                        {
-                            object? valA = rowA![col];
-                            object? valB = rowB![col];
-
-                            bool isColDiff = IsValueDifferent(valA, valB, options);
-                            if (isColDiff)
-                            {
-                                hasDiff = true;
-                                item.DifferingColumns.Add(col);
-                            }
-
-                            item.CellDiffs.Add(new OracleCellDiff
-                            {
-                                ColumnName = col,
-                                ValueA = valA,
-                                ValueB = valB,
-                                IsDifferent = isColDiff
-                            });
-                        }
-
-                        item.Status = hasDiff ? OracleRowDiffStatus.Modified : OracleRowDiffStatus.Identical;
-                    }
-                    else if (inA && !inB)
-                    {
-                        PopulateRowData(item.RowValuesA, rowA!, commonCols);
-                        item.Status = OracleRowDiffStatus.MissingInB; // Chỉ có ở A, thiếu ở B
-
-                        foreach (var col in compareCols)
-                        {
-                            item.CellDiffs.Add(new OracleCellDiff
-                            {
-                                ColumnName = col,
-                                ValueA = rowA![col],
-                                ValueB = null,
-                                IsDifferent = true
-                            });
-                            item.DifferingColumns.Add(col);
-                        }
-                    }
-                    else if (!inA && inB)
-                    {
-                        PopulateRowData(item.RowValuesB, rowB!, commonCols);
-                        item.Status = OracleRowDiffStatus.MissingInA; // Chỉ có ở B, thiếu ở A
-
-                        foreach (var col in compareCols)
-                        {
-                            item.CellDiffs.Add(new OracleCellDiff
-                            {
-                                ColumnName = col,
-                                ValueA = null,
-                                ValueB = rowB![col],
-                                IsDifferent = true
-                            });
-                            item.DifferingColumns.Add(col);
-                        }
-                    }
-
-                    diffItems.Add(item);
-                }
+                CompareByKeyColumns(dtA, dtB, result, options, progress);
             }
             else
             {
-                // SO SÁNH THEO THỨ TỰ BẢN GHI (SEQUENTIAL ORDER)
-                int maxCount = Math.Max(dtA.Rows.Count, dtB.Rows.Count);
-                for (int i = 0; i < maxCount; i++)
-                {
-                    if (i % 500 == 0)
-                    {
-                        double p = 60 + (35.0 * (i + 1) / maxCount);
-                        progress?.Report(($"Đang so khớp bản ghi theo thứ tự ({i + 1}/{maxCount})...", p));
-                    }
-
-                    DataRow? rowA = (i < dtA.Rows.Count) ? dtA.Rows[i] : null;
-                    DataRow? rowB = (i < dtB.Rows.Count) ? dtB.Rows[i] : null;
-
-                    var item = new OracleRowDiffItem
-                    {
-                        RowNumber = i + 1,
-                        KeyDisplay = $"Dòng #{i + 1}"
-                    };
-
-                    if (rowA != null && rowB != null)
-                    {
-                        PopulateRowData(item.RowValuesA, rowA, commonCols);
-                        PopulateRowData(item.RowValuesB, rowB, commonCols);
-
-                        bool hasDiff = false;
-                        foreach (var col in compareCols)
-                        {
-                            object? valA = rowA[col];
-                            object? valB = rowB[col];
-
-                            bool isColDiff = IsValueDifferent(valA, valB, options);
-                            if (isColDiff)
-                            {
-                                hasDiff = true;
-                                item.DifferingColumns.Add(col);
-                            }
-
-                            item.CellDiffs.Add(new OracleCellDiff
-                            {
-                                ColumnName = col,
-                                ValueA = valA,
-                                ValueB = valB,
-                                IsDifferent = isColDiff
-                            });
-                        }
-
-                        item.Status = hasDiff ? OracleRowDiffStatus.Modified : OracleRowDiffStatus.Identical;
-                    }
-                    else if (rowA != null && rowB == null)
-                    {
-                        PopulateRowData(item.RowValuesA, rowA, commonCols);
-                        item.Status = OracleRowDiffStatus.MissingInB;
-                        foreach (var col in compareCols)
-                        {
-                            item.CellDiffs.Add(new OracleCellDiff
-                            {
-                                ColumnName = col,
-                                ValueA = rowA[col],
-                                ValueB = null,
-                                IsDifferent = true
-                            });
-                            item.DifferingColumns.Add(col);
-                        }
-                    }
-                    else if (rowA == null && rowB != null)
-                    {
-                        PopulateRowData(item.RowValuesB, rowB, commonCols);
-                        item.Status = OracleRowDiffStatus.MissingInA;
-                        foreach (var col in compareCols)
-                        {
-                            item.CellDiffs.Add(new OracleCellDiff
-                            {
-                                ColumnName = col,
-                                ValueA = null,
-                                ValueB = rowB[col],
-                                IsDifferent = true
-                            });
-                            item.DifferingColumns.Add(col);
-                        }
-                    }
-
-                    diffItems.Add(item);
-                }
+                CompareSequentially(dtA, dtB, result, options, progress);
             }
 
-            result.DiffItems = diffItems;
             stopwatch.Stop();
             result.ExecutionTime = stopwatch.Elapsed;
 
-            progress?.Report(("Hoàn tất đối soát dữ liệu!", 100));
+            progress?.Report(($"Hoàn tất đối soát trong {result.ExecutionTime.TotalSeconds:F2}s.", 100));
             return result;
         }
 
-        private static async Task<DataTable> FetchTableDataAsync(OracleConnectionConfig config, string schema, string tableName, OracleCompareOptions options, bool isTableA)
+        private static void CompareByKeyColumns(
+            System.Data.DataTable dtA,
+            System.Data.DataTable dtB,
+            OracleCompareResult result,
+            OracleCompareOptions options,
+            IProgress<(string StatusText, double ProgressPercent)>? progress)
         {
+            var keyCols = options.SelectedKeyColumns;
+
+            // 1. Lập chỉ mục Dict cho Bảng B
+            var dictB = new Dictionary<string, DataRow>(StringComparer.Ordinal);
+
+            foreach (DataRow rowB in dtB.Rows)
+            {
+                string key = BuildRowKey(rowB, keyCols, options);
+                if (!dictB.ContainsKey(key))
+                {
+                    dictB.Add(key, rowB);
+                }
+            }
+
+            var processedKeysB = new HashSet<string>(StringComparer.Ordinal);
+            int rowIdx = 1;
+            int totalRowsA = dtA.Rows.Count;
+
+            // 2. So khớp từng dòng từ Bảng A sang Bảng B
+            for (int i = 0; i < totalRowsA; i++)
+            {
+                DataRow rowA = dtA.Rows[i];
+                string key = BuildRowKey(rowA, keyCols, options);
+
+                var diffItem = new OracleRowDiffItem
+                {
+                    RowNumber = rowIdx++,
+                    KeyDisplay = key
+                };
+
+                // Nạp giá trị dòng A
+                foreach (DataColumn col in dtA.Columns)
+                {
+                    diffItem.RowValuesA[col.ColumnName] = rowA[col];
+                }
+
+                if (dictB.TryGetValue(key, out DataRow? rowB))
+                {
+                    processedKeysB.Add(key);
+
+                    // Nạp giá trị dòng B
+                    foreach (DataColumn col in dtB.Columns)
+                    {
+                        diffItem.RowValuesB[col.ColumnName] = rowB[col];
+                    }
+
+                    // So sánh từng cột
+                    bool hasDiff = false;
+                    foreach (var colName in result.Columns)
+                    {
+                        object? valA = rowA.Table.Columns.Contains(colName) ? rowA[colName] : DBNull.Value;
+                        object? valB = rowB.Table.Columns.Contains(colName) ? rowB[colName] : DBNull.Value;
+
+                        bool isColDiff = IsValueDifferent(valA, valB, options);
+                        if (isColDiff)
+                        {
+                            hasDiff = true;
+                            diffItem.DifferingColumns.Add(colName);
+                        }
+
+                        diffItem.CellDiffs.Add(new OracleCellDiff
+                        {
+                            ColumnName = colName,
+                            ValueA = valA,
+                            ValueB = valB,
+                            IsDifferent = isColDiff
+                        });
+                    }
+
+                    diffItem.Status = hasDiff ? OracleRowDiffStatus.Modified : OracleRowDiffStatus.Identical;
+                }
+                else
+                {
+                    // Có trong A nhưng thiếu trong B
+                    diffItem.Status = OracleRowDiffStatus.MissingInB;
+                    foreach (var colName in result.Columns)
+                    {
+                        object? valA = rowA.Table.Columns.Contains(colName) ? rowA[colName] : DBNull.Value;
+                        diffItem.CellDiffs.Add(new OracleCellDiff
+                        {
+                            ColumnName = colName,
+                            ValueA = valA,
+                            ValueB = DBNull.Value,
+                            IsDifferent = true
+                        });
+                    }
+                }
+
+                result.DiffItems.Add(diffItem);
+
+                if (i % 500 == 0 && totalRowsA > 0)
+                {
+                    double pct = 60 + ((double)i / totalRowsA) * 30;
+                    progress?.Report(($"Đang đối soát bản ghi {i:N0} / {totalRowsA:N0}...", pct));
+                }
+            }
+
+            // 3. Tìm các dòng chỉ có trong Bảng B mà không có trong A
+            foreach (DataRow rowB in dtB.Rows)
+            {
+                string key = BuildRowKey(rowB, keyCols, options);
+                if (!processedKeysB.Contains(key))
+                {
+                    var diffItem = new OracleRowDiffItem
+                    {
+                        RowNumber = rowIdx++,
+                        KeyDisplay = key,
+                        Status = OracleRowDiffStatus.MissingInA
+                    };
+
+                    foreach (DataColumn col in dtB.Columns)
+                    {
+                        diffItem.RowValuesB[col.ColumnName] = rowB[col];
+                    }
+
+                    foreach (var colName in result.Columns)
+                    {
+                        object? valB = rowB.Table.Columns.Contains(colName) ? rowB[colName] : DBNull.Value;
+                        diffItem.CellDiffs.Add(new OracleCellDiff
+                        {
+                            ColumnName = colName,
+                            ValueA = DBNull.Value,
+                            ValueB = valB,
+                            IsDifferent = true
+                        });
+                    }
+
+                    result.DiffItems.Add(diffItem);
+                }
+            }
+        }
+
+        private static void CompareSequentially(
+            System.Data.DataTable dtA,
+            System.Data.DataTable dtB,
+            OracleCompareResult result,
+            OracleCompareOptions options,
+            IProgress<(string StatusText, double ProgressPercent)>? progress)
+        {
+            int maxCount = Math.Max(dtA.Rows.Count, dtB.Rows.Count);
+
+            for (int i = 0; i < maxCount; i++)
+            {
+                DataRow? rowA = i < dtA.Rows.Count ? dtA.Rows[i] : null;
+                DataRow? rowB = i < dtB.Rows.Count ? dtB.Rows[i] : null;
+
+                var diffItem = new OracleRowDiffItem
+                {
+                    RowNumber = i + 1,
+                    KeyDisplay = $"Dòng {i + 1}"
+                };
+
+                if (rowA != null && rowB != null)
+                {
+                    foreach (DataColumn col in dtA.Columns) diffItem.RowValuesA[col.ColumnName] = rowA[col];
+                    foreach (DataColumn col in dtB.Columns) diffItem.RowValuesB[col.ColumnName] = rowB[col];
+
+                    bool hasDiff = false;
+                    foreach (var colName in result.Columns)
+                    {
+                        object? valA = rowA.Table.Columns.Contains(colName) ? rowA[colName] : DBNull.Value;
+                        object? valB = rowB.Table.Columns.Contains(colName) ? rowB[colName] : DBNull.Value;
+
+                        bool isColDiff = IsValueDifferent(valA, valB, options);
+                        if (isColDiff)
+                        {
+                            hasDiff = true;
+                            diffItem.DifferingColumns.Add(colName);
+                        }
+
+                        diffItem.CellDiffs.Add(new OracleCellDiff
+                        {
+                            ColumnName = colName,
+                            ValueA = valA,
+                            ValueB = valB,
+                            IsDifferent = isColDiff
+                        });
+                    }
+
+                    diffItem.Status = hasDiff ? OracleRowDiffStatus.Modified : OracleRowDiffStatus.Identical;
+                }
+                else if (rowA != null)
+                {
+                    diffItem.Status = OracleRowDiffStatus.MissingInB;
+                    foreach (DataColumn col in dtA.Columns) diffItem.RowValuesA[col.ColumnName] = rowA[col];
+                    foreach (var colName in result.Columns)
+                    {
+                        object? valA = rowA.Table.Columns.Contains(colName) ? rowA[colName] : DBNull.Value;
+                        diffItem.CellDiffs.Add(new OracleCellDiff
+                        {
+                            ColumnName = colName,
+                            ValueA = valA,
+                            ValueB = DBNull.Value,
+                            IsDifferent = true
+                        });
+                    }
+                }
+                else if (rowB != null)
+                {
+                    diffItem.Status = OracleRowDiffStatus.MissingInA;
+                    foreach (DataColumn col in dtB.Columns) diffItem.RowValuesB[col.ColumnName] = rowB[col];
+                    foreach (var colName in result.Columns)
+                    {
+                        object? valB = rowB.Table.Columns.Contains(colName) ? rowB[colName] : DBNull.Value;
+                        diffItem.CellDiffs.Add(new OracleCellDiff
+                        {
+                            ColumnName = colName,
+                            ValueA = DBNull.Value,
+                            ValueB = valB,
+                            IsDifferent = true
+                        });
+                    }
+                }
+
+                result.DiffItems.Add(diffItem);
+
+                if (i % 500 == 0 && maxCount > 0)
+                {
+                    double pct = 60 + ((double)i / maxCount) * 30;
+                    progress?.Report(($"Đang đối soát thứ tự dòng {i:N0} / {maxCount:N0}...", pct));
+                }
+            }
+        }
+
+        private static string BuildRowKey(DataRow row, List<string> keyCols, OracleCompareOptions options)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < keyCols.Count; i++)
+            {
+                if (i > 0) sb.Append("|");
+                string colName = keyCols[i];
+                if (row.Table.Columns.Contains(colName))
+                {
+                    object val = row[colName];
+                    string str = FormatValueForCompare(val, options);
+                    sb.Append(str);
+                }
+            }
+            return sb.ToString();
+        }
+
+        private static async Task<System.Data.DataTable> FetchTableDataAsync(
+            OracleConnectionConfig config,
+            string schema,
+            string tableName,
+            OracleCompareOptions options,
+            bool isTableA)
+        {
+            string connStr = config.BuildConnectionString();
             return await Task.Run(() =>
             {
-                var dt = new DataTable();
-                try
+                var dt = new System.Data.DataTable();
+                using (var conn = new OracleConnection(connStr))
                 {
-                    string connStr = config.BuildConnectionString();
-                    using var conn = new OracleConnection(connStr);
                     conn.Open();
 
-                    using var cmd = conn.CreateCommand();
-
+                    string sql;
                     if (options.UseCustomQuery)
                     {
-                        string customSql = isTableA ? options.CustomQueryA : options.CustomQueryB;
-                        if (string.IsNullOrWhiteSpace(customSql)) customSql = $"SELECT * FROM {tableName}";
-                        cmd.CommandText = customSql;
+                        sql = isTableA ? options.CustomQueryA : options.CustomQueryB;
                     }
                     else
                     {
-                        string fullTableName = !string.IsNullOrWhiteSpace(schema) ? $"{schema.Trim()}.{tableName.Trim()}" : tableName.Trim();
-                        string whereClause = isTableA ? options.WhereClauseA : options.WhereClauseB;
+                        string where = isTableA ? options.WhereClauseA : options.WhereClauseB;
+                        string whereSql = string.IsNullOrWhiteSpace(where) ? "" : $"WHERE {where.Trim()}";
 
-                        var sb = new StringBuilder();
-                        sb.Append($"SELECT * FROM {fullTableName}");
-                        if (!string.IsNullOrWhiteSpace(whereClause))
-                        {
-                            string w = whereClause.Trim();
-                            if (!w.StartsWith("WHERE", StringComparison.OrdinalIgnoreCase))
-                            {
-                                sb.Append($" WHERE {w}");
-                            }
-                            else
-                            {
-                                sb.Append($" {w}");
-                            }
-                        }
+                        string fullTable = string.IsNullOrWhiteSpace(schema) ? tableName : $"\"{schema.ToUpperInvariant()}\".\"{tableName.ToUpperInvariant()}\"";
 
                         if (options.MaxRows > 0)
                         {
-                            // Oracle 12c+ FETCH FIRST syntax
-                            sb.Append($" FETCH FIRST {options.MaxRows} ROWS ONLY");
+                            sql = $"SELECT * FROM (SELECT * FROM {fullTable} {whereSql}) WHERE ROWNUM <= {options.MaxRows}";
                         }
-
-                        cmd.CommandText = sb.ToString();
+                        else
+                        {
+                            sql = $"SELECT * FROM {fullTable} {whereSql}";
+                        }
                     }
 
-                    using var adapter = new OracleDataAdapter(cmd);
-                    adapter.Fill(dt);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"FetchTableData error: {ex.Message}");
-                    throw new Exception($"Không thể tải dữ liệu từ Database {(isTableA ? "A" : "B")}:\n{ex.Message}", ex);
+                    using (var cmd = new OracleCommand(sql, conn))
+                    {
+                        cmd.CommandTimeout = 120;
+                        using (var adapter = new OracleDataAdapter(cmd))
+                        {
+                            adapter.Fill(dt);
+                        }
+                    }
                 }
                 return dt;
             });
         }
 
-        private static string BuildKeyString(DataRow row, List<string> keyCols, OracleCompareOptions options)
-        {
-            var parts = new List<string>();
-            foreach (var col in keyCols)
-            {
-                object? val = row[col];
-                string s = FormatValueForCompare(val, options);
-                parts.Add(s);
-            }
-            return string.Join(" | ", parts);
-        }
-
-        private static void PopulateRowData(Dictionary<string, object?> target, DataRow row, List<string> columns)
-        {
-            foreach (var col in columns)
-            {
-                if (row.Table.Columns.Contains(col))
-                {
-                    target[col] = row[col];
-                }
-            }
-        }
-
         private static string FormatValueForCompare(object? val, OracleCompareOptions options)
         {
-            if (val == null || val is DBNull)
-            {
-                return options.TreatNullAsEmpty ? "" : "<NULL>";
-            }
+            if (val == null || val is DBNull) return "";
 
-            if (val is DateTime dt)
-            {
-                return dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-            }
+            string str;
+            if (val is DateTime dt) str = dt.ToString("yyyy-MM-dd HH:mm:ss");
+            else if (val is double d) str = d.ToString("G15");
+            else if (val is decimal dec) str = dec.ToString("G29");
+            else if (val is float f) str = f.ToString("G7");
+            else str = val.ToString() ?? "";
 
-            string s = val.ToString() ?? "";
-            if (options.TrimStrings) s = s.Trim();
-            if (options.IgnoreWhitespace) s = System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ");
-            if (options.IgnoreCase) s = s.ToLowerInvariant();
-            return s;
+            if (options.TrimStrings) str = str.Trim();
+            if (options.IgnoreWhitespace) str = System.Text.RegularExpressions.Regex.Replace(str, @"\s+", " ").Trim();
+            if (options.IgnoreCase) str = str.ToLowerInvariant();
+
+            return str;
         }
 
         public static bool IsValueDifferent(object? valA, object? valB, OracleCompareOptions options)
         {
-            bool isNullA = valA == null || valA is DBNull || (options.TreatNullAsEmpty && string.IsNullOrEmpty(valA.ToString()?.Trim()));
-            bool isNullB = valB == null || valB is DBNull || (options.TreatNullAsEmpty && string.IsNullOrEmpty(valB.ToString()?.Trim()));
+            bool isNullA = valA == null || valA is DBNull;
+            bool isNullB = valB == null || valB is DBNull;
 
             if (isNullA && isNullB) return false;
-            if (isNullA || isNullB) return true;
 
-            // Numeric comparison with tolerance
-            if (options.NumericTolerance > 0 &&
-                double.TryParse(valA!.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double numA) &&
-                double.TryParse(valB!.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double numB))
+            if (options.TreatNullAsEmpty)
             {
-                return Math.Abs(numA - numB) > options.NumericTolerance;
+                string sA = isNullA ? "" : valA!.ToString()!.Trim();
+                string sB = isNullB ? "" : valB!.ToString()!.Trim();
+                if (string.IsNullOrEmpty(sA) && string.IsNullOrEmpty(sB)) return false;
+            }
+
+            if (isNullA != isNullB) return true;
+
+            if (options.NumericTolerance > 0 && double.TryParse(valA?.ToString(), out double dA) && double.TryParse(valB?.ToString(), out double dB))
+            {
+                return Math.Abs(dA - dB) > options.NumericTolerance;
             }
 
             string strA = FormatValueForCompare(valA, options);
@@ -607,13 +633,8 @@ namespace ExcelSupport.Services
                 app.ScreenUpdating = false;
                 app.DisplayAlerts = false;
 
-                var wb = app.ActiveWorkbook;
-                if (wb == null)
-                {
-                    wb = app.Workbooks.Add();
-                }
+                var wb = app.ActiveWorkbook ?? app.Workbooks.Add();
 
-                // Tạo sheet mới
                 string baseSheetName = "Oracle_Diff_Report";
                 string sheetName = baseSheetName;
                 int counter = 1;
@@ -657,11 +678,7 @@ namespace ExcelSupport.Services
                     return;
                 }
 
-                int startRow = activeCell.Row;
-                int startCol = activeCell.Column;
-
-                RenderDiffDataToWorksheet(activeSheet, startRow, startCol, result, highlightOnlyDiffs);
-
+                RenderDiffDataToWorksheet(activeSheet, activeCell.Row, activeCell.Column, result, highlightOnlyDiffs);
                 app.ScreenUpdating = true;
             }
             catch (Exception ex)
@@ -677,69 +694,191 @@ namespace ExcelSupport.Services
 
         private static void RenderDiffDataToWorksheet(ExcelWorksheet ws, int startRow, int startCol, OracleCompareResult result, bool highlightOnlyDiffs)
         {
+            if (result.Options?.ReportLayout == OracleReportLayout.SideBySide)
+            {
+                RenderSideBySideDiff(ws, startRow, startCol, result, highlightOnlyDiffs);
+            }
+            else
+            {
+                RenderStackedTopBottomDiff(ws, startRow, startCol, result, highlightOnlyDiffs);
+            }
+        }
+
+        private static void RenderStackedTopBottomDiff(ExcelWorksheet ws, int startRow, int startCol, OracleCompareResult result, bool highlightOnlyDiffs)
+        {
+            var filterItems = highlightOnlyDiffs
+                ? result.DiffItems.Where(r => r.Status != OracleRowDiffStatus.Identical).ToList()
+                : result.DiffItems;
+
+            if (result.Columns.Count == 0) return;
+
+            Color highlightColor = ParseColorHex(result.Options?.HighlightColorHex, Color.FromArgb(239, 68, 68));
+            Color headerBgColor = Color.FromArgb(110, 231, 183);
+            Color headerTextColor = Color.FromArgb(6, 78, 59);
+            Color borderColor = Color.FromArgb(156, 163, 175);
+
+            string labelA = string.IsNullOrWhiteSpace(result.ConnectionNameA) ? result.TableA : $"{result.TableA}({result.ConnectionNameA})";
+            string labelB = string.IsNullOrWhiteSpace(result.ConnectionNameB) ? result.TableB : $"{result.TableB}({result.ConnectionNameB})";
+
+            int curRow = RenderSingleTableBlock(ws, startRow, startCol, labelA, Color.FromArgb(37, 99, 235), headerBgColor, headerTextColor, borderColor, highlightColor, result.Columns, filterItems, isTableA: true);
+
+            curRow++; // Dòng trống ngăn cách
+
+            curRow = RenderSingleTableBlock(ws, curRow, startCol, labelB, Color.FromArgb(190, 24, 93), headerBgColor, headerTextColor, borderColor, highlightColor, result.Columns, filterItems, isTableA: false);
+
+            ws.Range[ws.Cells[startRow, startCol], ws.Cells[curRow, startCol + result.Columns.Count - 1]].Columns.AutoFit();
+        }
+
+        private static int RenderSingleTableBlock(
+            ExcelWorksheet ws,
+            int curRow,
+            int startCol,
+            string title,
+            Color titleColor,
+            Color headerBgColor,
+            Color headerTextColor,
+            Color borderColor,
+            Color highlightColor,
+            List<string> columns,
+            List<OracleRowDiffItem> items,
+            bool isTableA)
+        {
+            int numCols = columns.Count;
+            int rowCount = items.Count;
+
+            // 1. Tiêu đề bảng
+            ExcelRange titleRange = ws.Cells[curRow, startCol];
+            titleRange.Value2 = title;
+            titleRange.Font.Bold = true;
+            titleRange.Font.Size = 11;
+            titleRange.Font.Color = ColorTranslator.ToOle(titleColor);
+            curRow++;
+
+            // 2. Dòng Header cột
+            int headerRow = curRow;
+            object[,] headerArray = new object[1, numCols];
+            for (int c = 0; c < numCols; c++) headerArray[0, c] = columns[c];
+
+            ExcelRange headerRange = ws.Range[ws.Cells[headerRow, startCol], ws.Cells[headerRow, startCol + numCols - 1]];
+            headerRange.Value2 = headerArray;
+            headerRange.Font.Bold = true;
+            headerRange.Font.Size = 10;
+            headerRange.Font.Color = ColorTranslator.ToOle(headerTextColor);
+            headerRange.Interior.Color = ColorTranslator.ToOle(headerBgColor);
+            headerRange.HorizontalAlignment = -4108; // xlCenter
+            curRow++;
+
+            // 3. Dữ liệu & Tô màu sai khác
+            if (rowCount > 0)
+            {
+                int dataStartRow = curRow;
+                object[,] dataArray = new object[rowCount, numCols];
+
+                for (int i = 0; i < rowCount; i++)
+                {
+                    var dict = isTableA ? items[i].RowValuesA : items[i].RowValuesB;
+                    for (int c = 0; c < numCols; c++)
+                    {
+                        dict.TryGetValue(columns[c], out var val);
+                        dataArray[i, c] = FormatValueDisplay(val);
+                    }
+                }
+
+                ExcelRange dataRange = ws.Range[ws.Cells[dataStartRow, startCol], ws.Cells[dataStartRow + rowCount - 1, startCol + numCols - 1]];
+                dataRange.Value2 = dataArray;
+
+                // Tô màu sai khác
+                var missingStatus = isTableA ? OracleRowDiffStatus.MissingInB : OracleRowDiffStatus.MissingInA;
+                Color missingBg = isTableA ? Color.FromArgb(254, 226, 226) : Color.FromArgb(219, 234, 254);
+
+                for (int i = 0; i < rowCount; i++)
+                {
+                    var item = items[i];
+                    int r = dataStartRow + i;
+
+                    if (item.Status == missingStatus)
+                    {
+                        ws.Range[ws.Cells[r, startCol], ws.Cells[r, startCol + numCols - 1]].Interior.Color = ColorTranslator.ToOle(missingBg);
+                    }
+                    else if (item.Status == OracleRowDiffStatus.Modified)
+                    {
+                        foreach (var diffCol in item.DifferingColumns)
+                        {
+                            int colIdx = columns.IndexOf(diffCol);
+                            if (colIdx >= 0)
+                            {
+                                ExcelRange cell = ws.Cells[r, startCol + colIdx];
+                                cell.Interior.Color = ColorTranslator.ToOle(highlightColor);
+                                cell.Font.Bold = true;
+                            }
+                        }
+                    }
+                }
+
+                // Kẻ viền bảng
+                ExcelRange fullTable = ws.Range[ws.Cells[headerRow, startCol], ws.Cells[dataStartRow + rowCount - 1, startCol + numCols - 1]];
+                fullTable.Borders.LineStyle = 1;
+                fullTable.Borders.Color = ColorTranslator.ToOle(borderColor);
+
+                curRow = dataStartRow + rowCount;
+            }
+
+            return curRow;
+        }
+
+        private static void RenderSideBySideDiff(ExcelWorksheet ws, int startRow, int startCol, OracleCompareResult result, bool highlightOnlyDiffs)
+        {
             var filterItems = highlightOnlyDiffs
                 ? result.DiffItems.Where(r => r.Status != OracleRowDiffStatus.Identical).ToList()
                 : result.DiffItems;
 
             int curRow = startRow;
 
-            // 1. BANNER TIÊU ĐỀ
+            // Tiêu đề
             ExcelRange titleRange = ws.Range[ws.Cells[curRow, startCol], ws.Cells[curRow, startCol + 4]];
             titleRange.Merge();
-            titleRange.Value2 = "BÁO CÁO ĐỐI SOÁT DỮ LIỆU BẢNG ORACLE (ORACLE TABLE DIFF REPORT)";
+            titleRange.Value2 = "BÁO CÁO ĐỐI SOÁT DỮ LIỆU BẢNG ORACLE (SIDE-BY-SIDE)";
             titleRange.Font.Bold = true;
             titleRange.Font.Size = 14;
             titleRange.Font.Color = ColorTranslator.ToOle(Color.FromArgb(30, 41, 59));
             curRow += 2;
 
-            // 2. THỐNG KÊ TỔNG QUAN
-            ws.Cells[curRow, startCol].Value2 = "Bảng DB A (Gốc):";
+            // Thống kê tổng quan
+            ws.Cells[curRow, startCol].Value2 = "Bảng DB A:";
             ws.Cells[curRow, startCol + 1].Value2 = $"{result.SchemaA}.{result.TableA} ({result.TotalRowsA:N0} dòng)";
             ws.Cells[curRow, startCol + 3].Value2 = "Trùng khớp:";
             ws.Cells[curRow, startCol + 4].Value2 = $"{result.MatchCount:N0} dòng";
             curRow++;
 
-            ws.Cells[curRow, startCol].Value2 = "Bảng DB B (Đối chiếu):";
+            ws.Cells[curRow, startCol].Value2 = "Bảng DB B:";
             ws.Cells[curRow, startCol + 1].Value2 = $"{result.SchemaB}.{result.TableB} ({result.TotalRowsB:N0} dòng)";
-            ws.Cells[curRow, startCol + 3].Value2 = "Sai lệch giá trị:";
+            ws.Cells[curRow, startCol + 3].Value2 = "Sai lệch:";
             ws.Cells[curRow, startCol + 4].Value2 = $"{result.ModifiedCount:N0} dòng";
-            curRow++;
-
-            ws.Cells[curRow, startCol].Value2 = "Thời gian xử lý:";
-            ws.Cells[curRow, startCol + 1].Value2 = $"{result.ExecutionTime.TotalSeconds:F2} giây";
-            ws.Cells[curRow, startCol + 3].Value2 = "Chỉ có ở A / B:";
-            ws.Cells[curRow, startCol + 4].Value2 = $"-{result.MissingInBCount:N0} / +{result.MissingInACount:N0}";
             curRow += 2;
 
-            // 3. XÂY DỰNG BẢNG DỮ LIỆU ĐỐI SOÁT
-            // Cột: [STT] [Khóa / Vị Trí] [Trạng Thái] [Cột Sai Lệch] + Mỗi cột so sánh gồm: [Cột (DB A)] [Cột (DB B)]
             var headers = new List<string> { "STT", "Khóa / Bản ghi", "Trạng Thái", "Cột Sai Khác" };
             foreach (var col in result.Columns)
             {
-                headers.Add($"{col} (DB A)");
-                headers.Add($"{col} (DB B)");
+                headers.Add($"{col} (A)");
+                headers.Add($"{col} (B)");
             }
 
             int headerRow = curRow;
             int totalCols = headers.Count;
-
-            // Ghi Header
             object[,] headerArray = new object[1, totalCols];
-            for (int c = 0; c < totalCols; c++)
-            {
-                headerArray[0, c] = headers[c];
-            }
+            for (int c = 0; c < totalCols; c++) headerArray[0, c] = headers[c];
 
             ExcelRange headerRange = ws.Range[ws.Cells[headerRow, startCol], ws.Cells[headerRow, startCol + totalCols - 1]];
             headerRange.Value2 = headerArray;
             headerRange.Font.Bold = true;
             headerRange.Font.Color = ColorTranslator.ToOle(Color.White);
-            headerRange.Interior.Color = ColorTranslator.ToOle(Color.FromArgb(30, 41, 59)); // Slate 800
-            headerRange.HorizontalAlignment = -4108; // xlCenter
-
+            headerRange.Interior.Color = ColorTranslator.ToOle(Color.FromArgb(30, 41, 59));
+            headerRange.HorizontalAlignment = -4108;
             curRow++;
+
             int dataStartRow = curRow;
             int rowCount = filterItems.Count;
+            Color highlightColor = ParseColorHex(result.Options?.HighlightColorHex, Color.FromArgb(254, 240, 138));
 
             if (rowCount > 0)
             {
@@ -757,7 +896,6 @@ namespace ExcelSupport.Services
                     {
                         item.RowValuesA.TryGetValue(col, out var valA);
                         item.RowValuesB.TryGetValue(col, out var valB);
-
                         dataArray[i, colIdx] = FormatValueDisplay(valA);
                         dataArray[i, colIdx + 1] = FormatValueDisplay(valB);
                         colIdx += 2;
@@ -767,13 +905,6 @@ namespace ExcelSupport.Services
                 ExcelRange dataRange = ws.Range[ws.Cells[dataStartRow, startCol], ws.Cells[dataStartRow + rowCount - 1, startCol + totalCols - 1]];
                 dataRange.Value2 = dataArray;
 
-                // TÔ MÀU TRỰC QUAN CÁC Ô SAI LỆCH VÀ BẢN GHI
-                // Palette:
-                int colorModifiedCell = ColorTranslator.ToOle(Color.FromArgb(254, 240, 138)); // Vàng chanh sáng
-                int colorModifiedText = ColorTranslator.ToOle(Color.FromArgb(180, 83, 9));    // Cam đậm
-                int colorMissingA = ColorTranslator.ToOle(Color.FromArgb(254, 226, 226));     // Đỏ nhạt (Chỉ có ở A)
-                int colorMissingB = ColorTranslator.ToOle(Color.FromArgb(219, 234, 254));     // Xanh dương nhạt (Chỉ có ở B)
-
                 for (int i = 0; i < rowCount; i++)
                 {
                     var item = filterItems[i];
@@ -781,49 +912,41 @@ namespace ExcelSupport.Services
 
                     if (item.Status == OracleRowDiffStatus.MissingInB)
                     {
-                        // Chỉ có ở A -> Tô màu đỏ nhạt cho toàn dòng
-                        ExcelRange rowRange = ws.Range[ws.Cells[r, startCol], ws.Cells[r, startCol + totalCols - 1]];
-                        rowRange.Interior.Color = colorMissingA;
+                        ws.Range[ws.Cells[r, startCol], ws.Cells[r, startCol + totalCols - 1]].Interior.Color = ColorTranslator.ToOle(Color.FromArgb(254, 226, 226));
                     }
                     else if (item.Status == OracleRowDiffStatus.MissingInA)
                     {
-                        // Chỉ có ở B -> Tô màu xanh nhạt cho toàn dòng
-                        ExcelRange rowRange = ws.Range[ws.Cells[r, startCol], ws.Cells[r, startCol + totalCols - 1]];
-                        rowRange.Interior.Color = colorMissingB;
+                        ws.Range[ws.Cells[r, startCol], ws.Cells[r, startCol + totalCols - 1]].Interior.Color = ColorTranslator.ToOle(Color.FromArgb(219, 234, 254));
                     }
                     else if (item.Status == OracleRowDiffStatus.Modified)
                     {
-                        // Dòng có ô sửa đổi -> Tô màu đúng tại các ô có giá trị khác nhau
                         int colIdx = 4;
                         foreach (var col in result.Columns)
                         {
                             if (item.DifferingColumns.Contains(col))
                             {
-                                ExcelRange cellA = ws.Cells[r, startCol + colIdx];
-                                ExcelRange cellB = ws.Cells[r, startCol + colIdx + 1];
-
-                                cellA.Interior.Color = colorModifiedCell;
-                                cellA.Font.Bold = true;
-                                cellA.Font.Color = colorModifiedText;
-
-                                cellB.Interior.Color = colorModifiedCell;
-                                cellB.Font.Bold = true;
-                                cellB.Font.Color = colorModifiedText;
+                                ws.Cells[r, startCol + colIdx].Interior.Color = ColorTranslator.ToOle(highlightColor);
+                                ws.Cells[r, startCol + colIdx + 1].Interior.Color = ColorTranslator.ToOle(highlightColor);
                             }
                             colIdx += 2;
                         }
                     }
                 }
 
-                // Kẻ viền bảng (Borders)
                 ExcelRange fullTableRange = ws.Range[ws.Cells[headerRow, startCol], ws.Cells[dataStartRow + rowCount - 1, startCol + totalCols - 1]];
-                fullTableRange.Borders.LineStyle = 1; // xlContinuous
-                fullTableRange.Borders.Color = ColorTranslator.ToOle(Color.FromArgb(203, 213, 225)); // Slate 300
+                fullTableRange.Borders.LineStyle = 1;
+                fullTableRange.Borders.Color = ColorTranslator.ToOle(Color.FromArgb(203, 213, 225));
             }
 
-            // Tự động căn chỉnh độ rộng cột
             ExcelRange allColsRange = ws.Range[ws.Cells[headerRow, startCol], ws.Cells[headerRow + rowCount + 2, startCol + totalCols - 1]];
             allColsRange.Columns.AutoFit();
+        }
+
+        private static Color ParseColorHex(string? hex, Color defaultColor)
+        {
+            if (string.IsNullOrWhiteSpace(hex)) return defaultColor;
+            try { return ColorTranslator.FromHtml(hex); }
+            catch { return defaultColor; }
         }
 
         private static string FormatValueDisplay(object? val)
@@ -835,14 +958,7 @@ namespace ExcelSupport.Services
 
         private static bool SheetExists(Microsoft.Office.Interop.Excel.Workbook wb, string sheetName)
         {
-            foreach (ExcelWorksheet ws in wb.Worksheets)
-            {
-                if (string.Equals(ws.Name, sheetName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return wb.Worksheets.Cast<ExcelWorksheet>().Any(s => string.Equals(s.Name, sheetName, StringComparison.OrdinalIgnoreCase));
         }
 
         #endregion

@@ -532,9 +532,16 @@ namespace ExcelSupport.Views
 
             int.TryParse(txtMaxRows.Text, out int maxRows);
 
+            string highlightHex = (cboHighlightColor.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "#EF4444";
+            var layout = ((cboReportLayout.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "SideBySide")
+                ? OracleReportLayout.SideBySide
+                : OracleReportLayout.StackedTopBottom;
+
             var options = new OracleCompareOptions
             {
                 Mode = (rbModeSeq.IsChecked == true) ? OracleCompareMode.Sequential : OracleCompareMode.ByKeyColumns,
+                ReportLayout = layout,
+                HighlightColorHex = highlightHex,
                 IgnoreWhitespace = chkIgnoreSpaces.IsChecked == true,
                 IgnoreCase = chkIgnoreCase.IsChecked == true,
                 MaxRows = maxRows,
@@ -581,12 +588,16 @@ namespace ExcelSupport.Views
 
             try
             {
+                string connNameA = (cboProfileA.SelectedItem as OracleConnectionProfile)?.Name ?? "DB_A";
+                string connNameB = (cboProfileB.SelectedItem as OracleConnectionProfile)?.Name ?? "DB_B";
+
                 var result = await OracleDataCompareService.CompareTablesAsync(
                     _activeConfigA,
                     _activeConfigB,
                     schemaA, tableA,
                     schemaB, tableB,
-                    options, progress);
+                    options, progress,
+                    connNameA, connNameB);
 
                 _lastResult = result;
                 _allDiffItems = result.DiffItems;
