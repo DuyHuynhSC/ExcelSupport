@@ -935,7 +935,13 @@ namespace ExcelSupport.Services
 
             ["Oracle_BtnCompare"] = new() { [AppLanguage.Vietnamese] = "Tiến Hành So Sánh", [AppLanguage.English] = "Start Compare", [AppLanguage.Japanese] = "比較を実行" },
             ["Oracle_BtnExportExcel"] = new() { [AppLanguage.Vietnamese] = "Xuất Sheet Báo Cáo & Tô Màu", [AppLanguage.English] = "Export Report Sheet & Highlight", [AppLanguage.Japanese] = "新規シートに出力＆色付け" },
-            ["Oracle_BtnInsertActiveSelection"] = new() { [AppLanguage.Vietnamese] = "Chèn vào vị trí đang chọn", [AppLanguage.English] = "Insert at Active Selection", [AppLanguage.Japanese] = "選択位置に挿入＆色付け" },
+            ["Oracle_BtnInsertActiveSelection"] = new() { [AppLanguage.Vietnamese] = "Chèn vào vị trí chỉ định", [AppLanguage.English] = "Insert at Target Location", [AppLanguage.Japanese] = "指定位置に挿入＆色付け" },
+            ["Oracle_InsertAt"] = new() { [AppLanguage.Vietnamese] = "Vị trí chèn:", [AppLanguage.English] = "Insert at:", [AppLanguage.Japanese] = "挿入位置:" },
+            ["Oracle_InsertLocationTip"] = new() { [AppLanguage.Vietnamese] = "Vị trí ô bắt đầu chèn dữ liệu (ví dụ Sheet1!A1 hoặc A1)", [AppLanguage.English] = "Starting cell address to insert data (e.g. Sheet1!A1 or A1)", [AppLanguage.Japanese] = "データ挿入の開始セルアドレス（例: Sheet1!A1 または A1）" },
+            ["Oracle_BtnPickLocationTip"] = new() { [AppLanguage.Vietnamese] = "Chọn ô đích trên bảng tính Excel", [AppLanguage.English] = "Pick target cell on Excel worksheet", [AppLanguage.Japanese] = "Excelワークシート上で対象セルを選択" },
+            ["Oracle_BtnRefreshLocationTip"] = new() { [AppLanguage.Vietnamese] = "Lấy ô đang được chọn hiện tại trên Excel", [AppLanguage.English] = "Get currently active cell on Excel", [AppLanguage.Japanese] = "Excelで現在選択されているセルを取得" },
+            ["Oracle_PromptPickLocation"] = new() { [AppLanguage.Vietnamese] = "Nhấp chọn ô bắt đầu chèn dữ liệu trên bảng tính Excel:", [AppLanguage.English] = "Click to select starting cell on Excel worksheet:", [AppLanguage.Japanese] = "Excelワークシート上でデータ挿入を開始するセルをクリックして選択してください:" },
+            ["Oracle_TitlePickLocation"] = new() { [AppLanguage.Vietnamese] = "Chọn Vị Trí Chèn Dữ Liệu", [AppLanguage.English] = "Select Insert Location", [AppLanguage.Japanese] = "データ挿入位置の選択" },
             ["Oracle_BtnCopyDiff"] = new() { [AppLanguage.Vietnamese] = "Sao Chép Tóm Tắt", [AppLanguage.English] = "Copy Summary", [AppLanguage.Japanese] = "概要をコピー" },
 
             ["Oracle_OptHighlightColor"] = new() { [AppLanguage.Vietnamese] = "Màu sai khác:", [AppLanguage.English] = "Highlight Color:", [AppLanguage.Japanese] = "差異色:" },
@@ -1044,7 +1050,23 @@ namespace ExcelSupport.Services
             ["Snapshot_ColCell"] = new() { [AppLanguage.Vietnamese] = "Ô", [AppLanguage.English] = "Cell", [AppLanguage.Japanese] = "セル" },
             ["Snapshot_ColDiffType"] = new() { [AppLanguage.Vietnamese] = "Loại Thay Đổi", [AppLanguage.English] = "Change Type", [AppLanguage.Japanese] = "変更種類" },
             ["Snapshot_ColSnapshotVal"] = new() { [AppLanguage.Vietnamese] = "Giá Trị / Công Thức Bản Lưu", [AppLanguage.English] = "Snapshot Value / Formula", [AppLanguage.Japanese] = "保存時の値／数式" },
-            ["Snapshot_ColCurrentVal"] = new() { [AppLanguage.Vietnamese] = "Giá Trị / Công Thức Hiện Tại", [AppLanguage.English] = "Current Value / Formula", [AppLanguage.Japanese] = "現在の値／数式" }
+            ["Snapshot_ColCurrentVal"] = new() { [AppLanguage.Vietnamese] = "Giá Trị / Công Thức Hiện Tại", [AppLanguage.English] = "Current Value / Formula", [AppLanguage.Japanese] = "現在の値／数式" },
+
+            // --- 32. ORACLE QUICK SQL QUERY ---
+            ["btnOracleQuickQuery"] = new() { [AppLanguage.Vietnamese] = "Truy Vấn Nhanh SQL", [AppLanguage.English] = "Quick SQL Query", [AppLanguage.Japanese] = "SQLクイッククエリ" },
+            ["btnOracleQuickQuery_Tip"] = new() { [AppLanguage.Vietnamese] = "Truy vấn nhanh Oracle và chèn vào Excel (Ctrl+Shift+Q)", [AppLanguage.English] = "Quick query Oracle and insert into Excel (Ctrl+Shift+Q)", [AppLanguage.Japanese] = "Oracleクエリを実行してExcelに挿入 (Ctrl+Shift+Q)" },
+            ["btnOracleQuickQuery_SuperTip"] = new() { [AppLanguage.Vietnamese] = "Mở hộp thoại nhập câu lệnh SQL truy vấn trực tiếp từ database mặc định và chèn bảng dữ liệu vào ô đang chọn trên Excel (Phím tắt: Ctrl + Shift + Q).", [AppLanguage.English] = "Open dialog to input SQL query from default Oracle connection and insert result into active Excel cell (Shortcut: Ctrl + Shift + Q).", [AppLanguage.Japanese] = "デフォルトのOracle DBからSQLを実行し、選択中のExcelセルに結果を直接挿入します (ショートカット: Ctrl + Shift + Q)。" },
+
+            ["Oracle_BtnSetDefault"] = new() { [AppLanguage.Vietnamese] = "⭐ Đặt Mặc Định", [AppLanguage.English] = "⭐ Set Default", [AppLanguage.Japanese] = "⭐ デフォルトに設定" },
+            ["Oracle_BtnSetDefaultTip"] = new() { [AppLanguage.Vietnamese] = "Đặt cấu hình kết nối này làm mặc định cho tính năng Truy vấn nhanh (Ctrl+Shift+Q)", [AppLanguage.English] = "Set this connection as default for Quick Query (Ctrl+Shift+Q)", [AppLanguage.Japanese] = "この接続をクイッククエリ (Ctrl+Shift+Q) のデフォルトに設定" },
+            ["Oracle_QuickQueryTitle"] = new() { [AppLanguage.Vietnamese] = "Truy Vấn Nhanh Oracle (Quick SQL Query)", [AppLanguage.English] = "Oracle Quick SQL Query", [AppLanguage.Japanese] = "Oracle クイックSQLクエリ" },
+            ["Oracle_QuickQueryHeader"] = new() { [AppLanguage.Vietnamese] = "TRUY VẤN NHANH DỮ LIỆU ORACLE (QUICK SQL QUERY)", [AppLanguage.English] = "ORACLE QUICK SQL QUERY", [AppLanguage.Japanese] = "ORACLE クイックSQLクエリ" },
+            ["Oracle_QuickQuerySubHeader"] = new() { [AppLanguage.Vietnamese] = "Nhập câu lệnh SQL để truy vấn và chèn dữ liệu trực tiếp vào bảng tính Excel (Phím tắt: Ctrl + Enter để chạy)", [AppLanguage.English] = "Enter SQL query to fetch and insert data directly into Excel spreadsheet (Shortcut: Ctrl + Enter to run)", [AppLanguage.Japanese] = "SQL文を入力してExcelシートに直接データを挿入します (Ctrl + Enterで実行)" },
+            ["Oracle_SqlEditorLabel"] = new() { [AppLanguage.Vietnamese] = "Câu lệnh SQL:", [AppLanguage.English] = "SQL Query:", [AppLanguage.Japanese] = "SQLクエリ文:" },
+            ["Oracle_OptIncludeTitle"] = new() { [AppLanguage.Vietnamese] = "Kèm tên bảng làm tiêu đề", [AppLanguage.English] = "Include table name as title", [AppLanguage.Japanese] = "テーブル名をタイトルとして含める" },
+            ["Oracle_OptIncludeHeaders"] = new() { [AppLanguage.Vietnamese] = "Kèm dòng Header màu xanh", [AppLanguage.English] = "Include green header row", [AppLanguage.Japanese] = "緑色のヘッダー行を含める" },
+            ["Oracle_OptAutoFit"] = new() { [AppLanguage.Vietnamese] = "Tự động căn chỉnh độ rộng cột", [AppLanguage.English] = "Auto-fit columns width", [AppLanguage.Japanese] = "列幅を自動調整" },
+            ["Oracle_BtnExecuteInsert"] = new() { [AppLanguage.Vietnamese] = "Thực Thi & Chèn (Ctrl+Enter)", [AppLanguage.English] = "Execute & Insert (Ctrl+Enter)", [AppLanguage.Japanese] = "実行＆挿入 (Ctrl+Enter)" }
         };
     }
 }

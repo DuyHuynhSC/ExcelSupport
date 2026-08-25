@@ -662,29 +662,31 @@ namespace ExcelSupport.Services
             }
         }
 
-        public static void InsertDiffToActiveSelection(OracleCompareResult result, ExcelApp? app, bool highlightOnlyDiffs = false)
+        public static void InsertDiffToActiveSelection(OracleCompareResult result, ExcelApp? app, Range? targetRange = null, bool highlightOnlyDiffs = false)
         {
             if (app == null) return;
 
             try
             {
                 app.ScreenUpdating = false;
-                var activeSheet = app.ActiveSheet as ExcelWorksheet;
-                var activeCell = app.ActiveCell;
+                ExcelWorksheet? targetSheet = targetRange?.Worksheet ?? (app.ActiveSheet as ExcelWorksheet);
+                int targetRow = targetRange?.Row ?? app.ActiveCell?.Row ?? 1;
+                int targetCol = targetRange?.Column ?? app.ActiveCell?.Column ?? 1;
 
-                if (activeSheet == null || activeCell == null)
+                if (targetSheet == null)
                 {
                     ExportDiffReportToExcel(result, app, highlightOnlyDiffs);
                     return;
                 }
 
-                RenderDiffDataToWorksheet(activeSheet, activeCell.Row, activeCell.Column, result, highlightOnlyDiffs);
+                targetSheet.Activate();
+                RenderDiffDataToWorksheet(targetSheet, targetRow, targetCol, result, highlightOnlyDiffs);
                 app.ScreenUpdating = true;
             }
             catch (Exception ex)
             {
                 app.ScreenUpdating = true;
-                throw new Exception($"Lỗi chèn vào vị trí đang chọn: {ex.Message}", ex);
+                throw new Exception($"Lỗi chèn vào vị trí chỉ định: {ex.Message}", ex);
             }
             finally
             {

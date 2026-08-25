@@ -57,12 +57,26 @@ namespace ExcelSupport
 
             HookExcelEvents();
 
+            try
+            {
+                _excelApp?.OnKey("^+Q", "OracleQuickQueryCommand");
+                _excelApp?.OnKey("^+q", "OracleQuickQueryCommand");
+            }
+            catch { }
+
             QueueRefresh();
         }
 
         public void AutoClose()
         {
             UnhookExcelEvents();
+
+            try
+            {
+                _excelApp?.OnKey("^+Q");
+                _excelApp?.OnKey("^+q");
+            }
+            catch { }
 
             if (MainViewModel != null)
             {
@@ -4344,6 +4358,18 @@ namespace ExcelSupport
         }
 
         #endregion
+    }
+
+    public static class OracleCommands
+    {
+        [ExcelDna.Integration.ExcelCommand(ShortCut = "^+Q", Name = "OracleQuickQueryCommand")]
+        public static void OpenOracleQuickQuery()
+        {
+            ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                Views.OracleQuickQueryDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+            });
+        }
     }
 }
 

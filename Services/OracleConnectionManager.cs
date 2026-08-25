@@ -132,5 +132,77 @@ namespace ExcelSupport.Services
             }
             return false;
         }
+
+        public static OracleConnectionProfile? GetDefaultProfile()
+        {
+            var list = GetProfiles();
+            if (list.Count == 0) return null;
+            return list.FirstOrDefault(p => p.IsDefault) ?? list.FirstOrDefault();
+        }
+
+        public static bool SetDefaultProfile(string profileId)
+        {
+            var list = GetProfiles().ToList();
+            bool found = false;
+            foreach (var p in list)
+            {
+                if (p.Id == profileId)
+                {
+                    p.IsDefault = true;
+                    found = true;
+                }
+                else
+                {
+                    p.IsDefault = false;
+                }
+            }
+            if (found)
+            {
+                return Save(list);
+            }
+            return false;
+        }
+
+        #region Last Compare Session History
+
+        private static readonly string LastSessionFilePath = Path.Combine(ConfigDirectory, "oracle_last_compare.json");
+
+        public static OracleLastCompareSession? GetLastSession()
+        {
+            try
+            {
+                if (File.Exists(LastSessionFilePath))
+                {
+                    string json = File.ReadAllText(LastSessionFilePath);
+                    return JsonConvert.DeserializeObject<OracleLastCompareSession>(json);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OracleConnectionManager] GetLastSession error: {ex.Message}");
+            }
+            return null;
+        }
+
+        public static bool SaveLastSession(OracleLastCompareSession session)
+        {
+            try
+            {
+                if (!Directory.Exists(ConfigDirectory))
+                {
+                    Directory.CreateDirectory(ConfigDirectory);
+                }
+                string json = JsonConvert.SerializeObject(session, Formatting.Indented);
+                File.WriteAllText(LastSessionFilePath, json);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OracleConnectionManager] SaveLastSession error: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
     }
 }

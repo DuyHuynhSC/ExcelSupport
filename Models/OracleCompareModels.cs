@@ -45,12 +45,22 @@ namespace ExcelSupport.Models
         private string _defaultSchema = "";
         private string _defaultTable = "";
         private string _defaultWhereClause = "";
+        private bool _isDefault = false;
 
         public string Id
         {
             get => _id;
             set { _id = value; OnPropertyChanged(nameof(Id)); }
         }
+
+        public bool IsDefault
+        {
+            get => _isDefault;
+            set { _isDefault = value; OnPropertyChanged(nameof(IsDefault)); OnPropertyChanged(nameof(DefaultBadge)); }
+        }
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string DefaultBadge => IsDefault ? "⭐ (Mặc định)" : "";
 
         public string Name
         {
@@ -142,12 +152,21 @@ namespace ExcelSupport.Models
                 Password = this.Password,
                 DefaultSchema = this.DefaultSchema,
                 DefaultTable = this.DefaultTable,
-                DefaultWhereClause = this.DefaultWhereClause
+                DefaultWhereClause = this.DefaultWhereClause,
+                IsDefault = false
             };
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public class OracleQuickQueryOptions
+    {
+        public bool IncludeTitle { get; set; } = true;
+        public bool IncludeHeaders { get; set; } = true;
+        public bool AutoFitColumns { get; set; } = true;
+        public int MaxRows { get; set; } = 0;
     }
 
     public class OracleConnectionConfig : INotifyPropertyChanged
@@ -371,4 +390,29 @@ namespace ExcelSupport.Models
         public int MissingInBCount => DiffItems.Count(r => r.Status == OracleRowDiffStatus.MissingInB);
         public TimeSpan ExecutionTime { get; set; }
     }
+
+    public class OracleLastCompareSession
+    {
+        public string? ProfileIdA { get; set; }
+        public string? ProfileNameA { get; set; }
+        public string? SchemaA { get; set; }
+        public string? TableA { get; set; }
+        public string? WhereClauseA { get; set; }
+
+        public string? ProfileIdB { get; set; }
+        public string? ProfileNameB { get; set; }
+        public string? SchemaB { get; set; }
+        public string? TableB { get; set; }
+        public string? WhereClauseB { get; set; }
+
+        public OracleCompareMode Mode { get; set; } = OracleCompareMode.ByKeyColumns;
+        public OracleReportLayout ReportLayout { get; set; } = OracleReportLayout.StackedTopBottom;
+        public string HighlightColorHex { get; set; } = "#EF4444";
+        public bool IgnoreWhitespace { get; set; } = true;
+        public bool IgnoreCase { get; set; } = false;
+        public int MaxRows { get; set; } = 0;
+        public string? TargetAddress { get; set; }
+        public List<string> SelectedKeyColumns { get; set; } = new List<string>();
+    }
 }
+

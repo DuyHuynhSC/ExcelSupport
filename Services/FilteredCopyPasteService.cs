@@ -134,23 +134,45 @@ namespace ExcelSupport.Services
                 int startRow = destRng.Row;
                 int startCol = destRng.Column;
                 int destTotalRows = destRng.Rows.Count;
-                int destTotalCols = destRng.Columns.Count;
-
                 int maxRowsToScan = ws.Rows.Count;
-                int rowsToPaste = (destTotalRows > 1) ? destTotalRows : srcRows;
 
                 var visibleTargetRows = new List<int>();
-                int currentRow = startRow;
                 int hiddenCount = 0;
 
-                // Nếu người dùng chọn 1 ô đơn, ta quét tìm đủ số dòng hiển thị tương ứng với nguồn
-                // Nếu người dùng chọn 1 vùng nhiều dòng, ta quét các dòng hiển thị trong vùng đó
-                if (destTotalRows == 1)
+                if (destTotalRows > 1)
                 {
+                    Range? visibleDest = null;
+                    try { visibleDest = destRng.SpecialCells(XlCellType.xlCellTypeVisible); }
+                    catch { visibleDest = destRng; }
+
+                    if (visibleDest != null)
+                    {
+                        var rowSet = new SortedSet<int>();
+                        foreach (Range area in visibleDest.Areas)
+                        {
+                            int areaStart = area.Row;
+                            int areaCount = area.Rows.Count;
+                            for (int r = 0; r < areaCount; r++)
+                            {
+                                rowSet.Add(areaStart + r);
+                            }
+                        }
+                        visibleTargetRows.AddRange(rowSet);
+                    }
+                    hiddenCount = destTotalRows - visibleTargetRows.Count;
+                }
+                else
+                {
+                    // Nếu chọn 1 ô đơn, tìm đủ srcRows dòng hiển thị từ startRow trở xuống
+                    int currentRow = startRow;
                     while (visibleTargetRows.Count < srcRows && currentRow <= maxRowsToScan)
                     {
                         Range rowRng = ws.Rows[currentRow];
-                        if (rowRng.Hidden == false && rowRng.EntireRow.Hidden == false)
+                        bool isHidden = false;
+                        try { isHidden = Convert.ToBoolean(rowRng.EntireRow.Hidden); }
+                        catch { }
+
+                        if (!isHidden)
                         {
                             visibleTargetRows.Add(currentRow);
                         }
@@ -159,21 +181,6 @@ namespace ExcelSupport.Services
                             hiddenCount++;
                         }
                         currentRow++;
-                    }
-                }
-                else
-                {
-                    for (int r = startRow; r < startRow + destTotalRows; r++)
-                    {
-                        Range rowRng = ws.Rows[r];
-                        if (rowRng.Hidden == false && rowRng.EntireRow.Hidden == false)
-                        {
-                            visibleTargetRows.Add(r);
-                        }
-                        else
-                        {
-                            hiddenCount++;
-                        }
                     }
                 }
 
@@ -213,7 +220,7 @@ namespace ExcelSupport.Services
                     for (int c = 0; c < srcCols; c++)
                     {
                         int targetColIdx = startCol + c;
-                        object? val = rowData[c];
+                        object? val = (c < rowData.Count) ? rowData[c] : null;
 
                         if (options.SkipBlanks && (val == null || string.IsNullOrWhiteSpace(val.ToString())))
                         {
@@ -301,19 +308,11 @@ namespace ExcelSupport.Services
                 int baseRow = area.Row;
                 int baseCol = area.Column;
 
-                object[,] valArray;
-                object[,] formulaArray;
+                object? rawValues = area.Value2;
+                object? rawFormulas = area.Formula;
 
-                if (rowCount == 1 && colCount == 1)
-                {
-                    valArray = new object[1, 1] { { area.Value2 } };
-                    formulaArray = new object[1, 1] { { area.Formula } };
-                }
-                else
-                {
-                    valArray = (object[,])area.Value2;
-                    formulaArray = (object[,])area.Formula;
-                }
+                object?[,]? valArray = rawValues as object[,];
+                object?[,]? formulaArray = rawFormulas as object[,];
 
                 for (int r = 1; r <= rowCount; r++)
                 {
@@ -327,8 +326,11 @@ namespace ExcelSupport.Services
                     for (int c = 1; c <= colCount; c++)
                     {
                         int actualCol = baseCol + c - 1;
-                        rowDictValues[actualRow][actualCol] = valArray[r, c];
-                        rowDictFormulas[actualRow][actualCol] = formulaArray[r, c]?.ToString();
+                        object? val = (valArray != null) ? valArray[r, c] : rawValues;
+                        string? formula = (formulaArray != null) ? formulaArray[r, c]?.ToString() : rawFormulas?.ToString();
+
+                        rowDictValues[actualRow][actualCol] = val;
+                        rowDictFormulas[actualRow][actualCol] = formula;
                     }
                 }
             }

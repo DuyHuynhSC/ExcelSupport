@@ -130,6 +130,14 @@ namespace ExcelSupport.Ribbon
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnOracleTableCompare' />
+
+          <button id='btnOracleQuickQuery'
+                  size='large'
+                  image='oracle_query_icon'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnOracleQuickQuery' />
         </group>
 
         <!-- Group 4: Xử Lý Dữ Liệu -->
@@ -366,6 +374,10 @@ namespace ExcelSupport.Ribbon
             if (imageId == "oracle_compare_icon")
             {
                 return CreateOracleCompareBitmap();
+            }
+            if (imageId == "oracle_query_icon")
+            {
+                return CreateOracleQuickQueryBitmap();
             }
             if (imageId == "doctor_formula_icon")
             {
@@ -646,6 +658,64 @@ namespace ExcelSupport.Ribbon
                     // Mũi tên dưới: <-
                     g.DrawLine(arrowPen, 13, 26, 21, 26);
                     g.DrawLine(arrowPen, 15, 28, 12, 26);
+                }
+            }
+            return bmp;
+        }
+
+        private Bitmap CreateOracleQuickQueryBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // 1. Database Block (Oracle Red-Orange #EA580C)
+                using (var brushDb = new LinearGradientBrush(new Rectangle(4, 5, 24, 22),
+                    Color.FromArgb(234, 88, 12), Color.FromArgb(180, 50, 8), 45f))
+                {
+                    FillRoundedRectangle(g, brushDb, new Rectangle(4, 5, 24, 22), 3);
+                }
+                using (var penDb = new Pen(Color.FromArgb(154, 52, 18), 1f))
+                {
+                    DrawRoundedRectangle(g, penDb, new Rectangle(4, 5, 24, 22), 3);
+                }
+
+                // Các vạch đĩa Database
+                using (var diskPen = new Pen(Color.FromArgb(254, 215, 170), 1.2f))
+                {
+                    g.DrawLine(diskPen, 7, 11, 25, 11);
+                    g.DrawLine(diskPen, 7, 17, 25, 17);
+                    g.DrawLine(diskPen, 7, 23, 25, 23);
+                }
+
+                // 2. Tia sét / Flash Query màu vàng sáng (#F59E0B / #FEF08A)
+                Point[] lightning = new Point[]
+                {
+                    new Point(18, 3),
+                    new Point(11, 15),
+                    new Point(16, 15),
+                    new Point(13, 27),
+                    new Point(23, 13),
+                    new Point(18, 13)
+                };
+
+                using (var shadowBrush = new SolidBrush(Color.FromArgb(100, 0, 0, 0)))
+                {
+                    Point[] shadowPoints = lightning.Select(p => new Point(p.X + 1, p.Y + 1)).ToArray();
+                    g.FillPolygon(shadowBrush, shadowPoints);
+                }
+
+                using (var boltBrush = new LinearGradientBrush(new Rectangle(11, 3, 12, 24),
+                    Color.FromArgb(254, 240, 138), Color.FromArgb(245, 158, 11), 90f))
+                {
+                    g.FillPolygon(boltBrush, lightning);
+                }
+                using (var boltPen = new Pen(Color.FromArgb(180, 83, 9), 1f))
+                {
+                    g.DrawPolygon(boltPen, lightning);
                 }
             }
             return bmp;
@@ -981,6 +1051,11 @@ namespace ExcelSupport.Ribbon
         public void OnOracleTableCompare(IRibbonControl control)
         {
             Views.OracleTableCompareDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnOracleQuickQuery(IRibbonControl control)
+        {
+            Views.OracleQuickQueryDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnAdvancedFilter(IRibbonControl control)

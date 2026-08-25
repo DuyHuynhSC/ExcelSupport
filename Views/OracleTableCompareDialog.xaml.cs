@@ -44,9 +44,94 @@ namespace ExcelSupport.Views
             // Load saved connection profiles
             RefreshProfilesList();
 
+            // Default target address from active cell
+            InitActiveLocation();
+
+            // Restore last compare session (profiles, tables, where clauses, options)
+            RestoreLastSession();
+
             if (_isDarkTheme)
             {
                 ApplyDarkTheme();
+            }
+        }
+
+        private void InitActiveLocation()
+        {
+            try
+            {
+                var app = AddInEvents.Instance?.ExcelAppInstance;
+                if (app?.ActiveCell is Microsoft.Office.Interop.Excel.Range cell)
+                {
+                    txtInsertLocation.Text = $"{cell.Worksheet.Name}!{cell.Address[false, false]}";
+                }
+            }
+            catch { }
+        }
+
+        private void RestoreLastSession()
+        {
+            try
+            {
+                var session = OracleConnectionManager.GetLastSession();
+                if (session == null) return;
+
+                if (!string.IsNullOrEmpty(session.ProfileIdA))
+                {
+                    var pA = _profiles.FirstOrDefault(p => p.Id == session.ProfileIdA || p.Name == session.ProfileNameA);
+                    if (pA != null) cboProfileA.SelectedItem = pA;
+                }
+                if (!string.IsNullOrEmpty(session.ProfileIdB))
+                {
+                    var pB = _profiles.FirstOrDefault(p => p.Id == session.ProfileIdB || p.Name == session.ProfileNameB);
+                    if (pB != null) cboProfileB.SelectedItem = pB;
+                }
+
+                if (!string.IsNullOrEmpty(session.WhereClauseA)) txtWhereA.Text = session.WhereClauseA;
+                if (!string.IsNullOrEmpty(session.WhereClauseB)) txtWhereB.Text = session.WhereClauseB;
+
+                if (!string.IsNullOrEmpty(session.SchemaA)) cboSchemaA.Text = session.SchemaA;
+                if (!string.IsNullOrEmpty(session.TableA)) cboTableA.Text = session.TableA;
+                if (!string.IsNullOrEmpty(session.SchemaB)) cboSchemaB.Text = session.SchemaB;
+                if (!string.IsNullOrEmpty(session.TableB)) cboTableB.Text = session.TableB;
+
+                chkIgnoreSpaces.IsChecked = session.IgnoreWhitespace;
+                chkIgnoreCase.IsChecked = session.IgnoreCase;
+                txtMaxRows.Text = session.MaxRows.ToString();
+
+                if (session.Mode == OracleCompareMode.Sequential) rbModeSeq.IsChecked = true;
+                else rbModeKey.IsChecked = true;
+
+                if (!string.IsNullOrEmpty(session.HighlightColorHex))
+                {
+                    foreach (ComboBoxItem item in cboHighlightColor.Items)
+                    {
+                        if (string.Equals(item.Tag?.ToString(), session.HighlightColorHex, StringComparison.OrdinalIgnoreCase))
+                        {
+                            cboHighlightColor.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+
+                foreach (ComboBoxItem item in cboReportLayout.Items)
+                {
+                    string targetTag = session.ReportLayout == OracleReportLayout.SideBySide ? "SideBySide" : "Stacked";
+                    if (string.Equals(item.Tag?.ToString(), targetTag, StringComparison.OrdinalIgnoreCase))
+                    {
+                        cboReportLayout.SelectedItem = item;
+                        break;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(session.TargetAddress))
+                {
+                    txtInsertLocation.Text = session.TargetAddress;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RestoreLastSession] error: {ex.Message}");
             }
         }
 
@@ -188,6 +273,22 @@ namespace ExcelSupport.Views
             OracleConnectionManager.AddOrUpdateProfile(newProfile);
             RefreshProfilesList();
             lstProfiles.SelectedItem = _profiles.FirstOrDefault(p => p.Id == newProfile.Id);
+        }
+
+        private void BtnSetDefaultProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
+            {
+                OracleConnectionManager.SetDefaultProfile(p.Id);
+                RefreshProfilesList();
+                lstProfiles.SelectedItem = _profiles.FirstOrDefault(x => x.Id == p.Id);
+                txtSettingStatus.Text = $"Đã đặt '{p.Name}' làm kết nối mặc định.";
+            }
+            else
+            {
+                WpfMessageBox.Show("Vui lòng chọn một cấu hình kết nối trong danh sách để đặt làm mặc định.",
+                                   "Chưa chọn kết nối", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+            }
         }
 
         private void BtnCloneProfile_Click(object sender, RoutedEventArgs e)
@@ -620,6 +721,36 @@ namespace ExcelSupport.Views
                     WpfMessageBox.Show("Tuyệt vời! Dữ liệu của 2 bảng hoàn toàn khớp 100% không có bất kỳ sai lệch nào.",
                                        "Khớp Hoàn Hảo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
                 }
+
+                // Save compare session to history
+                try
+                {
+                    var session = new OracleLastCompareSession
+                    {
+                        ProfileIdA = (cboProfileA.SelectedItem as OracleConnectionProfile)?.Id,
+                        ProfileNameA = (cboProfileA.SelectedItem as OracleConnectionProfile)?.Name,
+                        SchemaA = schemaA,
+                        TableA = tableA,
+                        WhereClauseA = txtWhereA.Text.Trim(),
+
+                        ProfileIdB = (cboProfileB.SelectedItem as OracleConnectionProfile)?.Id,
+                        ProfileNameB = (cboProfileB.SelectedItem as OracleConnectionProfile)?.Name,
+                        SchemaB = schemaB,
+                        TableB = tableB,
+                        WhereClauseB = txtWhereB.Text.Trim(),
+
+                        Mode = options.Mode,
+                        ReportLayout = layout,
+                        HighlightColorHex = highlightHex,
+                        IgnoreWhitespace = chkIgnoreSpaces.IsChecked == true,
+                        IgnoreCase = chkIgnoreCase.IsChecked == true,
+                        MaxRows = maxRows,
+                        TargetAddress = txtInsertLocation.Text.Trim(),
+                        SelectedKeyColumns = _tableColumns.Where(c => c.IsSelectedKey).Select(c => c.ColumnName).ToList()
+                    };
+                    OracleConnectionManager.SaveLastSession(session);
+                }
+                catch { }
             }
             catch (Exception ex)
             {
@@ -730,6 +861,50 @@ namespace ExcelSupport.Views
 
         #region Export Actions
 
+        private void BtnPickInsertLocation_Click(object sender, RoutedEventArgs e)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            if (app == null) return;
+
+            try
+            {
+                this.Visibility = Visibility.Hidden;
+
+                dynamic excelApp = app;
+                dynamic result = excelApp.InputBox(
+                    Prompt: LocalizationService.Get("Oracle_PromptPickLocation") ?? "Chọn ô bắt đầu chèn dữ liệu:",
+                    Title: LocalizationService.Get("Oracle_TitlePickLocation") ?? "Vị Trí Chèn Dữ Liệu",
+                    Default: txtInsertLocation.Text.Trim(),
+                    Type: 8);
+
+                this.Visibility = Visibility.Visible;
+                this.Activate();
+
+                if (result is Microsoft.Office.Interop.Excel.Range targetRange)
+                {
+                    txtInsertLocation.Text = $"{targetRange.Worksheet.Name}!{targetRange.Address[false, false]}";
+                }
+            }
+            catch
+            {
+                this.Visibility = Visibility.Visible;
+                this.Activate();
+            }
+        }
+
+        private void BtnRefreshInsertLocation_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var app = AddInEvents.Instance?.ExcelAppInstance;
+                if (app?.ActiveCell is Microsoft.Office.Interop.Excel.Range cell)
+                {
+                    txtInsertLocation.Text = $"{cell.Worksheet.Name}!{cell.Address[false, false]}";
+                }
+            }
+            catch { }
+        }
+
         private void BtnInsertActiveSelection_Click(object sender, RoutedEventArgs e)
         {
             if (_lastResult == null)
@@ -748,11 +923,36 @@ namespace ExcelSupport.Views
                     return;
                 }
 
-                txtStatus.Text = "Đang chèn dữ liệu so sánh vào vùng chọn hiện tại...";
-                OracleDataCompareService.InsertDiffToActiveSelection(_lastResult, app);
+                Microsoft.Office.Interop.Excel.Range? targetRange = null;
+                string loc = txtInsertLocation.Text.Trim();
+                if (!string.IsNullOrWhiteSpace(loc))
+                {
+                    try
+                    {
+                        if (loc.Contains("!"))
+                        {
+                            var parts = loc.Split('!');
+                            string wsName = parts[0].Replace("'", "");
+                            string addr = parts[1];
+                            Microsoft.Office.Interop.Excel.Worksheet ws = app.Worksheets[wsName];
+                            targetRange = ws.Range[addr];
+                        }
+                        else
+                        {
+                            targetRange = (app.ActiveSheet as Microsoft.Office.Interop.Excel.Worksheet)?.Range[loc];
+                        }
+                    }
+                    catch
+                    {
+                        targetRange = null;
+                    }
+                }
 
-                txtStatus.Text = "Đã chèn và tô màu sai lệch vào vị trí đang chọn thành công!";
-                WpfMessageBox.Show("Dữ liệu so sánh đã được ghi thẳng vào vùng ô đang chọn và tô màu sai lệch thành công!",
+                txtStatus.Text = "Đang chèn dữ liệu so sánh vào vị trí được chỉ định...";
+                OracleDataCompareService.InsertDiffToActiveSelection(_lastResult, app, targetRange);
+
+                txtStatus.Text = "Đã chèn và tô màu sai lệch vào vị trí thành công!";
+                WpfMessageBox.Show("Dữ liệu so sánh đã được ghi thẳng vào vị trí chỉ định và tô màu sai lệch thành công!",
                                    "Hoàn tất chèn dữ liệu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
             }
             catch (Exception ex)
