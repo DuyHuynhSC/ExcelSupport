@@ -46,11 +46,12 @@ namespace ExcelSupport.Ribbon
                   onAction='OnRefreshTree' />
         </group>
 
-        <!-- Group 2: Thao tác sắp xếp & tiện ích -->
+        <!-- Group 2: Thao Tác Nhanh -->
         <group id='grpQuickTools' getLabel='GetRibbonLabel'>
           <button id='btnCreateTOC'
                   size='normal'
                   imageMso='TableOfContentsInsert'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -59,6 +60,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnSplitSheets'
                   size='normal'
                   imageMso='ExportExcelPath'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -67,6 +69,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnMergeSheets'
                   size='normal'
                   imageMso='Consolidate'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -75,6 +78,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnQuickSortAZ'
                   size='normal'
                   imageMso='SortAscendingExcel'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -83,6 +87,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnQuickSortZA'
                   size='normal'
                   imageMso='SortDescendingExcel'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -91,6 +96,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnCloseCurrentWb'
                   size='normal'
                   imageMso='FileClose'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -102,6 +108,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnCompareWorkbooks'
                   size='large'
                   image='compare_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -110,6 +117,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnCheckVietnamese'
                   size='large'
                   imageMso='Spelling'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -118,6 +126,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnExternalLinks'
                   size='large'
                   image='link_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -126,6 +135,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnOracleTableCompare'
                   size='large'
                   image='oracle_compare_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -134,6 +144,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnOracleQuickQuery'
                   size='large'
                   image='oracle_query_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -146,6 +157,7 @@ namespace ExcelSupport.Ribbon
             <button id='btnAdvancedFilter'
                     size='normal'
                     image='filter_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
@@ -154,12 +166,13 @@ namespace ExcelSupport.Ribbon
             <button id='btnDataCleaner'
                     size='normal'
                     image='cleaner_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
                     onAction='OnDataCleaner' />
 
-            <splitButton id='splitFilteredCopyPaste' size='normal'>
+            <splitButton id='splitFilteredCopyPaste' size='normal' getVisible='GetControlVisible'>
               <button id='btnFilteredCopyPasteWizard'
                       image='filtered_paste_icon'
                       getLabel='GetRibbonLabel'
@@ -194,6 +207,7 @@ namespace ExcelSupport.Ribbon
             <button id='btnDuplicateFinder'
                     size='normal'
                     image='duplicate_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
@@ -202,6 +216,7 @@ namespace ExcelSupport.Ribbon
             <button id='btnBatchBlankCleaner'
                     size='normal'
                     image='blank_cleaner_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
@@ -210,6 +225,7 @@ namespace ExcelSupport.Ribbon
             <button id='btnBatchFindReplace'
                     size='normal'
                     image='find_replace_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
@@ -220,6 +236,7 @@ namespace ExcelSupport.Ribbon
             <button id='btnVisualTableMerge'
                     size='normal'
                     image='table_merge_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
@@ -228,6 +245,7 @@ namespace ExcelSupport.Ribbon
             <button id='btnFuzzyDuplicate'
                     size='normal'
                     image='fuzzy_duplicate_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
@@ -236,6 +254,7 @@ namespace ExcelSupport.Ribbon
             <button id='btnSafeMergeConsolidate'
                     size='normal'
                     image='merge_icon'
+                    getVisible='GetControlVisible'
                     getLabel='GetRibbonLabel'
                     getScreentip='GetRibbonScreentip'
                     getSupertip='GetRibbonSupertip'
@@ -243,15 +262,25 @@ namespace ExcelSupport.Ribbon
           </box>
         </group>
 
-        <!-- Group 5: Quản Trị Tập Tin -->
+        <!-- Group 5: Quản Trị Tập Tin & Thiết Kế -->
         <group id='grpFileTools' getLabel='GetRibbonLabel'>
           <button id='btnBatchFileConverter'
                   size='large'
                   image='file_converter_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnBatchFileConverter' />
+
+          <button id='btnDesignPageCounter'
+                  size='large'
+                  image='page_counter_icon'
+                  getVisible='GetControlVisible'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnDesignPageCounter' />
         </group>
 
         <!-- Group 6: Thước Ngắm & Hiển Thị -->
@@ -296,6 +325,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnAiFormula'
                   size='large'
                   image='ai_formula_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -304,6 +334,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnAiFormulaDoctor'
                   size='large'
                   image='doctor_formula_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -312,6 +343,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnSnapshotRollback'
                   size='large'
                   image='snapshot_rollback_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -320,6 +352,7 @@ namespace ExcelSupport.Ribbon
           <button id='btnUserManual'
                   size='large'
                   image='manual_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
@@ -328,6 +361,14 @@ namespace ExcelSupport.Ribbon
 
         <!-- Group 8: Cài Đặt & Ngôn Ngữ -->
         <group id='grpSettings' getLabel='GetRibbonLabel'>
+          <button id='btnCustomizeRibbon'
+                  size='large'
+                  image='ribbon_settings_icon'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnCustomizeRibbon' />
+
           <menu id='mnuLanguage'
                 size='large'
                 image='globe_lang_icon'
@@ -363,6 +404,10 @@ namespace ExcelSupport.Ribbon
 
         public override object? LoadImage(string imageId)
         {
+            if (imageId == "ribbon_settings_icon")
+            {
+                return CreateRibbonSettingsBitmap();
+            }
             if (imageId == "navigator_icon")
             {
                 return CreateNavigatorBitmap();
@@ -430,6 +475,10 @@ namespace ExcelSupport.Ribbon
             if (imageId == "file_converter_icon")
             {
                 return CreateFileConverterBitmap();
+            }
+            if (imageId == "page_counter_icon")
+            {
+                return CreatePageCounterBitmap();
             }
             if (imageId == "filtered_paste_icon")
             {
@@ -508,6 +557,65 @@ namespace ExcelSupport.Ribbon
                 return CreateModeIcon("Col");
             }
             return base.LoadImage(imageId);
+        }
+
+        private Bitmap CreateRibbonSettingsBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Background soft slate circle
+                using (var bgBrush = new SolidBrush(Color.FromArgb(241, 245, 249)))
+                {
+                    g.FillEllipse(bgBrush, 2, 2, 28, 28);
+                }
+
+                // Slate border
+                using (var pen = new Pen(Color.FromArgb(148, 163, 184), 1.5f))
+                {
+                    g.DrawEllipse(pen, 2, 2, 28, 28);
+                }
+
+                // Gear center circle
+                using (var gearBrush = new SolidBrush(Color.FromArgb(71, 85, 105)))
+                {
+                    g.FillEllipse(gearBrush, 9, 9, 14, 14);
+                }
+
+                // Center hole
+                using (var holeBrush = new SolidBrush(Color.FromArgb(241, 245, 249)))
+                {
+                    g.FillEllipse(holeBrush, 13, 13, 6, 6);
+                }
+
+                // Gear teeth (8 teeth around)
+                using (var toothPen = new Pen(Color.FromArgb(71, 85, 105), 3f))
+                {
+                    toothPen.StartCap = LineCap.Round;
+                    toothPen.EndCap = LineCap.Round;
+                    // Horizontal & Vertical teeth
+                    g.DrawLine(toothPen, 16, 5, 16, 9);
+                    g.DrawLine(toothPen, 16, 23, 16, 27);
+                    g.DrawLine(toothPen, 5, 16, 9, 16);
+                    g.DrawLine(toothPen, 23, 16, 27, 16);
+                    // Diagonal teeth
+                    g.DrawLine(toothPen, 8, 8, 11, 11);
+                    g.DrawLine(toothPen, 21, 21, 24, 24);
+                    g.DrawLine(toothPen, 24, 8, 21, 11);
+                    g.DrawLine(toothPen, 8, 24, 11, 21);
+                }
+
+                // Sparkle / Accent dot (Indigo #6366F1)
+                using (var accentBrush = new SolidBrush(Color.FromArgb(99, 102, 241)))
+                {
+                    g.FillEllipse(accentBrush, 20, 4, 7, 7);
+                }
+            }
+            return bmp;
         }
 
         private Bitmap CreateCompareBitmap()
@@ -953,6 +1061,23 @@ namespace ExcelSupport.Ribbon
             _ribbon?.Invalidate();
         }
 
+        public bool GetControlVisible(IRibbonControl control)
+        {
+            return Services.RibbonVisibilityService.IsControlVisible(control.Id);
+        }
+
+        public void OnCustomizeRibbon(IRibbonControl control)
+        {
+            try
+            {
+                Views.RibbonCustomizeDialog.ShowWindow();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Không thể mở Tùy chỉnh Ribbon:\n{ex.Message}", "Lỗi giao diện", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         public void InvalidateRibbon()
         {
             _ribbon?.Invalidate();
@@ -1096,6 +1221,11 @@ namespace ExcelSupport.Ribbon
         public void OnBatchFileConverter(IRibbonControl control)
         {
             Views.BatchFileConverterDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnDesignPageCounter(IRibbonControl control)
+        {
+            Views.DesignPageCounterDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnSafeMergeConsolidate(IRibbonControl control)
@@ -1931,6 +2061,45 @@ namespace ExcelSupport.Ribbon
                 using (var p = new Pen(Color.White, 2f))
                 {
                     g.DrawArc(p, 17, 17, 10, 10, 0, 270);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreatePageCounterBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Nền trang tài liệu
+                using (var pageBrush = new SolidBrush(Color.FromArgb(241, 245, 249)))
+                using (var borderPen = new Pen(Color.FromArgb(37, 99, 235), 1.5f))
+                {
+                    g.FillRectangle(pageBrush, 4, 3, 20, 26);
+                    g.DrawRectangle(borderPen, 4, 3, 20, 26);
+                }
+
+                // Các dòng text mô phỏng
+                using (var lineBrush = new SolidBrush(Color.FromArgb(148, 163, 184)))
+                {
+                    g.FillRectangle(lineBrush, 7, 7, 14, 2);
+                    g.FillRectangle(lineBrush, 7, 11, 14, 2);
+                    g.FillRectangle(lineBrush, 7, 15, 10, 2);
+                }
+
+                // Huy hiệu đếm số trang xanh lá ở góc phải
+                using (var badge = new SolidBrush(Color.FromArgb(22, 163, 74)))
+                {
+                    g.FillEllipse(badge, 14, 14, 16, 16);
+                }
+
+                using (var font = new System.Drawing.Font("Arial", 8.5f, System.Drawing.FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    g.DrawString("12", font, textBrush, 14.5f, 15.5f);
                 }
             }
             return bmp;

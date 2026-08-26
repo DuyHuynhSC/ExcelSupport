@@ -1,0 +1,645 @@
+<Window x:Class="ExcelSupport.Views.DesignPageCounterDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        mc:Ignorable="d"
+        Title="{loc:Loc PageCounter_Title}"
+        Height="700" Width="920"
+        MinHeight="580" MinWidth="800"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        KeyDown="Window_KeyDown">
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
+        <!-- Primary Action Button -->
+        <Style x:Key="PrimaryActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Success Action Button -->
+        <Style x:Key="SuccessActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#16A34A"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#15803D"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Action Button -->
+        <Style x:Key="SecondaryActionBtn" TargetType="Button">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                    <Setter Property="Background" Value="#F1F5F9"/>
+                    <Setter Property="Foreground" Value="#334155"/>
+                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style TargetType="ComboBox">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="Background" Value="#1E293B"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- CheckBox Style -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- DataGrid Style -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="RowBackground" Value="#FFFFFF"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E2E8F0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="RowHeight" Value="28"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                    <Setter Property="RowBackground" Value="#1E293B"/>
+                    <Setter Property="AlternatingRowBackground" Value="#0F172A"/>
+                    <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 0. Header -->
+            <RowDefinition Height="Auto"/> <!-- 1. Source & Options Configuration -->
+            <RowDefinition Height="*"/>    <!-- 2. Results Dashboard -->
+            <RowDefinition Height="Auto"/> <!-- 3. Footer Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 0. HEADER ==================== -->
+        <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="20,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📑" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc PageCounter_Header}" FontWeight="Bold" FontSize="14.5">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Text="{loc:Loc PageCounter_SubHeader}" FontSize="11.5" TextWrapping="Wrap" Margin="26,3,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#64748B"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Badge -->
+                <Border Grid.Column="1" BorderThickness="1" CornerRadius="4" Padding="10,6" VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#EFF6FF"/>
+                            <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Background" Value="#1E3A8A"/>
+                                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="🎯 Template Diff Engine" FontSize="11" FontWeight="SemiBold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#2563EB"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#93C5FD"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 1. SOURCE & OPTIONS CONFIGURATION ==================== -->
+        <Border Grid.Row="1" BorderThickness="0,0,0,1" Padding="20,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#0F172A"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- File selectors -->
+                    <RowDefinition Height="Auto"/> <!-- Options & Button -->
+                </Grid.RowDefinitions>
+
+                <!-- Row 0: Target & Template Selector -->
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Target File -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{loc:Loc PageCounter_TargetFileLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#334155"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox ItemsSource="{Binding OpenWorkbooks}" SelectedItem="{Binding SelectedTargetWorkbook, Mode=TwoWay}" Height="30"/>
+                            <Button Grid.Column="1" Command="{Binding BrowseTargetFileCommand}" Style="{StaticResource SecondaryActionBtn}" Margin="4,0,0,0" Padding="8,4" Height="30" ToolTip="{loc:Loc PageCounter_BrowseTip}">
+                                <TextBlock Text="📁" FontSize="12"/>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Template File -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{loc:Loc PageCounter_TemplateFileLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#334155"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox ItemsSource="{Binding OpenWorkbooks}" SelectedItem="{Binding SelectedTemplateWorkbook, Mode=TwoWay}" Height="30"/>
+                            <Button Grid.Column="1" Command="{Binding BrowseTemplateFileCommand}" Style="{StaticResource SecondaryActionBtn}" Margin="4,0,0,0" Padding="8,4" Height="30" ToolTip="{loc:Loc PageCounter_BrowseTip}">
+                                <TextBlock Text="📁" FontSize="12"/>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Row 1: Options & Action Button -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <WrapPanel Grid.Column="0" VerticalAlignment="Center">
+                        <CheckBox Content="{loc:Loc PageCounter_OptIgnoreCover}" IsChecked="{Binding IgnoreCoverAndHistory, Mode=TwoWay}" Margin="0,0,16,0"/>
+                        <CheckBox Content="{loc:Loc PageCounter_OptIgnoreBlank}" IsChecked="{Binding IgnoreBlankPages, Mode=TwoWay}" Margin="0,0,16,0"/>
+                        <CheckBox Content="{loc:Loc PageCounter_OptCountShapes}" IsChecked="{Binding CountShapesAndPictures, Mode=TwoWay}" Margin="0,0,16,0"/>
+                    </WrapPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Command="{Binding RefreshWorkbooksCommand}" Style="{StaticResource SecondaryActionBtn}" Padding="8,4" Margin="0,0,8,0" Height="32" ToolTip="{loc:Loc PageCounter_RefreshTip}">
+                            <TextBlock Text="🔄" FontSize="12"/>
+                        </Button>
+                        <Button Command="{Binding AnalyzeCommand}" Style="{StaticResource PrimaryActionBtn}" Height="32" Padding="16,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔍" Margin="0,0,6,0"/>
+                                <TextBlock Text="{loc:Loc PageCounter_BtnAnalyze}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 2. RESULTS DASHBOARD ==================== -->
+        <Grid Grid.Row="2" Margin="20,14">
+            <!-- Progress Bar Overlay when analyzing -->
+            <Grid VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding IsAnalyzing, Converter={StaticResource BoolToVisConverter}}">
+                <StackPanel Width="320" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding ProgressMessage}" TextAlignment="Center" FontSize="12" Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#475569"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#F8FAFC"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ProgressBar Height="14" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Results View -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasResult}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Summary KPI Cards -->
+                    <RowDefinition Height="*"/>    <!-- Split View (Sheets Table + Page Breakdown) -->
+                </Grid.RowDefinitions>
+
+                <!-- Summary KPI Cards -->
+                <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Card 1: Total Print Pages -->
+                    <Border Grid.Column="0" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc PageCounter_CardTotalPages}" FontSize="11" Foreground="#1E40AF" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Result.TotalTargetPrintPages}" FontSize="20" FontWeight="Bold" Foreground="#1D4ED8" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 2: Template Pages (Excluded) -->
+                    <Border Grid.Column="1" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc PageCounter_CardTemplatePages}" FontSize="11" Foreground="#475569" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Result.TotalTemplatePages}" FontSize="20" FontWeight="Bold" Foreground="#334155" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 3: Net Work Pages -->
+                    <Border Grid.Column="2" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc PageCounter_CardWorkPages}" FontSize="11" Foreground="#166534" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Result.TotalWorkPages}" FontSize="20" FontWeight="Bold" Foreground="#15803D" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 4: Effort / Work Percent -->
+                    <Border Grid.Column="3" Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="12,8">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc PageCounter_CardWorkPercent}" FontSize="11" Foreground="#991B1B" FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding Result.OverallWorkPercent}" FontSize="20" FontWeight="Bold" Foreground="#DC2626"/>
+                                <TextBlock Text="%" FontSize="14" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Split View: Left Table of Sheets, Right Page Breakdown List -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="320"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: DataGrid of Sheets -->
+                    <Border Grid.Column="0" BorderThickness="1" CornerRadius="6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <DataGrid ItemsSource="{Binding Result.SheetResults}" SelectedItem="{Binding SelectedSheetResult, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColSheetName}" Binding="{Binding SheetName}" Width="*" FontWeight="SemiBold"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColStatus}" Binding="{Binding SummaryText}" Width="150"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColTotalPages}" Binding="{Binding TotalPrintPages}" Width="75"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColTemplatePages}" Binding="{Binding TemplatePagesCount}" Width="85"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColWorkPages}" Binding="{Binding WorkPagesCount}" Width="85"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColPercent}" Binding="{Binding WorkPercent, StringFormat={}{0}%}" Width="70"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Right: Selected Sheet Detail Page List -->
+                    <Border Grid.Column="2" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                                <TextBlock Text="{Binding SelectedSheetResult.SheetName, StringFormat=📄 Chi tiết trang: {0}}" FontWeight="Bold" FontSize="12.5">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#0F172A"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding SelectedSheetResult.SummaryText}" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding SelectedSheetResult.Pages}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,0,0,6">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#F8FAFC"/>
+                                                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsWorkPage}" Value="True">
+                                                                <Setter Property="Background" Value="#F0FDF4"/>
+                                                                <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="BlankPage">
+                                                                <Setter Property="Opacity" Value="0.6"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Border Grid.Column="0" Width="22" Height="22" CornerRadius="11" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#E2E8F0"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsWorkPage}" Value="True">
+                                                                        <Setter Property="Background" Value="#22C55E"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="{Binding PageNumber}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#475569"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsWorkPage}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding RangeAddress, StringFormat=Vùng in: {0}}" FontSize="11" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                                        <TextBlock Text="{Binding Description}" FontSize="10.5" Foreground="#64748B" Margin="0,1,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ==================== 3. FOOTER BAR ==================== -->
+        <Border Grid.Row="3" BorderThickness="0,1,0,0" Padding="20,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{loc:Loc PageCounter_FooterTip}" FontSize="11.5" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#64748B"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Command="{Binding ExportReportCommand}" Style="{StaticResource SuccessActionBtn}" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" Margin="0,0,6,0"/>
+                            <TextBlock Text="{loc:Loc PageCounter_BtnExport}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Content="{loc:Loc Common_Close}" Style="{StaticResource SecondaryActionBtn}" Click="BtnClose_Click" Width="80"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

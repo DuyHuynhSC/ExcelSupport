@@ -80,7 +80,16 @@ namespace ExcelSupport.Services
             int numRows = dt.Rows.Count;
             if (numCols == 0) return (0, 0);
 
-            Color titleColor = Color.FromArgb(37, 99, 235);       // Blue (#2563EB)
+            Color titleColor = Color.FromArgb(37, 99, 235);       // Blue (#2563EB) default
+            if (!string.IsNullOrWhiteSpace(options.TitleColorHex))
+            {
+                try
+                {
+                    titleColor = ColorTranslator.FromHtml(options.TitleColorHex);
+                }
+                catch { }
+            }
+
             Color headerBgColor = Color.FromArgb(110, 231, 183);   // Mint Green (#6EE7B7)
             Color headerTextColor = Color.FromArgb(6, 78, 59);     // Dark Green (#064E3B)
             Color borderColor = Color.FromArgb(156, 163, 175);     // Gray 400

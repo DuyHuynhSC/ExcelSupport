@@ -257,14 +257,6 @@ namespace ExcelSupport.Views
             }
         }
 
-        private void OnSelectAiSettingsTabClick(object sender, RoutedEventArgs e)
-        {
-            if (DataContext is TaskPaneViewModel vm)
-            {
-                vm.SelectedTabIndex = 2;
-            }
-        }
-
         private static T? FindAncestor<T>(DependencyObject current) where T : DependencyObject
         {
             while (current != null)

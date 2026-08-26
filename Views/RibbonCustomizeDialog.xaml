@@ -1,0 +1,428 @@
+<Window x:Class="ExcelSupport.Views.RibbonCustomizeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        xmlns:views="clr-namespace:ExcelSupport.Views"
+        mc:Ignorable="d"
+        Title="{loc:Loc Settings_Title}"
+        Height="620" Width="800"
+        MinHeight="500" MinWidth="680"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        KeyDown="Window_KeyDown">
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <!-- Modern TabItem Style -->
+        <Style x:Key="ModernTabItemStyle" TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="tabBorder" Background="Transparent" BorderBrush="Transparent" BorderThickness="0,0,0,3" Padding="16,10" Margin="0,0,4,0" Cursor="Hand">
+                            <ContentPresenter x:Name="tabContent" ContentSource="Header" TextBlock.FontWeight="SemiBold" TextBlock.FontSize="12.5" TextBlock.Foreground="#64748B"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="tabBorder" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#1E293B"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="#2563EB"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.FontWeight" Value="Bold"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#2563EB"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#94A3B8"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="tabBorder" Property="Background" Value="#1E293B"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#F8FAFC"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.FontWeight" Value="Bold"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#38BDF8"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Action Buttons -->
+        <Style x:Key="PrimaryActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#16A34A"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#15803D"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryActionBtn" TargetType="Button">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                    <Setter Property="Background" Value="#F1F5F9"/>
+                    <Setter Property="Foreground" Value="#334155"/>
+                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Search Input -->
+        <Style x:Key="SearchInputStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" Padding="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#2563EB"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="Foreground" Value="#1E293B"/>
+                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                    <Setter Property="CaretBrush" Value="#0F172A"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                    <Setter Property="CaretBrush" Value="#38BDF8"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 0. Header -->
+            <RowDefinition Height="*"/>    <!-- 1. Tabs Content -->
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 0. HEADER ==================== -->
+        <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="20,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="⚙️" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc Settings_Header}" FontWeight="Bold" FontSize="14.5">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Text="{loc:Loc Settings_SubHeader}" FontSize="11.5" TextWrapping="Wrap" Margin="26,3,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#64748B"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Badge -->
+                <Border Grid.Column="1" BorderThickness="1" CornerRadius="4" Padding="10,6" VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#EFF6FF"/>
+                            <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Background" Value="#1E3A8A"/>
+                                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="{loc:Loc RibbonCustomizer_InstantBadge}" FontSize="11" FontWeight="SemiBold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#2563EB"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#93C5FD"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 1. TABS CONTENT ==================== -->
+        <TabControl Grid.Row="1" x:Name="mainTabControl" Background="Transparent" BorderThickness="0" Margin="0" Padding="0">
+            <!-- ========== TAB 1: TÙY CHỈNH RIBBON & GIAO DIỆN ========== -->
+            <TabItem Header="{loc:Loc Settings_TabRibbon}" Style="{StaticResource ModernTabItemStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- 0. Theme Row -->
+                        <RowDefinition Height="Auto"/> <!-- 1. Toolbar -->
+                        <RowDefinition Height="*"/>    <!-- 2. Groups Content -->
+                        <RowDefinition Height="Auto"/> <!-- 3. Footer Bar -->
+                    </Grid.RowDefinitions>
+
+                    <!-- 0. THEME SELECTION -->
+                    <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="20,10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🌓" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{loc:Loc RibbonCustomizer_ThemeLabel}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#334155"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel.Resources>
+                                    <Style TargetType="RadioButton">
+                                        <Setter Property="Foreground" Value="#1E293B"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Resources>
+                                <RadioButton x:Name="rbLightTheme" Content="{loc:Loc RibbonCustomizer_ThemeLight}" GroupName="AppTheme" FontSize="12" Margin="0,0,20,0" IsChecked="True"/>
+                                <RadioButton x:Name="rbDarkTheme" Content="{loc:Loc RibbonCustomizer_ThemeDark}" GroupName="AppTheme" FontSize="12"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- 1. TOOLBAR -->
+                    <Border Grid.Row="1" BorderThickness="0,0,0,1" Padding="20,8">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#0F172A"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Filter / Search Box -->
+                            <TextBox Grid.Column="0" x:Name="txtSearch" Height="28" Style="{StaticResource SearchInputStyle}" TextChanged="TxtSearch_TextChanged" ToolTip="{loc:Loc RibbonCustomizer_SearchTip}"/>
+
+                            <!-- Quick Action Buttons -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="btnSelectAll" Content="{loc:Loc RibbonCustomizer_SelectAll}" Style="{StaticResource SecondaryActionBtn}" Margin="0,0,6,0" Click="BtnSelectAll_Click"/>
+                                <Button x:Name="btnUnselectAll" Content="{loc:Loc RibbonCustomizer_UnselectAll}" Style="{StaticResource SecondaryActionBtn}" Margin="0,0,6,0" Click="BtnUnselectAll_Click"/>
+                                <Button x:Name="btnResetDefault" Content="{loc:Loc RibbonCustomizer_ResetDefault}" Style="{StaticResource SecondaryActionBtn}" Click="BtnResetDefault_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- 2. GROUPS CONTENT -->
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="20,12">
+                        <StackPanel x:Name="pnlGroups">
+                            <!-- Dynamically populated group sections -->
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- 3. FOOTER BAR -->
+                    <Border Grid.Row="3" BorderThickness="0,1,0,0" Padding="20,12">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Status Note -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="💡" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="txtStatus" Text="{loc:Loc RibbonCustomizer_FooterTip}" FontSize="11.5" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+
+                            <!-- Action Buttons -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button x:Name="btnSaveApply" Style="{StaticResource PrimaryActionBtn}" Click="BtnSaveApply_Click" Margin="0,0,8,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💾" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{loc:Loc RibbonCustomizer_BtnSaveApply}"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="btnClose" Content="{loc:Loc Common_Close}" Style="{StaticResource SecondaryActionBtn}" Click="BtnClose_Click" Width="80"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ========== TAB 2: CẤU HÌNH AI NỘI BỘ ========== -->
+            <TabItem Header="{loc:Loc Settings_TabAi}" Style="{StaticResource ModernTabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+                    <views:AiSettingsControl x:Name="aiSettingsControl"/>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

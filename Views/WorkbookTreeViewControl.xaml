@@ -251,8 +251,6 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Tab 0: Quản lý Sheet -->
@@ -281,7 +279,7 @@
                 </Button>
 
                 <!-- Tab 1: Trợ lý AI -->
-                <Button Grid.Column="1" Click="OnSelectAiAssistantTabClick" Margin="2,0,2,0">
+                <Button Grid.Column="1" Click="OnSelectAiAssistantTabClick" Margin="2,0,0,0">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabButtonStyle}">
                             <Setter Property="Background" Value="#F1F5F9"/>
@@ -303,68 +301,6 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <TextBlock Text="{loc:Loc Nav_TabAi}" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
-                </Button>
-
-                <!-- Tab 2: Cài đặt AI -->
-                <Button Grid.Column="2" Click="OnSelectAiSettingsTabClick" Margin="2,0,4,0">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabButtonStyle}">
-                            <Setter Property="Background" Value="#F1F5F9"/>
-                            <Setter Property="Foreground" Value="#475569"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                    <Setter Property="Background" Value="#334155"/>
-                                    <Setter Property="Foreground" Value="#94A3B8"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
-                                    <Setter Property="Background" Value="#64748B"/>
-                                    <Setter Property="Foreground" Value="#FFFFFF"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="{loc:Loc Nav_TabSettings}" FontSize="11" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <!-- Nút Toggle Dark / Light Theme -->
-                <Button Grid.Column="3" Command="{Binding ToggleThemeCommand}" 
-                        ToolTip="{Binding ThemeToggleTooltip}"
-                        Width="28" Height="28" Cursor="Hand" Margin="2,0,0,0">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#F1F5F9"/>
-                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
-                            <Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="ThemeBorder" Background="{TemplateBinding Background}" 
-                                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                                CornerRadius="14">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ThemeBorder" Property="Background" Value="#E2E8F0"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                    <Setter Property="Background" Value="#334155"/>
-                                    <Setter Property="BorderBrush" Value="#475569"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <TextBlock Text="{Binding ThemeToggleIcon}" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Button>
             </Grid>
         </Border>
@@ -1189,21 +1125,6 @@
                 </Style>
             </Grid.Style>
             <views:AiAssistantControl DataContext="{Binding AiAssistant}"/>
-        </Grid>
-
-        <!-- ==================== NỘI DUNG TAB 2: CÀI ĐẶT AI ==================== -->
-        <Grid Grid.Row="1">
-            <Grid.Style>
-                <Style TargetType="Grid">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Grid.Style>
-            <views:AiSettingsControl DataContext="{Binding AiSettings}"/>
         </Grid>
     </Grid>
 </UserControl>

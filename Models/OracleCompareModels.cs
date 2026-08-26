@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ExcelSupport.Models
 {
@@ -164,9 +165,32 @@ namespace ExcelSupport.Models
     public class OracleQuickQueryOptions
     {
         public bool IncludeTitle { get; set; } = true;
+        public string TitleColorHex { get; set; } = "#2563EB";
         public bool IncludeHeaders { get; set; } = true;
         public bool AutoFitColumns { get; set; } = true;
         public int MaxRows { get; set; } = 0;
+    }
+
+    public class OracleQueryHistoryItem
+    {
+        public string Sql { get; set; } = "";
+        public DateTime ExecutedAt { get; set; } = DateTime.Now;
+        public int RowCount { get; set; }
+        public string? ProfileName { get; set; }
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string DisplayText
+        {
+            get
+            {
+                string singleLine = Regex.Replace(Sql ?? "", @"\s+", " ").Trim();
+                if (singleLine.Length > 60)
+                {
+                    singleLine = singleLine.Substring(0, 57) + "...";
+                }
+                return $"{ExecutedAt:HH:mm:ss} | {singleLine}";
+            }
+        }
     }
 
     public class OracleConnectionConfig : INotifyPropertyChanged

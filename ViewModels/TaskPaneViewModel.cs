@@ -168,6 +168,22 @@ namespace ExcelSupport.ViewModels
             }
         }
 
+        public new bool IsDarkTheme
+        {
+            get => base.IsDarkTheme;
+            set
+            {
+                if (base.IsDarkTheme != value)
+                {
+                    base.IsDarkTheme = value;
+                    if (AiAssistant != null) AiAssistant.IsDarkTheme = value;
+                    if (AiSettings != null) AiSettings.IsDarkTheme = value;
+                    OnPropertyChanged(nameof(ThemeToggleIcon));
+                    OnPropertyChanged(nameof(ThemeToggleTooltip));
+                }
+            }
+        }
+
         public string ThemeToggleIcon => IsDarkTheme ? "☀️" : "🌙";
         public string ThemeToggleTooltip => IsDarkTheme ? "Chuyển sang Giao diện Sáng (Light Theme)" : "Chuyển sang Giao diện Tối (Dark Theme)";
 

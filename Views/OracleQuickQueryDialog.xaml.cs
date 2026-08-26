@@ -22,7 +22,16 @@ namespace ExcelSupport.Views
     public partial class OracleQuickQueryDialog : Window
     {
         private readonly ObservableCollection<OracleConnectionProfile> _profiles = new ObservableCollection<OracleConnectionProfile>();
-        private readonly bool _isDarkTheme;
+        public static readonly DependencyProperty IsDarkThemeProperty =
+            DependencyProperty.Register(nameof(IsDarkTheme), typeof(bool), typeof(OracleQuickQueryDialog),
+                new PropertyMetadata(false));
+
+        public bool IsDarkTheme
+        {
+            get => (bool)GetValue(IsDarkThemeProperty);
+            set => SetValue(IsDarkThemeProperty, value);
+        }
+
         private bool _isExecuting = false;
 
         private static OracleQuickQueryDialog? _currentInstance;
@@ -30,24 +39,28 @@ namespace ExcelSupport.Views
         public OracleQuickQueryDialog(bool isDarkTheme = false)
         {
             InitializeComponent();
-            _isDarkTheme = isDarkTheme;
+            IsDarkTheme = isDarkTheme;
 
             LoadProfiles();
             InitTargetLocation();
+            LoadQueryHistory();
             RestoreLastQuery();
         }
 
-        public static void ShowWindow(bool isDarkTheme = false)
+        public static void ShowWindow(bool? isDarkTheme = null)
         {
             try
             {
+                bool isDark = isDarkTheme ?? (AddInEvents.MainViewModel?.IsDarkTheme ?? AiConfigManager.Current.IsDarkTheme);
+
                 if (_currentInstance != null && _currentInstance.IsLoaded)
                 {
+                    _currentInstance.IsDarkTheme = isDark;
                     _currentInstance.Activate();
                     return;
                 }
 
-                _currentInstance = new OracleQuickQueryDialog(isDarkTheme);
+                _currentInstance = new OracleQuickQueryDialog(isDark);
 
                 try
                 {
@@ -93,6 +106,40 @@ namespace ExcelSupport.Views
             }
         }
 
+        private void LoadQueryHistory()
+        {
+            try
+            {
+                var history = OracleConnectionManager.GetQueryHistory();
+                cboQueryHistory.ItemsSource = null;
+                cboQueryHistory.ItemsSource = history;
+                cboQueryHistory.DisplayMemberPath = "DisplayText";
+            }
+            catch { }
+        }
+
+        private void CboQueryHistory_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cboQueryHistory.SelectedItem is OracleQueryHistoryItem item && !string.IsNullOrWhiteSpace(item.Sql))
+            {
+                txtSqlQuery.Text = item.Sql;
+                txtSqlQuery.Focus();
+                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+            }
+        }
+
+        private void BtnClearHistory_Click(object sender, RoutedEventArgs e)
+        {
+            var confirm = WpfMessageBox.Show("Bạn có muốn xóa toàn bộ lịch sử các câu SQL đã truy vấn không?",
+                                             "Xác nhận xóa lịch sử", WpfMessageBoxButton.YesNo, WpfMessageBoxImage.Question);
+            if (confirm == MessageBoxResult.Yes)
+            {
+                OracleConnectionManager.ClearQueryHistory();
+                LoadQueryHistory();
+                txtStatus.Text = "Đã xóa toàn bộ lịch sử truy vấn.";
+            }
+        }
+
         private void InitTargetLocation()
         {
             try
@@ -110,6 +157,13 @@ namespace ExcelSupport.Views
         {
             try
             {
+                var history = OracleConnectionManager.GetQueryHistory();
+                if (history.Count > 0 && !string.IsNullOrWhiteSpace(history[0].Sql))
+                {
+                    txtSqlQuery.Text = history[0].Sql;
+                    return;
+                }
+
                 var session = OracleConnectionManager.GetLastSession();
                 if (session != null && !string.IsNullOrWhiteSpace(session.TableA))
                 {
@@ -208,10 +262,12 @@ namespace ExcelSupport.Views
             txtStatus.Text = "Đang kết nối Oracle và thực thi truy vấn...";
 
             int.TryParse(txtMaxRows.Text, out int maxRows);
+            string titleColorHex = (cboTitleColor.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "#2563EB";
 
             var options = new OracleQuickQueryOptions
             {
                 IncludeTitle = chkIncludeTitle.IsChecked == true,
+                TitleColorHex = titleColorHex,
                 IncludeHeaders = chkIncludeHeaders.IsChecked == true,
                 AutoFitColumns = chkAutoFit.IsChecked == true,
                 MaxRows = maxRows
@@ -291,6 +347,14 @@ namespace ExcelSupport.Views
                 app.ScreenUpdating = false;
                 var (rows, cols) = OracleQuickQueryService.InsertDataToWorksheet(targetWs, startRow, startCol, dt, tableName, options);
                 app.ScreenUpdating = true;
+
+                // Save to history & reload history dropdown
+                try
+                {
+                    OracleConnectionManager.AddQueryHistory(sql, rows, profile.Name);
+                    LoadQueryHistory();
+                }
+                catch { }
 
                 txtStatus.Text = $"Đã chèn thành công {rows:N0} dòng, {cols:N0} cột trong {sw.Elapsed.TotalSeconds:F2}s.";
                 WpfMessageBox.Show($"Đã truy vấn và chèn thành công {rows:N0} dòng dữ liệu vào Excel!\nThời gian: {sw.Elapsed.TotalSeconds:F2} giây.",

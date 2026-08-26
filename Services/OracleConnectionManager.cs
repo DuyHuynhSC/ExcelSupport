@@ -204,5 +204,83 @@ namespace ExcelSupport.Services
         }
 
         #endregion
+
+        #region Query History
+
+        private static readonly string QueryHistoryFilePath = Path.Combine(ConfigDirectory, "oracle_query_history.json");
+
+        public static List<OracleQueryHistoryItem> GetQueryHistory()
+        {
+            try
+            {
+                if (File.Exists(QueryHistoryFilePath))
+                {
+                    string json = File.ReadAllText(QueryHistoryFilePath);
+                    var list = JsonConvert.DeserializeObject<List<OracleQueryHistoryItem>>(json);
+                    if (list != null) return list;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OracleConnectionManager] GetQueryHistory error: {ex.Message}");
+            }
+            return new List<OracleQueryHistoryItem>();
+        }
+
+        public static bool AddQueryHistory(string sql, int rowCount, string? profileName)
+        {
+            if (string.IsNullOrWhiteSpace(sql)) return false;
+
+            try
+            {
+                var history = GetQueryHistory();
+
+                // Remove existing identical SQL to bring it to top
+                string cleanSql = sql.Trim();
+                history.RemoveAll(h => string.Equals(h.Sql?.Trim(), cleanSql, StringComparison.OrdinalIgnoreCase));
+
+                history.Insert(0, new OracleQueryHistoryItem
+                {
+                    Sql = cleanSql,
+                    ExecutedAt = DateTime.Now,
+                    RowCount = rowCount,
+                    ProfileName = profileName
+                });
+
+                // Keep up to 30 recent queries
+                if (history.Count > 30)
+                {
+                    history = history.Take(30).ToList();
+                }
+
+                if (!Directory.Exists(ConfigDirectory))
+                {
+                    Directory.CreateDirectory(ConfigDirectory);
+                }
+                string json = JsonConvert.SerializeObject(history, Formatting.Indented);
+                File.WriteAllText(QueryHistoryFilePath, json);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OracleConnectionManager] AddQueryHistory error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static bool ClearQueryHistory()
+        {
+            try
+            {
+                if (File.Exists(QueryHistoryFilePath))
+                {
+                    File.Delete(QueryHistoryFilePath);
+                }
+                return true;
+            }
+            catch { return false; }
+        }
+
+        #endregion
     }
 }
