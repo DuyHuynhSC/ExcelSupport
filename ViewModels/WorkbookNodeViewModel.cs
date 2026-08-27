@@ -37,6 +37,7 @@ namespace ExcelSupport.ViewModels
         public ICommand CreateTocCommand { get; }
         public ICommand UnhideAllSheetsCommand { get; }
         public ICommand CloseWorkbookCommand { get; }
+        public ICommand SortOriginalCommand { get; }
         public ICommand SortAscendingCommand { get; }
         public ICommand SortDescendingCommand { get; }
         public ICommand OpenToolsDialogCommand { get; }
@@ -78,6 +79,14 @@ namespace ExcelSupport.ViewModels
             CloseWorkbookCommand = new RelayCommand(_ =>
             {
                 AddInEvents.MainViewModel?.CloseWorkbookCommand.Execute(WorkbookName);
+            });
+
+            SortOriginalCommand = new RelayCommand(_ =>
+            {
+                if (AddInEvents.MainViewModel != null)
+                {
+                    AddInEvents.MainViewModel.WorkbookSortOrder = SortOrder.Original;
+                }
             });
 
             SortAscendingCommand = new RelayCommand(_ =>

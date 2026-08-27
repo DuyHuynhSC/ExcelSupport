@@ -111,6 +111,7 @@ namespace ExcelSupport.ViewModels
         public ICommand VeryHideSheetCommand { get; }
         public ICommand CreateTocCommand { get; }
         public ICommand CheckVietnameseCommand { get; }
+        public ICommand SortOriginalCommand { get; }
         public ICommand SortAscendingCommand { get; }
         public ICommand SortDescendingCommand { get; }
 
@@ -199,6 +200,14 @@ namespace ExcelSupport.ViewModels
                 {
                     AddInEvents.Instance?.CreateTableOfContents(wbName);
                 });
+            });
+
+            SortOriginalCommand = new RelayCommand(_ =>
+            {
+                if (AddInEvents.MainViewModel != null)
+                {
+                    AddInEvents.MainViewModel.SheetSortOrder = SortOrder.Original;
+                }
             });
 
             SortAscendingCommand = new RelayCommand(_ =>

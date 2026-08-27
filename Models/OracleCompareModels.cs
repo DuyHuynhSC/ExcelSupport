@@ -167,6 +167,7 @@ namespace ExcelSupport.Models
         public bool IncludeTitle { get; set; } = true;
         public string TitleColorHex { get; set; } = "#2563EB";
         public bool IncludeHeaders { get; set; } = true;
+        public string HeaderBgColorHex { get; set; } = "#CCFFFF";
         public bool AutoFitColumns { get; set; } = true;
         public int MaxRows { get; set; } = 0;
     }

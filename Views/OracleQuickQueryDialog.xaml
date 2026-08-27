@@ -6,8 +6,8 @@
         xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         mc:Ignorable="d"
         Title="{loc:Loc Oracle_QuickQueryTitle}"
-        Height="520" Width="780"
-        MinHeight="440" MinWidth="700"
+        Height="680" Width="880"
+        MinHeight="540" MinWidth="740"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
@@ -64,7 +64,7 @@
         <Style x:Key="SqlEditorStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="FontFamily" Value="Consolas, 'Cascadia Mono', 'Courier New'"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="AcceptsReturn" Value="True"/>
             <Setter Property="AcceptsTab" Value="True"/>
             <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
@@ -96,6 +96,46 @@
                     <Setter Property="Foreground" Value="#F8FAFC"/>
                     <Setter Property="BorderBrush" Value="#475569"/>
                     <Setter Property="CaretBrush" Value="#38BDF8"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- DataGrid Style -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="RowBackground" Value="#FFFFFF"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+            <Setter Property="GridLinesVisibility" Value="All"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E2E8F0"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#E2E8F0"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="RowHeight" Value="24"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                    <Setter Property="RowBackground" Value="#1E293B"/>
+                    <Setter Property="AlternatingRowBackground" Value="#0F172A"/>
+                    <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
+                    <Setter Property="VerticalGridLinesBrush" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -252,8 +292,36 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Buttons -->
-        <Style x:Key="PrimaryActionBtn" TargetType="Button">
+        <!-- Execute Action Button (Blue) -->
+        <Style x:Key="ExecuteActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Insert Action Button (Green) -->
+        <Style x:Key="InsertActionBtn" TargetType="Button">
             <Setter Property="Background" Value="#16A34A"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -386,7 +454,7 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <TextBlock Text="Ctrl + Enter: Thực thi" FontSize="11" FontWeight="SemiBold">
+                    <TextBlock Text="{loc:Loc Oracle_ShortcutBadge}" FontSize="11" FontWeight="SemiBold">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#2563EB"/>
@@ -403,15 +471,17 @@
         </Border>
 
         <!-- ==================== 1. BODY CONTENT ==================== -->
-        <Grid Grid.Row="1" Margin="20,14,20,10">
+        <Grid Grid.Row="1" Margin="20,10,20,10">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- Connection & Target Row -->
-                <RowDefinition Height="*"/>    <!-- SQL Text Editor -->
-                <RowDefinition Height="Auto"/> <!-- Options Row -->
+                <RowDefinition Height="Auto"/>                <!-- 0. Connection & Target Row -->
+                <RowDefinition Height="130*" MinHeight="85"/> <!-- 1. SQL Text Editor -->
+                <RowDefinition Height="6"/>                   <!-- 2. GridSplitter -->
+                <RowDefinition Height="170*" MinHeight="100"/> <!-- 3. Preview DataGrid -->
+                <RowDefinition Height="Auto"/>                <!-- 4. Options Row -->
             </Grid.RowDefinitions>
 
-            <!-- Top Row: Connection profile & Target cell -->
-            <Grid Grid.Row="0" Margin="0,0,0,10">
+            <!-- Row 0: Connection profile & Target cell -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="20"/>
@@ -466,14 +536,14 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Middle: SQL Editor -->
+            <!-- Row 1: SQL Editor -->
             <Grid Grid.Row="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="0,0,0,6">
+                <Grid Grid.Row="0" Margin="0,0,0,4">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -520,8 +590,78 @@
                 <TextBox Grid.Row="1" x:Name="txtSqlQuery" Style="{StaticResource SqlEditorStyle}"/>
             </Grid>
 
-            <!-- Bottom: Options Checkboxes & Color Picker -->
-            <Border Grid.Row="2" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,10,0,0">
+            <!-- Row 2: GridSplitter -->
+            <GridSplitter Grid.Row="2" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="Transparent" Cursor="SizeNS"/>
+
+            <!-- Row 3: Preview DataGrid -->
+            <Grid Grid.Row="3" Margin="0,2,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📊" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc Oracle_PreviewHeader}" FontWeight="SemiBold" FontSize="11.5" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#334155"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <!-- Preview Row Count Badge -->
+                    <Border Grid.Column="1" x:Name="bdPreviewCount" Visibility="Collapsed" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="3" Padding="6,2" VerticalAlignment="Center">
+                        <TextBlock x:Name="txtPreviewCount" Text="0 dòng" FontSize="10.5" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="1" BorderThickness="1" CornerRadius="4">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+
+                    <Grid>
+                        <DataGrid x:Name="dgPreview" AutoGenerateColumns="True" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Extended" CanUserSortColumns="True"/>
+
+                        <!-- Empty Placeholder Text -->
+                        <TextBlock x:Name="txtPreviewPlaceholder" Text="{loc:Loc Oracle_PreviewPlaceholder}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11.5" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#64748B"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Row 4: Options Checkboxes & Color Picker -->
+            <Border Grid.Row="4" BorderThickness="1" CornerRadius="6" Padding="14,8" Margin="0,8,0,0">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="#F1F5F9"/>
@@ -552,49 +692,74 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <CheckBox x:Name="chkIncludeTitle" Content="{loc:Loc Oracle_OptIncludeTitle}" IsChecked="True" FontSize="11.5" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="chkIncludeTitle" Content="{loc:Loc Oracle_OptIncludeTitle}" IsChecked="True" FontSize="11.5" Margin="0,0,16,0" VerticalAlignment="Center"/>
 
-                        <!-- Title Color Picker Dropdown -->
-                        <ComboBox x:Name="cboTitleColor" Height="26" Width="110" Margin="0,0,16,0" FontSize="11" SelectedIndex="0" ToolTip="{loc:Loc Oracle_OptTitleColorTip}">
+                        <CheckBox x:Name="chkIncludeHeaders" Content="{loc:Loc Oracle_OptIncludeHeaders}" IsChecked="True" FontSize="11.5" Margin="0,0,6,0" VerticalAlignment="Center"/>
+
+                        <!-- Header Background Color Picker Dropdown -->
+                        <ComboBox x:Name="cboHeaderColor" Height="26" Width="135" Margin="0,0,16,0" FontSize="11" SelectedIndex="0" ToolTip="{loc:Loc Oracle_OptHeaderColorTip}">
+                            <ComboBoxItem Tag="#CCFFFF" IsSelected="True">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#CCFFFF" BorderBrush="#059669" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorPastelCyan}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#6EE7B7">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#6EE7B7" BorderBrush="#059669" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorMint}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#BFDBFE">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#BFDBFE" BorderBrush="#2563EB" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorLightBlue}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#FEF08A">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#FEF08A" BorderBrush="#CA8A04" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorLightYellow}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#FED7AA">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#FED7AA" BorderBrush="#EA580C" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorLightOrange}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#E9D5FF">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#E9D5FF" BorderBrush="#9333EA" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorLightPurple}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#FEE2E2">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#FEE2E2" BorderBrush="#E11D48" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorLightPink}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
+                            <ComboBoxItem Tag="#E2E8F0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#E2E8F0" BorderBrush="#64748B" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorLightGray}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ComboBoxItem>
                             <ComboBoxItem Tag="#2563EB">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="11" Height="11" CornerRadius="5" Background="#2563EB" BorderBrush="#1D4ED8" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#2563EB" BorderBrush="#1D4ED8" BorderThickness="1" Margin="0,0,5,0"/>
                                     <TextBlock Text="{loc:Loc Oracle_ColorBlue}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </ComboBoxItem>
-                            <ComboBoxItem Tag="#DC2626">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="11" Height="11" CornerRadius="5" Background="#DC2626" BorderBrush="#B91C1C" BorderThickness="1" Margin="0,0,5,0"/>
-                                    <TextBlock Text="{loc:Loc Oracle_ColorRed}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </ComboBoxItem>
-                            <ComboBoxItem Tag="#16A34A">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="11" Height="11" CornerRadius="5" Background="#16A34A" BorderBrush="#15803D" BorderThickness="1" Margin="0,0,5,0"/>
-                                    <TextBlock Text="{loc:Loc Oracle_ColorGreen}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </ComboBoxItem>
-                            <ComboBoxItem Tag="#7C3AED">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="11" Height="11" CornerRadius="5" Background="#7C3AED" BorderBrush="#6D28D9" BorderThickness="1" Margin="0,0,5,0"/>
-                                    <TextBlock Text="{loc:Loc Oracle_ColorPurple}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </ComboBoxItem>
-                            <ComboBoxItem Tag="#EA580C">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="11" Height="11" CornerRadius="5" Background="#EA580C" BorderBrush="#C2410C" BorderThickness="1" Margin="0,0,5,0"/>
-                                    <TextBlock Text="{loc:Loc Oracle_ColorOrange}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </ComboBoxItem>
                             <ComboBoxItem Tag="#0F172A">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="11" Height="11" CornerRadius="5" Background="#0F172A" BorderBrush="#000000" BorderThickness="1" Margin="0,0,5,0"/>
-                                    <TextBlock Text="{loc:Loc Oracle_ColorBlack}" VerticalAlignment="Center"/>
+                                    <Border Width="12" Height="12" CornerRadius="2" Background="#0F172A" BorderBrush="#000000" BorderThickness="1" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{loc:Loc Oracle_ColorDarkSlate}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </ComboBoxItem>
                         </ComboBox>
 
-                        <CheckBox x:Name="chkIncludeHeaders" Content="{loc:Loc Oracle_OptIncludeHeaders}" IsChecked="True" FontSize="11.5" Margin="0,0,16,0" VerticalAlignment="Center"/>
                         <CheckBox x:Name="chkAutoFit" Content="{loc:Loc Oracle_OptAutoFit}" IsChecked="True" FontSize="11.5" Margin="0,0,16,0" VerticalAlignment="Center"/>
                     </StackPanel>
 
@@ -611,7 +776,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBox x:Name="txtMaxRows" Text="0" Width="60" Height="30" TextAlignment="Center" Style="{StaticResource QueryInputStyle}" ToolTip="{loc:Loc Oracle_LimitRowsTip}"/>
+                        <TextBox x:Name="txtMaxRows" Text="0" Width="60" Height="28" TextAlignment="Center" Style="{StaticResource QueryInputStyle}" ToolTip="{loc:Loc Oracle_LimitRowsTip}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -654,15 +819,21 @@
                     <ProgressBar x:Name="pbProgress" Height="12" Width="140" Margin="10,0,0,0" IsIndeterminate="True" Visibility="Collapsed"/>
                 </StackPanel>
 
-                <!-- Action Buttons -->
+                <!-- Action Buttons: Execute, Insert, Close -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button x:Name="btnExecute" Style="{StaticResource PrimaryActionBtn}" Click="BtnExecute_Click" Margin="0,0,8,0">
+                    <Button x:Name="btnExecute" Style="{StaticResource ExecuteActionBtn}" Click="BtnExecute_Click" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="▶" Margin="0,0,6,0"/>
-                            <TextBlock Text="{loc:Loc Oracle_BtnExecuteInsert}"/>
+                            <TextBlock Text="{loc:Loc Oracle_BtnExecute}"/>
                         </StackPanel>
                     </Button>
-                    <Button x:Name="btnCancel" Content="{loc:Loc Common_Close}" Style="{StaticResource SecondaryActionBtn}" Click="BtnCancel_Click" Width="85"/>
+                    <Button x:Name="btnInsert" Style="{StaticResource InsertActionBtn}" Click="BtnInsert_Click" IsEnabled="False" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📥" Margin="0,0,6,0"/>
+                            <TextBlock Text="{loc:Loc Oracle_BtnInsert}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="btnCancel" Content="{loc:Loc Common_Close}" Style="{StaticResource SecondaryActionBtn}" Click="BtnCancel_Click" Width="80"/>
                 </StackPanel>
             </Grid>
         </Border>

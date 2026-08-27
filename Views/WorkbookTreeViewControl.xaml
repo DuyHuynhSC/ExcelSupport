@@ -502,6 +502,7 @@
                                         <MenuItem Header="{loc:Loc Nav_Ctx_Merge}" Command="{Binding MergeSheetsCommand}"/>
                                         <MenuItem Header="{loc:Loc Nav_Ctx_BatchRename}" Command="{Binding BatchRenameCommand}"/>
                                         <Separator/>
+                                        <MenuItem Header="{loc:Loc Nav_Ctx_SortOriginal}" Command="{Binding SortOriginalCommand}"/>
                                         <MenuItem Header="{loc:Loc Nav_Ctx_SortAZ}" Command="{Binding SortAscendingCommand}"/>
                                         <MenuItem Header="{loc:Loc Nav_Ctx_SortZA}" Command="{Binding SortDescendingCommand}"/>
                                         <Separator/>
@@ -925,6 +926,7 @@
                                         <MenuItem Header="{loc:Loc Nav_Sheet_CreateTOC}" Command="{Binding CreateTocCommand}"/>
                                         <MenuItem Header="{loc:Loc Nav_Sheet_CheckVN}" Command="{Binding CheckVietnameseCommand}"/>
                                         <Separator/>
+                                        <MenuItem Header="{loc:Loc Nav_Sheet_SortOriginal}" Command="{Binding SortOriginalCommand}"/>
                                         <MenuItem Header="{loc:Loc Nav_Sheet_SortAZ}" Command="{Binding SortAscendingCommand}"/>
                                         <MenuItem Header="{loc:Loc Nav_Sheet_SortZA}" Command="{Binding SortDescendingCommand}"/>
                                     </ContextMenu>

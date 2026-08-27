@@ -33,6 +33,9 @@ namespace ExcelSupport.Views
         }
 
         private bool _isExecuting = false;
+        private System.Data.DataTable? _currentDataTable;
+        private string _lastExecutedSql = "";
+        private OracleConnectionProfile? _lastExecutedProfile;
 
         private static OracleQuickQueryDialog? _currentInstance;
 
@@ -249,116 +252,53 @@ namespace ExcelSupport.Views
                 return;
             }
 
-            var app = AddInEvents.Instance?.ExcelAppInstance;
-            if (app == null)
-            {
-                WpfMessageBox.Show("Không thể kết nối với ứng dụng Excel.", "Lỗi Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
-                return;
-            }
-
             _isExecuting = true;
             btnExecute.IsEnabled = false;
+            btnInsert.IsEnabled = false;
             pbProgress.Visibility = Visibility.Visible;
             txtStatus.Text = "Đang kết nối Oracle và thực thi truy vấn...";
 
             int.TryParse(txtMaxRows.Text, out int maxRows);
-            string titleColorHex = (cboTitleColor.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "#2563EB";
-
-            var options = new OracleQuickQueryOptions
-            {
-                IncludeTitle = chkIncludeTitle.IsChecked == true,
-                TitleColorHex = titleColorHex,
-                IncludeHeaders = chkIncludeHeaders.IsChecked == true,
-                AutoFitColumns = chkAutoFit.IsChecked == true,
-                MaxRows = maxRows
-            };
-
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
             try
             {
                 var config = profile.ToConnectionConfig();
                 var dt = await OracleQuickQueryService.ExecuteQueryAsync(config, sql, maxRows);
-
                 sw.Stop();
+
+                _currentDataTable = dt;
+                _lastExecutedSql = sql;
+                _lastExecutedProfile = profile;
 
                 if (dt.Rows.Count == 0 && dt.Columns.Count == 0)
                 {
-                    txtStatus.Text = "Câu lệnh thực thi thành công nhưng không trả về dữ liệu bảng.";
-                    WpfMessageBox.Show("Câu lệnh thực thi thành công nhưng không có bản ghi nào được trả về.", "Thông báo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                    dgPreview.ItemsSource = null;
+                    txtPreviewPlaceholder.Text = "Câu lệnh thực thi thành công nhưng không trả về dữ liệu bảng.";
+                    txtPreviewPlaceholder.Visibility = Visibility.Visible;
+                    bdPreviewCount.Visibility = Visibility.Collapsed;
+                    txtStatus.Text = "Câu lệnh thực thi thành công nhưng không có dữ liệu trả về.";
+                    btnInsert.IsEnabled = false;
                     return;
                 }
 
-                // Resolve Target Range
-                ExcelWorksheet? targetWs = null;
-                int startRow = 1;
-                int startCol = 1;
+                // Bind to Preview DataGrid
+                dgPreview.ItemsSource = _currentDataTable.DefaultView;
+                txtPreviewPlaceholder.Visibility = Visibility.Collapsed;
 
-                string loc = txtTargetLocation.Text.Trim();
-                if (!string.IsNullOrWhiteSpace(loc))
-                {
-                    try
-                    {
-                        if (loc.Contains("!"))
-                        {
-                            var parts = loc.Split('!');
-                            string wsName = parts[0].Replace("'", "");
-                            string addr = parts[1];
-                            targetWs = app.Worksheets[wsName];
-                            ExcelRange rng = targetWs.Range[addr];
-                            startRow = rng.Row;
-                            startCol = rng.Column;
-                        }
-                        else
-                        {
-                            targetWs = app.ActiveSheet as ExcelWorksheet;
-                            if (targetWs != null)
-                            {
-                                ExcelRange rng = targetWs.Range[loc];
-                                startRow = rng.Row;
-                                startCol = rng.Column;
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        targetWs = app.ActiveSheet as ExcelWorksheet;
-                        if (app.ActiveCell != null)
-                        {
-                            startRow = app.ActiveCell.Row;
-                            startCol = app.ActiveCell.Column;
-                        }
-                    }
-                }
-
-                targetWs ??= app.ActiveSheet as ExcelWorksheet;
-                if (targetWs == null)
-                {
-                    WpfMessageBox.Show("Không tìm thấy Sheet làm việc để chèn dữ liệu.", "Lỗi Sheet", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
-                    return;
-                }
-
-                targetWs.Activate();
-
-                // Extract Table Name for Title (Only table name per user requirement)
-                string tableName = OracleQuickQueryService.ExtractTableName(sql);
-
-                // Insert to Excel
-                app.ScreenUpdating = false;
-                var (rows, cols) = OracleQuickQueryService.InsertDataToWorksheet(targetWs, startRow, startCol, dt, tableName, options);
-                app.ScreenUpdating = true;
+                txtPreviewCount.Text = $"{dt.Rows.Count:N0} dòng, {dt.Columns.Count:N0} cột ({sw.Elapsed.TotalSeconds:F2}s)";
+                bdPreviewCount.Visibility = Visibility.Visible;
+                btnInsert.IsEnabled = true;
 
                 // Save to history & reload history dropdown
                 try
                 {
-                    OracleConnectionManager.AddQueryHistory(sql, rows, profile.Name);
+                    OracleConnectionManager.AddQueryHistory(sql, dt.Rows.Count, profile.Name);
                     LoadQueryHistory();
                 }
                 catch { }
 
-                txtStatus.Text = $"Đã chèn thành công {rows:N0} dòng, {cols:N0} cột trong {sw.Elapsed.TotalSeconds:F2}s.";
-                WpfMessageBox.Show($"Đã truy vấn và chèn thành công {rows:N0} dòng dữ liệu vào Excel!\nThời gian: {sw.Elapsed.TotalSeconds:F2} giây.",
-                                   "Truy Vấn Thành Công", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                txtStatus.Text = $"Đã tải {dt.Rows.Count:N0} dòng, {dt.Columns.Count:N0} cột ({sw.Elapsed.TotalSeconds:F2}s). Hãy kiểm tra dữ liệu xem trước và nhấn 'Chèn Vào Excel'.";
             }
             catch (Exception ex)
             {
@@ -374,6 +314,112 @@ namespace ExcelSupport.Views
             }
         }
 
+        private void BtnInsert_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentDataTable == null || (_currentDataTable.Rows.Count == 0 && _currentDataTable.Columns.Count == 0))
+            {
+                WpfMessageBox.Show("Chưa có dữ liệu để chèn. Vui lòng nhấn 'Thực Thi' để tải dữ liệu trước.", "Chưa có dữ liệu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            if (app == null)
+            {
+                WpfMessageBox.Show("Không thể kết nối với ứng dụng Excel.", "Lỗi Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                return;
+            }
+
+            // Resolve Target Range
+            ExcelWorksheet? targetWs = null;
+            int startRow = 1;
+            int startCol = 1;
+
+            string loc = txtTargetLocation.Text.Trim();
+            if (!string.IsNullOrWhiteSpace(loc))
+            {
+                try
+                {
+                    if (loc.Contains("!"))
+                    {
+                        var parts = loc.Split('!');
+                        string wsName = parts[0].Replace("'", "");
+                        string addr = parts[1];
+                        targetWs = app.Worksheets[wsName];
+                        ExcelRange rng = targetWs.Range[addr];
+                        startRow = rng.Row;
+                        startCol = rng.Column;
+                    }
+                    else
+                    {
+                        targetWs = app.ActiveSheet as ExcelWorksheet;
+                        if (targetWs != null)
+                        {
+                            ExcelRange rng = targetWs.Range[loc];
+                            startRow = rng.Row;
+                            startCol = rng.Column;
+                        }
+                    }
+                }
+                catch
+                {
+                    targetWs = app.ActiveSheet as ExcelWorksheet;
+                    if (app.ActiveCell != null)
+                    {
+                        startRow = app.ActiveCell.Row;
+                        startCol = app.ActiveCell.Column;
+                    }
+                }
+            }
+
+            targetWs ??= app.ActiveSheet as ExcelWorksheet;
+            if (targetWs == null)
+            {
+                WpfMessageBox.Show("Không tìm thấy Sheet làm việc để chèn dữ liệu.", "Lỗi Sheet", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                return;
+            }
+
+            int.TryParse(txtMaxRows.Text, out int maxRows);
+            string headerColorHex = (cboHeaderColor.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "#CCFFFF";
+
+            var options = new OracleQuickQueryOptions
+            {
+                IncludeTitle = chkIncludeTitle.IsChecked == true,
+                TitleColorHex = "#2563EB",
+                IncludeHeaders = chkIncludeHeaders.IsChecked == true,
+                HeaderBgColorHex = headerColorHex,
+                AutoFitColumns = chkAutoFit.IsChecked == true,
+                MaxRows = maxRows
+            };
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            try
+            {
+                targetWs.Activate();
+
+                // Extract Table Name for Title
+                string sql = !string.IsNullOrWhiteSpace(_lastExecutedSql) ? _lastExecutedSql : txtSqlQuery.Text.Trim();
+                string tableName = OracleQuickQueryService.ExtractTableName(sql);
+
+                // Insert to Excel
+                app.ScreenUpdating = false;
+                var (rows, cols) = OracleQuickQueryService.InsertDataToWorksheet(targetWs, startRow, startCol, _currentDataTable, tableName, options);
+                app.ScreenUpdating = true;
+                sw.Stop();
+
+                txtStatus.Text = $"Đã chèn thành công {rows:N0} dòng, {cols:N0} cột vào Sheet '{targetWs.Name}' ({sw.Elapsed.TotalSeconds:F2}s).";
+                WpfMessageBox.Show($"Đã chèn thành công {rows:N0} dòng, {cols:N0} cột dữ liệu vào Sheet '{targetWs.Name}'!\nThời gian chèn: {sw.Elapsed.TotalSeconds:F2} giây.",
+                                   "Chèn Dữ Liệu Thành Công", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                try { app.ScreenUpdating = true; } catch { }
+                txtStatus.Text = $"Lỗi chèn Excel: {ex.Message}";
+                WpfMessageBox.Show($"Quá trình chèn dữ liệu vào Excel phát sinh lỗi:\n\n{ex.Message}", "Lỗi Chèn Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+            }
+        }
+
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             Close();
@@ -385,6 +431,18 @@ namespace ExcelSupport.Views
             {
                 e.Handled = true;
                 BtnExecute_Click(btnExecute, new RoutedEventArgs());
+            }
+            else if (e.Key == Key.F5)
+            {
+                e.Handled = true;
+                if (btnInsert.IsEnabled)
+                {
+                    BtnInsert_Click(btnInsert, new RoutedEventArgs());
+                }
+                else
+                {
+                    BtnExecute_Click(btnExecute, new RoutedEventArgs());
+                }
             }
             else if (e.Key == Key.Escape)
             {

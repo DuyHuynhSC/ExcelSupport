@@ -90,8 +90,19 @@ namespace ExcelSupport.Services
                 catch { }
             }
 
-            Color headerBgColor = Color.FromArgb(110, 231, 183);   // Mint Green (#6EE7B7)
-            Color headerTextColor = Color.FromArgb(6, 78, 59);     // Dark Green (#064E3B)
+            Color headerBgColor = Color.FromArgb(204, 255, 255);   // Pastel Cyan (#CCFFFF) default
+            if (!string.IsNullOrWhiteSpace(options.HeaderBgColorHex))
+            {
+                try
+                {
+                    headerBgColor = ColorTranslator.FromHtml(options.HeaderBgColorHex);
+                }
+                catch { }
+            }
+
+            // Tính toán màu chữ Header tương phản tự động
+            double luminance = (0.299 * headerBgColor.R + 0.587 * headerBgColor.G + 0.114 * headerBgColor.B) / 255.0;
+            Color headerTextColor = luminance < 0.5 ? Color.White : Color.FromArgb(15, 23, 42); // Dark Slate for light bg, White for dark bg
             Color borderColor = Color.FromArgb(156, 163, 175);     // Gray 400
 
             int curRow = startRow;

@@ -123,14 +123,14 @@ namespace ExcelSupport.ViewModels
         {
             SortOrder.Ascending => "A-Z ↑",
             SortOrder.Descending => "Z-A ↓",
-            _ => "A-Z"
+            _ => "Original"
         };
 
         public string SheetSortLabel => SheetSortOrder switch
         {
             SortOrder.Ascending => "A-Z ↑",
             SortOrder.Descending => "Z-A ↓",
-            _ => "A-Z"
+            _ => "Original"
         };
 
         public WorkbookNodeViewModel? SelectedWorkbook
@@ -266,16 +266,22 @@ namespace ExcelSupport.ViewModels
 
             ToggleWorkbookSortCommand = new RelayCommand(_ =>
             {
-                WorkbookSortOrder = (WorkbookSortOrder == SortOrder.Ascending)
-                    ? SortOrder.Descending
-                    : SortOrder.Ascending;
+                WorkbookSortOrder = WorkbookSortOrder switch
+                {
+                    SortOrder.Original => SortOrder.Ascending,
+                    SortOrder.Ascending => SortOrder.Descending,
+                    _ => SortOrder.Original
+                };
             });
 
             ToggleSheetSortCommand = new RelayCommand(_ =>
             {
-                SheetSortOrder = (SheetSortOrder == SortOrder.Ascending)
-                    ? SortOrder.Descending
-                    : SortOrder.Ascending;
+                SheetSortOrder = SheetSortOrder switch
+                {
+                    SortOrder.Original => SortOrder.Ascending,
+                    SortOrder.Ascending => SortOrder.Descending,
+                    _ => SortOrder.Original
+                };
             });
 
             ToggleShowHiddenSheetsCommand = new RelayCommand(_ =>
