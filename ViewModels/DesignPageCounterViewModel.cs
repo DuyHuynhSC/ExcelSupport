@@ -63,9 +63,9 @@ namespace ExcelSupport.ViewModels
         private int _charactersPerPage = 600;
         private double _shapePageFactor = 0.5;
         private bool _highlightChangedCells = true;
-        private ColorSwatchItem _selectedHighlightColor;
-        private DensityPresetItem _selectedDensityPreset;
-        private ShapeFactorPresetItem _selectedShapeFactorPreset;
+        private ColorSwatchItem _selectedHighlightColor = null!;
+        private DensityPresetItem _selectedDensityPreset = null!;
+        private ShapeFactorPresetItem _selectedShapeFactorPreset = null!;
 
         private bool _ignoreCoverAndHistory = true;
         private bool _ignoreBlankPages = true;
@@ -346,28 +346,8 @@ namespace ExcelSupport.ViewModels
         {
             _excelApp = excelApp ?? throw new ArgumentNullException(nameof(excelApp));
 
-            // Presets mật độ ký tự
-            AvailableDensityPresets.Add(new DensityPresetItem { Name = "600 ký tự (Chuẩn Tiếng Nhật / Kanji)", Value = 600 });
-            AvailableDensityPresets.Add(new DensityPresetItem { Name = "1.200 ký tự (Tiếng Việt / Tiếng Anh)", Value = 1200 });
-            AvailableDensityPresets.Add(new DensityPresetItem { Name = "800 ký tự / trang", Value = 800 });
-            AvailableDensityPresets.Add(new DensityPresetItem { Name = "1.500 ký tự / trang", Value = 1500 });
-            _selectedDensityPreset = AvailableDensityPresets[0];
-
-            // Presets màu tô
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🎨 Bất kỳ màu nào (Khác màu trắng)", Hex = "ANY" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟡 Vàng (Yellow)", Hex = "#FEF08A" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🔵 Xanh ngọc / Xanh dương (Cyan)", Hex = "#BAE6FD" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟢 Xanh lá nhạt (Light Green)", Hex = "#BBF7D0" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟠 Cam nhạt (Orange)", Hex = "#FED7AA" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟣 Hồng / Tím nhạt (Pink / Violet)", Hex = "#DDD6FE" });
-            _selectedHighlightColor = AvailableHighlightColors[0];
-
-            // Presets quy đổi sơ đồ/hình ảnh
-            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "0.5 trang / sơ đồ (Mặc định)", Value = 0.5 });
-            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "0 trang (Không tính hình)", Value = 0.0 });
-            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "0.25 trang / sơ đồ", Value = 0.25 });
-            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "1.0 trang / sơ đồ", Value = 1.0 });
-            _selectedShapeFactorPreset = AvailableShapeFactors[0];
+            LoadPresets();
+            LocalizationService.LanguageChanged += _ => LoadPresets();
 
             RefreshWorkbooksCommand = new RelayCommand(_ => RefreshWorkbooks());
             BrowseTargetFileCommand = new RelayCommand(_ => BrowseTargetFile());
@@ -393,6 +373,39 @@ namespace ExcelSupport.ViewModels
             OpenEvidenceWorkbookCommand = new RelayCommand(_ => OpenEvidence(), _ => HasEvidenceFile);
 
             RefreshWorkbooks();
+        }
+
+        public void LoadPresets()
+        {
+            int prevDensityVal = SelectedDensityPreset?.Value ?? _charactersPerPage;
+            string prevColorHex = SelectedHighlightColor?.Hex ?? "ANY";
+            double prevShapeFactorVal = SelectedShapeFactorPreset?.Value ?? _shapePageFactor;
+
+            AvailableDensityPresets.Clear();
+            AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_DensityJapanese"), Value = 600 });
+            AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_DensityVietnamese"), Value = 1200 });
+            AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_Density800"), Value = 800 });
+            AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_Density1500"), Value = 1500 });
+            _selectedDensityPreset = AvailableDensityPresets.FirstOrDefault(p => p.Value == prevDensityVal) ?? AvailableDensityPresets[0];
+            OnPropertyChanged(nameof(SelectedDensityPreset));
+
+            AvailableHighlightColors.Clear();
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorAny"), Hex = "ANY" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorYellow"), Hex = "#FEF08A" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorCyan"), Hex = "#BAE6FD" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorGreen"), Hex = "#BBF7D0" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorOrange"), Hex = "#FED7AA" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorPink"), Hex = "#DDD6FE" });
+            _selectedHighlightColor = AvailableHighlightColors.FirstOrDefault(c => c.Hex.Equals(prevColorHex, StringComparison.OrdinalIgnoreCase)) ?? AvailableHighlightColors[0];
+            OnPropertyChanged(nameof(SelectedHighlightColor));
+
+            AvailableShapeFactors.Clear();
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = LocalizationService.Get("PageCounter_ShapeFactor05"), Value = 0.5 });
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = LocalizationService.Get("PageCounter_ShapeFactor0"), Value = 0.0 });
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = LocalizationService.Get("PageCounter_ShapeFactor025"), Value = 0.25 });
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = LocalizationService.Get("PageCounter_ShapeFactor1"), Value = 1.0 });
+            _selectedShapeFactorPreset = AvailableShapeFactors.FirstOrDefault(s => Math.Abs(s.Value - prevShapeFactorVal) < 0.01) ?? AvailableShapeFactors[0];
+            OnPropertyChanged(nameof(SelectedShapeFactorPreset));
         }
 
         public void RefreshWorkbooks()

@@ -6,8 +6,8 @@
         xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         mc:Ignorable="d"
         Title="{loc:Loc PageCounter_Title}"
-        Height="700" Width="920"
-        MinHeight="580" MinWidth="800"
+        Height="730" Width="1020"
+        MinHeight="600" MinWidth="920"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
@@ -437,7 +437,7 @@
 
                         <!-- Character & Highlight Specific Options -->
                         <WrapPanel Grid.Row="1" VerticalAlignment="Center" Visibility="{Binding IsCharHighlightMode, Converter={StaticResource BoolToVisConverter}}">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,16,4" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,6" VerticalAlignment="Center">
                                 <TextBlock Text="{loc:Loc PageCounter_DensityLabel}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,6,0">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -450,10 +450,10 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableDensityPresets}" SelectedItem="{Binding SelectedDensityPreset, Mode=TwoWay}" DisplayMemberPath="Name" Width="200" Height="28"/>
+                                <ComboBox ItemsSource="{Binding AvailableDensityPresets}" SelectedItem="{Binding SelectedDensityPreset, Mode=TwoWay}" DisplayMemberPath="Name" MinWidth="260" Height="28"/>
                             </StackPanel>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,0,16,4" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,6" VerticalAlignment="Center">
                                 <TextBlock Text="{loc:Loc PageCounter_HighlightColorLabel}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,6,0">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -466,10 +466,10 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableHighlightColors}" SelectedItem="{Binding SelectedHighlightColor, Mode=TwoWay}" DisplayMemberPath="Name" Width="160" Height="28"/>
+                                <ComboBox ItemsSource="{Binding AvailableHighlightColors}" SelectedItem="{Binding SelectedHighlightColor, Mode=TwoWay}" DisplayMemberPath="Name" MinWidth="240" Height="28"/>
                             </StackPanel>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,0,16,4" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,6" VerticalAlignment="Center">
                                 <TextBlock Text="{loc:Loc PageCounter_ShapeFactorLabel}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,6,0">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -482,10 +482,10 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableShapeFactors}" SelectedItem="{Binding SelectedShapeFactorPreset, Mode=TwoWay}" DisplayMemberPath="Name" Width="170" Height="28"/>
+                                <ComboBox ItemsSource="{Binding AvailableShapeFactors}" SelectedItem="{Binding SelectedShapeFactorPreset, Mode=TwoWay}" DisplayMemberPath="Name" MinWidth="220" Height="28"/>
                             </StackPanel>
 
-                            <CheckBox Content="{loc:Loc PageCounter_OptCreateEvidence}" IsChecked="{Binding HighlightChangedCells, Mode=TwoWay}" Margin="0,0,0,4" FontWeight="Medium" Visibility="{Binding IsAutoDiffMode, Converter={StaticResource BoolToVisConverter}}"/>
+                            <CheckBox Content="{loc:Loc PageCounter_OptCreateEvidence}" IsChecked="{Binding HighlightChangedCells, Mode=TwoWay}" Margin="0,0,0,6" FontWeight="Medium" Visibility="{Binding IsAutoDiffMode, Converter={StaticResource BoolToVisConverter}}"/>
                         </WrapPanel>
                     </Grid>
                 </Border>
