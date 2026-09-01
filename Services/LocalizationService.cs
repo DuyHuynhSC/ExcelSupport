@@ -110,7 +110,7 @@ namespace ExcelSupport.Services
             // --- 2. RIBBON BUTTONS & CONTROLS ---
             ["btnToggleTaskPane"] = new() { [AppLanguage.Vietnamese] = "Bật/Tắt Khung\nTiện Ích", [AppLanguage.English] = "Toggle\nTaskPane", [AppLanguage.Japanese] = "サイドパネル\n表示切替" },
             ["btnToggleTaskPane_Tip"] = new() { [AppLanguage.Vietnamese] = "Bật/Tắt Khung Tiện Ích", [AppLanguage.English] = "Toggle TaskPane", [AppLanguage.Japanese] = "サイドパネル表示切替" },
-            ["btnToggleTaskPane_SuperTip"] = new() { [AppLanguage.Vietnamese] = "Mở hoặc đóng thanh điều hướng nhanh Workbook/Sheet ở cạnh màn hình.", [AppLanguage.English] = "Open or close the Workbook/Sheet navigation panel on the side.", [AppLanguage.Japanese] = "画面側のブック・シートナビゲーションパネルを開閉します。" },
+            ["btnToggleTaskPane_SuperTip"] = new() { [AppLanguage.Vietnamese] = "Mở hoặc đóng thanh điều hướng nhanh Workbook/Sheet ở cạnh màn hình (Phím tắt: Ctrl + Shift + W).", [AppLanguage.English] = "Open or close the Workbook/Sheet navigation panel on the side (Shortcut: Ctrl + Shift + W).", [AppLanguage.Japanese] = "画面側のブック・シートナビゲーションパネルを開閉します（ショートカット: Ctrl + Shift + W）。" },
 
             ["btnRefreshTree"] = new() { [AppLanguage.Vietnamese] = "Làm Mới\nDanh Sách", [AppLanguage.English] = "Refresh\nTree", [AppLanguage.Japanese] = "ツリー\n更新" },
             ["btnRefreshTree_Tip"] = new() { [AppLanguage.Vietnamese] = "Làm Mới Danh Sách", [AppLanguage.English] = "Refresh Tree", [AppLanguage.Japanese] = "ツリー更新" },

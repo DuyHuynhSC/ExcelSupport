@@ -63,6 +63,8 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+q", "OracleQuickQueryCommand");
                 _excelApp?.OnKey("^+H", "ApplyDesignHighlightSelectionCommand");
                 _excelApp?.OnKey("^+h", "ApplyDesignHighlightSelectionCommand");
+                _excelApp?.OnKey("^+W", "ToggleTaskPaneCommand");
+                _excelApp?.OnKey("^+w", "ToggleTaskPaneCommand");
             }
             catch { }
 
@@ -79,6 +81,8 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+q");
                 _excelApp?.OnKey("^+H");
                 _excelApp?.OnKey("^+h");
+                _excelApp?.OnKey("^+W");
+                _excelApp?.OnKey("^+w");
             }
             catch { }
 
@@ -4418,6 +4422,22 @@ namespace ExcelSupport
                 {
                     var app = (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
                     Services.DesignPageCounterService.HighlightSelection(app);
+                }
+                catch { }
+            });
+        }
+    }
+
+    public static class TaskPaneCommands
+    {
+        [ExcelDna.Integration.ExcelCommand(ShortCut = "^+W", Name = "ToggleTaskPaneCommand")]
+        public static void ToggleTaskPane()
+        {
+            ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    Host.TaskPaneRegistry.ToggleTaskPaneAuto();
                 }
                 catch { }
             });

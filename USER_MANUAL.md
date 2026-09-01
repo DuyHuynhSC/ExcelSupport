@@ -51,6 +51,7 @@
 
 ### 2.1 Bảng Điều Hướng (Task Pane Bên Trái)
 * Mặc định hiển thị cố định ở bên trái màn hình Excel giúp bạn quan sát song song với vùng nhập liệu.
+* **Phím Tắt Bật/Tắt Nhanh:** Nhấn **`Ctrl + Shift + W`** bất cứ lúc nào trong Excel để đóng hoặc mở nhanh thanh Task Pane này.
 * **Vùng Trên:** Danh sách các Workbook đang mở.
 * **Vùng Dưới:** Danh sách các Sheet của Workbook đang chọn.
 

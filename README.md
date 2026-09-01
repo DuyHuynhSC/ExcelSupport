@@ -17,7 +17,7 @@
 ## ✨ Danh Sách Tính Năng Nổi Bật
 
 ### 📑 1. Điều Hướng & Quản Lý Bảng Tính (Sheet & Workbook Navigation)
-* **Dock Task Pane Cố Định:** Thanh điều hướng tích hợp bên trái màn hình Excel giúp theo dõi song song danh sách Workbook và Worksheet.
+* **Dock Task Pane Cố Định (Phím Tắt: `Ctrl + Shift + W`):** Thanh điều hướng tích hợp bên trái màn hình Excel giúp theo dõi song song danh sách Workbook và Worksheet. Bật/tắt nhanh bằng phím tắt `Ctrl + Shift + W`.
 * **Tìm Kiếm & Sắp Xếp Tức Thì:** Tìm kiếm Sheet thời gian thực với bộ lọc đa từ khóa (`|`), hỗ trợ sắp xếp theo thứ tự **Original**, **A-Z ↑**, **Z-A ↓**.
 * **Quản Trị Sheet Nhanh:** Đổi màu Tab, hiển thị toàn bộ Sheet ẩn (`Hidden` / `Very Hidden`), tự động tạo Sheet Mục Lục (Table of Contents) với Hyperlink trực tiếp.
 * **Tối Ưu Chống Giật (Anti-Flicker & Zero Lag):** Cơ chế đồng bộ 1 chiều thông minh loại bỏ hoàn toàn hiện tượng nhấp nháy màn hình hoặc đơ Excel khi chuyển Sheet / Workbook.

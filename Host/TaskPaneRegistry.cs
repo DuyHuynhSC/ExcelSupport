@@ -191,6 +191,15 @@ namespace ExcelSupport.Host
             }
         }
 
+        public static void ToggleTaskPaneAuto()
+        {
+            if (AddInEvents.MainViewModel != null)
+            {
+                bool newVisibleState = !IsTaskPaneVisible;
+                ToggleTaskPane(AddInEvents.MainViewModel, newVisibleState);
+            }
+        }
+
         public static void AutoRestoreForActiveWindow(TaskPaneViewModel viewModel)
         {
             if (!AppSettings.IsTaskPaneAutoOpen) return;
