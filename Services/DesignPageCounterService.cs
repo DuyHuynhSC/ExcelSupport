@@ -14,8 +14,9 @@ namespace ExcelSupport.Services
 
     public enum PageCounterMode
     {
-        CharacterAndHighlight, // Thuật toán đếm ký tự & tô màu ô thay đổi (Mặc định)
-        PrintBreakGrid         // Thuật toán ngắt trang in Excel
+        UserHighlightedColor, // Thuật toán đếm theo màu ô người dùng đã tô (Mặc định)
+        AutoDiffTemplate,     // Thuật toán tự động so sánh với Template & Tô màu đối chiếu
+        PrintBreakGrid        // Thuật toán ngắt trang in Excel
     }
 
     public enum PageStatus
@@ -36,15 +37,16 @@ namespace ExcelSupport.Services
 
     public class PageCounterOptions
     {
-        public PageCounterMode Mode { get; set; } = PageCounterMode.CharacterAndHighlight;
+        public PageCounterMode Mode { get; set; } = PageCounterMode.UserHighlightedColor;
         public bool IgnoreCoverAndHistory { get; set; } = true;
         public bool IgnoreBlankPages { get; set; } = true;
         public bool CountShapesAndPictures { get; set; } = true;
         public int MinChangedCellsThreshold { get; set; } = 2;
         public int CharactersPerPage { get; set; } = 600; // Định mức ký tự / trang (mặc định 600 cho Tiếng Nhật, 1200 cho Tiếng Việt/Anh)
-        public double ShapePageFactor { get; set; } = 0.5; // Mỗi hình vẽ/sơ đồ quy đổi = 0.5 trang
-        public bool HighlightChangedCells { get; set; } = true; // Tạo bản sao và tô màu ô thay đổi
-        public string HighlightColorHex { get; set; } = "#FEF08A"; // Vàng nhạt mặc định
+        public double ShapePageFactor { get; set; } = 0.5; // Mỗi sơ đồ/hình vẽ lớn quy đổi = 0.5 trang
+        public bool HighlightChangedCells { get; set; } = true; // Tạo bản sao và tô màu ô thay đổi (cho mode AutoDiff)
+        public string HighlightColorHex { get; set; } = "ANY"; // "ANY" = Bất kỳ màu nào, hoặc mã Hex "#FEF08A"
+        public bool MatchAnyHighlightColor { get; set; } = true; // Khác màu trắng và không màu
         public HashSet<string> ExcludedSheetNames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
@@ -260,7 +262,11 @@ namespace ExcelSupport.Services
                     clonedSheetsDict.TryGetValue(targetWs.Name, out Worksheet? clonedWs);
 
                     SheetPageCounterResult sheetResult;
-                    if (options.Mode == PageCounterMode.CharacterAndHighlight)
+                    if (options.Mode == PageCounterMode.UserHighlightedColor)
+                    {
+                        sheetResult = AnalyzeWorksheetByHighlightedColor(app, targetWs, options);
+                    }
+                    else if (options.Mode == PageCounterMode.AutoDiffTemplate)
                     {
                         sheetResult = AnalyzeWorksheetByCharacterAndHighlight(app, targetWs, tplWs, clonedWs, options);
                     }
@@ -327,6 +333,59 @@ namespace ExcelSupport.Services
         }
 
         /// <summary>
+        /// Tạo và mở một bản sao mới của file thiết kế để người dùng tự do tô màu các ô trước khi đếm.
+        /// </summary>
+        public static string? CreateAndOpenNewCopyForHighlighting(ExcelApp app, string targetWbNameOrPath)
+        {
+            if (app == null || string.IsNullOrWhiteSpace(targetWbNameOrPath)) return null;
+
+            try
+            {
+                string tempDir = Path.Combine(Path.GetTempPath(), "ExcelSupport_DesignPages");
+                if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+
+                string baseName = Path.GetFileNameWithoutExtension(targetWbNameOrPath);
+                string ext = Path.GetExtension(targetWbNameOrPath);
+                if (string.IsNullOrEmpty(ext)) ext = ".xlsx";
+
+                string newCopyPath = Path.Combine(tempDir, $"New_Design_{baseName}_{DateTime.Now:yyyyMMdd_HHmmss}{ext}");
+
+                bool openedHere = false;
+                Workbook? targetWb = FindOrOpenWorkbook(app, targetWbNameOrPath, out openedHere);
+                if (targetWb == null) return null;
+
+                try
+                {
+                    if (File.Exists(targetWb.FullName))
+                    {
+                        File.Copy(targetWb.FullName, newCopyPath, true);
+                    }
+                    else
+                    {
+                        targetWb.SaveCopyAs(newCopyPath);
+                    }
+
+                    app.Visible = true;
+                    Workbook newWb = app.Workbooks.Open(newCopyPath);
+                    newWb.Activate();
+                    return newCopyPath;
+                }
+                finally
+                {
+                    if (openedHere && targetWb != null)
+                    {
+                        try { targetWb.Close(false); Marshal.ReleaseComObject(targetWb); } catch { }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DesignPageCounterService] CreateAndOpenNewCopy error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Mở workbook đã được tô màu highlight (Evidence) trong Excel để người dùng xem trực tiếp.
         /// </summary>
         public static bool OpenEvidenceWorkbook(ExcelApp app, string filePath)
@@ -346,7 +405,156 @@ namespace ExcelSupport.Services
         }
 
         /// <summary>
-        /// Phân tích số trang thiết kế bằng thuật toán đếm ký tự & tô màu trực quan các ô thay đổi.
+        /// Phân tích số trang thiết kế dựa trên màu sắc mà người dùng đã tự tô vào các ô.
+        /// </summary>
+        private static SheetPageCounterResult AnalyzeWorksheetByHighlightedColor(
+            ExcelApp app,
+            Worksheet targetWs,
+            PageCounterOptions options)
+        {
+            var sheetResult = new SheetPageCounterResult
+            {
+                SheetName = targetWs.Name
+            };
+
+            // 1. Lấy UsedRange của Target
+            Range targetUsed = targetWs.UsedRange;
+            int targetStartRow = targetUsed.Row;
+            int targetStartCol = targetUsed.Column;
+            int targetRowCount = targetUsed.Rows.Count;
+            int targetColCount = targetUsed.Columns.Count;
+
+            object[,] targetVals = Extract2DArray(targetUsed.Value2);
+            object[,] targetFormulas = Extract2DArray(targetUsed.Formula);
+
+            Color targetColor = ColorTranslator.FromHtml(options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase) ? "#FEF08A" : options.HighlightColorHex);
+            bool matchAnyColor = options.MatchAnyHighlightColor || options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase);
+
+            var highlightedCells = new List<(int row, int col, int charCount)>();
+            int totalChars = 0;
+            int totalCells = 0;
+
+            for (int r = 1; r <= targetRowCount; r++)
+            {
+                int actualRow = targetStartRow + r - 1;
+                for (int c = 1; c <= targetColCount; c++)
+                {
+                    int actualCol = targetStartCol + c - 1;
+
+                    object? tVal = (r <= targetVals.GetLength(0) && c <= targetVals.GetLength(1)) ? targetVals[r, c] : null;
+                    object? tForm = (r <= targetFormulas.GetLength(0) && c <= targetFormulas.GetLength(1)) ? targetFormulas[r, c] : null;
+
+                    string tStr = tVal?.ToString()?.Trim() ?? string.Empty;
+                    string tFormStr = tForm?.ToString()?.Trim() ?? string.Empty;
+
+                    if (string.IsNullOrEmpty(tStr) && string.IsNullOrEmpty(tFormStr))
+                        continue;
+
+                    // Kiểm tra xem ô có được tô màu hay không
+                    Range? cell = null;
+                    bool isHighlighted = false;
+                    try
+                    {
+                        cell = targetWs.Cells[actualRow, actualCol] as Range;
+                        if (cell != null)
+                        {
+                            object interiorColor = cell.Interior.Color;
+                            object interiorColorIndex = cell.Interior.ColorIndex;
+                            isHighlighted = IsColorMatch(interiorColor, interiorColorIndex, targetColor, matchAnyColor);
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        if (cell != null) Marshal.ReleaseComObject(cell);
+                    }
+
+                    if (isHighlighted)
+                    {
+                        int len = tStr.Length > 0 ? tStr.Length : tFormStr.Length;
+                        totalCells++;
+                        totalChars += len;
+                        highlightedCells.Add((actualRow, actualCol, len));
+                    }
+                }
+            }
+
+            // 2. Đếm các hình vẽ / sơ đồ hợp lệ (kích thước lớn)
+            int addedShapes = 0;
+            if (options.CountShapesAndPictures)
+            {
+                addedShapes = CountMeaningfulDesignShapes(targetWs);
+            }
+
+            sheetResult.TotalChangedCells = totalCells;
+            sheetResult.TotalChangedCharacters = totalChars;
+            sheetResult.TotalAddedShapes = addedShapes;
+
+            // 3. Quy đổi ra số trang thiết kế
+            double charPages = (double)totalChars / Math.Max(1, options.CharactersPerPage);
+            double shapePages = addedShapes * options.ShapePageFactor;
+            double calculatedWorkPages = Math.Round(charPages + shapePages, 1);
+
+            sheetResult.TotalPrintPages = Math.Max(1, (int)Math.Ceiling(calculatedWorkPages > 0 ? calculatedWorkPages : 1));
+            sheetResult.WorkPagesCount = calculatedWorkPages;
+            sheetResult.TemplatePagesCount = 0;
+
+            if (totalCells == 0 && addedShapes == 0)
+            {
+                sheetResult.Status = SheetStatus.TemplateOnly;
+                sheetResult.WorkPagesCount = 0;
+            }
+            else
+            {
+                sheetResult.Status = SheetStatus.ModifiedSheet;
+            }
+
+            // 4. Xây dựng danh sách trang chi tiết
+            var targetPageRanges = GetPrintPageRanges(app, targetWs);
+            if (targetPageRanges.Count > 0)
+            {
+                sheetResult.TotalPrintPages = targetPageRanges.Count;
+                int pageIndex = 1;
+                foreach (var pr in targetPageRanges)
+                {
+                    int pageHighlightedCount = highlightedCells.Count(c => c.row >= pr.StartRow && c.row <= pr.EndRow && c.col >= pr.StartCol && c.col <= pr.EndCol);
+                    int pageChars = highlightedCells.Where(c => c.row >= pr.StartRow && c.row <= pr.EndRow && c.col >= pr.StartCol && c.col <= pr.EndCol).Sum(c => c.charCount);
+                    bool isWorkPage = pageHighlightedCount > 0;
+                    sheetResult.Pages.Add(new PageDetailItem
+                    {
+                        PageNumber = pageIndex++,
+                        RangeAddress = pr.Address,
+                        StartRow = pr.StartRow,
+                        EndRow = pr.EndRow,
+                        StartCol = pr.StartCol,
+                        EndCol = pr.EndCol,
+                        Status = isWorkPage ? PageStatus.WorkPage : PageStatus.TemplatePage,
+                        ChangedCellsCount = pageHighlightedCount,
+                        Description = isWorkPage ? $"{pageHighlightedCount} ô tô màu ({pageChars} ký tự)" : "Không có ô tô màu"
+                    });
+                }
+            }
+            else
+            {
+                sheetResult.Pages.Add(new PageDetailItem
+                {
+                    PageNumber = 1,
+                    RangeAddress = targetUsed.Address,
+                    StartRow = targetStartRow,
+                    EndRow = targetStartRow + targetRowCount - 1,
+                    StartCol = targetStartCol,
+                    EndCol = targetStartCol + targetColCount - 1,
+                    Status = totalCells > 0 ? PageStatus.WorkPage : PageStatus.TemplatePage,
+                    ChangedCellsCount = totalCells,
+                    Description = totalCells > 0 ? $"{totalCells} ô tô màu ({totalChars} ký tự)" : "Không có ô tô màu"
+                });
+            }
+
+            return sheetResult;
+        }
+
+        /// <summary>
+        /// Phân tích số trang thiết kế bằng thuật toán tự động so sánh với Template & tô màu trực quan các ô thay đổi.
         /// </summary>
         private static SheetPageCounterResult AnalyzeWorksheetByCharacterAndHighlight(
             ExcelApp app,
@@ -440,14 +648,16 @@ namespace ExcelSupport.Services
                 }
             }
 
-            // 3. Đếm số shapes mới thêm
+            // 3. Đếm số sơ đồ / hình vẽ hợp lệ mới thêm
             int addedShapes = 0;
             if (options.CountShapesAndPictures)
             {
-                int targetShapes = 0;
+                int targetShapes = CountMeaningfulDesignShapes(targetWs);
                 int tplShapes = 0;
-                try { targetShapes = targetWs.Shapes.Count; } catch { }
-                try { if (templateWs != null) tplShapes = templateWs.Shapes.Count; } catch { }
+                if (templateWs != null)
+                {
+                    tplShapes = CountMeaningfulDesignShapes(templateWs);
+                }
                 addedShapes = Math.Max(0, targetShapes - tplShapes);
             }
 
@@ -456,7 +666,7 @@ namespace ExcelSupport.Services
             {
                 try
                 {
-                    Color highlightColor = ColorTranslator.FromHtml(options.HighlightColorHex);
+                    Color highlightColor = ColorTranslator.FromHtml(options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase) ? "#FEF08A" : options.HighlightColorHex);
                     ApplyHighlightToCells(clonedWs, changedCells, highlightColor);
                 }
                 catch { }
@@ -951,7 +1161,61 @@ namespace ExcelSupport.Services
             }
         }
 
+        /// <summary>
+        /// Đếm các đối tượng hình ảnh/sơ đồ thiết kế có ý nghĩa thực tế (loại trừ drop-down, button, comment, icon nhỏ).
+        /// </summary>
+        public static int CountMeaningfulDesignShapes(Worksheet ws)
+        {
+            if (ws == null) return 0;
+            int count = 0;
+            try
+            {
+                foreach (Shape shape in ws.Shapes)
+                {
+                    try
+                    {
+                        // 1. Phải đang hiển thị (Visible)
+                        if (shape.Visible != Microsoft.Office.Core.MsoTriState.msoTrue)
+                            continue;
+
+                        // 2. Lọc loại Shape: Loại bỏ form control, comment, line viền nhỏ, drop-down arrows
+                        var type = shape.Type;
+                        if (type == Microsoft.Office.Core.MsoShapeType.msoComment ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoFormControl ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoOLEControlObject ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoLine ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoFreeform)
+                        {
+                            continue;
+                        }
+
+                        // 3. Lọc theo kích thước: Phải đủ lớn để là một sơ đồ thiết kế / ảnh chụp màn hình / chart
+                        float width = shape.Width;
+                        float height = shape.Height;
+
+                        // Bỏ qua các icon, bullet points, mũi tên nhỏ, viền khung (< 60x45 pt)
+                        if (width < 60 || height < 45)
+                            continue;
+
+                        // Diện tích tối thiểu: >= 3,600 pt^2
+                        if (width * height < 3600)
+                            continue;
+
+                        count++;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            return count;
+        }
+
         private static int CountShapesInRange(Worksheet ws, PageRect pr)
+        {
+            return CountMeaningfulShapesInRange(ws, pr);
+        }
+
+        public static int CountMeaningfulShapesInRange(Worksheet ws, PageRect pr)
         {
             int count = 0;
             try
@@ -960,6 +1224,24 @@ namespace ExcelSupport.Services
                 {
                     try
                     {
+                        if (shape.Visible != Microsoft.Office.Core.MsoTriState.msoTrue)
+                            continue;
+
+                        var type = shape.Type;
+                        if (type == Microsoft.Office.Core.MsoShapeType.msoComment ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoFormControl ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoOLEControlObject ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoLine ||
+                            type == Microsoft.Office.Core.MsoShapeType.msoFreeform)
+                        {
+                            continue;
+                        }
+
+                        float width = shape.Width;
+                        float height = shape.Height;
+                        if (width < 60 || height < 45 || width * height < 3600)
+                            continue;
+
                         int topRow = shape.TopLeftCell.Row;
                         int leftCol = shape.TopLeftCell.Column;
                         if (topRow >= pr.StartRow && topRow <= pr.EndRow &&
@@ -973,6 +1255,90 @@ namespace ExcelSupport.Services
             }
             catch { }
             return count;
+        }
+
+        /// <summary>
+        /// Kiểm tra xem màu nền của ô có khớp với màu chỉ định hay không.
+        /// </summary>
+        public static bool IsColorMatch(object interiorColor, object interiorColorIndex, Color targetColor, bool matchAnyHighlight)
+        {
+            if (interiorColor == null && interiorColorIndex == null) return false;
+
+            int colorIndex = 0;
+            if (interiorColorIndex != null && int.TryParse(interiorColorIndex.ToString(), out int cIdx))
+            {
+                colorIndex = cIdx;
+            }
+
+            // xlNone = -4142 (Không tô màu)
+            if (colorIndex == -4142) return false;
+
+            long oleColor = 0;
+            if (interiorColor != null)
+            {
+                if (interiorColor is double d) oleColor = (long)d;
+                else if (interiorColor is int i) oleColor = i;
+                else if (interiorColor is long l) oleColor = l;
+                else long.TryParse(interiorColor.ToString(), out oleColor);
+            }
+
+            // Màu trắng: 16777215 (0xFFFFFF) hoặc ColorIndex == 2 khi ole == 0
+            if (oleColor == 16777215 || (colorIndex == 2 && oleColor == 0))
+            {
+                return false;
+            }
+
+            // Nếu người dùng chọn bất kỳ màu nào: Bất kỳ màu nào khác trắng và không màu đều khớp!
+            if (matchAnyHighlight)
+            {
+                return oleColor > 0 || (colorIndex > 0 && colorIndex != 2);
+            }
+
+            // So khớp màu cụ thể
+            int r = (int)(oleColor & 0xFF);
+            int g = (int)((oleColor >> 8) & 0xFF);
+            int b = (int)((oleColor >> 16) & 0xFF);
+
+            int dr = Math.Abs(r - targetColor.R);
+            int dg = Math.Abs(g - targetColor.G);
+            int db = Math.Abs(b - targetColor.B);
+
+            // Khoảng cách RGB nhỏ
+            if (dr + dg + db <= 100) return true;
+
+            // Kiểm tra theo họ màu (Yellow, Green, Cyan, Orange, Pink)
+            return IsInSameColorFamily(r, g, b, targetColor);
+        }
+
+        private static bool IsInSameColorFamily(int r, int g, int b, Color targetColor)
+        {
+            // Họ màu Vàng (Yellow)
+            if (targetColor.R > 200 && targetColor.G > 180 && targetColor.B < 180)
+            {
+                return r > 180 && g > 170 && b < 170;
+            }
+            // Họ màu Xanh ngọc / Xanh dương (Cyan / Light Blue)
+            if (targetColor.B > 200 && targetColor.G > 160)
+            {
+                return b > 170 && (g > 150 || r < 180);
+            }
+            // Họ màu Xanh lá (Green)
+            if (targetColor.G > 180 && targetColor.R < 200)
+            {
+                return g > 160 && r < 200 && b < 200;
+            }
+            // Họ màu Cam / Đào (Orange / Peach)
+            if (targetColor.R > 220 && targetColor.G > 120 && targetColor.G < 220 && targetColor.B < 180)
+            {
+                return r > 190 && g > 110 && b < 180;
+            }
+            // Họ màu Hồng / Tím (Pink / Purple)
+            if (targetColor.R > 180 && targetColor.B > 180)
+            {
+                return r > 160 && b > 160;
+            }
+
+            return false;
         }
 
         private static object[,] Extract2DArray(object rawVal)

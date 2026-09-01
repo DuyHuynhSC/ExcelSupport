@@ -44,6 +44,12 @@ namespace ExcelSupport.ViewModels
         public int Value { get; set; }
     }
 
+    public class ShapeFactorPresetItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public double Value { get; set; }
+    }
+
     public class DesignPageCounterViewModel : ViewModelBase
     {
         private readonly ExcelApp _excelApp;
@@ -53,11 +59,13 @@ namespace ExcelSupport.ViewModels
         private string _customTargetFilePath = string.Empty;
         private string _customTemplateFilePath = string.Empty;
 
-        private PageCounterMode _mode = PageCounterMode.CharacterAndHighlight;
+        private PageCounterMode _mode = PageCounterMode.UserHighlightedColor;
         private int _charactersPerPage = 600;
+        private double _shapePageFactor = 0.5;
         private bool _highlightChangedCells = true;
         private ColorSwatchItem _selectedHighlightColor;
         private DensityPresetItem _selectedDensityPreset;
+        private ShapeFactorPresetItem _selectedShapeFactorPreset;
 
         private bool _ignoreCoverAndHistory = true;
         private bool _ignoreBlankPages = true;
@@ -75,6 +83,7 @@ namespace ExcelSupport.ViewModels
         public ObservableCollection<SheetSelectorItem> AvailableSheets { get; } = new();
         public ObservableCollection<ColorSwatchItem> AvailableHighlightColors { get; } = new();
         public ObservableCollection<DensityPresetItem> AvailableDensityPresets { get; } = new();
+        public ObservableCollection<ShapeFactorPresetItem> AvailableShapeFactors { get; } = new();
 
         public PageCounterMode Mode
         {
@@ -83,18 +92,38 @@ namespace ExcelSupport.ViewModels
             {
                 if (SetProperty(ref _mode, value))
                 {
+                    OnPropertyChanged(nameof(IsUserHighlightMode));
+                    OnPropertyChanged(nameof(IsAutoDiffMode));
                     OnPropertyChanged(nameof(IsCharHighlightMode));
                     OnPropertyChanged(nameof(IsPrintBreakMode));
                 }
             }
         }
 
-        public bool IsCharHighlightMode
+        public bool IsUserHighlightMode
         {
-            get => Mode == PageCounterMode.CharacterAndHighlight;
+            get => Mode == PageCounterMode.UserHighlightedColor;
             set
             {
-                if (value) Mode = PageCounterMode.CharacterAndHighlight;
+                if (value) Mode = PageCounterMode.UserHighlightedColor;
+            }
+        }
+
+        public bool IsAutoDiffMode
+        {
+            get => Mode == PageCounterMode.AutoDiffTemplate;
+            set
+            {
+                if (value) Mode = PageCounterMode.AutoDiffTemplate;
+            }
+        }
+
+        public bool IsCharHighlightMode
+        {
+            get => Mode == PageCounterMode.UserHighlightedColor || Mode == PageCounterMode.AutoDiffTemplate;
+            set
+            {
+                if (value && Mode == PageCounterMode.PrintBreakGrid) Mode = PageCounterMode.UserHighlightedColor;
             }
         }
 
@@ -111,6 +140,12 @@ namespace ExcelSupport.ViewModels
         {
             get => _charactersPerPage;
             set => SetProperty(ref _charactersPerPage, value);
+        }
+
+        public double ShapePageFactor
+        {
+            get => _shapePageFactor;
+            set => SetProperty(ref _shapePageFactor, value);
         }
 
         public bool HighlightChangedCells
@@ -133,6 +168,18 @@ namespace ExcelSupport.ViewModels
                 if (SetProperty(ref _selectedDensityPreset, value) && value != null)
                 {
                     CharactersPerPage = value.Value;
+                }
+            }
+        }
+
+        public ShapeFactorPresetItem SelectedShapeFactorPreset
+        {
+            get => _selectedShapeFactorPreset;
+            set
+            {
+                if (SetProperty(ref _selectedShapeFactorPreset, value) && value != null)
+                {
+                    ShapePageFactor = value.Value;
                 }
             }
         }
@@ -287,6 +334,7 @@ namespace ExcelSupport.ViewModels
         public ICommand RefreshWorkbooksCommand { get; }
         public ICommand BrowseTargetFileCommand { get; }
         public ICommand BrowseTemplateFileCommand { get; }
+        public ICommand CreateNewCopyForHighlightCommand { get; }
         public ICommand SelectAllSheetsCommand { get; }
         public ICommand DeselectAllSheetsCommand { get; }
         public ICommand InvertSheetsSelectionCommand { get; }
@@ -298,22 +346,33 @@ namespace ExcelSupport.ViewModels
         {
             _excelApp = excelApp ?? throw new ArgumentNullException(nameof(excelApp));
 
-            // Presets
+            // Presets mật độ ký tự
             AvailableDensityPresets.Add(new DensityPresetItem { Name = "600 ký tự (Chuẩn Tiếng Nhật / Kanji)", Value = 600 });
             AvailableDensityPresets.Add(new DensityPresetItem { Name = "1.200 ký tự (Tiếng Việt / Tiếng Anh)", Value = 1200 });
             AvailableDensityPresets.Add(new DensityPresetItem { Name = "800 ký tự / trang", Value = 800 });
             AvailableDensityPresets.Add(new DensityPresetItem { Name = "1.500 ký tự / trang", Value = 1500 });
             _selectedDensityPreset = AvailableDensityPresets[0];
 
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "Vàng nhạt", Hex = "#FEF08A" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "Xanh ngọc", Hex = "#BAE6FD" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "Xanh lá nhạt", Hex = "#BBF7D0" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "Cam nhạt", Hex = "#FED7AA" });
+            // Presets màu tô
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🎨 Bất kỳ màu nào (Khác màu trắng)", Hex = "ANY" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟡 Vàng (Yellow)", Hex = "#FEF08A" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🔵 Xanh ngọc / Xanh dương (Cyan)", Hex = "#BAE6FD" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟢 Xanh lá nhạt (Light Green)", Hex = "#BBF7D0" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟠 Cam nhạt (Orange)", Hex = "#FED7AA" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = "🟣 Hồng / Tím nhạt (Pink / Violet)", Hex = "#DDD6FE" });
             _selectedHighlightColor = AvailableHighlightColors[0];
+
+            // Presets quy đổi sơ đồ/hình ảnh
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "0.5 trang / sơ đồ (Mặc định)", Value = 0.5 });
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "0 trang (Không tính hình)", Value = 0.0 });
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "0.25 trang / sơ đồ", Value = 0.25 });
+            AvailableShapeFactors.Add(new ShapeFactorPresetItem { Name = "1.0 trang / sơ đồ", Value = 1.0 });
+            _selectedShapeFactorPreset = AvailableShapeFactors[0];
 
             RefreshWorkbooksCommand = new RelayCommand(_ => RefreshWorkbooks());
             BrowseTargetFileCommand = new RelayCommand(_ => BrowseTargetFile());
             BrowseTemplateFileCommand = new RelayCommand(_ => BrowseTemplateFile());
+            CreateNewCopyForHighlightCommand = new RelayCommand(_ => CreateNewCopyForHighlight(), _ => CanAnalyze);
             SelectAllSheetsCommand = new RelayCommand(_ =>
             {
                 foreach (var s in AvailableSheets) s.IsIncluded = true;
@@ -498,6 +557,48 @@ namespace ExcelSupport.ViewModels
             OnPropertyChanged(nameof(SheetSelectionHeader));
         }
 
+        private void CreateNewCopyForHighlight()
+        {
+            string targetSource = !string.IsNullOrEmpty(CustomTargetFilePath) ? CustomTargetFilePath : SelectedTargetWorkbook;
+            if (string.IsNullOrWhiteSpace(targetSource))
+            {
+                WpfMessageBox.Show("Vui lòng chọn hoặc duyệt file thiết kế nguồn trước.", "Chưa chọn file", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                string? newPath = DesignPageCounterService.CreateAndOpenNewCopyForHighlighting(_excelApp, targetSource);
+                if (!string.IsNullOrEmpty(newPath))
+                {
+                    string fileName = Path.GetFileName(newPath);
+                    if (!OpenWorkbooks.Contains(newPath!))
+                    {
+                        OpenWorkbooks.Insert(0, newPath!);
+                    }
+                    CustomTargetFilePath = newPath ?? string.Empty;
+                    _selectedTargetWorkbook = newPath ?? string.Empty;
+                    OnPropertyChanged(nameof(SelectedTargetWorkbook));
+                    LoadTargetSheets();
+
+                    string msg = string.Format(
+                        LocalizationService.Instance["PageCounter_MsgCopyCreated"] ??
+                        "Đã tạo và mở file bản sao mới:\n{0}\n\n👉 Hướng dẫn thao tác:\n1. Dùng công cụ Fill Color (Tô Màu Nền) trên thanh công cụ Excel để tô màu các ô bạn đã thiết kế theo màu chỉ định.\n2. Lưu file (Ctrl + S) nếu muốn.\n3. Quay lại đây và bấm nút 'Phân Tích & Đếm Trang' để hoàn tất!",
+                        fileName);
+
+                    WpfMessageBox.Show(msg, "Đã mở file bản sao để tô màu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                }
+                else
+                {
+                    WpfMessageBox.Show("Không thể tạo bản sao file Excel. Vui lòng kiểm tra quyền truy cập file.", "Lỗi tạo bản sao", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi tạo bản sao: {ex.Message}", "Lỗi", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+            }
+        }
+
         public async Task AnalyzeAsync()
         {
             string targetSource = !string.IsNullOrEmpty(CustomTargetFilePath) ? CustomTargetFilePath : SelectedTargetWorkbook;
@@ -517,12 +618,17 @@ namespace ExcelSupport.ViewModels
                 AvailableSheets.Where(s => !s.IsIncluded).Select(s => s.SheetName),
                 StringComparer.OrdinalIgnoreCase);
 
+            string colorHex = SelectedHighlightColor?.Hex ?? "ANY";
+            bool matchAnyColor = colorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase);
+
             var options = new PageCounterOptions
             {
                 Mode = Mode,
                 CharactersPerPage = CharactersPerPage > 0 ? CharactersPerPage : 600,
+                ShapePageFactor = ShapePageFactor,
                 HighlightChangedCells = HighlightChangedCells,
-                HighlightColorHex = SelectedHighlightColor?.Hex ?? "#FEF08A",
+                HighlightColorHex = colorHex,
+                MatchAnyHighlightColor = matchAnyColor,
                 IgnoreCoverAndHistory = IgnoreCoverAndHistory,
                 IgnoreBlankPages = IgnoreBlankPages,
                 CountShapesAndPictures = CountShapesAndPictures,

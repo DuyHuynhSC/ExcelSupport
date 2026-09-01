@@ -368,10 +368,17 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ComboBox ItemsSource="{Binding OpenWorkbooks}" SelectedItem="{Binding SelectedTargetWorkbook, Mode=TwoWay}" Height="30" ToolTip="{Binding SelectedTargetWorkbook}"/>
                             <Button Grid.Column="1" Command="{Binding BrowseTargetFileCommand}" Style="{StaticResource SecondaryActionBtn}" Margin="4,0,0,0" Padding="8,4" Height="30" ToolTip="{loc:Loc PageCounter_BrowseTip}">
                                 <TextBlock Text="📁" FontSize="12"/>
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding CreateNewCopyForHighlightCommand}" Style="{StaticResource SecondaryActionBtn}" Margin="4,0,0,0" Padding="8,4" Height="30" ToolTip="{loc:Loc PageCounter_BtnCreateNewCopyTip}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📝" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{loc:Loc PageCounter_BtnCreateNewCopy}" FontSize="11" FontWeight="Medium"/>
+                                </StackPanel>
                             </Button>
                         </Grid>
                     </StackPanel>
@@ -423,7 +430,8 @@
 
                         <!-- Algorithm Mode RadioButtons -->
                         <WrapPanel Grid.Row="0" Margin="0,0,0,8" VerticalAlignment="Center">
-                            <RadioButton Content="{loc:Loc PageCounter_ModeCharHighlight}" IsChecked="{Binding IsCharHighlightMode, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,20,0"/>
+                            <RadioButton Content="{loc:Loc PageCounter_ModeUserHighlight}" IsChecked="{Binding IsUserHighlightMode, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,18,0"/>
+                            <RadioButton Content="{loc:Loc PageCounter_ModeAutoDiff}" IsChecked="{Binding IsAutoDiffMode, Mode=TwoWay}" Margin="0,0,18,0"/>
                             <RadioButton Content="{loc:Loc PageCounter_ModePrintBreak}" IsChecked="{Binding IsPrintBreakMode, Mode=TwoWay}"/>
                         </WrapPanel>
 
@@ -442,7 +450,7 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableDensityPresets}" SelectedItem="{Binding SelectedDensityPreset, Mode=TwoWay}" DisplayMemberPath="Name" Width="230" Height="28"/>
+                                <ComboBox ItemsSource="{Binding AvailableDensityPresets}" SelectedItem="{Binding SelectedDensityPreset, Mode=TwoWay}" DisplayMemberPath="Name" Width="200" Height="28"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,16,4" VerticalAlignment="Center">
@@ -458,10 +466,26 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableHighlightColors}" SelectedItem="{Binding SelectedHighlightColor, Mode=TwoWay}" DisplayMemberPath="Name" Width="110" Height="28"/>
+                                <ComboBox ItemsSource="{Binding AvailableHighlightColors}" SelectedItem="{Binding SelectedHighlightColor, Mode=TwoWay}" DisplayMemberPath="Name" Width="160" Height="28"/>
                             </StackPanel>
 
-                            <CheckBox Content="{loc:Loc PageCounter_OptCreateEvidence}" IsChecked="{Binding HighlightChangedCells, Mode=TwoWay}" Margin="0,0,0,4" FontWeight="Medium"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,4" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc PageCounter_ShapeFactorLabel}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,6,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#475569"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#CBD5E1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ComboBox ItemsSource="{Binding AvailableShapeFactors}" SelectedItem="{Binding SelectedShapeFactorPreset, Mode=TwoWay}" DisplayMemberPath="Name" Width="170" Height="28"/>
+                            </StackPanel>
+
+                            <CheckBox Content="{loc:Loc PageCounter_OptCreateEvidence}" IsChecked="{Binding HighlightChangedCells, Mode=TwoWay}" Margin="0,0,0,4" FontWeight="Medium" Visibility="{Binding IsAutoDiffMode, Converter={StaticResource BoolToVisConverter}}"/>
                         </WrapPanel>
                     </Grid>
                 </Border>

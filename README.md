@@ -23,17 +23,18 @@
 * **Tối Ưu Chống Giật (Anti-Flicker & Zero Lag):** Cơ chế đồng bộ 1 chiều thông minh loại bỏ hoàn toàn hiện tượng nhấp nháy màn hình hoặc đơ Excel khi chuyển Sheet / Workbook.
 
 ### 📐 2. Thống Kê & Đếm Trang Thiết Kế (Design Page Counter)
-* **Thuật Toán Định Mức Ký Tự & Tô Màu Đối Chiếu (Evidence):**
-  * Tự động tạo bản sao an toàn (In-Memory / Temp Clone) để bảo vệ 100% file thiết kế gốc.
-  * So khớp cell-by-cell trên RAM với file Template của khách hàng, đếm chính xác số ký tự được viết mới / chỉnh sửa.
-  * Tự động **tô màu highlight trực quan** các ô thay đổi trên file bản sao với 4 gam màu dịu mắt (Vàng, Xanh ngọc, Xanh lá, Cam).
-  * Nhận diện sơ đồ, hình vẽ, diagram mới được chèn thêm.
+* **Quy Trình & Chế Độ Đếm Linh Hoạt:**
+  * **Chế độ 1: Đếm theo màu ô tự tô (Khuyên dùng):** Bấm nút **`📝 Mở Bản Sao Mới Để Tô Màu`** $\rightarrow$ Excel mở một file bản sao New độc lập để bạn tự do dùng công cụ Fill Color tô màu các ô thiết kế $\rightarrow$ Add-in quét các ô màu, đếm tổng ký tự và tính ra số trang thiết kế.
+  * **Chế độ 2: Tự động so sánh với Template gốc:** Tự động so khớp cell-by-cell với file Template của khách hàng, đếm ký tự thay đổi và tự động xuất file Evidence đã tô màu trực quan.
+  * **Chế độ 3: Đếm theo ngắt trang in Excel:** Phân tích theo lưới ngắt trang in (Print Breaks Grid).
+* **Bộ Lọc Sơ Đồ / Hình Ảnh & Công Thức Quy Đổi:**
+  * **Bộ lọc hình ảnh thông minh:** Chỉ nhận diện các hình/sơ đồ thiết kế thực sự ($\ge 60 \times 45\text{ pt}$, diện tích $\ge 3.600\text{ pt}^2$), loại bỏ triệt để drop-down, form controls, comments, nút bấm, icon nhỏ (khắc phục lỗi 1 hình nhỏ bị tính thành 100 trang).
   * Quy đổi ra số trang thiết kế chuẩn theo định mức:
-    $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô tô màu}}{\text{Định mức ký tự / trang}} + (\text{Số hình ảnh mới} \times 0.5)$$
+    $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô tô màu}}{\text{Định mức ký tự / trang}} + (\text{Số sơ đồ/hình ảnh} \times \text{Hệ số hình})$$
   * Hỗ trợ các preset định mức: **600 ký tự/trang** (Chuẩn Tiếng Nhật / Kanji), **1.200 ký tự/trang** (Tiếng Việt / Anh), 800 và 1.500 ký tự.
 * **Bằng Chứng Đối Chiếu & Báo Cáo:**
   * Nút **`🎨 Mở File Đã Tô Màu (Evidence)`**: Mở trực tiếp file copy đã highlight để kiểm tra và dùng làm bằng chứng nghiệm thu (Proof of Work).
-  * Nút **`📊 Xuất Báo Cáo Ra Excel`**: Tạo sheet tổng hợp đầy đủ KPI ký tự, hình vẽ, số trang và tỷ lệ làm việc (%).
+  * Nút **`📊 Xuất Báo Cáo Ra Excel`**: Tạo sheet tổng hợp đầy đủ KPI ký tự ô màu, sơ đồ/hình ảnh, số trang và tỷ lệ làm việc (%).
   * Hỗ trợ chọn/loại trừ các sheet không cần đếm.
 
 ### 🗄️ 3. Bộ Công Cụ Cơ Sở Dữ Liệu Oracle (Oracle Database Tools)

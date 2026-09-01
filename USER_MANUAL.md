@@ -317,17 +317,36 @@ Công cụ chuyên dụng dành cho các dự án Offshore, Outsourcing và Qu�
 * **Tô Màu Highlight Trực Quan (Evidence File):** Tự động tô màu highlight các ô thay đổi trên bản sao với 4 gam màu dịu mắt (Vàng, Xanh Pastel, Xanh lá, Cam nhạt).
 * **Công Thức Quy Đổi Trang Tiêu Chuẩn:**
   $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô thay đổi}}{\text{Định mức ký tự / trang}} + (\text{Số hình vẽ mới} \times 0.5)$$
-  * Hỗ trợ các preset định mức: **600 ký tự/trang** (Chuẩn Tiếng Nhật / Kanji), **1.200 ký tự/trang** (Tiếng Việt / Tiếng Anh), 800 và 1.500 ký tự.
+### 18.1 Các Chế Độ Đếm & Thuật Toán:
+* **Chế độ 1: Đếm theo màu ô tự tô (Khuyên dùng - Manual User-Highlighted Cells):**
+  - **Quy trình làm việc:**
+    1. Bấm nút **`📝 Mở Bản Sao Mới Để Tô Màu`**: Hệ thống tự động nhân bản file thiết kế thành một file New và mở trực tiếp trên Excel.
+    2. Dùng công cụ **Fill Color (Tô màu nền)** của Excel để tô màu các ô bạn đã thiết kế (ví dụ màu Vàng, Xanh ngọc, Xanh lá, Cam, Hồng hoặc bất kỳ màu nào).
+    3. Quay lại hộp thoại và bấm **`🔍 Phân Tích & Đếm Trang`**: Hệ thống sẽ quét các ô đã tô màu, đếm tổng ký tự và quy đổi ra số trang thiết kế tương ứng.
+* **Chế độ 2: Tự động so sánh với Template gốc (Auto-Diff with Template):**
+  - Tự động so khớp từng ô giữa Target Workbook và Template Workbook của khách hàng.
+  - Tự động đếm các ô thay đổi, tự động tạo file bản sao **Evidence** đã tô màu trực quan.
+* **Chế độ 3: Đếm theo ngắt trang in Excel (Print Breaks Grid):**
+  - Phân tích theo lưới ngắt trang in của Excel.
 
-### 18.2 Thao Tác Sử Dụng:
+### 18.2 Bộ Lọc Sơ Đồ / Hình Ảnh & Định Mức Ký Tự:
+* **Bộ lọc hình ảnh thông minh (Tránh lỗi đếm sai hình nhỏ):**
+  - Chỉ nhận diện và tính các hình ảnh/sơ đồ thiết kế thực sự (kích thước tối thiểu $\ge 60 \times 45\text{ pt}$, diện tích $\ge 3.600\text{ pt}^2$).
+  - Bỏ qua toàn bộ form control, nút bấm, drop-down data validation, comment/note ẩn, icon nhỏ.
+  - Tùy chọn hệ số quy đổi: **0 trang** (bỏ qua hình), **0.25 trang**, **0.5 trang/sơ đồ** (mặc định), **1.0 trang/sơ đồ**.
+* **Định mức ký tự / trang:**
+  - Hỗ trợ các preset: **600 ký tự/trang** (Chuẩn Tiếng Nhật / Kanji), **1.200 ký tự/trang** (Tiếng Việt / Tiếng Anh), 800 và 1.500 ký tự.
+
+### 18.3 Thao Tác Sử Dụng:
 1. Trên Ribbon, bấm nút **`📐 Đếm Trang Thiết Kế`**.
-2. Chọn **File Cần Đếm (Target Workbook)** và **File Mẫu Gốc (Template Workbook)** (có thể chọn trực tiếp từ danh sách Workbook đang mở hoặc bấm **`Browse...`** để chọn file từ ổ đĩa).
-3. Chọn các Sheet cần đếm trong danh sách (hỗ trợ nút **Chọn tất cả**, **Bỏ chọn**, **Đảo vùng chọn**).
-4. Thiết lập định mức ký tự (Mặc định 600 ký tự/trang cho tiếng Nhật hoặc 1.200 cho tiếng Việt).
-5. Bấm **`🚀 Tiến Hành Phân Tích & Đếm Trang`**.
-6. **Xem Kết Quả & Nghiệm Thu:**
-   - Xem bảng KPI tổng quan: Tổng ký tự, số hình vẽ, tổng số trang, tỷ lệ hoàn thành (%).
-   - Bấm nút **`🎨 Mở File Đã Tô Màu (Evidence)`** để mở trực tiếp file copy đã highlight phục vụ giải trình, nghiệm thu với khách hàng.
+2. Chọn **File Cần Đếm (Target Workbook)**.
+3. Bấm **`📝 Mở Bản Sao Mới Để Tô Màu`** để mở file bản sao mới trong Excel và dùng công cụ Fill Color tô màu các ô bạn đã thiết kế.
+4. Chọn danh sách Sheet cần đếm (hỗ trợ nút **Chọn tất cả**, **Bỏ chọn**, **Đảo vùng chọn**).
+5. Thiết lập màu ô cần đếm (Mặc định: *🎨 Bất kỳ màu nào khác trắng*) và định mức ký tự (Mặc định 600 ký tự/trang).
+6. Bấm **`🔍 Phân Tích & Đếm Trang`**.
+7. **Xem Kết Quả & Nghiệm Thu:**
+   - Xem bảng KPI tổng quan: Tổng ký tự ô màu, số sơ đồ/hình ảnh hợp lệ, tổng số trang quy đổi, tỷ lệ hoàn thành (%).
+   - Bấm nút **`🎨 Mở File Đã Tô Màu (Evidence)`** để mở file bản sao đã highlight.
    - Bấm nút **`📊 Xuất Báo Cáo Ra Excel`** để xuất bảng thống kê chi tiết ra một Sheet mới.
 
 ---
