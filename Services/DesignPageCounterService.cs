@@ -341,7 +341,7 @@ namespace ExcelSupport.Services
         {
             try
             {
-                var app = excelApp ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                var app = excelApp ?? AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
                 if (app == null) return false;
 
                 dynamic selection = app.Selection;
@@ -358,7 +358,18 @@ namespace ExcelSupport.Services
                 int b = Convert.ToInt32(targetHex.Substring(5, 2), 16);
                 int oleColor = r | (g << 8) | (b << 16);
 
-                selection.Interior.Color = oleColor;
+                if (selection is Range rng)
+                {
+                    rng.Interior.Color = oleColor;
+                }
+                else
+                {
+                    try
+                    {
+                        selection.Interior.Color = oleColor;
+                    }
+                    catch { }
+                }
 
                 try
                 {

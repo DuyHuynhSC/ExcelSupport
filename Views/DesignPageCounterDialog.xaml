@@ -476,9 +476,15 @@
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
-                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{loc:Loc PageCounter_ColorShortcutTip}">
-                                    <TextBlock Text="⌨ Ctrl+Shift+H" FontSize="10.5" FontWeight="SemiBold" Foreground="#1D4ED8"/>
-                                </Border>
+                                <Button Command="{Binding HighlightSelectionCommand}" Style="{StaticResource SecondaryActionBtn}" Padding="8,4" Height="28" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{loc:Loc PageCounter_BtnHighlightSelectionTip}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🎨" Margin="0,0,4,0" FontSize="11" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Loc PageCounter_BtnHighlightSelection}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Ctrl+Shift+H" FontSize="9.5" FontWeight="Bold" Foreground="#2563EB"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,16,6" VerticalAlignment="Center">

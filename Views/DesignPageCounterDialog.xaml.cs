@@ -63,8 +63,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                _currentInstance.ShowDialog();
-                _currentInstance = null;
+                _currentInstance.Closed += (s, e) => { _currentInstance = null; };
+                _currentInstance.Show();
             }
             catch (Exception ex)
             {

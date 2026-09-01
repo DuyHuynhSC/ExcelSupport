@@ -61,6 +61,8 @@ namespace ExcelSupport
             {
                 _excelApp?.OnKey("^+Q", "OracleQuickQueryCommand");
                 _excelApp?.OnKey("^+q", "OracleQuickQueryCommand");
+                _excelApp?.OnKey("^+H", "ApplyDesignHighlightSelectionCommand");
+                _excelApp?.OnKey("^+h", "ApplyDesignHighlightSelectionCommand");
             }
             catch { }
 
@@ -75,6 +77,8 @@ namespace ExcelSupport
             {
                 _excelApp?.OnKey("^+Q");
                 _excelApp?.OnKey("^+q");
+                _excelApp?.OnKey("^+H");
+                _excelApp?.OnKey("^+h");
             }
             catch { }
 

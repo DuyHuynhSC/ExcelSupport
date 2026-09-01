@@ -372,6 +372,7 @@ namespace ExcelSupport.ViewModels
         public ICommand BrowseTargetFileCommand { get; }
         public ICommand BrowseTemplateFileCommand { get; }
         public ICommand CreateNewCopyForHighlightCommand { get; }
+        public ICommand HighlightSelectionCommand { get; }
         public ICommand SelectAllSheetsCommand { get; }
         public ICommand DeselectAllSheetsCommand { get; }
         public ICommand InvertSheetsSelectionCommand { get; }
@@ -394,6 +395,7 @@ namespace ExcelSupport.ViewModels
             BrowseTargetFileCommand = new RelayCommand(_ => BrowseTargetFile());
             BrowseTemplateFileCommand = new RelayCommand(_ => BrowseTemplateFile());
             CreateNewCopyForHighlightCommand = new RelayCommand(_ => CreateNewCopyForHighlight(), _ => CanAnalyze);
+            HighlightSelectionCommand = new RelayCommand(_ => HighlightCurrentSelection());
             SelectAllSheetsCommand = new RelayCommand(_ =>
             {
                 foreach (var s in AvailableSheets) s.IsIncluded = true;
@@ -651,6 +653,23 @@ namespace ExcelSupport.ViewModels
             catch (Exception ex)
             {
                 WpfMessageBox.Show($"Lỗi tạo bản sao: {ex.Message}", "Lỗi", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+            }
+        }
+
+        public void HighlightCurrentSelection()
+        {
+            try
+            {
+                string hex = SelectedHighlightColor?.Hex ?? "ANY";
+                bool ok = DesignPageCounterService.HighlightSelection(_excelApp, hex);
+                if (!ok)
+                {
+                    WpfMessageBox.Show("Không thể tô màu vùng chọn. Vui lòng mở file Excel và chọn ít nhất một ô trên bảng tính.", "Chưa chọn ô", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi tô màu: {ex.Message}", "Lỗi", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
         }
 
