@@ -19,6 +19,12 @@
 13. [Trợ Lý AI, Dịch Thuật Nhật - Việt & Công Thức Tự Động (AI Copilot)](#13-trợ-lý-ai-dịch-thuật-nhật---việt--công-thức-tự-động-ai-copilot)
 14. [Quản Lý Liên Kết Ngoài & Rà Soát Tiếng Việt (Audit Tools)](#14-quản-lý-liên-kết-ngoài--rà-soát-tiếng-việt-audit-tools)
 15. [Tùy Chỉnh Giao Diện Sáng / Tối (Dark & Light Theme)](#15-tùy-chỉnh-giao-diện-sáng--tối-dark--light-theme)
+16. [Sao Chép & Dán Vùng Lọc (Copy & Paste Visible Cells Only)](#16-sao-chép--dán-vùng-lọc-copy--paste-visible-cells-only)
+17. [Chuyển Đổi Ngôn Ngữ Thanh Ribbon (Language Settings)](#17-chuyển-đổi-ngôn-ngữ-thanh-ribbon-language-settings)
+18. [Thống Kê & Đếm Trang Thiết Kế (Design Page Counter)](#18-thống-kê--đếm-trang-thiết-kế-design-page-counter)
+19. [Bộ Công Cụ Cơ Sở Dữ Liệu Oracle (Oracle Database Tools)](#19-bộ-công-cụ-cơ-sở-dữ-liệu-oracle-oracle-database-tools)
+20. [Bác Sĩ Công Thức & Sửa Lỗi Tự Động (AI Formula Doctor)](#20-bác-sĩ-công-thức--sửa-lỗi-tự-động-ai-formula-doctor)
+21. [Sao Lưu & Khôi Phục Dữ Liệu Tức Thì (Sheet Snapshot & Instant Undo)](#21-sao-lưu--khôi-phục-dữ-liệu-tức-thì-sheet-snapshot--instant-undo)
 
 ---
 
@@ -295,6 +301,88 @@ ExcelSupport Add-In hỗ trợ 3 ngôn ngữ giao diện chuẩn hóa:
    - **🇯🇵 日本語**
 4. Toàn bộ thanh Ribbon (tên nhóm, tên nút, Screentip tóm tắt và Supertip giải thích chi tiết) sẽ được **chuyển đổi ngôn ngữ ngay lập tức mà không cần khởi động lại Excel**.
 5. Cài đặt ngôn ngữ được tự động lưu và duy trì cho mọi phiên làm việc tiếp theo.
+
+---
+
+## 18. Thống Kê & Đếm Trang Thiết Kế (Design Page Counter)
+
+Công cụ chuyên dụng dành cho các dự án Offshore, Outsourcing và Quản trị dự án phần mềm để nghiệm thu khối lượng tài liệu thiết kế (Basic Design, Detail Design, Test Plan, Database Schema...).
+
+### 18.1 Thuật Toán Định Mức Ký Tự & Tô Màu Đối Chiếu (Evidence)
+* **Bảo Vệ File Gốc 100%:** Khi bắt đầu đếm, hệ thống tự động tạo một file bản sao an toàn tại thư mục tạm (`%TEMP%\ExcelSupport_DesignPages\Evidence_...xlsx`). File gốc của bạn không bị sửa đổi bất kỳ nội dung nào.
+* **So Sánh Siêu Tốc Trên Bộ Nhớ RAM:** Đọc toàn bộ bảng tính thiết kế và bảng tính Template vào mảng 2D trong RAM, quét so khớp từng ô (`cell-by-cell`) để xác định:
+  - Các ô có nội dung mới hoặc bị thay đổi so với Template.
+  - Tổng số lượng ký tự thực tế tại các ô thay đổi (`Total Changed Characters`).
+  - Số lượng hình vẽ, sơ đồ kiến trúc, UI layout mới được chèn thêm (`Added Shapes / Diagrams`).
+* **Tô Màu Highlight Trực Quan (Evidence File):** Tự động tô màu highlight các ô thay đổi trên bản sao với 4 gam màu dịu mắt (Vàng, Xanh Pastel, Xanh lá, Cam nhạt).
+* **Công Thức Quy Đổi Trang Tiêu Chuẩn:**
+  $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô thay đổi}}{\text{Định mức ký tự / trang}} + (\text{Số hình vẽ mới} \times 0.5)$$
+  * Hỗ trợ các preset định mức: **600 ký tự/trang** (Chuẩn Tiếng Nhật / Kanji), **1.200 ký tự/trang** (Tiếng Việt / Tiếng Anh), 800 và 1.500 ký tự.
+
+### 18.2 Thao Tác Sử Dụng:
+1. Trên Ribbon, bấm nút **`📐 Đếm Trang Thiết Kế`**.
+2. Chọn **File Cần Đếm (Target Workbook)** và **File Mẫu Gốc (Template Workbook)** (có thể chọn trực tiếp từ danh sách Workbook đang mở hoặc bấm **`Browse...`** để chọn file từ ổ đĩa).
+3. Chọn các Sheet cần đếm trong danh sách (hỗ trợ nút **Chọn tất cả**, **Bỏ chọn**, **Đảo vùng chọn**).
+4. Thiết lập định mức ký tự (Mặc định 600 ký tự/trang cho tiếng Nhật hoặc 1.200 cho tiếng Việt).
+5. Bấm **`🚀 Tiến Hành Phân Tích & Đếm Trang`**.
+6. **Xem Kết Quả & Nghiệm Thu:**
+   - Xem bảng KPI tổng quan: Tổng ký tự, số hình vẽ, tổng số trang, tỷ lệ hoàn thành (%).
+   - Bấm nút **`🎨 Mở File Đã Tô Màu (Evidence)`** để mở trực tiếp file copy đã highlight phục vụ giải trình, nghiệm thu với khách hàng.
+   - Bấm nút **`📊 Xuất Báo Cáo Ra Excel`** để xuất bảng thống kê chi tiết ra một Sheet mới.
+
+---
+
+## 19. Bộ Công Cụ Cơ Sở Dữ Liệu Oracle (Oracle Database Tools)
+
+Hỗ trợ các kỹ sư phát triển phần mềm, DBA và chuyên viên phân tích dữ liệu tương tác trực tiếp với cơ sở dữ liệu Oracle từ Excel.
+
+### 19.1 Quick SQL Query (Phím Tắt: `Ctrl + Shift + Q`)
+* **Thực Thi & Xem Trước An Toàn (Preview First):**
+  1. Nhập cấu hình kết nối (Host, Port, SID / Service Name, User, Password).
+  2. Viết câu lệnh SQL Query.
+  3. Bấm **`▶ Thực Thi (Execute)`** $\rightarrow$ Dữ liệu kết quả được tải và hiển thị ngay trên lưới DataGrid xem trước để kiểm tra tính chính xác.
+  4. Sau khi xem trước OK, bấm **`📥 Chèn Vào Sheet (Insert to Excel)`** để ghi kết quả vào Sheet hiện tại.
+* **Tùy Chỉnh Định Dạng Bảng:**
+  - Tự động tạo Auto-Filter, kẻ viền (Borders), tự căn chỉnh độ rộng cột (`AutoFit Columns`).
+  - Tùy chỉnh màu nền Header bảng kết quả với gam màu Pastel Cyan mặc định trang nhã.
+
+### 19.2 Oracle Table Compare (So Sánh Cấu Trúc & Dữ Liệu)
+* So sánh định nghĩa DDL của bảng (Cột, Kiểu dữ liệu, Độ dài, Nullable, Primary Key).
+* So sánh dữ liệu giữa 2 Database hoặc giữa 2 Schema (Môi trường Development vs UAT/Production).
+* Làm nổi bật các dòng dữ liệu bị lệch (Mismatch), dòng mới (Added) hoặc dòng bị xóa (Deleted).
+
+---
+
+## 20. Bác Sĩ Công Thức & Sửa Lỗi Tự Động (AI Formula Doctor)
+
+### 20.1 Chẩn Đoán & Sửa Lỗi Công Thức
+* **Tự Động Quét Lỗi:** Quét toàn bộ Sheet hoặc vùng chọn để phát hiện các ô bị lỗi công thức: `#N/A`, `#VALUE!`, `#REF!`, `#DIV/0!`, `#NAME?`, `#NUM!`, `#NULL!`, `#CALC!`.
+* **AI Giải Thích & Sinh Công Thức Mới:** AI phân tích cấu trúc dữ liệu xung quanh và giải thích nguyên nhân gây lỗi, đồng thời tự động đề xuất công thức mới chính xác.
+* **Áp Dụng Linh Hoạt:**
+  - Bấm **`Sửa Ô Này`**: Sửa ngay lập tức ô đang chọn.
+  - Bấm **`Sửa Hàng Loạt Cột Này (Batch Apply Fix)`**: Tự động nhân bản công thức đã sửa xuống toàn bộ các ô lỗi khác trong cùng một cột.
+
+### 20.2 Hiện Đại Hóa Công Thức (Modernize Formula)
+* Chuyển đổi các công thức lồng ghép phức tạp thế hệ cũ sang các hàm mảng động hiện đại:
+  - Thay thế chuỗi `IF(ISNA(VLOOKUP(...)))` bằng `XLOOKUP(..., "Không tìm thấy")`.
+  - Sử dụng hàm `LET` để đặt biến trung gian, tăng tốc độ tính toán gấp nhiều lần cho bảng tính dung lượng lớn.
+  - Tự động hóa trích xuất danh sách duy nhất bằng hàm `UNIQUE` và `FILTER`.
+
+---
+
+## 21. Sao Lưu & Khôi Phục Dữ Liệu Tức Thì (Sheet Snapshot & Instant Undo)
+
+Cơ chế an toàn tối thượng giúp bạn yên tâm thực hiện các tác vụ chỉnh sửa dữ liệu quy mô lớn mà không sợ mất dữ liệu.
+
+### 21.1 Chụp Ảnh Snapshot Bảng Tính
+* **Tự Động Sao Lưu:** Tự động tạo một bản snapshot lưu trên RAM trước khi thực thi các tác vụ hàng loạt (Xóa trùng lặp, Thay thế hàng loạt, Dọn dẹp dữ liệu, Gộp ô...).
+* **Sao Lưu Thủ Công:** Bấm nút **`📸 Snapshot Bảng Tính`** trên Ribbon bất kỳ lúc nào để lưu lại trạng thái làm việc hiện tại.
+
+### 21.2 Khôi Phục Dữ Liệu (Instant Restore)
+* Mở hộp thoại Quản lý Snapshot $\rightarrow$ Chọn mốc thời gian cần khôi phục.
+* Chọn:
+  - **Khôi phục đè lên Sheet hiện tại:** Phục hồi nguyên vẹn dữ liệu, công thức và độ rộng cột trong tích tắc.
+  - **Khôi phục sang Sheet Mới (`Restored_...`):** Giữ nguyên sheet hiện tại và tạo thêm một sheet mới chứa toàn bộ dữ liệu snapshot để so sánh đối chiếu.
 
 ---
 

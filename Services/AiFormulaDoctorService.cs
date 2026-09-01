@@ -242,7 +242,7 @@ Respond in {langName} in strictly valid JSON format with this exact structure:
                         string? prop = result["proposed_formula"]?.ToString();
                         string? expl = result["fix_explanation"]?.ToString();
 
-                        if (!string.IsNullOrWhiteSpace(prop) && prop.StartsWith("="))
+                        if (!string.IsNullOrWhiteSpace(prop) && prop!.StartsWith("="))
                         {
                             item.AiDiagnosis = diag ?? item.AiDiagnosis;
                             item.ProposedFormula = prop.Trim();
@@ -382,7 +382,7 @@ Respond in {langName} in strictly valid JSON format with this exact structure:
                 var cell = ws.Range[item.CellAddress];
                 cell.Formula = item.ProposedFormula;
                 item.IsFixed = true;
-                item.Formula = item.ProposedFormula;
+                item.Formula = item.ProposedFormula ?? string.Empty;
                 item.DisplayValue = cell.Text?.ToString() ?? string.Empty;
                 return true;
             }
@@ -414,7 +414,7 @@ Respond in {langName} in strictly valid JSON format with this exact structure:
                     try
                     {
                         // Adjust row index in formula
-                        string adjustedFormula = AdjustFormulaRow(templateItem.ProposedFormula, templateItem.Row, other.Row);
+                        string adjustedFormula = AdjustFormulaRow(templateItem.ProposedFormula!, templateItem.Row, other.Row);
                         other.ProposedFormula = adjustedFormula;
                         if (ApplyFixToCell(app, other))
                         {
@@ -560,7 +560,7 @@ Respond in strictly valid JSON:
                     {
                         string? m = json["modernized_formula"]?.ToString();
                         string? s = json["summary"]?.ToString();
-                        if (!string.IsNullOrWhiteSpace(m) && m.StartsWith("="))
+                        if (!string.IsNullOrWhiteSpace(m) && m!.StartsWith("="))
                         {
                             result.ModernizedFormula = m.Trim();
                             result.ChangesSummary = s ?? result.ChangesSummary;

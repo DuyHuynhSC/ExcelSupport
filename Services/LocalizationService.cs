@@ -1148,7 +1148,29 @@ namespace ExcelSupport.Services
             ["PageCounter_ColWorkPages"] = new() { [AppLanguage.Vietnamese] = "Thiết kế", [AppLanguage.English] = "Design", [AppLanguage.Japanese] = "設計ページ" },
             ["PageCounter_ColPercent"] = new() { [AppLanguage.Vietnamese] = "% Thiết kế", [AppLanguage.English] = "% Work", [AppLanguage.Japanese] = "割合" },
             ["PageCounter_FooterTip"] = new() { [AppLanguage.Vietnamese] = "Kết quả bóc tách trang dựa trên ngắt trang thực tế của Excel và đối chiếu từng ô dữ liệu / hình vẽ so với template gốc.", [AppLanguage.English] = "Results are calculated from Excel print breaks and cell/shape diffs compared to the base template.", [AppLanguage.Japanese] = "Excelの印刷改ページとセル/図形の差分比較に基づいて実質ページ数を正確に集計します。" },
-            ["PageCounter_BtnExport"] = new() { [AppLanguage.Vietnamese] = "Xuất Báo Cáo Ra Excel", [AppLanguage.English] = "Export Report to Excel", [AppLanguage.Japanese] = "Excelレポート出力" }
+            ["PageCounter_BtnExport"] = new() { [AppLanguage.Vietnamese] = "Xuất Báo Cáo Ra Excel", [AppLanguage.English] = "Export Report to Excel", [AppLanguage.Japanese] = "Excelレポート出力" },
+            ["PageCounter_SheetSelectTip"] = new() { [AppLanguage.Vietnamese] = "Tích chọn các Sheet cần đếm (bỏ tích để loại trừ):", [AppLanguage.English] = "Select sheets to count (uncheck to exclude):", [AppLanguage.Japanese] = "集計対象のシートを選択（除外するシートのチェックを外す）:" },
+            ["PageCounter_BtnSelectAll"] = new() { [AppLanguage.Vietnamese] = "✓ Chọn tất cả", [AppLanguage.English] = "✓ Select All", [AppLanguage.Japanese] = "✓ すべて選択" },
+            ["PageCounter_BtnDeselectAll"] = new() { [AppLanguage.Vietnamese] = "✕ Bỏ chọn", [AppLanguage.English] = "✕ Deselect All", [AppLanguage.Japanese] = "✕ すべて解除" },
+            ["PageCounter_BtnInvertSelect"] = new() { [AppLanguage.Vietnamese] = "🔄 Đảo chọn", [AppLanguage.English] = "🔄 Invert Selection", [AppLanguage.Japanese] = "🔄 選択反転" },
+            ["PageCounter_ModeCharHighlight"] = new() { [AppLanguage.Vietnamese] = "Định mức Ký tự & Tô màu ô thay đổi (Khuyên dùng)", [AppLanguage.English] = "Character Count & Visual Highlight (Recommended)", [AppLanguage.Japanese] = "文字数基準＆変更セル着色集計（推奨）" },
+            ["PageCounter_ModePrintBreak"] = new() { [AppLanguage.Vietnamese] = "Đếm theo ngắt trang in Excel (Print Breaks)", [AppLanguage.English] = "Excel Print Breaks Grid", [AppLanguage.Japanese] = "Excel印刷改ページ基準" },
+            ["PageCounter_DensityLabel"] = new() { [AppLanguage.Vietnamese] = "Định mức ký tự / trang:", [AppLanguage.English] = "Characters per page:", [AppLanguage.Japanese] = "1ページあたりの基準文字数:" },
+            ["PageCounter_DensityJapanese"] = new() { [AppLanguage.Vietnamese] = "600 ký tự (Chuẩn Tiếng Nhật / Kanji)", [AppLanguage.English] = "600 chars (Japanese standard)", [AppLanguage.Japanese] = "600文字 (日本語・漢字基準)" },
+            ["PageCounter_DensityVietnamese"] = new() { [AppLanguage.Vietnamese] = "1.200 ký tự (Tiếng Việt / Tiếng Anh)", [AppLanguage.English] = "1,200 chars (VN / English standard)", [AppLanguage.Japanese] = "1,200文字 (ベトナム語/英語基準)" },
+            ["PageCounter_Density800"] = new() { [AppLanguage.Vietnamese] = "800 ký tự / trang", [AppLanguage.English] = "800 chars / page", [AppLanguage.Japanese] = "800文字 / ページ" },
+            ["PageCounter_Density1500"] = new() { [AppLanguage.Vietnamese] = "1.500 ký tự / trang", [AppLanguage.English] = "1,500 chars / page", [AppLanguage.Japanese] = "1,500文字 / ページ" },
+            ["PageCounter_HighlightColorLabel"] = new() { [AppLanguage.Vietnamese] = "Màu tô:", [AppLanguage.English] = "Highlight Color:", [AppLanguage.Japanese] = "着色カラー:" },
+            ["PageCounter_ColorYellow"] = new() { [AppLanguage.Vietnamese] = "Vàng nhạt", [AppLanguage.English] = "Soft Yellow", [AppLanguage.Japanese] = "ソフトイエロー" },
+            ["PageCounter_ColorCyan"] = new() { [AppLanguage.Vietnamese] = "Xanh ngọc", [AppLanguage.English] = "Cyan Blue", [AppLanguage.Japanese] = "水色 (Cyan)" },
+            ["PageCounter_ColorGreen"] = new() { [AppLanguage.Vietnamese] = "Xanh lá nhạt", [AppLanguage.English] = "Light Green", [AppLanguage.Japanese] = "ライトグリーン" },
+            ["PageCounter_ColorOrange"] = new() { [AppLanguage.Vietnamese] = "Cam nhạt", [AppLanguage.English] = "Soft Orange", [AppLanguage.Japanese] = "ソフトオレンジ" },
+            ["PageCounter_OptCreateEvidence"] = new() { [AppLanguage.Vietnamese] = "Tạo bản sao & tô màu các ô thay đổi (Evidence)", [AppLanguage.English] = "Create copy & highlight changed cells (Evidence)", [AppLanguage.Japanese] = "複製を作成し変更セルを着色 (証跡ファイル)" },
+            ["PageCounter_CardCharsCount"] = new() { [AppLanguage.Vietnamese] = "TỔNG KÝ TỰ MỚI / SỬA", [AppLanguage.English] = "TOTAL CHANGED CHARACTERS", [AppLanguage.Japanese] = "総変更文字数" },
+            ["PageCounter_CardShapesCount"] = new() { [AppLanguage.Vietnamese] = "SƠ ĐỒ / HÌNH ẢNH MỚI", [AppLanguage.English] = "NEW DIAGRAMS / SHAPES", [AppLanguage.Japanese] = "新規図形・画像数" },
+            ["PageCounter_BtnOpenEvidence"] = new() { [AppLanguage.Vietnamese] = "🎨 Mở File Đã Tô Màu (Evidence)", [AppLanguage.English] = "🎨 Open Highlighted File (Evidence)", [AppLanguage.Japanese] = "🎨 着色済み証跡ファイルを開く" },
+            ["PageCounter_ColChars"] = new() { [AppLanguage.Vietnamese] = "Ký tự mới", [AppLanguage.English] = "Characters", [AppLanguage.Japanese] = "変更文字数" },
+            ["PageCounter_ColShapes"] = new() { [AppLanguage.Vietnamese] = "Hình vẽ", [AppLanguage.English] = "Shapes", [AppLanguage.Japanese] = "図形数" }
         };
     }
 }

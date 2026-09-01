@@ -82,6 +82,34 @@
             </Setter>
         </Style>
 
+        <!-- Evidence Action Button (Purple/Violet) -->
+        <Style x:Key="EvidenceActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#7C3AED"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#6D28D9"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Secondary Action Button -->
         <Style x:Key="SecondaryActionBtn" TargetType="Button">
             <Setter Property="FontWeight" Value="Medium"/>
@@ -142,6 +170,18 @@
             </Style.Triggers>
         </Style>
 
+        <!-- RadioButton Style -->
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- DataGrid Style -->
         <Style TargetType="DataGrid">
             <Setter Property="Background" Value="#FFFFFF"/>
@@ -176,6 +216,17 @@
                     <Setter Property="Background" Value="#334155"/>
                     <Setter Property="Foreground" Value="#F8FAFC"/>
                     <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Expander Style -->
+        <Style TargetType="Expander">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -285,8 +336,10 @@
             </Border.Style>
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/> <!-- File selectors -->
-                    <RowDefinition Height="Auto"/> <!-- Options & Button -->
+                    <RowDefinition Height="Auto"/> <!-- Row 0: File selectors -->
+                    <RowDefinition Height="Auto"/> <!-- Row 1: Mode & Density / Highlight Options -->
+                    <RowDefinition Height="Auto"/> <!-- Row 2: General Checkboxes & Action Buttons -->
+                    <RowDefinition Height="Auto"/> <!-- Row 3: Sheet Selection Expander -->
                 </Grid.RowDefinitions>
 
                 <!-- Row 0: Target & Template Selector -->
@@ -316,7 +369,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <ComboBox ItemsSource="{Binding OpenWorkbooks}" SelectedItem="{Binding SelectedTargetWorkbook, Mode=TwoWay}" Height="30"/>
+                            <ComboBox ItemsSource="{Binding OpenWorkbooks}" SelectedItem="{Binding SelectedTargetWorkbook, Mode=TwoWay}" Height="30" ToolTip="{Binding SelectedTargetWorkbook}"/>
                             <Button Grid.Column="1" Command="{Binding BrowseTargetFileCommand}" Style="{StaticResource SecondaryActionBtn}" Margin="4,0,0,0" Padding="8,4" Height="30" ToolTip="{loc:Loc PageCounter_BrowseTip}">
                                 <TextBlock Text="📁" FontSize="12"/>
                             </Button>
@@ -342,7 +395,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <ComboBox ItemsSource="{Binding OpenWorkbooks}" SelectedItem="{Binding SelectedTemplateWorkbook, Mode=TwoWay}" Height="30"/>
+                            <ComboBox ItemsSource="{Binding OpenWorkbooks}" SelectedItem="{Binding SelectedTemplateWorkbook, Mode=TwoWay}" Height="30" ToolTip="{Binding SelectedTemplateWorkbook}"/>
                             <Button Grid.Column="1" Command="{Binding BrowseTemplateFileCommand}" Style="{StaticResource SecondaryActionBtn}" Margin="4,0,0,0" Padding="8,4" Height="30" ToolTip="{loc:Loc PageCounter_BrowseTip}">
                                 <TextBlock Text="📁" FontSize="12"/>
                             </Button>
@@ -350,8 +403,71 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Row 1: Options & Action Button -->
-                <Grid Grid.Row="1">
+                <!-- Row 1: Algorithm Mode & Density / Highlight Parameters -->
+                <Border Grid.Row="1" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Background" Value="#1E293B"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Algorithm Mode RadioButtons -->
+                        <WrapPanel Grid.Row="0" Margin="0,0,0,8" VerticalAlignment="Center">
+                            <RadioButton Content="{loc:Loc PageCounter_ModeCharHighlight}" IsChecked="{Binding IsCharHighlightMode, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,20,0"/>
+                            <RadioButton Content="{loc:Loc PageCounter_ModePrintBreak}" IsChecked="{Binding IsPrintBreakMode, Mode=TwoWay}"/>
+                        </WrapPanel>
+
+                        <!-- Character & Highlight Specific Options -->
+                        <WrapPanel Grid.Row="1" VerticalAlignment="Center" Visibility="{Binding IsCharHighlightMode, Converter={StaticResource BoolToVisConverter}}">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,4" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc PageCounter_DensityLabel}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,6,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#475569"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#CBD5E1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ComboBox ItemsSource="{Binding AvailableDensityPresets}" SelectedItem="{Binding SelectedDensityPreset, Mode=TwoWay}" DisplayMemberPath="Name" Width="230" Height="28"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,4" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc PageCounter_HighlightColorLabel}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,6,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#475569"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#CBD5E1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <ComboBox ItemsSource="{Binding AvailableHighlightColors}" SelectedItem="{Binding SelectedHighlightColor, Mode=TwoWay}" DisplayMemberPath="Name" Width="110" Height="28"/>
+                            </StackPanel>
+
+                            <CheckBox Content="{loc:Loc PageCounter_OptCreateEvidence}" IsChecked="{Binding HighlightChangedCells, Mode=TwoWay}" Margin="0,0,0,4" FontWeight="Medium"/>
+                        </WrapPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Row 2: General Options & Action Button -->
+                <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -375,6 +491,97 @@
                         </Button>
                     </StackPanel>
                 </Grid>
+
+                <!-- Row 3: Sheet Inclusion / Exclusion Section -->
+                <Expander Grid.Row="3" Margin="0,10,0,0" IsExpanded="False">
+                    <Expander.Header>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📑" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SheetSelectionHeader}" FontWeight="SemiBold" FontSize="11.5" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#334155"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Expander.Header>
+                    <Border BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,6,0,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/> <!-- Quick Action Buttons -->
+                                <RowDefinition Height="Auto"/> <!-- Sheets WrapPanel / List -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Quick Action Buttons -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Text="{loc:Loc PageCounter_SheetSelectTip}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <Button Content="{loc:Loc PageCounter_BtnSelectAll}" Command="{Binding SelectAllSheetsCommand}" Style="{StaticResource SecondaryActionBtn}" Padding="8,3" FontSize="11" Margin="0,0,6,0"/>
+                                <Button Content="{loc:Loc PageCounter_BtnDeselectAll}" Command="{Binding DeselectAllSheetsCommand}" Style="{StaticResource SecondaryActionBtn}" Padding="8,3" FontSize="11" Margin="0,0,6,0"/>
+                                <Button Content="{loc:Loc PageCounter_BtnInvertSelect}" Command="{Binding InvertSheetsSelectionCommand}" Style="{StaticResource SecondaryActionBtn}" Padding="8,3" FontSize="11"/>
+                            </StackPanel>
+
+                            <!-- Sheets WrapPanel in ScrollViewer -->
+                            <ScrollViewer Grid.Row="1" MaxHeight="120" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding AvailableSheets}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="0,0,8,6">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#F8FAFC"/>
+                                                        <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsIncluded}" Value="True">
+                                                                <Setter Property="Background" Value="#EFF6FF"/>
+                                                                <Setter Property="BorderBrush" Value="#93C5FD"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                <Setter Property="Background" Value="#0F172A"/>
+                                                                <Setter Property="BorderBrush" Value="#334155"/>
+                                                            </DataTrigger>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                                    <Condition Binding="{Binding IsIncluded}" Value="True"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Background" Value="#1E3A8A"/>
+                                                                <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <CheckBox IsChecked="{Binding IsIncluded, Mode=TwoWay}" Content="{Binding SheetName}" FontSize="11.5" FontWeight="Medium"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Expander>
             </Grid>
         </Border>
 
@@ -426,19 +633,19 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Card 1: Total Print Pages -->
+                    <!-- Card 1: Total Changed Characters -->
                     <Border Grid.Column="0" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,8,0">
                         <StackPanel>
-                            <TextBlock Text="{loc:Loc PageCounter_CardTotalPages}" FontSize="11" Foreground="#1E40AF" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Result.TotalTargetPrintPages}" FontSize="20" FontWeight="Bold" Foreground="#1D4ED8" Margin="0,2,0,0"/>
+                            <TextBlock Text="{loc:Loc PageCounter_CardCharsCount}" FontSize="11" Foreground="#1E40AF" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Result.TotalChangedCharacters, StringFormat={}{0:N0}}" FontSize="20" FontWeight="Bold" Foreground="#1D4ED8" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Card 2: Template Pages (Excluded) -->
+                    <!-- Card 2: New Shapes / Diagrams -->
                     <Border Grid.Column="1" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,8,0">
                         <StackPanel>
-                            <TextBlock Text="{loc:Loc PageCounter_CardTemplatePages}" FontSize="11" Foreground="#475569" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Result.TotalTemplatePages}" FontSize="20" FontWeight="Bold" Foreground="#334155" Margin="0,2,0,0"/>
+                            <TextBlock Text="{loc:Loc PageCounter_CardShapesCount}" FontSize="11" Foreground="#475569" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Result.TotalAddedShapes}" FontSize="20" FontWeight="Bold" Foreground="#334155" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -446,7 +653,7 @@
                     <Border Grid.Column="2" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,8,0">
                         <StackPanel>
                             <TextBlock Text="{loc:Loc PageCounter_CardWorkPages}" FontSize="11" Foreground="#166534" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Result.TotalWorkPages}" FontSize="20" FontWeight="Bold" Foreground="#15803D" Margin="0,2,0,0"/>
+                            <TextBlock Text="{Binding Result.TotalWorkPages, StringFormat={}{0:F1}}" FontSize="20" FontWeight="Bold" Foreground="#15803D" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -486,9 +693,10 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{loc:Loc PageCounter_ColSheetName}" Binding="{Binding SheetName}" Width="*" FontWeight="SemiBold"/>
                                 <DataGridTextColumn Header="{loc:Loc PageCounter_ColStatus}" Binding="{Binding SummaryText}" Width="150"/>
-                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColTotalPages}" Binding="{Binding TotalPrintPages}" Width="75"/>
-                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColTemplatePages}" Binding="{Binding TemplatePagesCount}" Width="85"/>
-                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColWorkPages}" Binding="{Binding WorkPagesCount}" Width="85"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColTotalPages}" Binding="{Binding TotalPrintPages}" Width="70"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColChars}" Binding="{Binding TotalChangedCharacters, StringFormat={}{0:N0}}" Width="80"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColShapes}" Binding="{Binding TotalAddedShapes}" Width="65"/>
+                                <DataGridTextColumn Header="{loc:Loc PageCounter_ColWorkPages}" Binding="{Binding WorkPagesCount, StringFormat={}{0:F1}}" Width="80"/>
                                 <DataGridTextColumn Header="{loc:Loc PageCounter_ColPercent}" Binding="{Binding WorkPercent, StringFormat={}{0}%}" Width="70"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -631,6 +839,12 @@
                 </TextBlock>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Command="{Binding OpenEvidenceWorkbookCommand}" Style="{StaticResource EvidenceActionBtn}" Margin="0,0,8,0" Visibility="{Binding HasEvidenceFile, Converter={StaticResource BoolToVisConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎨" Margin="0,0,6,0"/>
+                            <TextBlock Text="{loc:Loc PageCounter_BtnOpenEvidence}"/>
+                        </StackPanel>
+                    </Button>
                     <Button Command="{Binding ExportReportCommand}" Style="{StaticResource SuccessActionBtn}" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📊" Margin="0,0,6,0"/>

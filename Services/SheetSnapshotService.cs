@@ -47,7 +47,7 @@ namespace ExcelSupport.Services
                     SheetName = ws.Name,
                     Description = string.IsNullOrWhiteSpace(description)
                         ? (isAuto ? "Tự động sao lưu trước tác vụ" : "Sao lưu thủ công")
-                        : description.Trim(),
+                        : description!.Trim(),
                     StartRow = startRow,
                     StartColumn = startCol,
                     RowCount = rowCount,
@@ -187,7 +187,7 @@ namespace ExcelSupport.Services
                         for (int c = 0; c < cols; c++)
                         {
                             string? formStr = snapshot.Formulas[r, c]?.ToString();
-                            if (!string.IsNullOrWhiteSpace(formStr) && formStr.StartsWith("="))
+                            if (!string.IsNullOrWhiteSpace(formStr) && formStr!.StartsWith("="))
                             {
                                 hasFormulas = true;
                                 break;

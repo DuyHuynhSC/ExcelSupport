@@ -456,7 +456,7 @@ namespace ExcelSupport.Views
                 var schemas = await OracleDataCompareService.GetSchemasAsync(config);
                 cboSchemaA.ItemsSource = schemas;
 
-                string userUpper = !string.IsNullOrWhiteSpace(defaultSchema) ? defaultSchema.ToUpperInvariant() : config.Username.ToUpperInvariant();
+                string userUpper = !string.IsNullOrWhiteSpace(defaultSchema) ? defaultSchema!.ToUpperInvariant() : (config.Username?.ToUpperInvariant() ?? string.Empty);
                 var matched = schemas.FirstOrDefault(s => s.Equals(userUpper, StringComparison.OrdinalIgnoreCase));
                 if (matched != null)
                 {
@@ -486,7 +486,7 @@ namespace ExcelSupport.Views
                 var schemas = await OracleDataCompareService.GetSchemasAsync(config);
                 cboSchemaB.ItemsSource = schemas;
 
-                string userUpper = !string.IsNullOrWhiteSpace(defaultSchema) ? defaultSchema.ToUpperInvariant() : config.Username.ToUpperInvariant();
+                string userUpper = !string.IsNullOrWhiteSpace(defaultSchema) ? defaultSchema!.ToUpperInvariant() : (config.Username?.ToUpperInvariant() ?? string.Empty);
                 var matched = schemas.FirstOrDefault(s => s.Equals(userUpper, StringComparison.OrdinalIgnoreCase));
                 if (matched != null)
                 {

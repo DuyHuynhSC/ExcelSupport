@@ -3,35 +3,78 @@
 [![.NET](https://img.shields.io/badge/.NET%20Framework-4.8-512BD4?style=flat&logo=dotnet)](https://dotnet.microsoft.com/)
 [![Excel-DNA](https://img.shields.io/badge/Excel--DNA-1.8.0-107C41?style=flat&logo=microsoftexcel)](https://excel-dna.net/)
 [![WPF](https://img.shields.io/badge/UI-WPF%20MVVM-0078D4?style=flat)](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/)
+[![Oracle](https://img.shields.io/badge/Database-Oracle%20Managed-F80000?style=flat&logo=oracle)](https://www.oracle.com/database/)
 [![AI-Ready](https://img.shields.io/badge/AI-OpenAI%20%7C%20Qwen%203.6%20%7C%20DeepSeek-FF6F00?style=flat)](https://github.com/QwenLM)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![User Manual](https://img.shields.io/badge/Documentation-USER__MANUAL.md-2563EB?style=flat)](USER_MANUAL.md)
 
-**ExcelSupport** là một Add-in chuyên nghiệp, hiệu năng cao dành cho Microsoft Excel, được xây dựng trên nền tảng **Excel-DNA**, **WPF MVVM** và tích hợp **AI Copilot (OpenAI / Qwen 3.6 / DeepSeek)**. Add-in cung cấp bộ công cụ toàn diện giúp tối ưu hóa xử lý bảng tính lớn, nhiều Sheet và nhiều Workbook trong doanh nghiệp.
+**ExcelSupport** là một Add-in mở rộng chuyên nghiệp, hiệu năng cao dành cho **Microsoft Excel**, được xây dựng trên nền tảng **Excel-DNA**, **WPF MVVM** và tích hợp **AI Copilot (OpenAI / Qwen / DeepSeek)** cùng bộ công cụ quản trị dữ liệu **Oracle Database**. Add-in cung cấp giải pháp toàn diện giúp tối ưu hóa xử lý bảng tính lớn, nhiều Sheet, nhiều Workbook, hỗ trợ đếm trang thiết kế chính xác và nâng cao năng suất lập trình/nghiệp vụ.
 
-> 📖 **Xem sách hướng dẫn sử dụng toàn diện từ A-Z tại: [USER_MANUAL.md](USER_MANUAL.md)**
+> 📖 **Xem tài liệu hướng dẫn sử dụng chi tiết từ A-Z tại: [USER_MANUAL.md](USER_MANUAL.md)**
 
 ---
 
-## ✨ Danh Sách Tính Năng Chính
+## ✨ Danh Sách Tính Năng Nổi Bật
 
-| Nhóm Tính Năng | Công Cụ | Mô Tả Tóm Tắt |
-| :--- | :--- | :--- |
-| **📁 Điều Hướng & Quản Lý** | **Sheet Navigator** | Dock Task Pane bên trái, tìm kiếm Sheet tức thì, sắp xếp A-Z, đổi màu Tab, hiện tất cả Sheet ẩn, tạo Mục Lục tự động. |
-| **📊 So Sánh & Đối Chiếu** | **Diff & Compare Tool** | So sánh 2 Workbook/Sheet với thuật toán Row LCS thông minh, phát hiện chèn/xóa dòng, click đúp nhảy tới ô, tô màu sai lệch. |
-| **🌪️ Lọc Dữ Liệu** | **Advanced Filter Pro** | Lọc Whitelist/Blacklist hàng trăm dòng, lọc theo công thức, ô lỗi, màu sắc, Regex/Wildcard, tự ghi nhớ lịch sử lọc. |
-| **🧹 Chuẩn Hóa & Dọn Dẹp** | **Data Cleaning Wizard** | Cắt khoảng trắng thừa, xóa NBSP `\u00A0`, chuẩn hóa chữ hoa/thường, xóa dấu tiếng Việt, chuyển tên Việt sang Katakana. |
-| **🔍 Trùng Lặp & Gom Nhóm** | **Duplicate Finder** | Gom nhóm các dòng trùng lặp theo đa cột khóa, so khớp chính xác/mờ, tô màu nhóm, xóa dòng trùng hoặc tách sheet. |
-| **🗑️ Dòng Trống & Gộp Ô** | **Batch Cleaner & Safe Merge** | Xóa dòng/cột trống đa Sheet, gộp các ô bảo toàn dữ liệu kèm ký tự phân cách, gộp nhiều Sheet thành 1 Sheet Tổng Hợp. |
-| **🔄 Thay Thế Hàng Loạt** | **Batch Find & Replace** | Thay thế đồng thời hàng trăm từ khóa/mã sản phẩm theo bảng đối chiếu tra cứu, nạp nhanh 1-Click từ vùng chọn Excel. |
-| **🔍 Trộn & Ghép Nối Bảng** | **Visual XLOOKUP Wizard** | Ghép 2 bảng dữ liệu trực quan bằng Left Join, Inner Join, Full Outer Join mà không cần viết công thức phức tạp. |
-| **🧹 Trùng Lặp Ảo & Lỗi Gõ** | **Fuzzy Duplicate Cleaner** | Nhận diện lỗi chính tả, khác biệt dấu tiếng Việt, khoảng trắng vô hình bằng Levenshtein/Jaro-Winkler, chuẩn hóa 1-Click. |
-| **📂 Quản Trị & Đổi File** | **Batch File Converter** | Chuyển đổi định dạng hàng loạt (`.xlsx`, `.xls`, `.xlsb`, `.csv`, `.pdf`), tách sheet thành file riêng, gộp nhiều file vào 1. |
-| **📋 Sao Chép & Dán Vùng Lọc** | **Filtered Copy & Paste Wizard** | Chỉ copy và dán vào các dòng hiển thị (`Visible Cells Only`), tự động bỏ qua các dòng bị ẩn/bị lọc để bảo vệ dữ liệu 100%. |
-| **🎯 Thước Kẻ & Bảng Thống Kê** | **Ruler Plus & Dynamic HUD** | Thước ngắm chữ thập 7 màu dịu mắt, bảng HUD nổi hiển thị Tổng, Trung bình, Số lượng ô (chỉ tính dòng hiển thị) kèm chỉnh cỡ chữ động `[A-]` `[A+]`. |
-| **🤖 Trợ Lý AI & Dịch Thuật** | **AI Copilot & Formula Fixer** | Dịch thuật ô Nhật ⇋ Việt kèm từ điển Glossary bắt buộc, tự động viết công thức từ tiếng Việt, chẩn đoán & sửa lỗi công thức 1-Click. |
-| **🌓 Giao Diện Hiện Đại** | **Dark / Light Theme** | Chuyển đổi linh hoạt giữa giao diện Sáng và Tối Slate (`#0F172A`), tương thích 100% trên toàn bộ các cửa sổ và hộp thoại. |
-| **🌐 Đa Ngôn Ngữ Ribbon** | **Multi-Language Ribbon** | Chuyển đổi tức thì 3 ngôn ngữ trên thanh Ribbon: **Tiếng Việt 🇻🇳**, **English 🇬🇧**, **日本語 🇯🇵** (tự động lưu cấu hình). |
+### 📑 1. Điều Hướng & Quản Lý Bảng Tính (Sheet & Workbook Navigation)
+* **Dock Task Pane Cố Định:** Thanh điều hướng tích hợp bên trái màn hình Excel giúp theo dõi song song danh sách Workbook và Worksheet.
+* **Tìm Kiếm & Sắp Xếp Tức Thì:** Tìm kiếm Sheet thời gian thực với bộ lọc đa từ khóa (`|`), hỗ trợ sắp xếp theo thứ tự **Original**, **A-Z ↑**, **Z-A ↓**.
+* **Quản Trị Sheet Nhanh:** Đổi màu Tab, hiển thị toàn bộ Sheet ẩn (`Hidden` / `Very Hidden`), tự động tạo Sheet Mục Lục (Table of Contents) với Hyperlink trực tiếp.
+* **Tối Ưu Chống Giật (Anti-Flicker & Zero Lag):** Cơ chế đồng bộ 1 chiều thông minh loại bỏ hoàn toàn hiện tượng nhấp nháy màn hình hoặc đơ Excel khi chuyển Sheet / Workbook.
+
+### 📐 2. Thống Kê & Đếm Trang Thiết Kế (Design Page Counter)
+* **Thuật Toán Định Mức Ký Tự & Tô Màu Đối Chiếu (Evidence):**
+  * Tự động tạo bản sao an toàn (In-Memory / Temp Clone) để bảo vệ 100% file thiết kế gốc.
+  * So khớp cell-by-cell trên RAM với file Template của khách hàng, đếm chính xác số ký tự được viết mới / chỉnh sửa.
+  * Tự động **tô màu highlight trực quan** các ô thay đổi trên file bản sao với 4 gam màu dịu mắt (Vàng, Xanh ngọc, Xanh lá, Cam).
+  * Nhận diện sơ đồ, hình vẽ, diagram mới được chèn thêm.
+  * Quy đổi ra số trang thiết kế chuẩn theo định mức:
+    $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô tô màu}}{\text{Định mức ký tự / trang}} + (\text{Số hình ảnh mới} \times 0.5)$$
+  * Hỗ trợ các preset định mức: **600 ký tự/trang** (Chuẩn Tiếng Nhật / Kanji), **1.200 ký tự/trang** (Tiếng Việt / Anh), 800 và 1.500 ký tự.
+* **Bằng Chứng Đối Chiếu & Báo Cáo:**
+  * Nút **`🎨 Mở File Đã Tô Màu (Evidence)`**: Mở trực tiếp file copy đã highlight để kiểm tra và dùng làm bằng chứng nghiệm thu (Proof of Work).
+  * Nút **`📊 Xuất Báo Cáo Ra Excel`**: Tạo sheet tổng hợp đầy đủ KPI ký tự, hình vẽ, số trang và tỷ lệ làm việc (%).
+  * Hỗ trợ chọn/loại trừ các sheet không cần đếm.
+
+### 🗄️ 3. Bộ Công Cụ Cơ Sở Dữ Liệu Oracle (Oracle Database Tools)
+* **Quick SQL Query:**
+  * Thực thi câu lệnh SQL trực tiếp từ Excel bằng phím tắt `Ctrl + Shift + Q`.
+  * **Tách riêng Quy trình Thực thi & Chèn dữ liệu:** Chạy query $\rightarrow$ Xem trước dữ liệu trên DataGrid (Preview) $\rightarrow$ Xác nhận rồi mới chèn vào Sheet.
+  * Tùy chọn định dạng bảng thông minh, tùy chỉnh màu nền Header (Header Background Color với mã màu Pastel Cyan dịu mắt).
+* **Oracle Table Compare:**
+  * So sánh cấu trúc bảng (DDL, cột, kiểu dữ liệu, khóa chính, độ dài) và nội dung dữ liệu giữa 2 Database Oracle hoặc 2 Schema khác nhau.
+  * Hiển thị chi tiết các dòng lệch dữ liệu, dòng thêm mới hoặc bị thiếu.
+
+### 🩺 4. Bác Sĩ Công Thức & Trợ Lý AI (AI Formula Doctor & Copilot)
+* **AI Formula Doctor:**
+  * Quét và phát hiện tự động toàn bộ ô bị lỗi công thức (`#N/A`, `#VALUE!`, `#REF!`, `#DIV/0!`, `#NAME?`, `#NUM!`, `#NULL!`, `#CALC!`).
+  * AI chẩn đoán nguyên nhân gốc rễ và tự động sinh công thức sửa lỗi chính xác.
+  * Áp dụng sửa lỗi 1-Click cho từng ô hoặc sửa hàng loạt tự động theo cột (Batch Apply Fix).
+  * **Hiện Đại Hóa Công Thức (Modernize Formula):** Nâng cấp các công thức lồng ghép cũ (`VLOOKUP` + `IFERROR` + `INDEX/MATCH`) sang các hàm hiện đại (`XLOOKUP`, `LET`, `FILTER`, `UNIQUE`).
+* **Trợ Lý Dịch Thuật & Soạn Thảo:**
+  * Dịch thuật dữ liệu Nhật ⇋ Việt / Anh theo ngữ cảnh bảng tính.
+  * Quản lý Từ điển Thuật ngữ dự án (Glossary) với cơ chế Import/Export CSV UTF-8 BOM & JSON.
+  * Tự động viết công thức Excel từ mô tả tiếng Việt tự nhiên.
+
+### 📸 5. Sao Lưu Tức Thì & Chống Mất Dữ Liệu (Sheet Snapshot & Instant Undo)
+* Tự động hoặc thủ công chụp lại toàn bộ trạng thái Sheet (dữ liệu, công thức, định dạng số, độ rộng cột) trước khi chạy các tác vụ nặng.
+* Khôi phục (Restore) lại nguyên trạng dữ liệu chỉ với 1 click, bảo vệ an toàn 100% dữ liệu.
+
+### 🛠️ 6. Bộ Tiện Ích Xử Lý Bảng Tính Chuyên Sâu
+* **Diff & Compare Tool:** So sánh 2 Workbook/Sheet với thuật toán Row LCS thông minh, phát hiện chèn/xóa dòng, click đúp nhảy tới ô sai lệch.
+* **Advanced Filter Pro:** Lọc danh sách Whitelist/Blacklist hàng trăm dòng, lọc theo công thức, ô lỗi, màu sắc, Regex/Wildcard.
+* **Data Cleaning Wizard:** Cắt khoảng trắng thừa, xóa NBSP `\u00A0`, chuẩn hóa chữ hoa/thường, xóa dấu tiếng Việt, chuyển tên Việt sang Katakana.
+* **Duplicate Finder & Fuzzy Duplicate:** Gom nhóm dòng trùng theo đa cột khóa, nhận diện sai lệch chính tả/dấu cách mờ bằng thuật toán Levenshtein & Jaro-Winkler.
+* **Batch Cleaner & Safe Merge:** Xóa dòng/cột trống đa Sheet, gộp ô bảo toàn dữ liệu, gộp nhiều Sheet vào 1 Sheet Tổng Hợp.
+* **Batch Find & Replace:** Tìm kiếm và thay thế đồng thời hàng trăm từ khóa theo bảng tra cứu đối chiếu.
+* **Visual Table Merge (XLOOKUP Wizard):** Ghép 2 bảng dữ liệu trực quan bằng Left Join, Inner Join, Full Outer Join mà không cần viết công thức phức tạp.
+* **Batch File Converter:** Chuyển đổi định dạng hàng loạt (`.xlsx`, `.xls`, `.xlsb`, `.csv`, `.pdf`), tách/gộp file nền siêu tốc.
+* **Filtered Copy & Paste:** Copy và dán an toàn chỉ vào các ô hiển thị (`Visible Cells Only`), tự động bỏ qua dòng bị ẩn/lọc.
+* **Ruler Plus & Dynamic HUD:** Thước ngắm chữ thập 7 màu dịu mắt, bảng HUD nổi thống kê nhanh (Tổng, Trung bình, Đếm) cho dòng/cột hiển thị.
+
+### 🌓 7. Giao Diện & Đa Ngôn Ngữ
+* **Hỗ Trợ 100% Dark / Light Theme:** Chuyển đổi giao diện Sáng / Tối Slate (`#0F172A`) đồng bộ trên tất cả các cửa sổ, hộp thoại và Task Pane.
+* **Đa Ngôn Ngữ (Multi-Language Ribbon & UI):** Hỗ trợ chuyển đổi mượt mà 3 ngôn ngữ: **Tiếng Việt 🇻🇳**, **English 🇬🇧**, **日本語 🇯🇵** (940+ localization keys).
 
 ---
 
@@ -40,7 +83,7 @@
 ```
 ExcelSupport/
 ├── ExcelSupport.csproj               # Project SDK .NET Framework 4.8 (WPF + WinForms + Excel-DNA)
-├── ExcelSupport-AddIn.dna            # Manifest khai báo Add-in cho Excel-DNA
+├── ExcelSupport-AddIn.dna            # Manifest khai báo Add-in & nhúng DLL phụ thuộc cho Excel-DNA
 ├── AddInEvents.cs                    # Lớp nạp chính (IExcelAddIn), hook sự kiện Excel COM & quản lý bộ nhớ
 ├── README.md                         # Tài liệu tổng quan dự án
 ├── USER_MANUAL.md                    # Sách hướng dẫn sử dụng chi tiết từ A-Z
@@ -50,24 +93,37 @@ ExcelSupport/
 │   ├── FuzzyDuplicateModels.cs       # Model nhận diện trùng lặp ảo & gom cụm (Fuzzy Clusters)
 │   ├── BatchFileConverterModels.cs   # Model chuyển đổi và gộp/tách file hàng loạt
 │   ├── BatchFindReplaceModels.cs     # Model tìm & thay thế hàng loạt
+│   ├── OracleConnectionConfig.cs     # Cấu hình kết nối Oracle Database
+│   ├── SheetSnapshotItem.cs          # Model dữ liệu snapshot bảng tính
 │   ├── GlossaryItem.cs               # Model thuật ngữ từ điển Nhật ⇋ Việt
 │   └── VietnameseLocationItem.cs     # Model vị trí phát hiện tiếng Việt
 │
 ├── Services/                         # Tầng dịch vụ & Xử lý nghiệp vụ
+│   ├── DesignPageCounterService.cs   # Thuật toán đếm trang thiết kế, so khớp ký tự & tô màu Evidence
+│   ├── OracleDataCompareService.cs   # Dịch vụ kết nối, query & so sánh dữ liệu Oracle Database
+│   ├── AiFormulaDoctorService.cs     # Dịch vụ chẩn đoán, sửa lỗi & tối ưu công thức Excel bằng AI
+│   ├── SheetSnapshotService.cs       # Dịch vụ chụp ảnh snapshot & hoàn tác dữ liệu
 │   ├── TableMergeService.cs          # Dịch vụ ghép bảng bằng mảng 2D siêu tốc
 │   ├── FuzzyDuplicateService.cs      # Thuật toán Levenshtein & Jaro-Winkler nhận diện trùng lặp ảo
 │   ├── BatchFileConverterService.cs  # Chuyển đổi định dạng, tách/gộp file nền
 │   ├── BatchFindReplaceService.cs    # Dịch vụ tìm và thay thế theo bảng tra cứu
 │   ├── GridRulerService.cs           # Quản lý thước kẻ chữ thập & tính toán thống kê dòng/cột hiển thị
 │   ├── GlossaryService.cs            # Dịch vụ Import/Export Glossary (CSV UTF-8 BOM & JSON)
+│   ├── LocalizationService.cs        # Quản lý đa ngôn ngữ (Tiếng Việt, Tiếng Anh, Tiếng Nhật)
 │   └── OpenAiClientService.cs        # HTTP Client kết nối OpenAI / Local LLM
 │
 ├── ViewModels/                       # Tầng ViewModel (Mô hình MVVM)
 │   ├── TaskPaneViewModel.cs          # ViewModel chính điều khiển Task Pane & Theme toggle
+│   ├── DesignPageCounterViewModel.cs # ViewModel đếm số trang thiết kế & quản lý Evidence
 │   ├── AiAssistantViewModel.cs       # Quản lý logic Dịch thuật, Glossary, Sinh & Sửa công thức
 │   └── AiSettingsViewModel.cs        # Quản lý kiểm tra kết nối & Lưu cấu hình AI
 │
 ├── Views/                            # Giao diện người dùng WPF (XAML) - Hỗ trợ 100% Dark Theme
+│   ├── DesignPageCounterDialog.xaml  # Hộp thoại Thống Kê & Đếm Trang Thiết Kế
+│   ├── OracleQuickQueryDialog.xaml   # Hộp thoại Thực Thi & Xem Trước SQL Query Oracle
+│   ├── OracleTableCompareDialog.xaml # Hộp thoại So Sánh Bảng & Dữ Liệu Oracle Database
+│   ├── AiFormulaDoctorDialog.xaml    # Hộp thoại Bác Sĩ Công Thức & Sửa Lỗi Tự Động
+│   ├── SheetSnapshotDialog.xaml      # Hộp thoại Quản Lý Snapshot & Khôi Phục Dữ Liệu
 │   ├── VisualTableMergeDialog.xaml   # Hộp thoại Trộn & Ghép Nối Bảng Trực Quan
 │   ├── FuzzyDuplicateDialog.xaml     # Hộp thoại Phát Hiện Dữ Liệu Bất Thường & Trùng Lặp Ảo
 │   ├── BatchFileConverterDialog.xaml # Hộp thoại Quản Trị & Chuyển Đổi File Hàng Loạt
@@ -96,14 +152,16 @@ ExcelSupport/
 dotnet build
 ```
 
-### 2. Đóng gói bản phát hành Release (Tự Động Đóng Gói .xll):
+### 2. Đóng gói bản phát hành Release (Self-Contained XLL):
 ```bash
 dotnet publish -c release
 ```
 
-File Add-in độc lập (standalone `.xll`) sẽ nằm tại thư mục:
+File Add-in độc lập hoàn chỉnh (đã nhúng sẵn toàn bộ `Newtonsoft.Json.dll` và `Oracle.ManagedDataAccess.dll` nén LZMA) nằm tại thư mục:
 * Bản **Excel 64-bit:** `bin\release\net48\publish\ExcelSupport-AddIn64-packed.xll`
 * Bản **Excel 32-bit:** `bin\release\net48\publish\ExcelSupport-AddIn-packed.xll`
+
+> 💡 **Cài Đặt:** Bạn chỉ cần copy duy nhất file `.xll` này sang máy tính của người dùng để mở hoặc nạp vào Excel mà không cần cài đặt thêm DLL phụ thuộc.
 
 ---
 

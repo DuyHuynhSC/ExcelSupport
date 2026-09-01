@@ -124,7 +124,7 @@ namespace ExcelSupport.Views
             if (string.IsNullOrEmpty(sheetName) || _excelApp == null) return;
 
             string wbName = _excelApp.ActiveWorkbook?.Name ?? string.Empty;
-            _columns = TableMergeService.GetSheetColumns(_excelApp, wbName, sheetName);
+            _columns = TableMergeService.GetSheetColumns(_excelApp, wbName, sheetName!);
 
             CboColumns.ItemsSource = _columns;
             CboColumns.DisplayMemberPath = nameof(MergeColumnItem.DisplayText);

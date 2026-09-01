@@ -239,7 +239,6 @@ namespace ExcelSupport.ViewModels
                 if (param is WorkbookNodeViewModel wb)
                 {
                     SelectedWorkbook = wb;
-                    RequestActivateWorkbook?.Invoke(wb.WorkbookName);
                 }
             });
 
@@ -248,7 +247,6 @@ namespace ExcelSupport.ViewModels
                 if (param is WorksheetNodeViewModel ws)
                 {
                     SelectedWorksheet = ws;
-                    RequestActivateWorksheet?.Invoke(ws.WorkbookName, ws.SheetName);
                 }
             });
 

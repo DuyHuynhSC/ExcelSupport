@@ -200,18 +200,18 @@ namespace ExcelSupport
         private void ExcelApp_WorkbookNewSheet(Workbook Wb, object Sh) => QueueRefresh();
         private void ExcelApp_SheetActivate(object Sh)
         {
-            QueueRefresh();
+            QueueActiveSelectionSync();
             Services.GridRulerService.OnSheetActivate(Sh as _Worksheet);
         }
-        private void ExcelApp_SheetDeactivate(object Sh) => QueueRefresh();
-        private void ExcelApp_SheetChange(object Sh, Range Target) => QueueActiveSelectionSync();
+        private void ExcelApp_SheetDeactivate(object Sh) { }
+        private void ExcelApp_SheetChange(object Sh, Range Target) { }
         private void ExcelApp_SheetSelectionChange(object Sh, Range Target)
         {
             Services.GridRulerService.OnSheetSelectionChange(Sh as _Worksheet, Target);
         }
-        private void ExcelApp_WorkbookActivate(Workbook Wb) => QueueRefresh();
-        private void ExcelApp_WorkbookDeactivate(Workbook Wb) => QueueRefresh();
-        private void ExcelApp_WindowActivate(Workbook Wb, Window Wn) => QueueRefresh();
+        private void ExcelApp_WorkbookActivate(Workbook Wb) => QueueActiveSelectionSync();
+        private void ExcelApp_WorkbookDeactivate(Workbook Wb) { }
+        private void ExcelApp_WindowActivate(Workbook Wb, Window Wn) => QueueActiveSelectionSync();
 
         private System.Threading.Timer? _refreshDebounceTimer;
         private readonly object _refreshLock = new object();
@@ -229,13 +229,8 @@ namespace ExcelSupport
                     {
                         if (_isBatchProcessing) return;
                         RefreshWorkbookTree();
-                        if (MainViewModel != null && AppSettings.IsTaskPaneAutoOpen)
-                        {
-                            TaskPaneRegistry.AutoRestoreForActiveWindow(MainViewModel);
-                        }
-                        ExcelSupport.Ribbon.RibbonController.Instance?.InvalidateControl("btnToggleTaskPane");
                     });
-                }, null, 80, System.Threading.Timeout.Infinite);
+                }, null, 150, System.Threading.Timeout.Infinite);
             }
         }
 
@@ -256,7 +251,7 @@ namespace ExcelSupport
                         if (_isBatchProcessing) return;
                         UpdateActiveSheetState();
                     });
-                }, null, 50, System.Threading.Timeout.Infinite);
+                }, null, 60, System.Threading.Timeout.Infinite);
             }
         }
 
@@ -533,9 +528,29 @@ namespace ExcelSupport
 
             try
             {
-                targetWb.Activate();
+                // Kiểm tra nếu Workbook này đã là ActiveWorkbook thì không gọi targetWb.Activate() lại
+                Workbook? currentActiveWb = null;
+                bool isAlreadyActive = false;
+                try
+                {
+                    currentActiveWb = _excelApp?.ActiveWorkbook;
+                    if (currentActiveWb != null && string.Equals(currentActiveWb.Name, targetWb.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        isAlreadyActive = true;
+                    }
+                }
+                catch { }
+                finally
+                {
+                    if (currentActiveWb != null) Marshal.ReleaseComObject(currentActiveWb);
+                }
 
-                // Kích hoạt cửa sổ SDI riêng biệt của Workbook (đặc biệt hữu dụng khi dùng nhiều màn hình hoặc cửa sổ bị minimize vào taskbar)
+                if (!isAlreadyActive)
+                {
+                    targetWb.Activate();
+                }
+
+                // Khôi phục cửa sổ nếu bị minimize
                 Windows? windows = null;
                 try
                 {
@@ -548,17 +563,13 @@ namespace ExcelSupport
                             win = windows[1];
                             if (win != null)
                             {
-                                win.Visible = true;
                                 if (win.WindowState == XlWindowState.xlMinimized)
                                 {
                                     win.WindowState = XlWindowState.xlNormal;
                                 }
-                                win.Activate();
-
-                                IntPtr winHwnd = (IntPtr)win.Hwnd;
-                                if (winHwnd != IntPtr.Zero)
+                                if (!isAlreadyActive)
                                 {
-                                    BringWindowToFront(winHwnd);
+                                    win.Activate();
                                 }
                             }
                         }
@@ -642,8 +653,28 @@ namespace ExcelSupport
                             {
                                 ws.Visible = (int)XlSheetVisibility.xlSheetVisible;
                             }
-                            try { ws.Select(Type.Missing); } catch { }
-                            try { ws.Activate(); } catch { }
+
+                            // Kiểm tra nếu sheet này đã đang là ActiveSheet thì không activate lại
+                            object? currentActiveSheet = null;
+                            string? currentSheetName = null;
+                            try
+                            {
+                                currentActiveSheet = _excelApp?.ActiveSheet;
+                                if (currentActiveSheet is _Worksheet curWs)
+                                {
+                                    currentSheetName = curWs.Name;
+                                }
+                            }
+                            catch { }
+                            finally
+                            {
+                                if (currentActiveSheet != null) Marshal.ReleaseComObject(currentActiveSheet);
+                            }
+
+                            if (!string.Equals(currentSheetName, sheetName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                try { ws.Activate(); } catch { }
+                            }
 
                             // Đồng bộ ngay huy hiệu Active trên giao diện
                             MainViewModel?.SetActiveSelection(targetWb.Name, sheetName);

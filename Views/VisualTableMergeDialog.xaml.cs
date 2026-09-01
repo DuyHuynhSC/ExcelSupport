@@ -154,7 +154,7 @@ namespace ExcelSupport.Views
             string? sheetName = CboSheet1.SelectedItem as string;
             if (string.IsNullOrEmpty(wbName) || string.IsNullOrEmpty(sheetName)) return;
 
-            _table1Cols = TableMergeService.GetSheetColumns(_excelApp, wbName, sheetName);
+            _table1Cols = TableMergeService.GetSheetColumns(_excelApp, wbName!, sheetName!);
             CboKeyCol1.ItemsSource = _table1Cols;
             CboKeyCol1.DisplayMemberPath = nameof(MergeColumnItem.DisplayText);
             CboKeyCol1.SelectedValuePath = nameof(MergeColumnItem.ColumnIndex);
@@ -202,7 +202,7 @@ namespace ExcelSupport.Views
             string? sheetName = CboSheet2.SelectedItem as string;
             if (string.IsNullOrEmpty(wbName) || string.IsNullOrEmpty(sheetName)) return;
 
-            _table2Cols = TableMergeService.GetSheetColumns(_excelApp, wbName, sheetName);
+            _table2Cols = TableMergeService.GetSheetColumns(_excelApp, wbName!, sheetName!);
             CboKeyCol2.ItemsSource = _table2Cols;
             CboKeyCol2.DisplayMemberPath = nameof(MergeColumnItem.DisplayText);
             CboKeyCol2.SelectedValuePath = nameof(MergeColumnItem.ColumnIndex);
@@ -276,13 +276,13 @@ namespace ExcelSupport.Views
 
             var options = new TableMergeOptions
             {
-                Table1WorkbookName = wb1,
-                Table1SheetName = s1,
+                Table1WorkbookName = wb1!,
+                Table1SheetName = s1!,
                 Table1KeyColIndex = key1Item.ColumnIndex,
                 Table1HeaderRow = 1,
 
-                Table2WorkbookName = wb2,
-                Table2SheetName = s2,
+                Table2WorkbookName = wb2!,
+                Table2SheetName = s2!,
                 Table2KeyColIndex = key2Item.ColumnIndex,
                 Table2HeaderRow = 1,
 

@@ -12,6 +12,12 @@ namespace ExcelSupport.Services
 {
     #region Data Models & Enums
 
+    public enum PageCounterMode
+    {
+        CharacterAndHighlight, // Thuật toán đếm ký tự & tô màu ô thay đổi (Mặc định)
+        PrintBreakGrid         // Thuật toán ngắt trang in Excel
+    }
+
     public enum PageStatus
     {
         WorkPage,       // Trang thiết kế thực tế (có nội dung mới/sửa)
@@ -30,10 +36,16 @@ namespace ExcelSupport.Services
 
     public class PageCounterOptions
     {
+        public PageCounterMode Mode { get; set; } = PageCounterMode.CharacterAndHighlight;
         public bool IgnoreCoverAndHistory { get; set; } = true;
         public bool IgnoreBlankPages { get; set; } = true;
         public bool CountShapesAndPictures { get; set; } = true;
-        public int MinChangedCellsThreshold { get; set; } = 2; // Tối thiểu N ô sửa đổi mới tính là trang làm việc
+        public int MinChangedCellsThreshold { get; set; } = 2;
+        public int CharactersPerPage { get; set; } = 600; // Định mức ký tự / trang (mặc định 600 cho Tiếng Nhật, 1200 cho Tiếng Việt/Anh)
+        public double ShapePageFactor { get; set; } = 0.5; // Mỗi hình vẽ/sơ đồ quy đổi = 0.5 trang
+        public bool HighlightChangedCells { get; set; } = true; // Tạo bản sao và tô màu ô thay đổi
+        public string HighlightColorHex { get; set; } = "#FEF08A"; // Vàng nhạt mặc định
+        public HashSet<string> ExcludedSheetNames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
     public class PageDetailItem
@@ -59,22 +71,25 @@ namespace ExcelSupport.Services
         public SheetStatus Status { get; set; } = SheetStatus.TemplateOnly;
         public int TotalPrintPages { get; set; }
         public int TemplatePagesCount { get; set; }
-        public int WorkPagesCount { get; set; }
+        public double WorkPagesCount { get; set; }
         public int BlankPagesCount { get; set; }
         public int TotalChangedCells { get; set; }
+        public int TotalChangedCharacters { get; set; }
         public int TotalAddedShapes { get; set; }
-        public double WorkPercent => TotalPrintPages > 0 ? Math.Round((double)WorkPagesCount / TotalPrintPages * 100.0, 1) : 0;
+        public double WorkPercent => TotalPrintPages > 0 ? Math.Min(100.0, Math.Round(WorkPagesCount / TotalPrintPages * 100.0, 1)) : 0;
         public List<PageDetailItem> Pages { get; set; } = new();
 
         public string SummaryText
         {
             get
             {
+                if (Status == SheetStatus.SkippedSheet)
+                    return "Đã loại trừ (Không đếm)";
                 if (Status == SheetStatus.NewSheet)
-                    return $"Sheet mới (+{WorkPagesCount} trang)";
+                    return $"Sheet mới (+{WorkPagesCount:F1} trang, {TotalChangedCharacters:N0} ký tự)";
                 if (Status == SheetStatus.TemplateOnly)
                     return $"Nguyên bản Template ({TemplatePagesCount} trang)";
-                return $"Thiết kế {WorkPagesCount}/{TotalPrintPages} trang ({WorkPercent}%)";
+                return $"Thiết kế {WorkPagesCount:F1} trang ({TotalChangedCharacters:N0} ký tự, {TotalAddedShapes} ảnh)";
             }
         }
     }
@@ -85,18 +100,22 @@ namespace ExcelSupport.Services
         public string TargetWorkbookPath { get; set; } = string.Empty;
         public string TemplateWorkbookName { get; set; } = string.Empty;
         public string TemplateWorkbookPath { get; set; } = string.Empty;
+        public string? HighlightedClonedWorkbookPath { get; set; }
         public DateTime AnalyzedAt { get; set; } = DateTime.Now;
 
         public int TotalTargetPrintPages { get; set; }
         public int TotalTemplatePages { get; set; }
-        public int TotalWorkPages { get; set; }
+        public double TotalWorkPages { get; set; }
         public int TotalBlankPages { get; set; }
+        public int TotalChangedCells { get; set; }
+        public int TotalChangedCharacters { get; set; }
+        public int TotalAddedShapes { get; set; }
         public int TotalNewSheetsCount { get; set; }
         public int TotalModifiedSheetsCount { get; set; }
         public int TotalUnchangedSheetsCount { get; set; }
 
         public double OverallWorkPercent => TotalTargetPrintPages > 0
-            ? Math.Round((double)TotalWorkPages / TotalTargetPrintPages * 100.0, 1)
+            ? Math.Min(100.0, Math.Round(TotalWorkPages / TotalTargetPrintPages * 100.0, 1))
             : 0;
 
         public List<SheetPageCounterResult> SheetResults { get; set; } = new();
@@ -125,6 +144,9 @@ namespace ExcelSupport.Services
 
             Workbook? targetWb = null;
             Workbook? templateWb = null;
+            Workbook? clonedWb = null;
+            string? tempClonePath = null;
+
             bool targetOpenedHere = false;
             bool templateOpenedHere = false;
 
@@ -150,14 +172,43 @@ namespace ExcelSupport.Services
                 if (targetWb == null)
                     throw new FileNotFoundException($"Không thể mở file thiết kế: {targetWbNameOrPath}");
 
-                // 2. Resolve Template Workbook (nếu có)
+                // 2. Tạo bản sao tạm thời (Clone) nếu người dùng chọn tính năng tô màu (Highlight)
+                if (options.HighlightChangedCells)
+                {
+                    try
+                    {
+                        string tempDir = Path.Combine(Path.GetTempPath(), "ExcelSupport_DesignPages");
+                        if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+                        string baseName = Path.GetFileNameWithoutExtension(targetWb.Name);
+                        string ext = Path.GetExtension(targetWb.FullName);
+                        if (string.IsNullOrEmpty(ext)) ext = ".xlsx";
+                        tempClonePath = Path.Combine(tempDir, $"Evidence_{baseName}_{DateTime.Now:yyyyMMdd_HHmmss}{ext}");
+
+                        if (File.Exists(targetWb.FullName))
+                        {
+                            File.Copy(targetWb.FullName, tempClonePath, true);
+                        }
+                        else
+                        {
+                            targetWb.SaveCopyAs(tempClonePath);
+                        }
+
+                        if (File.Exists(tempClonePath))
+                        {
+                            clonedWb = app.Workbooks.Open(tempClonePath);
+                        }
+                    }
+                    catch { }
+                }
+
+                // 3. Resolve Template Workbook (nếu có)
                 if (!string.IsNullOrWhiteSpace(templateWbNameOrPath))
                 {
                     progressCallback?.Invoke("Đang mở và tải template gốc...", 15);
                     templateWb = FindOrOpenWorkbook(app, templateWbNameOrPath, out templateOpenedHere);
                 }
 
-                // 3. Xây dựng danh sách Sheets của Template để so khớp nhanh
+                // 4. Xây dựng danh sách Sheets của Template để so khớp nhanh
                 var templateSheetsDict = new Dictionary<string, Worksheet>(StringComparer.OrdinalIgnoreCase);
                 if (templateWb != null)
                 {
@@ -167,18 +218,28 @@ namespace ExcelSupport.Services
                     }
                 }
 
+                var clonedSheetsDict = new Dictionary<string, Worksheet>(StringComparer.OrdinalIgnoreCase);
+                if (clonedWb != null)
+                {
+                    foreach (Worksheet ws in clonedWb.Worksheets)
+                    {
+                        clonedSheetsDict[ws.Name] = ws;
+                    }
+                }
+
                 int sheetCount = targetWb.Worksheets.Count;
                 int currentSheetIndex = 0;
 
-                // 4. Lặp qua từng Sheet trong Target Workbook
+                // 5. Lặp qua từng Sheet trong Target Workbook
                 foreach (Worksheet targetWs in targetWb.Worksheets)
                 {
                     currentSheetIndex++;
                     int progress = 20 + (int)((double)currentSheetIndex / Math.Max(1, sheetCount) * 70);
-                    progressCallback?.Invoke($"Đang phân tích trang in sheet: {targetWs.Name} ({currentSheetIndex}/{sheetCount})...", progress);
+                    progressCallback?.Invoke($"Đang phân tích và tô màu sheet: {targetWs.Name} ({currentSheetIndex}/{sheetCount})...", progress);
 
+                    bool isExplicitlyExcluded = options.ExcludedSheetNames != null && options.ExcludedSheetNames.Contains(targetWs.Name);
                     bool isCoverOrHistory = IsCoverOrHistorySheet(targetWs.Name);
-                    if (options.IgnoreCoverAndHistory && isCoverOrHistory)
+                    if (isExplicitlyExcluded || (options.IgnoreCoverAndHistory && isCoverOrHistory))
                     {
                         var skippedResult = new SheetPageCounterResult
                         {
@@ -196,14 +257,27 @@ namespace ExcelSupport.Services
                     }
 
                     templateSheetsDict.TryGetValue(targetWs.Name, out Worksheet? tplWs);
+                    clonedSheetsDict.TryGetValue(targetWs.Name, out Worksheet? clonedWs);
 
-                    var sheetResult = AnalyzeWorksheetPages(app, targetWs, tplWs, options);
+                    SheetPageCounterResult sheetResult;
+                    if (options.Mode == PageCounterMode.CharacterAndHighlight)
+                    {
+                        sheetResult = AnalyzeWorksheetByCharacterAndHighlight(app, targetWs, tplWs, clonedWs, options);
+                    }
+                    else
+                    {
+                        sheetResult = AnalyzeWorksheetPages(app, targetWs, tplWs, options);
+                    }
+
                     result.SheetResults.Add(sheetResult);
 
                     result.TotalTargetPrintPages += sheetResult.TotalPrintPages;
                     result.TotalTemplatePages += sheetResult.TemplatePagesCount;
                     result.TotalWorkPages += sheetResult.WorkPagesCount;
                     result.TotalBlankPages += sheetResult.BlankPagesCount;
+                    result.TotalChangedCells += sheetResult.TotalChangedCells;
+                    result.TotalChangedCharacters += sheetResult.TotalChangedCharacters;
+                    result.TotalAddedShapes += sheetResult.TotalAddedShapes;
 
                     if (sheetResult.Status == SheetStatus.NewSheet)
                         result.TotalNewSheetsCount++;
@@ -213,6 +287,20 @@ namespace ExcelSupport.Services
                         result.TotalUnchangedSheetsCount++;
                 }
 
+                // Lưu lại file cloned workbook nếu có
+                if (clonedWb != null)
+                {
+                    try
+                    {
+                        clonedWb.Save();
+                        clonedWb.Close(false);
+                        Marshal.ReleaseComObject(clonedWb);
+                        clonedWb = null;
+                        result.HighlightedClonedWorkbookPath = tempClonePath;
+                    }
+                    catch { }
+                }
+
                 progressCallback?.Invoke("Hoàn tất phân tích!", 100);
                 return result;
             }
@@ -220,6 +308,11 @@ namespace ExcelSupport.Services
             {
                 app.ScreenUpdating = prevScreenUpdating;
                 app.DisplayAlerts = prevDisplayAlerts;
+
+                if (clonedWb != null)
+                {
+                    try { clonedWb.Close(false); Marshal.ReleaseComObject(clonedWb); } catch { }
+                }
 
                 // Dọn dẹp các workbook nếu được mở tạm thời
                 if (targetOpenedHere && targetWb != null)
@@ -231,6 +324,244 @@ namespace ExcelSupport.Services
                     try { templateWb.Close(false); Marshal.ReleaseComObject(templateWb); } catch { }
                 }
             }
+        }
+
+        /// <summary>
+        /// Mở workbook đã được tô màu highlight (Evidence) trong Excel để người dùng xem trực tiếp.
+        /// </summary>
+        public static bool OpenEvidenceWorkbook(ExcelApp app, string filePath)
+        {
+            if (app == null || string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return false;
+            try
+            {
+                app.Visible = true;
+                var wb = app.Workbooks.Open(filePath);
+                wb.Activate();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Phân tích số trang thiết kế bằng thuật toán đếm ký tự & tô màu trực quan các ô thay đổi.
+        /// </summary>
+        private static SheetPageCounterResult AnalyzeWorksheetByCharacterAndHighlight(
+            ExcelApp app,
+            Worksheet targetWs,
+            Worksheet? templateWs,
+            Worksheet? clonedWs,
+            PageCounterOptions options)
+        {
+            var sheetResult = new SheetPageCounterResult
+            {
+                SheetName = targetWs.Name
+            };
+
+            // 1. Tổng số trang in thực tế của sheet để làm cơ sở hiển thị
+            var targetPageRanges = GetPrintPageRanges(app, targetWs);
+            sheetResult.TotalPrintPages = Math.Max(1, targetPageRanges.Count);
+
+            // 2. Lấy UsedRange của Target và Template
+            Range targetUsed = targetWs.UsedRange;
+            int targetStartRow = targetUsed.Row;
+            int targetStartCol = targetUsed.Column;
+            int targetRowCount = targetUsed.Rows.Count;
+            int targetColCount = targetUsed.Columns.Count;
+
+            object[,] targetVals = Extract2DArray(targetUsed.Value2);
+            object[,] targetFormulas = Extract2DArray(targetUsed.Formula);
+
+            object[,]? tplVals = null;
+            object[,]? tplFormulas = null;
+            int tplStartRow = 1, tplStartCol = 1;
+
+            if (templateWs != null)
+            {
+                try
+                {
+                    Range tplUsed = templateWs.UsedRange;
+                    tplStartRow = tplUsed.Row;
+                    tplStartCol = tplUsed.Column;
+                    tplVals = Extract2DArray(tplUsed.Value2);
+                    tplFormulas = Extract2DArray(tplUsed.Formula);
+                }
+                catch { }
+            }
+
+            var changedCells = new List<(int row, int col)>();
+            int totalChars = 0;
+            int totalCells = 0;
+
+            for (int r = 1; r <= targetRowCount; r++)
+            {
+                int actualRow = targetStartRow + r - 1;
+                for (int c = 1; c <= targetColCount; c++)
+                {
+                    int actualCol = targetStartCol + c - 1;
+
+                    object? tVal = (r <= targetVals.GetLength(0) && c <= targetVals.GetLength(1)) ? targetVals[r, c] : null;
+                    object? tForm = (r <= targetFormulas.GetLength(0) && c <= targetFormulas.GetLength(1)) ? targetFormulas[r, c] : null;
+
+                    string tStr = tVal?.ToString()?.Trim() ?? string.Empty;
+                    string tFormStr = tForm?.ToString()?.Trim() ?? string.Empty;
+
+                    if (string.IsNullOrEmpty(tStr) && string.IsNullOrEmpty(tFormStr))
+                        continue;
+
+                    // Đối chiếu với ô tương ứng trên template
+                    string tplStr = string.Empty;
+                    string tplFormStr = string.Empty;
+
+                    if (tplVals != null)
+                    {
+                        int tplR = actualRow - tplStartRow + 1;
+                        int tplC = actualCol - tplStartCol + 1;
+                        if (tplR >= 1 && tplR <= tplVals.GetLength(0) && tplC >= 1 && tplC <= tplVals.GetLength(1))
+                        {
+                            object? tpV = tplVals[tplR, tplC];
+                            object? tpF = (tplFormulas != null && tplR <= tplFormulas.GetLength(0) && tplC <= tplFormulas.GetLength(1)) ? tplFormulas[tplR, tplC] : null;
+                            tplStr = tpV?.ToString()?.Trim() ?? string.Empty;
+                            tplFormStr = tpF?.ToString()?.Trim() ?? string.Empty;
+                        }
+                    }
+
+                    bool isDiff = !string.Equals(tStr, tplStr, StringComparison.Ordinal) ||
+                                  !string.Equals(tFormStr, tplFormStr, StringComparison.Ordinal);
+
+                    if (isDiff)
+                    {
+                        totalCells++;
+                        totalChars += tStr.Length;
+                        changedCells.Add((actualRow, actualCol));
+                    }
+                }
+            }
+
+            // 3. Đếm số shapes mới thêm
+            int addedShapes = 0;
+            if (options.CountShapesAndPictures)
+            {
+                int targetShapes = 0;
+                int tplShapes = 0;
+                try { targetShapes = targetWs.Shapes.Count; } catch { }
+                try { if (templateWs != null) tplShapes = templateWs.Shapes.Count; } catch { }
+                addedShapes = Math.Max(0, targetShapes - tplShapes);
+            }
+
+            // 4. Tô màu các ô thay đổi trên bản sao (Cloned Worksheet)
+            if (clonedWs != null && changedCells.Count > 0 && options.HighlightChangedCells)
+            {
+                try
+                {
+                    Color highlightColor = ColorTranslator.FromHtml(options.HighlightColorHex);
+                    ApplyHighlightToCells(clonedWs, changedCells, highlightColor);
+                }
+                catch { }
+            }
+
+            sheetResult.TotalChangedCells = totalCells;
+            sheetResult.TotalChangedCharacters = totalChars;
+            sheetResult.TotalAddedShapes = addedShapes;
+
+            // 5. Quy đổi ra số trang thiết kế
+            double charPages = (double)totalChars / Math.Max(1, options.CharactersPerPage);
+            double shapePages = addedShapes * options.ShapePageFactor;
+            double calculatedWorkPages = Math.Round(charPages + shapePages, 1);
+
+            if (totalCells == 0 && addedShapes == 0)
+            {
+                sheetResult.Status = SheetStatus.TemplateOnly;
+                sheetResult.WorkPagesCount = 0;
+                sheetResult.TemplatePagesCount = sheetResult.TotalPrintPages;
+            }
+            else if (templateWs == null)
+            {
+                sheetResult.Status = SheetStatus.NewSheet;
+                sheetResult.WorkPagesCount = Math.Max(1.0, calculatedWorkPages);
+                sheetResult.TemplatePagesCount = 0;
+            }
+            else
+            {
+                sheetResult.Status = SheetStatus.ModifiedSheet;
+                sheetResult.WorkPagesCount = calculatedWorkPages;
+                sheetResult.TemplatePagesCount = Math.Max(0, (int)Math.Ceiling(sheetResult.TotalPrintPages - calculatedWorkPages));
+            }
+
+            // 6. Xây dựng danh sách trang chi tiết
+            int pageIndex = 1;
+            foreach (var pr in targetPageRanges)
+            {
+                int pageChangedCells = changedCells.Count(c => c.row >= pr.StartRow && c.row <= pr.EndRow && c.col >= pr.StartCol && c.col <= pr.EndCol);
+                bool isWorkPage = pageChangedCells > 0;
+                sheetResult.Pages.Add(new PageDetailItem
+                {
+                    PageNumber = pageIndex++,
+                    RangeAddress = pr.Address,
+                    StartRow = pr.StartRow,
+                    EndRow = pr.EndRow,
+                    StartCol = pr.StartCol,
+                    EndCol = pr.EndCol,
+                    Status = isWorkPage ? (templateWs == null ? PageStatus.NewPage : PageStatus.WorkPage) : PageStatus.TemplatePage,
+                    ChangedCellsCount = pageChangedCells,
+                    Description = isWorkPage ? $"{pageChangedCells} ô thay đổi (Đã tô màu)" : "Nguyên bản template"
+                });
+            }
+
+            return sheetResult;
+        }
+
+        /// <summary>
+        /// Tô màu nền hàng loạt cho danh sách các ô bằng cách gom nhóm địa chỉ Range.
+        /// </summary>
+        private static void ApplyHighlightToCells(Worksheet ws, List<(int row, int col)> cells, Color color)
+        {
+            if (cells == null || cells.Count == 0) return;
+            int oleColor = ColorTranslator.ToOle(color);
+
+            var addressChunks = new List<string>();
+            var currentChunk = new List<string>();
+
+            foreach (var (r, c) in cells)
+            {
+                string addr = GetExcelCellAddress(r, c);
+                currentChunk.Add(addr);
+                if (currentChunk.Count >= 25)
+                {
+                    addressChunks.Add(string.Join(",", currentChunk));
+                    currentChunk.Clear();
+                }
+            }
+            if (currentChunk.Count > 0)
+            {
+                addressChunks.Add(string.Join(",", currentChunk));
+            }
+
+            foreach (var chunk in addressChunks)
+            {
+                try
+                {
+                    Range rng = ws.Range[chunk];
+                    rng.Interior.Color = oleColor;
+                    Marshal.ReleaseComObject(rng);
+                }
+                catch { }
+            }
+        }
+
+        private static string GetExcelCellAddress(int row, int col)
+        {
+            int dividend = col;
+            string colName = string.Empty;
+            while (dividend > 0)
+            {
+                int modulo = (dividend - 1) % 26;
+                colName = Convert.ToChar(65 + modulo) + colName;
+                dividend = (dividend - modulo) / 26;
+            }
+            return $"{colName}{row}";
         }
 
         /// <summary>
@@ -659,14 +990,14 @@ namespace ExcelSupport.Services
             return new object[1, 1];
         }
 
-        private static bool IsCoverOrHistorySheet(string sheetName)
+        public static bool IsCoverOrHistorySheet(string sheetName)
         {
             if (string.IsNullOrWhiteSpace(sheetName)) return false;
             string clean = sheetName.Trim().ToLowerInvariant();
             return CoverAndHistoryPatterns.Any(p => clean.Contains(p));
         }
 
-        private static Workbook? FindOrOpenWorkbook(ExcelApp app, string nameOrPath, out bool openedHere)
+        public static Workbook? FindOrOpenWorkbook(ExcelApp app, string nameOrPath, out bool openedHere)
         {
             openedHere = false;
             if (string.IsNullOrWhiteSpace(nameOrPath)) return null;
@@ -736,19 +1067,19 @@ namespace ExcelSupport.Services
 
                 // --- 2. THẺ CHỈ SỐ KPI TỔNG HỢP ---
                 int kpiRow = 5;
-                reportWs.Cells[kpiRow, 1].Value2 = "TỔNG SỐ TRANG IN";
-                reportWs.Cells[kpiRow + 1, 1].Value2 = result.TotalTargetPrintPages;
+                reportWs.Cells[kpiRow, 1].Value2 = "TỔNG KÝ TỰ MỚI / SỬA";
+                reportWs.Cells[kpiRow + 1, 1].Value2 = $"{result.TotalChangedCharacters:N0} ký tự";
                 FormatKpiCard(reportWs, kpiRow, 1, Color.FromArgb(239, 246, 255), Color.FromArgb(37, 99, 235));
 
-                reportWs.Cells[kpiRow, 3].Value2 = "TRANG TEMPLATE GỐC (LOẠI TRỪ)";
-                reportWs.Cells[kpiRow + 1, 3].Value2 = result.TotalTemplatePages;
+                reportWs.Cells[kpiRow, 3].Value2 = "SƠ ĐỒ / ẢNH MỚI";
+                reportWs.Cells[kpiRow + 1, 3].Value2 = $"{result.TotalAddedShapes} hình";
                 FormatKpiCard(reportWs, kpiRow, 3, Color.FromArgb(241, 245, 249), Color.FromArgb(100, 116, 139));
 
-                reportWs.Cells[kpiRow, 5].Value2 = "SỐ TRANG THIẾT KẾ THỰC TẾ";
-                reportWs.Cells[kpiRow + 1, 5].Value2 = result.TotalWorkPages;
+                reportWs.Cells[kpiRow, 5].Value2 = "SỐ TRANG THIẾT KẾ QUY ĐỔI";
+                reportWs.Cells[kpiRow + 1, 5].Value2 = $"{result.TotalWorkPages:F1} trang";
                 FormatKpiCard(reportWs, kpiRow, 5, Color.FromArgb(240, 253, 244), Color.FromArgb(22, 163, 74));
 
-                reportWs.Cells[kpiRow, 7].Value2 = "TỶ LỆ LÀM MỚI / CHỈNH SỬA";
+                reportWs.Cells[kpiRow, 7].Value2 = "TỶ LỆ LÀM MỚI / SỬA ĐỔI";
                 reportWs.Cells[kpiRow + 1, 7].Value2 = $"{result.OverallWorkPercent}%";
                 FormatKpiCard(reportWs, kpiRow, 7, Color.FromArgb(254, 242, 242), Color.FromArgb(220, 38, 38));
 
@@ -756,7 +1087,7 @@ namespace ExcelSupport.Services
                 int tableHeaderRow = 8;
                 string[] headers = new[]
                 {
-                    "STT", "Tên Sheet", "Trạng thái", "Tổng số trang", "Trang Template", "Trang Thiết kế", "% Thiết kế", "Số ô sửa đổi", "Hình vẽ mới", "Chi tiết các trang"
+                    "STT", "Tên Sheet", "Trạng thái", "Tổng trang in", "Trang Template", "Trang Thiết kế", "% Thiết kế", "Ký tự mới/sửa", "Hình vẽ mới", "Số ô sửa đổi", "Chi tiết các trang"
                 };
 
                 for (int col = 0; col < headers.Length; col++)
@@ -782,14 +1113,15 @@ namespace ExcelSupport.Services
                     reportWs.Cells[curRow, 5].Value2 = s.TemplatePagesCount;
                     reportWs.Cells[curRow, 6].Value2 = s.WorkPagesCount;
                     reportWs.Cells[curRow, 7].Value2 = $"{s.WorkPercent}%";
-                    reportWs.Cells[curRow, 8].Value2 = s.TotalChangedCells;
+                    reportWs.Cells[curRow, 8].Value2 = s.TotalChangedCharacters;
                     reportWs.Cells[curRow, 9].Value2 = s.TotalAddedShapes;
+                    reportWs.Cells[curRow, 10].Value2 = s.TotalChangedCells;
 
                     // Chi tiết từng trang
                     var pageSummaries = s.Pages
                         .Where(p => p.IsWorkPage)
                         .Select(p => $"Trang {p.PageNumber} ({p.Description})");
-                    reportWs.Cells[curRow, 10].Value2 = string.Join("; ", pageSummaries);
+                    reportWs.Cells[curRow, 11].Value2 = string.Join("; ", pageSummaries);
 
                     if (s.WorkPagesCount > 0)
                     {
@@ -817,10 +1149,27 @@ namespace ExcelSupport.Services
                 reportWs.Cells[curRow, 6].Font.Color = ColorTranslator.ToOle(Color.FromArgb(22, 163, 74));
                 reportWs.Cells[curRow, 7].Value2 = $"{result.OverallWorkPercent}%";
                 reportWs.Cells[curRow, 7].Font.Bold = true;
+                reportWs.Cells[curRow, 8].Value2 = result.TotalChangedCharacters;
+                reportWs.Cells[curRow, 8].Font.Bold = true;
+                reportWs.Cells[curRow, 9].Value2 = result.TotalAddedShapes;
+                reportWs.Cells[curRow, 9].Font.Bold = true;
+                reportWs.Cells[curRow, 10].Value2 = result.TotalChangedCells;
+                reportWs.Cells[curRow, 10].Font.Bold = true;
 
                 Range totalRange = reportWs.Range[reportWs.Cells[curRow, 1], reportWs.Cells[curRow, headers.Length]];
                 totalRange.Interior.Color = ColorTranslator.ToOle(Color.FromArgb(241, 245, 249));
                 totalRange.Borders.LineStyle = XlLineStyle.xlContinuous;
+
+                // Thông tin file Evidence nếu có
+                if (!string.IsNullOrEmpty(result.HighlightedClonedWorkbookPath) && File.Exists(result.HighlightedClonedWorkbookPath))
+                {
+                    curRow += 2;
+                    reportWs.Cells[curRow, 1].Value2 = "🎨 File bản sao đã tô màu đối chiếu (Evidence):";
+                    reportWs.Cells[curRow, 1].Font.Bold = true;
+                    reportWs.Cells[curRow, 1].Font.Color = ColorTranslator.ToOle(Color.FromArgb(124, 58, 237));
+                    reportWs.Cells[curRow + 1, 1].Value2 = result.HighlightedClonedWorkbookPath;
+                    reportWs.Cells[curRow + 1, 1].Font.Italic = true;
+                }
 
                 // Tự căn chỉnh độ rộng cột
                 reportWs.Columns.AutoFit();

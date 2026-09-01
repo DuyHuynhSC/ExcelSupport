@@ -94,19 +94,7 @@ namespace ExcelSupport.Views
                     if (DataContext is TaskPaneViewModel vm)
                     {
                         vm.SelectedWorksheet = ws;
-                        vm.ActivateWorksheetCommand.Execute(ws);
                     }
-                }
-            }
-        }
-
-        private void OnWorksheetListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.ListBox lb && lb.SelectedItem is WorksheetNodeViewModel ws)
-            {
-                if (DataContext is TaskPaneViewModel vm)
-                {
-                    vm.ActivateWorksheetCommand.Execute(ws);
                 }
             }
         }
@@ -122,19 +110,7 @@ namespace ExcelSupport.Views
                     if (DataContext is TaskPaneViewModel vm)
                     {
                         vm.SelectedWorkbook = wb;
-                        vm.ActivateWorkbookCommand.Execute(wb);
                     }
-                }
-            }
-        }
-
-        private void OnWorkbookListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.ListBox lb && lb.SelectedItem is WorkbookNodeViewModel wb)
-            {
-                if (DataContext is TaskPaneViewModel vm)
-                {
-                    vm.ActivateWorkbookCommand.Execute(wb);
                 }
             }
         }
@@ -169,7 +145,6 @@ namespace ExcelSupport.Views
                 int nextIndex = (currentIndex < 0) ? 0 : Math.Min(items.Count - 1, currentIndex + 1);
                 var nextWs = items[nextIndex];
                 vm.SelectedWorksheet = nextWs;
-                vm.ActivateWorksheetCommand.Execute(nextWs);
                 WorksheetsListBox?.ScrollIntoView(nextWs);
                 e.Handled = true;
             }
@@ -178,7 +153,6 @@ namespace ExcelSupport.Views
                 int prevIndex = (currentIndex < 0) ? items.Count - 1 : Math.Max(0, currentIndex - 1);
                 var prevWs = items[prevIndex];
                 vm.SelectedWorksheet = prevWs;
-                vm.ActivateWorksheetCommand.Execute(prevWs);
                 WorksheetsListBox?.ScrollIntoView(prevWs);
                 e.Handled = true;
             }
@@ -186,7 +160,6 @@ namespace ExcelSupport.Views
             {
                 var targetWs = (currentIndex >= 0) ? items[currentIndex] : items[0];
                 vm.SelectedWorksheet = targetWs;
-                vm.ActivateWorksheetCommand.Execute(targetWs);
                 WorksheetsListBox?.ScrollIntoView(targetWs);
                 e.Handled = true;
             }
@@ -206,7 +179,6 @@ namespace ExcelSupport.Views
                 int nextIndex = (currentIndex < 0) ? 0 : Math.Min(items.Count - 1, currentIndex + 1);
                 var nextWb = items[nextIndex];
                 vm.SelectedWorkbook = nextWb;
-                vm.ActivateWorkbookCommand.Execute(nextWb);
                 WorkbooksListBox?.ScrollIntoView(nextWb);
                 e.Handled = true;
             }
@@ -215,7 +187,6 @@ namespace ExcelSupport.Views
                 int prevIndex = (currentIndex < 0) ? items.Count - 1 : Math.Max(0, currentIndex - 1);
                 var prevWb = items[prevIndex];
                 vm.SelectedWorkbook = prevWb;
-                vm.ActivateWorkbookCommand.Execute(prevWb);
                 WorkbooksListBox?.ScrollIntoView(prevWb);
                 e.Handled = true;
             }
@@ -223,7 +194,6 @@ namespace ExcelSupport.Views
             {
                 var targetWb = (currentIndex >= 0) ? items[currentIndex] : items[0];
                 vm.SelectedWorkbook = targetWb;
-                vm.ActivateWorkbookCommand.Execute(targetWb);
                 WorkbooksListBox?.ScrollIntoView(targetWb);
                 e.Handled = true;
             }
