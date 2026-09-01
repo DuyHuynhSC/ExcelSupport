@@ -466,7 +466,19 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableHighlightColors}" SelectedItem="{Binding SelectedHighlightColor, Mode=TwoWay}" DisplayMemberPath="Name" MinWidth="240" Height="28"/>
+                                <ComboBox ItemsSource="{Binding AvailableHighlightColors}" SelectedItem="{Binding SelectedHighlightColor, Mode=TwoWay}" MinWidth="245" Height="28" ToolTip="{loc:Loc PageCounter_ColorShortcutTip}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="16" Height="16" CornerRadius="3" Background="{Binding SwatchBrush}" BorderBrush="#94A3B8" BorderThickness="1" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontSize="11.5"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{loc:Loc PageCounter_ColorShortcutTip}">
+                                    <TextBlock Text="⌨ Ctrl+Shift+H" FontSize="10.5" FontWeight="SemiBold" Foreground="#1D4ED8"/>
+                                </Border>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,16,6" VerticalAlignment="Center">

@@ -4402,6 +4402,23 @@ namespace ExcelSupport
             });
         }
     }
+
+    public static class DesignPageCounterCommands
+    {
+        [ExcelDna.Integration.ExcelCommand(ShortCut = "^+H", Name = "ApplyDesignHighlightSelectionCommand")]
+        public static void HighlightDesignSelection()
+        {
+            ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    var app = (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                    Services.DesignPageCounterService.HighlightSelection(app);
+                }
+                catch { }
+            });
+        }
+    }
 }
 
 

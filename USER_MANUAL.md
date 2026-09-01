@@ -319,10 +319,10 @@ Công cụ chuyên dụng dành cho các dự án Offshore, Outsourcing và Qu�
   $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô thay đổi}}{\text{Định mức ký tự / trang}} + (\text{Số hình vẽ mới} \times 0.5)$$
 ### 18.1 Các Chế Độ Đếm & Thuật Toán:
 * **Chế độ 1: Đếm theo màu ô tự tô (Khuyên dùng - Manual User-Highlighted Cells):**
-  - **Quy trình làm việc:**
+  - **Quy trình làm việc siêu tốc:**
     1. Bấm nút **`📝 Mở Bản Sao Mới Để Tô Màu`**: Hệ thống tự động nhân bản file thiết kế thành một file New và mở trực tiếp trên Excel.
-    2. Dùng công cụ **Fill Color (Tô màu nền)** của Excel để tô màu các ô bạn đã thiết kế (ví dụ màu Vàng, Xanh ngọc, Xanh lá, Cam, Hồng hoặc bất kỳ màu nào).
-    3. Quay lại hộp thoại và bấm **`🔍 Phân Tích & Đếm Trang`**: Hệ thống sẽ quét các ô đã tô màu, đếm tổng ký tự và quy đổi ra số trang thiết kế tương ứng.
+    2. Bôi đen các vùng ô bạn đã thiết kế và nhấn phím tắt **`Ctrl + Shift + H`** để tô màu đánh dấu tức thì theo màu đang chọn trong ComboBox (hoặc dùng công cụ Fill Color trên Excel).
+    3. Quay lại hộp thoại và bấm **`🔍 Phân Tích & Đếm Trang`**: Hệ thống sẽ quét các ô có màu chỉ định, đếm tổng ký tự và quy đổi ra số trang thiết kế tương ứng.
 * **Chế độ 2: Tự động so sánh với Template gốc (Auto-Diff with Template):**
   - Tự động so khớp từng ô giữa Target Workbook và Template Workbook của khách hàng.
   - Tự động đếm các ô thay đổi, tự động tạo file bản sao **Evidence** đã tô màu trực quan.

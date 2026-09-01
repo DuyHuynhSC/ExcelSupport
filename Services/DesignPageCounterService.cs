@@ -86,12 +86,12 @@ namespace ExcelSupport.Services
             get
             {
                 if (Status == SheetStatus.SkippedSheet)
-                    return "Đã loại trừ (Không đếm)";
+                    return LocalizationService.Get("PageCounter_StatusSkipped");
                 if (Status == SheetStatus.NewSheet)
-                    return $"Sheet mới (+{WorkPagesCount:F1} trang, {TotalChangedCharacters:N0} ký tự)";
+                    return LocalizationService.Get("PageCounter_StatusNewSheet", WorkPagesCount, TotalChangedCharacters);
                 if (Status == SheetStatus.TemplateOnly)
-                    return $"Nguyên bản Template ({TemplatePagesCount} trang)";
-                return $"Thiết kế {WorkPagesCount:F1} trang ({TotalChangedCharacters:N0} ký tự, {TotalAddedShapes} ảnh)";
+                    return LocalizationService.Get("PageCounter_StatusTemplateOnly", TemplatePagesCount);
+                return LocalizationService.Get("PageCounter_StatusModified", WorkPagesCount, TotalChangedCharacters, TotalAddedShapes);
             }
         }
     }
@@ -329,6 +329,48 @@ namespace ExcelSupport.Services
                 {
                     try { templateWb.Close(false); Marshal.ReleaseComObject(templateWb); } catch { }
                 }
+            }
+        }
+
+        public static string CurrentHighlightColorHex { get; set; } = "#FEF08A";
+
+        /// <summary>
+        /// Tô màu vùng ô đang được chọn trong Excel theo màu chỉ định (phím tắt Ctrl + Shift + H).
+        /// </summary>
+        public static bool HighlightSelection(ExcelApp? excelApp = null, string? hexColor = null)
+        {
+            try
+            {
+                var app = excelApp ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                if (app == null) return false;
+
+                dynamic selection = app.Selection;
+                if (selection == null) return false;
+
+                string targetHex = hexColor ?? CurrentHighlightColorHex;
+                if (string.IsNullOrEmpty(targetHex) || targetHex.Equals("ANY", StringComparison.OrdinalIgnoreCase))
+                {
+                    targetHex = "#FEF08A"; // Default to vivid yellow pastel
+                }
+
+                int r = Convert.ToInt32(targetHex.Substring(1, 2), 16);
+                int g = Convert.ToInt32(targetHex.Substring(3, 2), 16);
+                int b = Convert.ToInt32(targetHex.Substring(5, 2), 16);
+                int oleColor = r | (g << 8) | (b << 16);
+
+                selection.Interior.Color = oleColor;
+
+                try
+                {
+                    app.StatusBar = $"🎨 ExcelSupport: Đã tô màu đánh dấu thiết kế [{targetHex}] (Ctrl + Shift + H)";
+                }
+                catch { }
+
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 

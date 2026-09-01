@@ -36,6 +36,37 @@ namespace ExcelSupport.ViewModels
     {
         public string Name { get; set; } = string.Empty;
         public string Hex { get; set; } = string.Empty;
+        public bool IsAnyColor => Hex.Equals("ANY", StringComparison.OrdinalIgnoreCase);
+
+        public System.Windows.Media.Brush SwatchBrush
+        {
+            get
+            {
+                if (IsAnyColor)
+                {
+                    return new System.Windows.Media.LinearGradientBrush(
+                        new System.Windows.Media.GradientStopCollection
+                        {
+                            new(System.Windows.Media.Color.FromRgb(239, 68, 68), 0.0),
+                            new(System.Windows.Media.Color.FromRgb(245, 158, 11), 0.33),
+                            new(System.Windows.Media.Color.FromRgb(16, 185, 129), 0.66),
+                            new(System.Windows.Media.Color.FromRgb(59, 130, 246), 1.0)
+                        },
+                        new System.Windows.Point(0, 0),
+                        new System.Windows.Point(1, 1));
+                }
+
+                try
+                {
+                    var converter = new System.Windows.Media.BrushConverter();
+                    return (System.Windows.Media.Brush)(converter.ConvertFromString(Hex) ?? System.Windows.Media.Brushes.Yellow);
+                }
+                catch
+                {
+                    return System.Windows.Media.Brushes.Yellow;
+                }
+            }
+        }
     }
 
     public class DensityPresetItem
@@ -157,7 +188,13 @@ namespace ExcelSupport.ViewModels
         public ColorSwatchItem SelectedHighlightColor
         {
             get => _selectedHighlightColor;
-            set => SetProperty(ref _selectedHighlightColor, value);
+            set
+            {
+                if (SetProperty(ref _selectedHighlightColor, value))
+                {
+                    DesignPageCounterService.CurrentHighlightColorHex = value?.Hex ?? "#FEF08A";
+                }
+            }
         }
 
         public DensityPresetItem SelectedDensityPreset
@@ -241,8 +278,8 @@ namespace ExcelSupport.ViewModels
             {
                 int total = AvailableSheets.Count;
                 int included = AvailableSheets.Count(s => s.IsIncluded);
-                if (total == 0) return "📑 Tùy chọn Sheet cần đếm (Đang tải...)";
-                return $"📑 Tùy chọn Sheet cần đếm (Đã chọn {included}/{total} sheet)";
+                if (total == 0) return LocalizationService.Get("PageCounter_SheetSelectHeaderLoading");
+                return LocalizationService.Get("PageCounter_SheetSelectHeaderCount", included, total);
             }
         }
 
@@ -347,7 +384,11 @@ namespace ExcelSupport.ViewModels
             _excelApp = excelApp ?? throw new ArgumentNullException(nameof(excelApp));
 
             LoadPresets();
-            LocalizationService.LanguageChanged += _ => LoadPresets();
+            LocalizationService.LanguageChanged += _ =>
+            {
+                LoadPresets();
+                OnPropertyChanged(nameof(SheetSelectionHeader));
+            };
 
             RefreshWorkbooksCommand = new RelayCommand(_ => RefreshWorkbooks());
             BrowseTargetFileCommand = new RelayCommand(_ => BrowseTargetFile());
@@ -596,10 +637,11 @@ namespace ExcelSupport.ViewModels
 
                     string msg = string.Format(
                         LocalizationService.Instance["PageCounter_MsgCopyCreated"] ??
-                        "Đã tạo và mở file bản sao mới:\n{0}\n\n👉 Hướng dẫn thao tác:\n1. Dùng công cụ Fill Color (Tô Màu Nền) trên thanh công cụ Excel để tô màu các ô bạn đã thiết kế theo màu chỉ định.\n2. Lưu file (Ctrl + S) nếu muốn.\n3. Quay lại đây và bấm nút 'Phân Tích & Đếm Trang' để hoàn tất!",
+                        "Đã tạo và mở file bản sao mới:\n{0}\n\n👉 Hướng dẫn thao tác nhanh:\n1. Bôi đen vùng ô bạn đã thiết kế và nhấn phím tắt [Ctrl + Shift + H] để tô màu tức thì (hoặc dùng Fill Color trên thanh Ribbon).\n2. Lưu file (Ctrl + S) nếu muốn.\n3. Quay lại đây và bấm nút 'Phân Tích & Đếm Trang' để hoàn tất!",
                         fileName);
+                    string title = LocalizationService.Instance["PageCounter_MsgCopyCreatedTitle"] ?? "Đã mở file bản sao để tô màu";
 
-                    WpfMessageBox.Show(msg, "Đã mở file bản sao để tô màu", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                    WpfMessageBox.Show(msg, title, WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
                 }
                 else
                 {
