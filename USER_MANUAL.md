@@ -21,10 +21,11 @@
 15. [Tùy Chỉnh Giao Diện Sáng / Tối (Dark & Light Theme)](#15-tùy-chỉnh-giao-diện-sáng--tối-dark--light-theme)
 16. [Sao Chép & Dán Vùng Lọc (Copy & Paste Visible Cells Only)](#16-sao-chép--dán-vùng-lọc-copy--paste-visible-cells-only)
 17. [Chuyển Đổi Ngôn Ngữ Thanh Ribbon (Language Settings)](#17-chuyển-đổi-ngôn-ngữ-thanh-ribbon-language-settings)
-18. [Thống Kê & Đếm Trang Thiết Kế (Design Page Counter)](#18-thống-kê--đếm-trang-thiết-kế-design-page-counter)
+18. [Thống Kê & Đếm Trang Thiết Kế 2.0 (Design Page Counter 2.0)](#18-thống-kê--đếm-trang-thiết-kế-20-design-page-counter-20)
 19. [Bộ Công Cụ Cơ Sở Dữ Liệu Oracle (Oracle Database Tools)](#19-bộ-công-cụ-cơ-sở-dữ-liệu-oracle-oracle-database-tools)
 20. [Bác Sĩ Công Thức & Sửa Lỗi Tự Động (AI Formula Doctor)](#20-bác-sĩ-công-thức--sửa-lỗi-tự-động-ai-formula-doctor)
 21. [Sao Lưu & Khôi Phục Dữ Liệu Tức Thì (Sheet Snapshot & Instant Undo)](#21-sao-lưu--khôi-phục-dữ-liệu-tức-thì-sheet-snapshot--instant-undo)
+22. [Bộ Tiện Ích Chuyên Sâu IT / Khách Hàng Nhật Bản (Japan & IT Tools)](#22-bộ-tiện-ích-chuyên-sâu-it--khách-hàng-nhật-bản-japan--it-tools)
 
 ---
 
@@ -305,7 +306,7 @@ ExcelSupport Add-In hỗ trợ 3 ngôn ngữ giao diện chuẩn hóa:
 
 ---
 
-## 18. Thống Kê & Đếm Trang Thiết Kế (Design Page Counter)
+## 18. Thống Kê & Đếm Trang Thiết Kế 2.0 (Design Page Counter 2.0)
 
 Công cụ chuyên dụng dành cho các dự án Offshore, Outsourcing và Quản trị dự án phần mềm để nghiệm thu khối lượng tài liệu thiết kế (Basic Design, Detail Design, Test Plan, Database Schema...).
 
@@ -315,40 +316,34 @@ Công cụ chuyên dụng dành cho các dự án Offshore, Outsourcing và Qu�
   - Các ô có nội dung mới hoặc bị thay đổi so với Template.
   - Tổng số lượng ký tự thực tế tại các ô thay đổi (`Total Changed Characters`).
   - Số lượng hình vẽ, sơ đồ kiến trúc, UI layout mới được chèn thêm (`Added Shapes / Diagrams`).
-* **Tô Màu Highlight Trực Quan (Evidence File):** Tự động tô màu highlight các ô thay đổi trên bản sao với 4 gam màu dịu mắt (Vàng, Xanh Pastel, Xanh lá, Cam nhạt).
+* **Tô Màu Highlight Trực Quan (Evidence File):** Tự động tô màu highlight các ô thay đổi trên bản sao với các gam màu dịu mắt (Vàng, Xanh Pastel, Xanh lá, Cam nhạt).
 * **Công Thức Quy Đổi Trang Tiêu Chuẩn:**
-  $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô thay đổi}}{\text{Định mức ký tự / trang}} + (\text{Số hình vẽ mới} \times 0.5)$$
-### 18.1 Các Chế Độ Đếm & Thuật Toán:
+  $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô thay đổi}}{\text{Định mức ký tự / trang}} + (\text{Số hình vẽ mới} \times \text{Hệ số trang/sơ đồ})$$
+
+### 18.2 Các Chế Độ Đếm & Thao Tác Siêu Tốc:
 * **Chế độ 1: Đếm theo màu ô tự tô (Khuyên dùng - Manual User-Highlighted Cells):**
   - **Quy trình làm việc siêu tốc:**
     1. Bấm nút **`📝 Mở Bản Sao Mới Để Tô Màu`**: Hệ thống tự động nhân bản file thiết kế thành một file New và mở trực tiếp trên Excel.
     2. Bôi đen các vùng ô bạn đã thiết kế và nhấn phím tắt **`Ctrl + Shift + H`** để tô màu đánh dấu tức thì theo màu đang chọn trong ComboBox (hoặc dùng công cụ Fill Color trên Excel).
-    3. Quay lại hộp thoại và bấm **`🔍 Phân Tích & Đếm Trang`**: Hệ thống sẽ quét các ô có màu chỉ định, đếm tổng ký tự và quy đổi ra số trang thiết kế tương ứng.
+    3. **Xóa màu nhanh:** Nếu tô nhầm, quét chọn ô và nhấn phím tắt **`Ctrl + Shift + Alt + H`** (hoặc bấm nút **`🧹 Xóa màu ô đã chọn`**) để xóa sạch màu nền và khôi phục viền ô.
+    4. Quay lại hộp thoại và bấm **`🔍 Phân Tích & Đếm Trang`**: Hệ thống sẽ quét các ô có màu chỉ định, đếm tổng ký tự và quy đổi ra số trang thiết kế tương ứng.
 * **Chế độ 2: Tự động so sánh với Template gốc (Auto-Diff with Template):**
   - Tự động so khớp từng ô giữa Target Workbook và Template Workbook của khách hàng.
   - Tự động đếm các ô thay đổi, tự động tạo file bản sao **Evidence** đã tô màu trực quan.
 * **Chế độ 3: Đếm theo ngắt trang in Excel (Print Breaks Grid):**
   - Phân tích theo lưới ngắt trang in của Excel.
 
-### 18.2 Bộ Lọc Sơ Đồ / Hình Ảnh & Định Mức Ký Tự:
-* **Bộ lọc hình ảnh thông minh (Tránh lỗi đếm sai hình nhỏ):**
-  - Chỉ nhận diện và tính các hình ảnh/sơ đồ thiết kế thực sự (kích thước tối thiểu $\ge 60 \times 45\text{ pt}$, diện tích $\ge 3.600\text{ pt}^2$).
-  - Bỏ qua toàn bộ form control, nút bấm, drop-down data validation, comment/note ẩn, icon nhỏ.
-  - Tùy chọn hệ số quy đổi: **0 trang** (bỏ qua hình), **0.25 trang**, **0.5 trang/sơ đồ** (mặc định), **1.0 trang/sơ đồ**.
-* **Định mức ký tự / trang:**
-  - Hỗ trợ các preset: **600 ký tự/trang** (Chuẩn Tiếng Nhật / Kanji), **1.200 ký tự/trang** (Tiếng Việt / Tiếng Anh), 800 và 1.500 ký tự.
-
-### 18.3 Thao Tác Sử Dụng:
-1. Trên Ribbon, bấm nút **`📐 Đếm Trang Thiết Kế`**.
-2. Chọn **File Cần Đếm (Target Workbook)**.
-3. Bấm **`📝 Mở Bản Sao Mới Để Tô Màu`** để mở file bản sao mới trong Excel và dùng công cụ Fill Color tô màu các ô bạn đã thiết kế.
-4. Chọn danh sách Sheet cần đếm (hỗ trợ nút **Chọn tất cả**, **Bỏ chọn**, **Đảo vùng chọn**).
-5. Thiết lập màu ô cần đếm (Mặc định: *🎨 Bất kỳ màu nào khác trắng*) và định mức ký tự (Mặc định 600 ký tự/trang).
-6. Bấm **`🔍 Phân Tích & Đếm Trang`**.
-7. **Xem Kết Quả & Nghiệm Thu:**
-   - Xem bảng KPI tổng quan: Tổng ký tự ô màu, số sơ đồ/hình ảnh hợp lệ, tổng số trang quy đổi, tỷ lệ hoàn thành (%).
-   - Bấm nút **`🎨 Mở File Đã Tô Màu (Evidence)`** để mở file bản sao đã highlight.
-   - Bấm nút **`📊 Xuất Báo Cáo Ra Excel`** để xuất bảng thống kê chi tiết ra một Sheet mới.
+### 18.3 Quản Lý Cấu Hình Mẫu Dự Án (Project Profile Presets) & Biểu Đồ Dashboard:
+* **Cấu Hình Mẫu Dự Án Đa Dạng (Project Profile Presets):**
+  - **Chuẩn Tiếng Nhật Tiêu Chuẩn (JIS Standard):** 600 ký tự/trang, 0.5 trang/sơ đồ (chuẩn nghiệm thu khách hàng Nhật).
+  - **Dự Án Offshore (VN/EN Text Heavy):** 1.200 ký tự/trang, 0.5 trang/sơ đồ.
+  - **Tài Liệu Backend / DB Spec (Code/Query/DDL):** 800 ký tự/trang, 0.25 trang/sơ đồ.
+  - **Giao Diện Web / Mobile UI (Diagram Heavy):** 500 ký tự/trang, 1.0 trang/sơ đồ.
+  - **Tùy chỉnh riêng:** Cho phép tự nhập định mức ký tự và hệ số quy đổi hình ảnh bất kỳ.
+* **Báo Cáo Kèm Biểu Đồ Trực Quan Trong Excel (Charts Dashboard):**
+  - Khi bấm **`📊 Xuất Báo Cáo Ra Excel`**, hệ thống tự động vẽ **2 Biểu đồ chuyên nghiệp**:
+    1. **Doughnut Chart:** Tỷ trọng khối lượng thiết kế mới vs Khung mẫu Template ban đầu.
+    2. **Clustered Column / Bar Chart:** Phân bổ khối lượng trang quy đổi chi tiết theo từng Sheet.
 
 ---
 
@@ -403,6 +398,44 @@ Cơ chế an toàn tối thượng giúp bạn yên tâm thực hiện các tác
 * Chọn:
   - **Khôi phục đè lên Sheet hiện tại:** Phục hồi nguyên vẹn dữ liệu, công thức và độ rộng cột trong tích tắc.
   - **Khôi phục sang Sheet Mới (`Restored_...`):** Giữ nguyên sheet hiện tại và tạo thêm một sheet mới chứa toàn bộ dữ liệu snapshot để so sánh đối chiếu.
+
+---
+
+## 22. Bộ Tiện Ích Chuyên Sâu IT / Khách Hàng Nhật Bản (Japan & IT Tools)
+
+Nhóm công cụ đặc thù trên thanh Ribbon (`Tiện Ích Nhật & IT` / `Japan & IT Tools`) giải quyết triệt để các vấn đề chuẩn hóa dữ liệu, tài liệu thiết kế và trao đổi kỹ thuật cho các dự án phần mềm làm việc với khách hàng Nhật Bản.
+
+### 22.1 Chuyển Đổi Toàn Giác ⇋ Bán Giác (Zenkaku ⇋ Hankaku Converter)
+* **Vị trí:** Bấm nút **`🅰 全/半 Chuyển Đổi Zenkaku/Hankaku`** trên Ribbon.
+* **Tính năng:**
+  - **Chuyển sang Bán Giác (To Hankaku):**
+    - Chữ số toàn giác $\rightarrow$ Chữ số chuẩn (`０-９` $\rightarrow$ `0-9`).
+    - Chữ cái alphabet toàn giác $\rightarrow$ Bán giác (`Ａ-Ｚ`, `ａ-ｚ` $\rightarrow$ `A-Z`, `a-z`).
+    - Dấu cách tiếng Nhật toàn giác $\rightarrow$ Dấu cách thường (`\u3000` $\rightarrow$ ` `).
+    - Dấu câu, ký hiệu đặc biệt (`！＠＃` $\rightarrow$ `!@#`).
+    - Chuyển Katakana toàn giác sang bán giác (tùy chọn).
+  - **Chuyển sang Toàn Giác (To Zenkaku):**
+    - Chữ số, alphabet, dấu cách sang toàn giác (`0-9` $\rightarrow$ `０-９`, `A-Z` $\rightarrow$ `Ａ-Ｚ`).
+    - Ghép chuẩn âm đục/bán đục Katakana bán giác sang toàn giác (`ｶﾞ` $\rightarrow$ `ガ`, `ﾊﾟ` $\rightarrow$ `パ`).
+* **Xem trước trực quan:** Tích hợp ô Live Interactive Preview để xem kết quả chuyển đổi mẫu ngay tức thì trước khi áp dụng vào bảng tính.
+
+### 22.2 Rà Soát Chuẩn Từ Vựng Katakana & Trường Âm (Katakana Spell & Chouon Validator)
+* **Vị trí:** Bấm nút **`🈁 Rà Soát Katakana`** trên Ribbon.
+* **Vấn đề giải quyết:** Trong tài liệu kỹ thuật tiếng Nhật, sự không nhất quán về trường âm (Chouon `ー`) thường gây lỗi nghiệm thu (Ví dụ: chỗ viết `サーバー` chỗ lại viết `サーバ`, `ユーザー` vs `ユーザ`, `コンピューター` vs `コンピュータ`).
+* **Tính năng:**
+  - **Quét & Gom nhóm thông minh:** Quét toàn bộ vùng chọn hoặc Sheet, tự động gom các biến thể cùng gốc từ Katakana thành từng nhóm.
+  - **Chuẩn hóa 1-Click theo JIS hoặc Custom:**
+    - **Chuẩn JIS Tiêu chuẩn:** Tự động chuẩn hóa về từ có/không có trường âm theo quy tắc JIS.
+    - **Chuẩn hóa tùy chọn:** Chọn biến thể chuẩn mong muốn và bấm **`⚡ Chuẩn Hóa Cụm Này`** hoặc **`⚡ Chuẩn Hóa Tất Cả`** để thay thế đồng loạt trong toàn bộ bảng tính.
+  - **Định vị nhanh:** Nhấp đúp vào dòng kết quả để nhảy ngay tới ô chứa từ sai lệch trên sheet.
+
+### 22.3 Trích Xuất Bảng Sang Markdown & HTML (Table to Markdown & HTML Exporter)
+* **Phím Tắt:** **`Ctrl + Shift + M`** (hoặc bấm nút **`📑 Xuất Markdown/HTML`** trên Ribbon).
+* **Tính năng:**
+  - Chuyển đổi vùng ô đang chọn trong Excel thành mã **Markdown Table** (dùng cho GitHub, GitLab, Jira, Confluence, Backlog, Slack) hoặc **HTML Table** (`<table>...</table>`).
+  - **Căn lề thông minh (Smart Alignment):** Tự động nhận diện cột số và căn phải (`---:`), cột chữ căn trái (`:---`).
+  - **Xử lý xuống dòng an toàn:** Tự động chuyển đổi các ký tự xuống dòng `\n` trong ô thành thẻ `<br>` để bảo toàn cấu trúc bảng Markdown.
+  - **Hộp thoại Tabbed Preview:** Xem trước giao diện bảng Markdown và HTML trực tiếp, kèm nút **`📋 Copy Markdown`** và **`📋 Copy HTML`** 1-Click sao chép vào Clipboard.
 
 ---
 

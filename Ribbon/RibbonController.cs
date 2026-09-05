@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using ExcelDna.Integration.CustomUI;
 using ExcelSupport.Host;
 using ExcelSupport.ViewModels;
+using ExcelApp = Microsoft.Office.Interop.Excel.Application;
 using VmSortOrder = ExcelSupport.ViewModels.SortOrder;
 
 namespace ExcelSupport.Ribbon
@@ -20,386 +21,22 @@ namespace ExcelSupport.Ribbon
         public override string GetCustomUI(string ribbonId)
         {
             Instance = this;
-            return @"
-<customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='OnRibbonLoaded' loadImage='LoadImage'>
-  <ribbon>
-    <tabs>
-      <tab id='tabWorkbookNav' getLabel='GetRibbonLabel' insertBeforeMso='TabHome'>
-        
-        <!-- Group 1: Bảng điều khiển chính -->
-        <group id='grpNavExplorer' getLabel='GetRibbonLabel'>
-          <toggleButton id='btnToggleTaskPane' 
-                        size='large' 
-                        image='navigator_icon' 
-                        getLabel='GetRibbonLabel'
-                        getScreentip='GetRibbonScreentip'
-                        getSupertip='GetRibbonSupertip'
-                        getPressed='GetTaskPanePressed' 
-                        onAction='OnToggleTaskPane' />
-          
-          <button id='btnRefreshTree'
-                  size='large'
-                  imageMso='Refresh' 
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnRefreshTree' />
-        </group>
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream("ExcelSupport.Ribbon.CustomRibbon.xml");
+                if (stream != null)
+                {
+                    using var reader = new System.IO.StreamReader(stream, System.Text.Encoding.UTF8);
+                    return reader.ReadToEnd();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading CustomRibbon.xml resource: {ex.Message}");
+            }
 
-        <!-- Group 2: Thao Tác Nhanh -->
-        <group id='grpQuickTools' getLabel='GetRibbonLabel'>
-          <button id='btnCreateTOC'
-                  size='normal'
-                  imageMso='TableOfContentsInsert'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnCreateTOC' />
-
-          <button id='btnSplitSheets'
-                  size='normal'
-                  imageMso='ExportExcelPath'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnSplitSheets' />
-
-          <button id='btnMergeSheets'
-                  size='normal'
-                  imageMso='Consolidate'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnMergeSheets' />
-
-          <button id='btnQuickSortAZ'
-                  size='normal'
-                  imageMso='SortAscendingExcel'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnSortAZ' />
-
-          <button id='btnQuickSortZA'
-                  size='normal'
-                  imageMso='SortDescendingExcel'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnSortZA' />
-
-          <button id='btnCloseCurrentWb'
-                  size='normal'
-                  imageMso='FileClose'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnCloseCurrentWorkbook' />
-        </group>
-
-        <!-- Group 3: Kiểm Tra & Đối Soát -->
-        <group id='grpAuditTools' getLabel='GetRibbonLabel'>
-          <button id='btnCompareWorkbooks'
-                  size='large'
-                  image='compare_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnCompareWorkbooks' />
-
-          <button id='btnCheckVietnamese'
-                  size='large'
-                  imageMso='Spelling'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnCheckVietnamese' />
-
-          <button id='btnExternalLinks'
-                  size='large'
-                  image='link_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnExternalLinksManager' />
-
-          <button id='btnOracleTableCompare'
-                  size='large'
-                  image='oracle_compare_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnOracleTableCompare' />
-
-          <button id='btnOracleQuickQuery'
-                  size='large'
-                  image='oracle_query_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnOracleQuickQuery' />
-        </group>
-
-        <!-- Group 4: Xử Lý Dữ Liệu -->
-        <group id='grpDataTools' getLabel='GetRibbonLabel'>
-          <box id='boxDataCol1' boxStyle='vertical'>
-            <button id='btnAdvancedFilter'
-                    size='normal'
-                    image='filter_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnAdvancedFilter' />
-
-            <button id='btnDataCleaner'
-                    size='normal'
-                    image='cleaner_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnDataCleaner' />
-
-            <splitButton id='splitFilteredCopyPaste' size='normal' getVisible='GetControlVisible'>
-              <button id='btnFilteredCopyPasteWizard'
-                      image='filtered_paste_icon'
-                      getLabel='GetRibbonLabel'
-                      getScreentip='GetRibbonScreentip'
-                      getSupertip='GetRibbonSupertip'
-                      onAction='OnFilteredCopyPasteWizard' />
-              <menu id='mnuFilteredCopyPaste'>
-                <button id='btnCopyVisibleOnly'
-                        imageMso='Copy'
-                        getLabel='GetRibbonLabel'
-                        getScreentip='GetRibbonScreentip'
-                        getSupertip='GetRibbonSupertip'
-                        onAction='OnCopyVisibleOnly' />
-                <button id='btnPasteToVisibleOnly'
-                        imageMso='Paste'
-                        getLabel='GetRibbonLabel'
-                        getScreentip='GetRibbonScreentip'
-                        getSupertip='GetRibbonSupertip'
-                        onAction='OnPasteToVisibleOnly' />
-                <menuSeparator id='sepFilteredPaste' />
-                <button id='btnOpenFilteredPasteWizard'
-                        image='filtered_paste_icon'
-                        getLabel='GetRibbonLabel'
-                        getScreentip='GetRibbonScreentip'
-                        getSupertip='GetRibbonSupertip'
-                        onAction='OnFilteredCopyPasteWizard' />
-              </menu>
-            </splitButton>
-          </box>
-
-          <box id='boxDataCol2' boxStyle='vertical'>
-            <button id='btnDuplicateFinder'
-                    size='normal'
-                    image='duplicate_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnDuplicateFinder' />
-
-            <button id='btnBatchBlankCleaner'
-                    size='normal'
-                    image='blank_cleaner_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnBatchBlankCleaner' />
-
-            <button id='btnBatchFindReplace'
-                    size='normal'
-                    image='find_replace_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnBatchFindReplace' />
-          </box>
-
-          <box id='boxDataCol3' boxStyle='vertical'>
-            <button id='btnVisualTableMerge'
-                    size='normal'
-                    image='table_merge_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnVisualTableMerge' />
-
-            <button id='btnFuzzyDuplicate'
-                    size='normal'
-                    image='fuzzy_duplicate_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnFuzzyDuplicate' />
-
-            <button id='btnSafeMergeConsolidate'
-                    size='normal'
-                    image='merge_icon'
-                    getVisible='GetControlVisible'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    getSupertip='GetRibbonSupertip'
-                    onAction='OnSafeMergeConsolidate' />
-          </box>
-        </group>
-
-        <!-- Group 5: Quản Trị Tập Tin & Thiết Kế -->
-        <group id='grpFileTools' getLabel='GetRibbonLabel'>
-          <button id='btnBatchFileConverter'
-                  size='large'
-                  image='file_converter_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnBatchFileConverter' />
-
-          <button id='btnDesignPageCounter'
-                  size='large'
-                  image='page_counter_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnDesignPageCounter' />
-        </group>
-
-        <!-- Group 6: Thước Ngắm & Hiển Thị -->
-        <group id='grpViewTools' getLabel='GetRibbonLabel'>
-          <toggleButton id='btnToggleGridRuler'
-                        size='large'
-                        image='ruler_icon'
-                        getLabel='GetRibbonLabel'
-                        getScreentip='GetRibbonScreentip'
-                        getSupertip='GetRibbonSupertip'
-                        onAction='OnToggleGridRuler'
-                        getPressed='GetGridRulerPressed' />
-
-          <menu id='mnuGridRulerOptions'
-                size='large'
-                image='ruler_settings_icon'
-                getLabel='GetRibbonLabel'
-                getScreentip='GetRibbonScreentip'
-                getSupertip='GetRibbonSupertip'>
-            
-            <menuSeparator id='sepRulerColor' getTitle='GetRibbonLabel' />
-            <button id='btnColorYellow' getLabel='GetRibbonLabel' image='color_yellow_icon' onAction='OnSelectRulerColor' tag='Yellow' />
-            <button id='btnColorSky' getLabel='GetRibbonLabel' image='color_sky_icon' onAction='OnSelectRulerColor' tag='Sky' />
-            <button id='btnColorEmerald' getLabel='GetRibbonLabel' image='color_emerald_icon' onAction='OnSelectRulerColor' tag='Emerald' />
-            <button id='btnColorOrange' getLabel='GetRibbonLabel' image='color_orange_icon' onAction='OnSelectRulerColor' tag='Orange' />
-            <button id='btnColorPurple' getLabel='GetRibbonLabel' image='color_purple_icon' onAction='OnSelectRulerColor' tag='Purple' />
-            <button id='btnColorPink' getLabel='GetRibbonLabel' image='color_pink_icon' onAction='OnSelectRulerColor' tag='Pink' />
-            <button id='btnColorGray' getLabel='GetRibbonLabel' image='color_gray_icon' onAction='OnSelectRulerColor' tag='Gray' />
-
-            <menuSeparator id='sepRulerMode' getTitle='GetRibbonLabel' />
-            <button id='btnModeBoth' getLabel='GetRibbonLabel' image='mode_both_icon' onAction='OnSelectRulerMode' tag='Both' />
-            <button id='btnModeRow' getLabel='GetRibbonLabel' image='mode_row_icon' onAction='OnSelectRulerMode' tag='Row' />
-            <button id='btnModeCol' getLabel='GetRibbonLabel' image='mode_col_icon' onAction='OnSelectRulerMode' tag='Col' />
-
-            <menuSeparator id='sepRulerHud' getTitle='GetRibbonLabel' />
-            <button id='btnToggleHud' getLabel='GetRibbonLabel' getScreentip='GetRibbonScreentip' image='hud_icon' onAction='OnToggleRulerHud' />
-          </menu>
-        </group>
-
-        <!-- Group 7: Trợ Lý AI & Năng Suất -->
-        <group id='grpAiTools' getLabel='GetRibbonLabel'>
-          <button id='btnAiFormula'
-                  size='large'
-                  image='ai_formula_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnAiFormula' />
-
-          <button id='btnAiFormulaDoctor'
-                  size='large'
-                  image='doctor_formula_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnAiFormulaDoctor' />
-
-          <button id='btnSnapshotRollback'
-                  size='large'
-                  image='snapshot_rollback_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnSnapshotRollback' />
-
-          <button id='btnUserManual'
-                  size='large'
-                  image='manual_icon'
-                  getVisible='GetControlVisible'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnUserManual' />
-        </group>
-
-        <!-- Group 8: Cài Đặt & Ngôn Ngữ -->
-        <group id='grpSettings' getLabel='GetRibbonLabel'>
-          <button id='btnCustomizeRibbon'
-                  size='large'
-                  image='ribbon_settings_icon'
-                  getLabel='GetRibbonLabel'
-                  getScreentip='GetRibbonScreentip'
-                  getSupertip='GetRibbonSupertip'
-                  onAction='OnCustomizeRibbon' />
-
-          <menu id='mnuLanguage'
-                size='large'
-                image='globe_lang_icon'
-                getLabel='GetRibbonLabel'
-                getScreentip='GetRibbonScreentip'
-                getSupertip='GetRibbonSupertip'>
-            <button id='btnLangVi'
-                    image='flag_vi_icon'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    onAction='OnSelectLanguage'
-                    tag='vi' />
-            <button id='btnLangEn'
-                    image='flag_en_icon'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    onAction='OnSelectLanguage'
-                    tag='en' />
-            <button id='btnLangJa'
-                    image='flag_ja_icon'
-                    getLabel='GetRibbonLabel'
-                    getScreentip='GetRibbonScreentip'
-                    onAction='OnSelectLanguage'
-                    tag='ja' />
-          </menu>
-        </group>
-
-      </tab>
-    </tabs>
-  </ribbon>
-</customUI>";
+            return "<customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' />";
         }
 
         public override object? LoadImage(string imageId)
@@ -503,6 +140,18 @@ namespace ExcelSupport.Ribbon
             if (imageId == "flag_ja_icon")
             {
                 return CreateFlagJaBitmap();
+            }
+            if (imageId == "zenkaku_icon")
+            {
+                return CreateZenkakuBitmap();
+            }
+            if (imageId == "katakana_icon")
+            {
+                return CreateKatakanaBitmap();
+            }
+            if (imageId == "markdown_icon")
+            {
+                return CreateMarkdownBitmap();
             }
             if (imageId == "ruler_icon")
             {
@@ -1226,6 +875,24 @@ namespace ExcelSupport.Ribbon
         public void OnDesignPageCounter(IRibbonControl control)
         {
             Views.DesignPageCounterDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnJapaneseConvert(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Views.JapaneseTextConverterDialog.ShowWindow(app);
+        }
+
+        public void OnKatakanaCheck(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Views.KatakanaValidatorDialog.ShowWindow(app);
+        }
+
+        public void OnExportMarkdown(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Views.TableExportDialog.ShowWindow(app);
         }
 
         public void OnSafeMergeConsolidate(IRibbonControl control)
@@ -2379,6 +2046,146 @@ namespace ExcelSupport.Ribbon
                 using (var sunBrush = new SolidBrush(Color.FromArgb(188, 0, 45)))
                 {
                     g.FillEllipse(sunBrush, 7, 4, 10, 10);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateZenkakuBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient xanh dương đậm
+                using (var bgBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(30, 58, 138), Color.FromArgb(37, 99, 235), 45f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(2, 2, 28, 28), 5);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(29, 78, 216), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 5);
+                }
+
+                // Chữ "全" (Zenkaku) màu trắng bên trái
+                using (var font = new System.Drawing.Font("Meiryo", 8.5f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    g.DrawString("全", font, textBrush, 3, 4);
+                }
+
+                // Mũi tên 2 chiều ⇋ màu vàng cam ở giữa
+                using (var arrowPen = new Pen(Color.FromArgb(245, 158, 11), 1.5f))
+                {
+                    g.DrawLine(arrowPen, 7, 22, 24, 22);
+                    g.DrawLine(arrowPen, 21, 20, 24, 22);
+                    g.DrawLine(arrowPen, 21, 24, 24, 22);
+                    g.DrawLine(arrowPen, 10, 20, 7, 22);
+                    g.DrawLine(arrowPen, 10, 24, 7, 22);
+                }
+
+                // Chữ "半" (Hankaku) màu xanh ngọc bên phải
+                using (var font = new System.Drawing.Font("Meiryo", 8.5f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.FromArgb(125, 211, 252)))
+                {
+                    g.DrawString("半", font, textBrush, 16, 4);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateKatakanaBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền tím Slate Indigo
+                using (var bgBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(79, 70, 229), Color.FromArgb(67, 56, 202), 45f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(2, 2, 28, 28), 5);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(55, 48, 163), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 5);
+                }
+
+                // Chữ Katakana "ア" lớn màu trắng
+                using (var font = new System.Drawing.Font("Meiryo", 12f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    var sf = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
+                    g.DrawString("ア", font, textBrush, new RectangleF(2, 1, 28, 20), sf);
+                }
+
+                // Dấu kiểm checkmark xanh lục ngọc ở góc dưới
+                using (var checkBg = new SolidBrush(Color.FromArgb(16, 185, 129)))
+                using (var checkPen = new Pen(Color.White, 1.2f))
+                {
+                    g.FillEllipse(checkBg, 16, 16, 13, 13);
+                    g.DrawEllipse(checkPen, 16, 16, 13, 13);
+                }
+                using (var checkIconPen = new Pen(Color.White, 1.6f))
+                {
+                    g.DrawLine(checkIconPen, 19, 23, 22, 26);
+                    g.DrawLine(checkIconPen, 22, 26, 26, 19);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateMarkdownBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền Dark Slate #0F172A
+                using (var bgBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(30, 41, 59), Color.FromArgb(15, 23, 42), 45f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(2, 2, 28, 28), 5);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(51, 65, 85), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 5);
+                }
+
+                // Chữ M phong cách Markdown
+                using (var font = new System.Drawing.Font("Segoe UI", 11f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    g.DrawString("M", font, textBrush, 4, 3);
+                }
+
+                // Mũi tên xuống màu Sky Blue #38BDF8
+                using (var arrowPen = new Pen(Color.FromArgb(56, 189, 248), 1.8f))
+                {
+                    g.DrawLine(arrowPen, 23, 6, 23, 16);
+                    g.DrawLine(arrowPen, 20, 13, 23, 16);
+                    g.DrawLine(arrowPen, 26, 13, 23, 16);
+                }
+
+                // Các vạch bảng Markdown ở đáy
+                using (var gridPen = new Pen(Color.FromArgb(148, 163, 184), 1f))
+                {
+                    g.DrawLine(gridPen, 6, 22, 26, 22);
+                    g.DrawLine(gridPen, 16, 20, 16, 25);
                 }
             }
             return bmp;

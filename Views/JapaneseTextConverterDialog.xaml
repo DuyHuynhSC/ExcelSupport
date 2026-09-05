@@ -1,0 +1,132 @@
+<Window x:Class="ExcelSupport.Views.JapaneseTextConverterDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        Title="{loc:Loc Japan_ZenkakuHankaku_Title}" 
+        Height="540" Width="680" 
+        MinHeight="450" MinWidth="580"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI" FontSize="12">
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
+        <Style x:Key="PrimaryActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="Auto"/> <!-- Direction RadioButtons -->
+            <RowDefinition Height="Auto"/> <!-- Option Checkboxes -->
+            <RowDefinition Height="Auto"/> <!-- Scope RadioButtons -->
+            <RowDefinition Height="*"/>    <!-- Live Preview Box -->
+            <RowDefinition Height="Auto"/> <!-- Progress / Action Buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="{loc:Loc Japan_ZenkakuHankaku_Header}" FontSize="16" FontWeight="Bold" Foreground="#1E293B"/>
+            <TextBlock Text="{loc:Loc Japan_ZenkakuHankaku_SubHeader}" FontSize="11.5" Foreground="#64748B" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <!-- 2. Conversion Direction -->
+        <GroupBox Grid.Row="1" Header="{loc:Loc Japan_DirectionGroup}" Margin="0,0,0,10" Padding="10">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="{loc:Loc Japan_ToHankaku}" IsChecked="{Binding ToHankaku, Mode=TwoWay}" FontWeight="SemiBold" Margin="0,0,24,0"/>
+                <RadioButton Content="{loc:Loc Japan_ToZenkaku}" IsChecked="{Binding ToZenkaku, Mode=TwoWay}" FontWeight="SemiBold"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- 3. Conversion Element Checkboxes -->
+        <GroupBox Grid.Row="2" Header="{loc:Loc Japan_ElementsGroup}" Margin="0,0,0,10" Padding="10">
+            <WrapPanel Orientation="Horizontal">
+                <CheckBox Content="{loc:Loc Japan_ElemAlpha}" IsChecked="{Binding ConvertAlpha, Mode=TwoWay}" Margin="0,0,18,6"/>
+                <CheckBox Content="{loc:Loc Japan_ElemNumbers}" IsChecked="{Binding ConvertNumbers, Mode=TwoWay}" Margin="0,0,18,6"/>
+                <CheckBox Content="{loc:Loc Japan_ElemKatakana}" IsChecked="{Binding ConvertKatakana, Mode=TwoWay}" Margin="0,0,18,6"/>
+                <CheckBox Content="{loc:Loc Japan_ElemPunctuation}" IsChecked="{Binding ConvertPunctuation, Mode=TwoWay}" Margin="0,0,18,6"/>
+                <CheckBox Content="{loc:Loc Japan_ElemSpace}" IsChecked="{Binding ConvertSpace, Mode=TwoWay}" Margin="0,0,18,6"/>
+            </WrapPanel>
+        </GroupBox>
+
+        <!-- 4. Conversion Scope -->
+        <GroupBox Grid.Row="3" Header="{loc:Loc Japan_ScopeGroup}" Margin="0,0,0,10" Padding="10">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="{loc:Loc Japan_ScopeSelection}" IsChecked="{Binding IsScopeSelection, Mode=TwoWay}" Margin="0,0,20,0"/>
+                <RadioButton Content="{loc:Loc Japan_ScopeActiveSheet}" IsChecked="{Binding IsScopeActiveSheet, Mode=TwoWay}" Margin="0,0,20,0"/>
+                <RadioButton Content="{loc:Loc Japan_ScopeActiveWorkbook}" IsChecked="{Binding IsScopeActiveWorkbook, Mode=TwoWay}"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- 5. Live Interactive Preview -->
+        <GroupBox Grid.Row="4" Header="{loc:Loc Japan_PreviewGroup}" Margin="0,0,0,12" Padding="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="{loc:Loc Japan_SampleInputLabel}" FontSize="11" Foreground="#64748B" Margin="0,0,0,2"/>
+                <TextBox Grid.Row="1" Text="{Binding SampleInput, UpdateSourceTrigger=PropertyChanged}" Padding="6,4" FontSize="12" FontFamily="Segoe UI, Meiryo" VerticalScrollBarVisibility="Auto" Margin="0,0,0,6"/>
+
+                <TextBlock Grid.Row="2" Text="{loc:Loc Japan_SampleOutputLabel}" FontSize="11" Foreground="#16A34A" FontWeight="SemiBold" Margin="0,0,0,2"/>
+                <TextBox Grid.Row="3" Text="{Binding SampleOutput, Mode=OneWay}" IsReadOnly="True" Background="#F1F5F9" Padding="6,4" FontSize="12" FontFamily="Segoe UI, Meiryo" VerticalScrollBarVisibility="Auto"/>
+            </Grid>
+        </GroupBox>
+
+        <!-- 6. Progress and Action Button -->
+        <Grid Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0" Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVisConverter}}">
+                <TextBlock Text="{Binding ProgressStatus}" FontSize="11.5" Foreground="#2563EB" FontWeight="Medium" Margin="0,0,0,4"/>
+                <ProgressBar Value="{Binding ProgressPercent}" Height="6" Maximum="100" Foreground="#2563EB" BorderThickness="0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="{loc:Loc Japan_BtnExecuteConvert}" Command="{Binding ConvertCommand}" Style="{StaticResource PrimaryActionBtn}" MinWidth="160"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

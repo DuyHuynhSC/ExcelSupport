@@ -22,20 +22,31 @@
 * **Quản Trị Sheet Nhanh:** Đổi màu Tab, hiển thị toàn bộ Sheet ẩn (`Hidden` / `Very Hidden`), tự động tạo Sheet Mục Lục (Table of Contents) với Hyperlink trực tiếp.
 * **Tối Ưu Chống Giật (Anti-Flicker & Zero Lag):** Cơ chế đồng bộ 1 chiều thông minh loại bỏ hoàn toàn hiện tượng nhấp nháy màn hình hoặc đơ Excel khi chuyển Sheet / Workbook.
 
-### 📐 2. Thống Kê & Đếm Trang Thiết Kế (Design Page Counter)
+### 📐 2. Thống Kê & Đếm Trang Thiết Kế (Design Page Counter 2.0)
 * **Quy Trình & Chế Độ Đếm Linh Hoạt:**
-  * **Chế độ 1: Đếm theo màu ô tự tô (Khuyên dùng):** Bấm nút **`📝 Mở Bản Sao Mới Để Tô Màu`** $\rightarrow$ Excel mở một file bản sao New độc lập để bạn tự do dùng công cụ Fill Color tô màu các ô thiết kế $\rightarrow$ Add-in quét các ô màu, đếm tổng ký tự và tính ra số trang thiết kế.
+  * **Chế độ 1: Đếm theo màu ô tự tô (Khuyên dùng):** Bấm nút **`📝 Mở Bản Sao Mới Để Tô Màu`** $\rightarrow$ Excel mở một file bản sao New độc lập $\rightarrow$ Quét chọn ô và tô màu nhanh bằng phím tắt **`Ctrl + Shift + H`** (hoặc xóa màu bằng **`Ctrl + Shift + Alt + H`**) $\rightarrow$ Add-in tự động tính ra số trang thiết kế chuẩn xác.
   * **Chế độ 2: Tự động so sánh với Template gốc:** Tự động so khớp cell-by-cell với file Template của khách hàng, đếm ký tự thay đổi và tự động xuất file Evidence đã tô màu trực quan.
   * **Chế độ 3: Đếm theo ngắt trang in Excel:** Phân tích theo lưới ngắt trang in (Print Breaks Grid).
-* **Bộ Lọc Sơ Đồ / Hình Ảnh & Công Thức Quy Đổi:**
-  * **Bộ lọc hình ảnh thông minh:** Chỉ nhận diện các hình/sơ đồ thiết kế thực sự ($\ge 60 \times 45\text{ pt}$, diện tích $\ge 3.600\text{ pt}^2$), loại bỏ triệt để drop-down, form controls, comments, nút bấm, icon nhỏ (khắc phục lỗi 1 hình nhỏ bị tính thành 100 trang).
-  * Quy đổi ra số trang thiết kế chuẩn theo định mức:
-    $$\text{Số trang quy đổi} = \frac{\text{Tổng ký tự ô tô màu}}{\text{Định mức ký tự / trang}} + (\text{Số sơ đồ/hình ảnh} \times \text{Hệ số hình})$$
-  * Hỗ trợ các preset định mức: **600 ký tự/trang** (Chuẩn Tiếng Nhật / Kanji), **1.200 ký tự/trang** (Tiếng Việt / Anh), 800 và 1.500 ký tự.
-* **Bằng Chứng Đối Chiếu & Báo Cáo:**
+* **Quản Lý Cấu Hình Dự Án (Project Profiles & Presets):**
+  * Hỗ trợ chọn nhanh hoặc lưu các cấu hình định mức chuyên biệt:
+    * **Tiêu chuẩn Nhật Bản (JIS Standard):** 600 ký tự / trang, Hình vẽ 0.5 trang.
+    * **Tài liệu Tiếng Việt / Anh:** 1.200 ký tự / trang, Hình vẽ 0.5 trang.
+    * **Tài liệu Kỹ Thuật / Backend Data:** 800 ký tự / trang, Hình vẽ 0.3 trang.
+    * **Thiết kế Giao diện Web / UI:** 500 ký tự / trang, Hình vẽ 0.6 trang.
+* **Báo Cáo Nghiệm Thu Trực Quan Đính Kèm Biểu Đồ (Charts Dashboard):**
   * Nút **`🎨 Mở File Đã Tô Màu (Evidence)`**: Mở trực tiếp file copy đã highlight để kiểm tra và dùng làm bằng chứng nghiệm thu (Proof of Work).
-  * Nút **`📊 Xuất Báo Cáo Ra Excel`**: Tạo sheet tổng hợp đầy đủ KPI ký tự ô màu, sơ đồ/hình ảnh, số trang và tỷ lệ làm việc (%).
-  * Hỗ trợ chọn/loại trừ các sheet không cần đếm.
+  * Nút **`📊 Xuất Báo Cáo Ra Excel`**: Tạo sheet tổng hợp đầy đủ KPI, kèm **Biểu đồ tròn (Pie Chart)** phân bổ tỷ lệ khối lượng Thiết Kế vs Template và **Biểu đồ cột (Bar Chart)** số trang giữa các Sheet.
+
+### 🗾 3. Bộ Tiện Ích Chuyên Sâu IT / Khách Hàng Nhật Bản (Japan & IT Tools)
+* **Bộ Chuyển Đổi Toàn Giác ⇋ Bán Giác (Zenkaku ⇋ Hankaku Converter):**
+  * Chuyển đổi hai chiều giữa chữ số (`０-９` $\leftrightarrow$ `0-9`), chữ cái (`Ａ-Ｚ`, `ａ-ｚ` $\leftrightarrow$ `A-Z`, `a-z`), khoảng trắng Nhật (`\u3000` $\leftrightarrow$ ` `), Katakana (`アイウ` $\leftrightarrow$ `ｱｲｳ`, có xử lý ghép âm đục `ｶﾞ` $\leftrightarrow$ `ガ`, âm bán đục `ﾊﾟ` $\leftrightarrow$ `パ`), dấu câu và ký hiệu.
+  * Áp dụng trên: Vùng ô chọn (Selection), Sheet hiện tại, hoặc Toàn bộ Workbook.
+* **Rà Soát Chuẩn Từ Vựng Katakana (Katakana Spell & Chouon Validator):**
+  * Tự động quét toàn bộ bảng tính để phát hiện các từ Katakana viết lệch chuẩn (đặc biệt là quy tắc trường âm `ー`: `サーバー` vs `サーバ`, `ユーザー` vs `ユーザ`, `コンピューター` vs `コンピュータ`, `フォルダー` vs `フォルダ`, v.v.).
+  * Hộp thoại trực quan hiển thị vị trí ô, xem trước và 1-click chuẩn hóa đồng loạt toàn bộ tài liệu theo chuẩn JIS.
+* **Trích Xuất Bảng Sang Markdown & HTML Table (Phím Tắt: `Ctrl + Shift + M`):**
+  * Chuyển đổi vùng chọn Excel sang **Markdown Table** (căn lề số sang phải, xử lý ngắt dòng `<br>`, chống vỡ bảng) để paste tức thì vào Jira, Confluence, GitHub PR, Redmine, Notion.
+  * Xuất sang **HTML Table** kèm CSS inline viền và màu sắc hiện đại.
 
 ### 🗄️ 3. Bộ Công Cụ Cơ Sở Dữ Liệu Oracle (Oracle Database Tools)
 * **Quick SQL Query:**

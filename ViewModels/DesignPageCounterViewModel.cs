@@ -81,6 +81,14 @@ namespace ExcelSupport.ViewModels
         public double Value { get; set; }
     }
 
+    public class ProjectProfilePresetItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public int CharsPerPage { get; set; }
+        public double ShapeFactor { get; set; }
+        public string Description { get; set; } = string.Empty;
+    }
+
     public class DesignPageCounterViewModel : ViewModelBase
     {
         private readonly ExcelApp _excelApp;
@@ -97,6 +105,7 @@ namespace ExcelSupport.ViewModels
         private ColorSwatchItem _selectedHighlightColor = null!;
         private DensityPresetItem _selectedDensityPreset = null!;
         private ShapeFactorPresetItem _selectedShapeFactorPreset = null!;
+        private ProjectProfilePresetItem? _selectedProfile;
 
         private bool _ignoreCoverAndHistory = true;
         private bool _ignoreBlankPages = true;
@@ -115,6 +124,7 @@ namespace ExcelSupport.ViewModels
         public ObservableCollection<ColorSwatchItem> AvailableHighlightColors { get; } = new();
         public ObservableCollection<DensityPresetItem> AvailableDensityPresets { get; } = new();
         public ObservableCollection<ShapeFactorPresetItem> AvailableShapeFactors { get; } = new();
+        public ObservableCollection<ProjectProfilePresetItem> AvailableProfiles { get; } = new();
 
         public PageCounterMode Mode
         {
@@ -217,6 +227,27 @@ namespace ExcelSupport.ViewModels
                 if (SetProperty(ref _selectedShapeFactorPreset, value) && value != null)
                 {
                     ShapePageFactor = value.Value;
+                }
+            }
+        }
+
+        public ProjectProfilePresetItem? SelectedProfile
+        {
+            get => _selectedProfile;
+            set
+            {
+                if (SetProperty(ref _selectedProfile, value) && value != null)
+                {
+                    CharactersPerPage = value.CharsPerPage;
+                    ShapePageFactor = value.ShapeFactor;
+
+                    var density = AvailableDensityPresets.FirstOrDefault(d => d.Value == value.CharsPerPage);
+                    if (density != null) _selectedDensityPreset = density;
+                    OnPropertyChanged(nameof(SelectedDensityPreset));
+
+                    var shapeFactor = AvailableShapeFactors.FirstOrDefault(s => Math.Abs(s.Value - value.ShapeFactor) < 0.01);
+                    if (shapeFactor != null) _selectedShapeFactorPreset = shapeFactor;
+                    OnPropertyChanged(nameof(SelectedShapeFactorPreset));
                 }
             }
         }
@@ -373,6 +404,7 @@ namespace ExcelSupport.ViewModels
         public ICommand BrowseTemplateFileCommand { get; }
         public ICommand CreateNewCopyForHighlightCommand { get; }
         public ICommand HighlightSelectionCommand { get; }
+        public ICommand ClearHighlightSelectionCommand { get; }
         public ICommand SelectAllSheetsCommand { get; }
         public ICommand DeselectAllSheetsCommand { get; }
         public ICommand InvertSheetsSelectionCommand { get; }
@@ -396,6 +428,7 @@ namespace ExcelSupport.ViewModels
             BrowseTemplateFileCommand = new RelayCommand(_ => BrowseTemplateFile());
             CreateNewCopyForHighlightCommand = new RelayCommand(_ => CreateNewCopyForHighlight(), _ => CanAnalyze);
             HighlightSelectionCommand = new RelayCommand(_ => HighlightCurrentSelection());
+            ClearHighlightSelectionCommand = new RelayCommand(_ => ClearCurrentSelection());
             SelectAllSheetsCommand = new RelayCommand(_ =>
             {
                 foreach (var s in AvailableSheets) s.IsIncluded = true;
@@ -423,6 +456,38 @@ namespace ExcelSupport.ViewModels
             int prevDensityVal = SelectedDensityPreset?.Value ?? _charactersPerPage;
             string prevColorHex = SelectedHighlightColor?.Hex ?? "ANY";
             double prevShapeFactorVal = SelectedShapeFactorPreset?.Value ?? _shapePageFactor;
+
+            AvailableProfiles.Clear();
+            AvailableProfiles.Add(new ProjectProfilePresetItem
+            {
+                Name = LocalizationService.Get("PageCounter_ProfileJIS"),
+                CharsPerPage = 600,
+                ShapeFactor = 0.5,
+                Description = LocalizationService.Get("PageCounter_ProfileJIS_Desc")
+            });
+            AvailableProfiles.Add(new ProjectProfilePresetItem
+            {
+                Name = LocalizationService.Get("PageCounter_ProfileVN"),
+                CharsPerPage = 1200,
+                ShapeFactor = 0.5,
+                Description = LocalizationService.Get("PageCounter_ProfileVN_Desc")
+            });
+            AvailableProfiles.Add(new ProjectProfilePresetItem
+            {
+                Name = LocalizationService.Get("PageCounter_ProfileBackend"),
+                CharsPerPage = 800,
+                ShapeFactor = 0.3,
+                Description = LocalizationService.Get("PageCounter_ProfileBackend_Desc")
+            });
+            AvailableProfiles.Add(new ProjectProfilePresetItem
+            {
+                Name = LocalizationService.Get("PageCounter_ProfileWeb"),
+                CharsPerPage = 500,
+                ShapeFactor = 0.6,
+                Description = LocalizationService.Get("PageCounter_ProfileWeb_Desc")
+            });
+            _selectedProfile = AvailableProfiles[0];
+            OnPropertyChanged(nameof(SelectedProfile));
 
             AvailableDensityPresets.Clear();
             AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_DensityJapanese"), Value = 600 });
@@ -670,6 +735,22 @@ namespace ExcelSupport.ViewModels
             catch (Exception ex)
             {
                 WpfMessageBox.Show($"Lỗi tô màu: {ex.Message}", "Lỗi", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+            }
+        }
+
+        public void ClearCurrentSelection()
+        {
+            try
+            {
+                bool ok = DesignPageCounterService.ClearHighlightSelection(_excelApp);
+                if (!ok)
+                {
+                    WpfMessageBox.Show("Không thể xóa màu vùng chọn. Vui lòng mở file Excel và chọn ít nhất một ô trên bảng tính.", "Chưa chọn ô", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show($"Lỗi xóa màu: {ex.Message}", "Lỗi", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
         }
 

@@ -386,6 +386,46 @@ namespace ExcelSupport.Services
         }
 
         /// <summary>
+        /// Xóa màu đánh dấu của các ô đang được chọn trong Excel (phím tắt Ctrl + Shift + Alt + H).
+        /// </summary>
+        public static bool ClearHighlightSelection(ExcelApp? excelApp = null)
+        {
+            try
+            {
+                var app = excelApp ?? AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                if (app == null) return false;
+
+                dynamic selection = app.Selection;
+                if (selection == null) return false;
+
+                if (selection is Range rng)
+                {
+                    rng.Interior.ColorIndex = -4142; // xlColorIndexNone
+                }
+                else
+                {
+                    try
+                    {
+                        selection.Interior.ColorIndex = -4142;
+                    }
+                    catch { }
+                }
+
+                try
+                {
+                    app.StatusBar = "🧹 ExcelSupport: Đã xóa màu đánh dấu vùng chọn (Ctrl + Shift + Alt + H)";
+                }
+                catch { }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Tạo và mở một bản sao mới của file thiết kế để người dùng tự do tô màu các ô trước khi đếm.
         /// </summary>
         public static string? CreateAndOpenNewCopyForHighlighting(ExcelApp app, string targetWbNameOrPath)
@@ -471,14 +511,27 @@ namespace ExcelSupport.Services
             };
 
             // 1. Lấy UsedRange của Target
-            Range targetUsed = targetWs.UsedRange;
-            int targetStartRow = targetUsed.Row;
-            int targetStartCol = targetUsed.Column;
-            int targetRowCount = targetUsed.Rows.Count;
-            int targetColCount = targetUsed.Columns.Count;
+            Range? targetUsed = null;
+            int targetStartRow = 1;
+            int targetStartCol = 1;
+            int targetRowCount = 1;
+            int targetColCount = 1;
 
-            object[,] targetVals = Extract2DArray(targetUsed.Value2);
-            object[,] targetFormulas = Extract2DArray(targetUsed.Formula);
+            try
+            {
+                targetUsed = targetWs.UsedRange;
+                if (targetUsed != null)
+                {
+                    targetStartRow = targetUsed.Row;
+                    targetStartCol = targetUsed.Column;
+                    targetRowCount = targetUsed.Rows.Count;
+                    targetColCount = targetUsed.Columns.Count;
+                }
+            }
+            catch { }
+
+            object?[,] targetVals = Extract2DArray(targetUsed?.Value2, targetRowCount, targetColCount);
+            object?[,] targetFormulas = Extract2DArray(targetUsed?.Formula, targetRowCount, targetColCount);
 
             Color targetColor = ColorTranslator.FromHtml(options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase) ? "#FEF08A" : options.HighlightColorHex);
             bool matchAnyColor = options.MatchAnyHighlightColor || options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase);
@@ -494,8 +547,8 @@ namespace ExcelSupport.Services
                 {
                     int actualCol = targetStartCol + c - 1;
 
-                    object? tVal = (r <= targetVals.GetLength(0) && c <= targetVals.GetLength(1)) ? targetVals[r, c] : null;
-                    object? tForm = (r <= targetFormulas.GetLength(0) && c <= targetFormulas.GetLength(1)) ? targetFormulas[r, c] : null;
+                    object? tVal = targetVals[r, c];
+                    object? tForm = targetFormulas[r, c];
 
                     string tStr = tVal?.ToString()?.Trim() ?? string.Empty;
                     string tFormStr = tForm?.ToString()?.Trim() ?? string.Empty;
@@ -556,6 +609,7 @@ namespace ExcelSupport.Services
             {
                 sheetResult.Status = SheetStatus.TemplateOnly;
                 sheetResult.WorkPagesCount = 0;
+                sheetResult.TemplatePagesCount = sheetResult.TotalPrintPages;
             }
             else
             {
@@ -567,6 +621,7 @@ namespace ExcelSupport.Services
             if (targetPageRanges.Count > 0)
             {
                 sheetResult.TotalPrintPages = targetPageRanges.Count;
+                sheetResult.TemplatePagesCount = totalCells == 0 && addedShapes == 0 ? targetPageRanges.Count : 0;
                 int pageIndex = 1;
                 foreach (var pr in targetPageRanges)
                 {
@@ -589,10 +644,11 @@ namespace ExcelSupport.Services
             }
             else
             {
+                string addr = targetUsed != null ? targetUsed.Address : "A1";
                 sheetResult.Pages.Add(new PageDetailItem
                 {
                     PageNumber = 1,
-                    RangeAddress = targetUsed.Address,
+                    RangeAddress = addr,
                     StartRow = targetStartRow,
                     EndRow = targetStartRow + targetRowCount - 1,
                     StartCol = targetStartCol,
@@ -626,28 +682,47 @@ namespace ExcelSupport.Services
             sheetResult.TotalPrintPages = Math.Max(1, targetPageRanges.Count);
 
             // 2. Lấy UsedRange của Target và Template
-            Range targetUsed = targetWs.UsedRange;
-            int targetStartRow = targetUsed.Row;
-            int targetStartCol = targetUsed.Column;
-            int targetRowCount = targetUsed.Rows.Count;
-            int targetColCount = targetUsed.Columns.Count;
+            Range? targetUsed = null;
+            int targetStartRow = 1;
+            int targetStartCol = 1;
+            int targetRowCount = 1;
+            int targetColCount = 1;
 
-            object[,] targetVals = Extract2DArray(targetUsed.Value2);
-            object[,] targetFormulas = Extract2DArray(targetUsed.Formula);
+            try
+            {
+                targetUsed = targetWs.UsedRange;
+                if (targetUsed != null)
+                {
+                    targetStartRow = targetUsed.Row;
+                    targetStartCol = targetUsed.Column;
+                    targetRowCount = targetUsed.Rows.Count;
+                    targetColCount = targetUsed.Columns.Count;
+                }
+            }
+            catch { }
 
-            object[,]? tplVals = null;
-            object[,]? tplFormulas = null;
+            object?[,] targetVals = Extract2DArray(targetUsed?.Value2, targetRowCount, targetColCount);
+            object?[,] targetFormulas = Extract2DArray(targetUsed?.Formula, targetRowCount, targetColCount);
+
+            object?[,]? tplVals = null;
+            object?[,]? tplFormulas = null;
             int tplStartRow = 1, tplStartCol = 1;
+            int tplRowCount = 0, tplColCount = 0;
 
             if (templateWs != null)
             {
                 try
                 {
                     Range tplUsed = templateWs.UsedRange;
-                    tplStartRow = tplUsed.Row;
-                    tplStartCol = tplUsed.Column;
-                    tplVals = Extract2DArray(tplUsed.Value2);
-                    tplFormulas = Extract2DArray(tplUsed.Formula);
+                    if (tplUsed != null)
+                    {
+                        tplStartRow = tplUsed.Row;
+                        tplStartCol = tplUsed.Column;
+                        tplRowCount = tplUsed.Rows.Count;
+                        tplColCount = tplUsed.Columns.Count;
+                        tplVals = Extract2DArray(tplUsed.Value2, tplRowCount, tplColCount);
+                        tplFormulas = Extract2DArray(tplUsed.Formula, tplRowCount, tplColCount);
+                    }
                 }
                 catch { }
             }
@@ -663,8 +738,8 @@ namespace ExcelSupport.Services
                 {
                     int actualCol = targetStartCol + c - 1;
 
-                    object? tVal = (r <= targetVals.GetLength(0) && c <= targetVals.GetLength(1)) ? targetVals[r, c] : null;
-                    object? tForm = (r <= targetFormulas.GetLength(0) && c <= targetFormulas.GetLength(1)) ? targetFormulas[r, c] : null;
+                    object? tVal = targetVals[r, c];
+                    object? tForm = targetFormulas[r, c];
 
                     string tStr = tVal?.ToString()?.Trim() ?? string.Empty;
                     string tFormStr = tForm?.ToString()?.Trim() ?? string.Empty;
@@ -680,10 +755,10 @@ namespace ExcelSupport.Services
                     {
                         int tplR = actualRow - tplStartRow + 1;
                         int tplC = actualCol - tplStartCol + 1;
-                        if (tplR >= 1 && tplR <= tplVals.GetLength(0) && tplC >= 1 && tplC <= tplVals.GetLength(1))
+                        if (tplR >= 1 && tplR <= tplRowCount && tplC >= 1 && tplC <= tplColCount)
                         {
                             object? tpV = tplVals[tplR, tplC];
-                            object? tpF = (tplFormulas != null && tplR <= tplFormulas.GetLength(0) && tplC <= tplFormulas.GetLength(1)) ? tplFormulas[tplR, tplC] : null;
+                            object? tpF = tplFormulas != null ? tplFormulas[tplR, tplC] : null;
                             tplStr = tpV?.ToString()?.Trim() ?? string.Empty;
                             tplFormStr = tpF?.ToString()?.Trim() ?? string.Empty;
                         }
@@ -846,6 +921,20 @@ namespace ExcelSupport.Services
             if (targetPageRanges.Count == 0)
             {
                 sheetResult.Status = (templateWs == null) ? SheetStatus.NewSheet : SheetStatus.TemplateOnly;
+                sheetResult.TotalPrintPages = 1;
+                sheetResult.TemplatePagesCount = (templateWs == null) ? 0 : 1;
+                sheetResult.WorkPagesCount = 0;
+                sheetResult.Pages.Add(new PageDetailItem
+                {
+                    PageNumber = 1,
+                    RangeAddress = "A1",
+                    StartRow = 1,
+                    EndRow = 1,
+                    StartCol = 1,
+                    EndCol = 1,
+                    Status = PageStatus.BlankPage,
+                    Description = "Trang trống"
+                });
                 return sheetResult;
             }
 
@@ -960,25 +1049,34 @@ namespace ExcelSupport.Services
 
             try
             {
+                int rowCount = pr.EndRow - pr.StartRow + 1;
+                int colCount = pr.EndCol - pr.StartCol + 1;
+
                 targetRange = targetWs.Range[targetWs.Cells[pr.StartRow, pr.StartCol], targetWs.Cells[pr.EndRow, pr.EndCol]];
                 int targetNonEmpty = 0;
                 int changedCount = 0;
 
-                object[,] targetVals = Extract2DArray(targetRange.Value2);
-                object[,] targetFormulas = Extract2DArray(targetRange.Formula);
+                object?[,] targetVals = Extract2DArray(targetRange.Value2, rowCount, colCount);
+                object?[,] targetFormulas = Extract2DArray(targetRange.Formula, rowCount, colCount);
 
                 // Lấy range tương ứng trên template
                 int tplMaxRow = 0;
                 int tplMaxCol = 0;
                 try
                 {
-                    tplMaxRow = templateWs.UsedRange.Row + templateWs.UsedRange.Rows.Count - 1;
-                    tplMaxCol = templateWs.UsedRange.Column + templateWs.UsedRange.Columns.Count - 1;
+                    Range tplUsed = templateWs.UsedRange;
+                    if (tplUsed != null)
+                    {
+                        tplMaxRow = tplUsed.Row + tplUsed.Rows.Count - 1;
+                        tplMaxCol = tplUsed.Column + tplUsed.Columns.Count - 1;
+                    }
                 }
                 catch { }
 
-                object[,]? tplVals = null;
-                object[,]? tplFormulas = null;
+                object?[,]? tplVals = null;
+                object?[,]? tplFormulas = null;
+                int tplRowCount = 0;
+                int tplColCount = 0;
 
                 if (pr.StartRow <= tplMaxRow && pr.StartCol <= tplMaxCol)
                 {
@@ -986,22 +1084,21 @@ namespace ExcelSupport.Services
                     {
                         int endR = Math.Min(pr.EndRow, tplMaxRow);
                         int endC = Math.Min(pr.EndCol, tplMaxCol);
+                        tplRowCount = endR - pr.StartRow + 1;
+                        tplColCount = endC - pr.StartCol + 1;
                         tplRange = templateWs.Range[templateWs.Cells[pr.StartRow, pr.StartCol], templateWs.Cells[endR, endC]];
-                        tplVals = Extract2DArray(tplRange.Value2);
-                        tplFormulas = Extract2DArray(tplRange.Formula);
+                        tplVals = Extract2DArray(tplRange.Value2, tplRowCount, tplColCount);
+                        tplFormulas = Extract2DArray(tplRange.Formula, tplRowCount, tplColCount);
                     }
                     catch { }
                 }
-
-                int rowCount = pr.EndRow - pr.StartRow + 1;
-                int colCount = pr.EndCol - pr.StartCol + 1;
 
                 for (int r = 1; r <= rowCount; r++)
                 {
                     for (int c = 1; c <= colCount; c++)
                     {
-                        object? tVal = (r <= targetVals.GetLength(0) && c <= targetVals.GetLength(1)) ? targetVals[r, c] : null;
-                        object? tForm = (r <= targetFormulas.GetLength(0) && c <= targetFormulas.GetLength(1)) ? targetFormulas[r, c] : null;
+                        object? tVal = targetVals[r, c];
+                        object? tForm = targetFormulas[r, c];
 
                         string tStr = tVal?.ToString()?.Trim() ?? string.Empty;
                         string tFormStr = tForm?.ToString()?.Trim() ?? string.Empty;
@@ -1011,8 +1108,8 @@ namespace ExcelSupport.Services
                             targetNonEmpty++;
                         }
 
-                        object? tplVal = (tplVals != null && r <= tplVals.GetLength(0) && c <= tplVals.GetLength(1)) ? tplVals[r, c] : null;
-                        object? tplForm = (tplFormulas != null && r <= tplFormulas.GetLength(0) && c <= tplFormulas.GetLength(1)) ? tplFormulas[r, c] : null;
+                        object? tplVal = (tplVals != null && r <= tplRowCount && c <= tplColCount) ? tplVals[r, c] : null;
+                        object? tplForm = (tplFormulas != null && r <= tplRowCount && c <= tplColCount) ? tplFormulas[r, c] : null;
 
                         string tplStr = tplVal?.ToString()?.Trim() ?? string.Empty;
                         string tplFormStr = tplForm?.ToString()?.Trim() ?? string.Empty;
@@ -1189,14 +1286,16 @@ namespace ExcelSupport.Services
             Range? range = null;
             try
             {
+                int rowCount = pr.EndRow - pr.StartRow + 1;
+                int colCount = pr.EndCol - pr.StartCol + 1;
                 range = ws.Range[ws.Cells[pr.StartRow, pr.StartCol], ws.Cells[pr.EndRow, pr.EndCol]];
-                object[,] arr = Extract2DArray(range.Value2);
+                object?[,] arr = Extract2DArray(range.Value2, rowCount, colCount);
                 int count = 0;
-                for (int r = 1; r <= arr.GetLength(0); r++)
+                for (int r = 1; r <= rowCount; r++)
                 {
-                    for (int c = 1; c <= arr.GetLength(1); c++)
+                    for (int c = 1; c <= colCount; c++)
                     {
-                        if (arr[r, c] != null && !string.IsNullOrWhiteSpace(arr[r, c].ToString()))
+                        if (arr[r, c] != null && !string.IsNullOrWhiteSpace(arr[r, c]?.ToString()))
                         {
                             count++;
                         }
@@ -1335,8 +1434,8 @@ namespace ExcelSupport.Services
                 else long.TryParse(interiorColor.ToString(), out oleColor);
             }
 
-            // Màu trắng: 16777215 (0xFFFFFF) hoặc ColorIndex == 2 khi ole == 0
-            if (oleColor == 16777215 || (colorIndex == 2 && oleColor == 0))
+            // Không màu hoặc màu trắng: 16777215 (0xFFFFFF), hoặc ColorIndex == 2 khi ole == 0
+            if (oleColor == 16777215 || (colorIndex == 2 && oleColor == 0) || (oleColor == 0 && colorIndex <= 0))
             {
                 return false;
             }
@@ -1352,12 +1451,15 @@ namespace ExcelSupport.Services
             int g = (int)((oleColor >> 8) & 0xFF);
             int b = (int)((oleColor >> 16) & 0xFF);
 
+            // Bỏ qua màu trắng / xám cực nhạt gần trắng (RGB >= 250)
+            if (r >= 250 && g >= 250 && b >= 250) return false;
+
             int dr = Math.Abs(r - targetColor.R);
             int dg = Math.Abs(g - targetColor.G);
             int db = Math.Abs(b - targetColor.B);
 
             // Khoảng cách RGB nhỏ
-            if (dr + dg + db <= 100) return true;
+            if (dr + dg + db <= 120) return true;
 
             // Kiểm tra theo họ màu (Yellow, Green, Cyan, Orange, Pink)
             return IsInSameColorFamily(r, g, b, targetColor);
@@ -1365,48 +1467,66 @@ namespace ExcelSupport.Services
 
         private static bool IsInSameColorFamily(int r, int g, int b, Color targetColor)
         {
-            // Họ màu Vàng (Yellow)
+            // Họ màu Vàng / Hổ phách (Yellow / Amber)
             if (targetColor.R > 200 && targetColor.G > 180 && targetColor.B < 180)
             {
-                return r > 180 && g > 170 && b < 170;
+                return r > 160 && g > 140 && b < 190 && (r >= b || g >= b);
             }
             // Họ màu Xanh ngọc / Xanh dương (Cyan / Light Blue)
-            if (targetColor.B > 200 && targetColor.G > 160)
+            if (targetColor.B > 180 && targetColor.G > 140)
             {
-                return b > 170 && (g > 150 || r < 180);
+                return b > 150 && (b >= r || g >= r);
             }
             // Họ màu Xanh lá (Green)
-            if (targetColor.G > 180 && targetColor.R < 200)
+            if (targetColor.G > 160 && targetColor.R < 220)
             {
-                return g > 160 && r < 200 && b < 200;
+                return g > 140 && g >= r && g >= b;
             }
             // Họ màu Cam / Đào (Orange / Peach)
-            if (targetColor.R > 220 && targetColor.G > 120 && targetColor.G < 220 && targetColor.B < 180)
+            if (targetColor.R > 200 && targetColor.G > 100 && targetColor.B < 180)
             {
-                return r > 190 && g > 110 && b < 180;
+                return r > 170 && g > 90 && b < 180 && r > b;
             }
-            // Họ màu Hồng / Tím (Pink / Purple)
-            if (targetColor.R > 180 && targetColor.B > 180)
+            // Họ màu Hồng / Tím (Pink / Purple / Violet / Magenta)
+            if (targetColor.R > 160 && targetColor.B > 160)
             {
-                return r > 160 && b > 160;
+                return (r > 130 && b > 130) || (b > 130 && r >= g) || (r > 130 && b >= g);
             }
 
             return false;
         }
 
-        private static object[,] Extract2DArray(object rawVal)
+        private static object?[,] Extract2DArray(object? rawVal, int rowCount = 1, int colCount = 1)
         {
+            int rows = Math.Max(1, rowCount);
+            int cols = Math.Max(1, colCount);
+            var result = new object?[rows + 1, cols + 1];
+
             if (rawVal is object[,] arr)
             {
-                return arr;
+                int lowerR = arr.GetLowerBound(0);
+                int upperR = arr.GetUpperBound(0);
+                int lowerC = arr.GetLowerBound(1);
+                int upperC = arr.GetUpperBound(1);
+
+                for (int r = lowerR; r <= upperR; r++)
+                {
+                    int targetR = r - lowerR + 1;
+                    if (targetR > rows) break;
+                    for (int c = lowerC; c <= upperC; c++)
+                    {
+                        int targetC = c - lowerC + 1;
+                        if (targetC > cols) break;
+                        result[targetR, targetC] = arr[r, c];
+                    }
+                }
             }
             else if (rawVal != null)
             {
-                object[,] single = new object[2, 2];
-                single[1, 1] = rawVal;
-                return single;
+                result[1, 1] = rawVal;
             }
-            return new object[1, 1];
+
+            return result;
         }
 
         public static bool IsCoverOrHistorySheet(string sheetName)
@@ -1588,6 +1708,56 @@ namespace ExcelSupport.Services
                     reportWs.Cells[curRow, 1].Font.Color = ColorTranslator.ToOle(Color.FromArgb(124, 58, 237));
                     reportWs.Cells[curRow + 1, 1].Value2 = result.HighlightedClonedWorkbookPath;
                     reportWs.Cells[curRow + 1, 1].Font.Italic = true;
+                }
+
+                // --- 4. TỰ ĐỘNG VẼ BIỂU ĐỒ TRỰC QUAN (CHARTS) ---
+                try
+                {
+                    // 4.1 Bảng dữ liệu phụ cho Biểu đồ tròn (Pie Chart) đặt tại cột M, N
+                    int chartDataRow = 8;
+                    reportWs.Cells[chartDataRow, 13].Value2 = "Phân loại trang";
+                    reportWs.Cells[chartDataRow, 14].Value2 = "Số trang";
+                    reportWs.Cells[chartDataRow + 1, 13].Value2 = "Trang Thiết kế mới";
+                    reportWs.Cells[chartDataRow + 1, 14].Value2 = Math.Max(0.0, result.TotalWorkPages);
+                    reportWs.Cells[chartDataRow + 2, 13].Value2 = "Trang Template gốc";
+                    reportWs.Cells[chartDataRow + 2, 14].Value2 = Math.Max(0.0, (double)result.TotalTemplatePages);
+
+                    Range pieDataRange = reportWs.Range[reportWs.Cells[chartDataRow, 13], reportWs.Cells[chartDataRow + 2, 14]];
+                    
+                    ChartObjects chartObjs = (ChartObjects)reportWs.ChartObjects();
+                    ChartObject pieChartObj = chartObjs.Add(540, 20, 320, 200);
+                    pieChartObj.Chart.ChartType = XlChartType.xlDoughnut;
+                    pieChartObj.Chart.SetSourceData(pieDataRange);
+                    pieChartObj.Chart.HasTitle = true;
+                    pieChartObj.Chart.ChartTitle.Text = "Tỷ Lệ Thiết Kế vs Template";
+
+                    // 4.2 Biểu đồ cột phân bổ khối lượng từng Sheet (nếu có nhiều hơn 1 sheet)
+                    if (result.SheetResults.Count > 1)
+                    {
+                        int barDataStartRow = curRow + 4;
+                        reportWs.Cells[barDataStartRow, 1].Value2 = "Tên Sheet";
+                        reportWs.Cells[barDataStartRow, 2].Value2 = "Trang Thiết kế";
+                        
+                        int rIdx = barDataStartRow + 1;
+                        foreach (var s in result.SheetResults.Take(20))
+                        {
+                            reportWs.Cells[rIdx, 1].Value2 = s.SheetName;
+                            reportWs.Cells[rIdx, 2].Value2 = s.WorkPagesCount;
+                            rIdx++;
+                        }
+
+                        Range barDataRange = reportWs.Range[reportWs.Cells[barDataStartRow, 1], reportWs.Cells[rIdx - 1, 2]];
+                        ChartObject barChartObj = chartObjs.Add(20, curRow + 4, 500, 220);
+                        barChartObj.Chart.ChartType = XlChartType.xlColumnClustered;
+                        barChartObj.Chart.SetSourceData(barDataRange);
+                        barChartObj.Chart.HasTitle = true;
+                        barChartObj.Chart.ChartTitle.Text = "Số Trang Thiết Kế Từng Sheet";
+                        try { barChartObj.Chart.Legend?.Delete(); } catch { }
+                    }
+                }
+                catch (Exception exChart)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error creating report charts: {exChart.Message}");
                 }
 
                 // Tự căn chỉnh độ rộng cột

@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="USER_MANUAL.md" />
+    <EmbeddedResource Include="Ribbon\CustomRibbon.xml" />
+    <EmbeddedResource Include="Languages\*.json" />
   </ItemGroup>
 
 </Project>
