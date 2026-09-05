@@ -332,7 +332,8 @@ namespace ExcelSupport.Services
             }
         }
 
-        public static string CurrentHighlightColorHex { get; set; } = "#FEF08A";
+        public static string CurrentHighlightColorHex { get; set; } = "#F472B6";
+        public static string LastChosenConcreteColorHex { get; set; } = "#F472B6";
 
         /// <summary>
         /// Tô màu vùng ô đang được chọn trong Excel theo màu chỉ định (phím tắt Ctrl + Shift + H).
@@ -350,22 +351,33 @@ namespace ExcelSupport.Services
                 string targetHex = hexColor ?? CurrentHighlightColorHex;
                 if (string.IsNullOrEmpty(targetHex) || targetHex.Equals("ANY", StringComparison.OrdinalIgnoreCase))
                 {
-                    targetHex = "#FEF08A"; // Default to vivid yellow pastel
+                    targetHex = !string.IsNullOrEmpty(LastChosenConcreteColorHex) && !LastChosenConcreteColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase)
+                        ? LastChosenConcreteColorHex
+                        : "#F472B6";
                 }
 
-                int r = Convert.ToInt32(targetHex.Substring(1, 2), 16);
-                int g = Convert.ToInt32(targetHex.Substring(3, 2), 16);
-                int b = Convert.ToInt32(targetHex.Substring(5, 2), 16);
-                int oleColor = r | (g << 8) | (b << 16);
+                Color color;
+                try
+                {
+                    color = ColorTranslator.FromHtml(targetHex.StartsWith("#") ? targetHex : "#" + targetHex);
+                }
+                catch
+                {
+                    color = Color.FromArgb(244, 114, 182); // #F472B6 Pink
+                }
+
+                int oleColor = ColorTranslator.ToOle(color);
 
                 if (selection is Range rng)
                 {
+                    rng.Interior.Pattern = XlPattern.xlPatternSolid;
                     rng.Interior.Color = oleColor;
                 }
                 else
                 {
                     try
                     {
+                        selection.Interior.Pattern = XlPattern.xlPatternSolid;
                         selection.Interior.Color = oleColor;
                     }
                     catch { }
@@ -533,7 +545,7 @@ namespace ExcelSupport.Services
             object?[,] targetVals = Extract2DArray(targetUsed?.Value2, targetRowCount, targetColCount);
             object?[,] targetFormulas = Extract2DArray(targetUsed?.Formula, targetRowCount, targetColCount);
 
-            Color targetColor = ColorTranslator.FromHtml(options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase) ? "#FEF08A" : options.HighlightColorHex);
+            Color targetColor = ColorTranslator.FromHtml(options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase) ? "#F472B6" : options.HighlightColorHex);
             bool matchAnyColor = options.MatchAnyHighlightColor || options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase);
 
             var highlightedCells = new List<(int row, int col, int charCount)>();
@@ -794,7 +806,7 @@ namespace ExcelSupport.Services
             {
                 try
                 {
-                    Color highlightColor = ColorTranslator.FromHtml(options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase) ? "#FEF08A" : options.HighlightColorHex);
+                    Color highlightColor = ColorTranslator.FromHtml(options.HighlightColorHex.Equals("ANY", StringComparison.OrdinalIgnoreCase) ? "#F472B6" : options.HighlightColorHex);
                     ApplyHighlightToCells(clonedWs, changedCells, highlightColor);
                 }
                 catch { }
@@ -1458,10 +1470,10 @@ namespace ExcelSupport.Services
             int dg = Math.Abs(g - targetColor.G);
             int db = Math.Abs(b - targetColor.B);
 
-            // Khoảng cách RGB nhỏ
-            if (dr + dg + db <= 120) return true;
+            // Khoảng cách RGB nhỏ (ngưỡng 150 để bao quát các biến thể hiển thị/theme của Excel)
+            if (dr + dg + db <= 150) return true;
 
-            // Kiểm tra theo họ màu (Yellow, Green, Cyan, Orange, Pink)
+            // Kiểm tra theo họ màu (Yellow, Green, Cyan, Orange, Pink, Purple, Red)
             return IsInSameColorFamily(r, g, b, targetColor);
         }
 
@@ -1487,10 +1499,20 @@ namespace ExcelSupport.Services
             {
                 return r > 170 && g > 90 && b < 180 && r > b;
             }
-            // Họ màu Hồng / Tím (Pink / Purple / Violet / Magenta)
-            if (targetColor.R > 160 && targetColor.B > 160)
+            // Họ màu Hồng tươi / Hồng phấn (Pink / Magenta) - #F472B6, #FBCFE8, #FFC0CB
+            if (targetColor.R > 180 && (targetColor.B > 120 || targetColor.R > targetColor.G + 30))
             {
-                return (r > 130 && b > 130) || (b > 130 && r >= g) || (r > 130 && b >= g);
+                return r > 170 && (b > 110 || (r > g + 25 && r > b)) && (r >= g);
+            }
+            // Họ màu Tím (Purple / Violet) - #DDD6FE (221, 214, 254)
+            if (targetColor.B > 180 && targetColor.R > 160 && targetColor.B >= targetColor.R)
+            {
+                return b > 150 && r > 140 && (b >= g || r >= g);
+            }
+            // Họ màu Đỏ nhạt / San hô (Red / Coral) - #FECACA (254, 202, 202)
+            if (targetColor.R > 200 && targetColor.G < 230 && targetColor.B < 230)
+            {
+                return r > 180 && r > g && r > b;
             }
 
             return false;

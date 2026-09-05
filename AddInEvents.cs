@@ -63,8 +63,8 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+q", "OracleQuickQueryCommand");
                 _excelApp?.OnKey("^+H", "ApplyDesignHighlightSelectionCommand");
                 _excelApp?.OnKey("^+h", "ApplyDesignHighlightSelectionCommand");
-                _excelApp?.OnKey("^+!H", "ClearDesignHighlightSelectionCommand");
-                _excelApp?.OnKey("^+!h", "ClearDesignHighlightSelectionCommand");
+                _excelApp?.OnKey("^+%H", "ClearDesignHighlightSelectionCommand");
+                _excelApp?.OnKey("^+%h", "ClearDesignHighlightSelectionCommand");
                 _excelApp?.OnKey("^+M", "ExportMarkdownTableCommand");
                 _excelApp?.OnKey("^+m", "ExportMarkdownTableCommand");
                 _excelApp?.OnKey("^+W", "ToggleTaskPaneCommand");
@@ -85,8 +85,8 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+q");
                 _excelApp?.OnKey("^+H");
                 _excelApp?.OnKey("^+h");
-                _excelApp?.OnKey("^+!H");
-                _excelApp?.OnKey("^+!h");
+                _excelApp?.OnKey("^+%H");
+                _excelApp?.OnKey("^+%h");
                 _excelApp?.OnKey("^+M");
                 _excelApp?.OnKey("^+m");
                 _excelApp?.OnKey("^+W");

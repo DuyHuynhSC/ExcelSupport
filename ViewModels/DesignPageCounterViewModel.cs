@@ -195,6 +195,8 @@ namespace ExcelSupport.ViewModels
             set => SetProperty(ref _highlightChangedCells, value);
         }
 
+        private static string _savedHighlightColorHex = "#F472B6";
+
         public ColorSwatchItem SelectedHighlightColor
         {
             get => _selectedHighlightColor;
@@ -202,7 +204,15 @@ namespace ExcelSupport.ViewModels
             {
                 if (SetProperty(ref _selectedHighlightColor, value))
                 {
-                    DesignPageCounterService.CurrentHighlightColorHex = value?.Hex ?? "#FEF08A";
+                    if (value != null)
+                    {
+                        _savedHighlightColorHex = value.Hex;
+                        DesignPageCounterService.CurrentHighlightColorHex = value.Hex;
+                        if (!value.IsAnyColor)
+                        {
+                            DesignPageCounterService.LastChosenConcreteColorHex = value.Hex;
+                        }
+                    }
                 }
             }
         }
@@ -454,7 +464,7 @@ namespace ExcelSupport.ViewModels
         public void LoadPresets()
         {
             int prevDensityVal = SelectedDensityPreset?.Value ?? _charactersPerPage;
-            string prevColorHex = SelectedHighlightColor?.Hex ?? "ANY";
+            string prevColorHex = SelectedHighlightColor?.Hex ?? _savedHighlightColorHex;
             double prevShapeFactorVal = SelectedShapeFactorPreset?.Value ?? _shapePageFactor;
 
             AvailableProfiles.Clear();
@@ -499,12 +509,18 @@ namespace ExcelSupport.ViewModels
 
             AvailableHighlightColors.Clear();
             AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorAny"), Hex = "ANY" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorPink"), Hex = "#F472B6" });
             AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorYellow"), Hex = "#FEF08A" });
             AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorCyan"), Hex = "#BAE6FD" });
             AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorGreen"), Hex = "#BBF7D0" });
             AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorOrange"), Hex = "#FED7AA" });
-            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorPink"), Hex = "#DDD6FE" });
-            _selectedHighlightColor = AvailableHighlightColors.FirstOrDefault(c => c.Hex.Equals(prevColorHex, StringComparison.OrdinalIgnoreCase)) ?? AvailableHighlightColors[0];
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorPurple"), Hex = "#DDD6FE" });
+            AvailableHighlightColors.Add(new ColorSwatchItem { Name = LocalizationService.Get("PageCounter_ColorRed"), Hex = "#FECACA" });
+
+            SelectedHighlightColor = AvailableHighlightColors.FirstOrDefault(c => c.Hex.Equals(prevColorHex, StringComparison.OrdinalIgnoreCase))
+                ?? AvailableHighlightColors.FirstOrDefault(c => c.Hex.Equals(_savedHighlightColorHex, StringComparison.OrdinalIgnoreCase))
+                ?? AvailableHighlightColors.FirstOrDefault(c => c.Hex.Equals("#F472B6", StringComparison.OrdinalIgnoreCase))
+                ?? AvailableHighlightColors[0];
             OnPropertyChanged(nameof(SelectedHighlightColor));
 
             AvailableShapeFactors.Clear();
@@ -725,7 +741,15 @@ namespace ExcelSupport.ViewModels
         {
             try
             {
-                string hex = SelectedHighlightColor?.Hex ?? "ANY";
+                string hex = (SelectedHighlightColor != null && !SelectedHighlightColor.IsAnyColor)
+                    ? SelectedHighlightColor.Hex
+                    : DesignPageCounterService.LastChosenConcreteColorHex;
+
+                if (string.IsNullOrEmpty(hex) || hex.Equals("ANY", StringComparison.OrdinalIgnoreCase))
+                {
+                    hex = "#F472B6";
+                }
+
                 bool ok = DesignPageCounterService.HighlightSelection(_excelApp, hex);
                 if (!ok)
                 {
