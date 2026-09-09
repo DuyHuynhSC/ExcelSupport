@@ -186,7 +186,7 @@ namespace ExcelSupport
             return colLetter;
         }
 
-        public List<CellTextItem> GetSelectedCellsText(int maxCells = 500)
+        public List<CellTextItem> GetSelectedCellsText(int maxCells = 1000, bool visibleOnly = true)
         {
             var list = new List<CellTextItem>();
             if (_excelApp == null) return list;
@@ -199,29 +199,65 @@ namespace ExcelSupport
                     selection = _excelApp.Selection as Range;
                     if (selection == null) return list;
 
-                    int count = 0;
-                    foreach (Range cell in selection.Cells)
+                    Range? targetRange = selection;
+                    if (visibleOnly)
                     {
                         try
                         {
-                            string text = cell.Text?.ToString() ?? string.Empty;
-                            if (!string.IsNullOrWhiteSpace(text))
-                            {
-                                list.Add(new CellTextItem
-                                {
-                                    Row = cell.Row,
-                                    Column = cell.Column,
-                                    Address = cell.Address[false, false],
-                                    OriginalText = text.Trim()
-                                });
-
-                                count++;
-                                if (count >= maxCells) break;
-                            }
+                            targetRange = selection.SpecialCells(XlCellType.xlCellTypeVisible);
                         }
-                        finally
+                        catch
                         {
-                            Marshal.ReleaseComObject(cell);
+                            targetRange = selection;
+                        }
+                    }
+
+                    int count = 0;
+                    if (targetRange != null)
+                    {
+                        foreach (Range area in targetRange.Areas)
+                        {
+                            try
+                            {
+                                foreach (Range cell in area.Cells)
+                                {
+                                    try
+                                    {
+                                        string text = cell.Text?.ToString() ?? string.Empty;
+                                        if (!string.IsNullOrWhiteSpace(text))
+                                        {
+                                            list.Add(new CellTextItem
+                                            {
+                                                Row = cell.Row,
+                                                Column = cell.Column,
+                                                Address = cell.Address[false, false],
+                                                OriginalText = text.Trim()
+                                            });
+
+                                            count++;
+                                            if (count >= maxCells) break;
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        Marshal.ReleaseComObject(cell);
+                                    }
+                                }
+                            }
+                            finally
+                            {
+                                if (area != null && !ReferenceEquals(area, targetRange))
+                                {
+                                    Marshal.ReleaseComObject(area);
+                                }
+                            }
+
+                            if (count >= maxCells) break;
+                        }
+
+                        if (targetRange != null && !ReferenceEquals(targetRange, selection))
+                        {
+                            Marshal.ReleaseComObject(targetRange);
                         }
                     }
                 }

@@ -141,8 +141,18 @@ namespace ExcelSupport.Views
             // Group by GroupId
             var grouped = _allControls.GroupBy(c => c.GroupId).ToList();
 
-            // Prioritize grpDataTools first
-            grouped = grouped.OrderBy(g => g.Key == "grpDataTools" ? 0 : 1).ToList();
+            // Order groups logically
+            var groupOrder = new Dictionary<string, int>
+            {
+                { "grpDataTools", 0 },
+                { "grpAuditTools", 1 },
+                { "grpJapanTools", 2 },
+                { "grpQuickTools", 3 },
+                { "grpFileTools", 4 },
+                { "grpAiTools", 5 }
+            };
+
+            grouped = grouped.OrderBy(g => groupOrder.TryGetValue(g.Key, out int order) ? order : 99).ToList();
 
             foreach (var group in grouped)
             {
@@ -173,6 +183,7 @@ namespace ExcelSupport.Views
                 var headerTitleStack = new StackPanel { Orientation = WpfOrientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
                 var groupIcon = group.Key == "grpDataTools" ? "📊" :
                                 group.Key == "grpAuditTools" ? "🔍" :
+                                group.Key == "grpJapanTools" ? "🇯🇵" :
                                 group.Key == "grpQuickTools" ? "⚡" :
                                 group.Key == "grpFileTools" ? "📁" : "🤖";
 
@@ -234,6 +245,7 @@ namespace ExcelSupport.Views
                     {
                         ctrlLabel = ctrl.ControlId;
                     }
+                    ctrlLabel = ctrlLabel.Replace("\r", "").Replace("\n", " ");
 
                     var cardBorder = new Border
                     {

@@ -208,20 +208,25 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Margin="0,0,0,8">
-                                <TextBlock Text="{Binding SelectedGroup.BaseStem, StringFormat='Nhóm từ gốc: [{0}]'}" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
-                                <TextBlock Text="Chọn chuẩn từ vựng muốn áp dụng cho nhóm này:" FontSize="11" Foreground="#475569" Margin="0,2,0,0"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{loc:Loc Katakana_GroupStemHeader}" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
+                                    <TextBlock Text=": [" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
+                                    <TextBlock Text="{Binding SelectedGroup.BaseStem}" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
+                                    <TextBlock Text="]" FontWeight="Bold" FontSize="13" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <TextBlock Text="{loc:Loc Katakana_SelectRulePrompt}" FontSize="11" Foreground="#475569" Margin="0,2,0,0"/>
                             </StackPanel>
 
                             <WrapPanel Grid.Row="1" Orientation="Horizontal">
                                 <Button Command="{Binding StandardizeSelectedWithChouonCommand}" Style="{StaticResource SuccessActionBtn}" Margin="0,0,8,4">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Đồng bộ CÓ trường âm: " FontSize="11"/>
+                                        <TextBlock Text="{loc:Loc Katakana_BtnSyncWithChouon}" FontSize="11"/>
                                         <TextBlock Text="{Binding SelectedGroup.WithChouonWord}" FontWeight="Bold" FontSize="11.5"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding StandardizeSelectedWithoutChouonCommand}" Style="{StaticResource SecondaryActionBtn}" Margin="0,0,8,4">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Đồng bộ KHÔNG trường âm: " FontSize="11"/>
+                                        <TextBlock Text="{loc:Loc Katakana_BtnSyncWithoutChouon}" FontSize="11"/>
                                         <TextBlock Text="{Binding SelectedGroup.WithoutChouonWord}" FontWeight="Bold" FontSize="11.5"/>
                                     </StackPanel>
                                 </Button>
@@ -233,13 +238,13 @@
                     <GroupBox Grid.Row="1" Header="{loc:Loc Katakana_LocationsListHeader}" Padding="6">
                         <DataGrid ItemsSource="{Binding SelectedGroup.Variants[0].Locations}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single" SelectedItem="{Binding SelectedLocation, Mode=TwoWay}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Sheet" Binding="{Binding SheetName}" Width="120"/>
-                                <DataGridTextColumn Header="Ô" Binding="{Binding CellAddress}" Width="60"/>
-                                <DataGridTextColumn Header="Nội dung trong ô" Binding="{Binding OriginalText}" Width="*"/>
+                                <DataGridTextColumn Header="{loc:Loc Katakana_ColSheet}" Binding="{Binding SheetName}" Width="120"/>
+                                <DataGridTextColumn Header="{loc:Loc Katakana_ColCell}" Binding="{Binding CellAddress}" Width="60"/>
+                                <DataGridTextColumn Header="{loc:Loc Katakana_ColContent}" Binding="{Binding OriginalText}" Width="*"/>
                                 <DataGridTemplateColumn Width="70">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Content="Tới ô ↗" Style="{StaticResource SecondaryActionBtn}" Padding="4,1" FontSize="10" Command="{Binding DataContext.NavigateToCellCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                            <Button Content="{loc:Loc Katakana_BtnGoToCell}" Style="{StaticResource SecondaryActionBtn}" Padding="4,1" FontSize="10" Command="{Binding DataContext.NavigateToCellCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>

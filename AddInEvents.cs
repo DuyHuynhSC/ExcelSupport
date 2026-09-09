@@ -69,6 +69,9 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+m", "ExportMarkdownTableCommand");
                 _excelApp?.OnKey("^+W", "ToggleTaskPaneCommand");
                 _excelApp?.OnKey("^+w", "ToggleTaskPaneCommand");
+                _excelApp?.OnKey("{F3}", "OpenAiTranslateDialogCommand");
+                _excelApp?.OnKey("^+T", "OpenAiTranslateDialogCommand");
+                _excelApp?.OnKey("^+t", "OpenAiTranslateDialogCommand");
             }
             catch { }
 
@@ -91,6 +94,9 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+m");
                 _excelApp?.OnKey("^+W");
                 _excelApp?.OnKey("^+w");
+                _excelApp?.OnKey("{F3}");
+                _excelApp?.OnKey("^+T");
+                _excelApp?.OnKey("^+t");
             }
             catch { }
 

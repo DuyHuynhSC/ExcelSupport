@@ -41,6 +41,10 @@ namespace ExcelSupport.Ribbon
 
         public override object? LoadImage(string imageId)
         {
+            if (imageId == "ai_translate_icon")
+            {
+                return CreateAiTranslateBitmap();
+            }
             if (imageId == "ribbon_settings_icon")
             {
                 return CreateRibbonSettingsBitmap();
@@ -927,6 +931,11 @@ namespace ExcelSupport.Ribbon
             {
                 System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             }
+        }
+
+        public void OnAiTranslate(IRibbonControl control)
+        {
+            Views.AiTranslateDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnAiFormula(IRibbonControl control)
@@ -2186,6 +2195,53 @@ namespace ExcelSupport.Ribbon
                 {
                     g.DrawLine(gridPen, 6, 22, 26, 22);
                     g.DrawLine(gridPen, 16, 20, 16, 25);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateAiTranslateBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Nền gradient xanh ngọc lục bảo #107C41 -> #059669
+                using (var bgBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(16, 124, 65), Color.FromArgb(5, 150, 105), 45f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(2, 2, 28, 28), 5);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(4, 120, 87), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 5);
+                }
+
+                // Chữ "A" màu trắng bên trái
+                using (var fontA = new System.Drawing.Font("Segoe UI", 9.5f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    g.DrawString("A", fontA, textBrush, 3, 2);
+                }
+
+                // Mũi tên 2 chiều ⇋ ở giữa
+                using (var arrowPen = new Pen(Color.FromArgb(254, 240, 138), 1.6f))
+                {
+                    g.DrawLine(arrowPen, 7, 23, 25, 23);
+                    g.DrawLine(arrowPen, 22, 20, 25, 23);
+                    g.DrawLine(arrowPen, 22, 26, 25, 23);
+                    g.DrawLine(arrowPen, 10, 20, 7, 23);
+                    g.DrawLine(arrowPen, 10, 26, 7, 23);
+                }
+
+                // Chữ Nhật "あ" màu vàng nhạt bên phải
+                using (var fontJa = new System.Drawing.Font("Meiryo", 8.5f, FontStyle.Bold))
+                using (var textBrushJa = new SolidBrush(Color.FromArgb(254, 240, 138)))
+                {
+                    g.DrawString("あ", fontJa, textBrushJa, 15, 3);
                 }
             }
             return bmp;

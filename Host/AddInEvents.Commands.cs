@@ -85,4 +85,33 @@ namespace ExcelSupport
             });
         }
     }
+
+    public static class AiTranslationCommands
+    {
+        [ExcelCommand(ShortCut = "{F3}", Name = "OpenAiTranslateDialogCommand")]
+        public static void OpenAiTranslateDialog()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    AiTranslateDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                }
+                catch { }
+            });
+        }
+
+        [ExcelCommand(ShortCut = "^+T", Name = "OpenAiTranslateDialogAltCommand")]
+        public static void OpenAiTranslateDialogAlt()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    AiTranslateDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                }
+                catch { }
+            });
+        }
+    }
 }

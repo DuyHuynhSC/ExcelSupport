@@ -13,15 +13,9 @@ namespace ExcelSupport.ViewModels
 {
     public class AiAssistantViewModel : ViewModelBase
     {
-        private int _selectedSubTab = 0; // 0: Dịch thuật, 1: Sinh công thức, 2: Gỡ lỗi & Hỏi đáp
+        private int _selectedSubTab = 0; // 0: Sinh công thức, 1: Gỡ lỗi & Hỏi đáp
         private bool _isBusy;
         private string _statusMessage = string.Empty;
-
-        // --- Translation Properties ---
-        private bool _writeToAdjacentColumn = false;
-        private bool _enableGlossary = true;
-        private string _translationSummary = string.Empty;
-        private int _translatedCellCount = 0;
 
         // --- Formula Generator Properties ---
         private string _formulaPrompt = string.Empty;
@@ -66,62 +60,6 @@ namespace ExcelSupport.ViewModels
         {
             get => _statusMessage;
             private set => SetProperty(ref _statusMessage, value);
-        }
-
-        public bool WriteToAdjacentColumn
-        {
-            get => _writeToAdjacentColumn;
-            set => SetProperty(ref _writeToAdjacentColumn, value);
-        }
-
-        private bool _openEditor = false;
-        public bool OpenEditor
-        {
-            get => _openEditor;
-            set => SetProperty(ref _openEditor, value);
-        }
-
-        public bool EnableGlossary
-        {
-            get => _enableGlossary;
-            set
-            {
-                if (SetProperty(ref _enableGlossary, value))
-                {
-                    var cfg = AiConfigManager.Current;
-                    cfg.EnableGlossary = value;
-                    AiConfigManager.Save(cfg);
-                }
-            }
-        }
-
-        public string GlossaryCountText
-        {
-            get
-            {
-                int count = AiConfigManager.Current.Glossary?.Count ?? 0;
-                return $"📖 Thuật Ngữ Glossary ({count})";
-            }
-        }
-
-        public string TranslationSummary
-        {
-            get => _translationSummary;
-            private set
-            {
-                if (SetProperty(ref _translationSummary, value))
-                {
-                    OnPropertyChanged(nameof(HasTranslationSummary));
-                }
-            }
-        }
-
-        public bool HasTranslationSummary => !string.IsNullOrWhiteSpace(TranslationSummary);
-
-        public int TranslatedCellCount
-        {
-            get => _translatedCellCount;
-            private set => SetProperty(ref _translatedCellCount, value);
         }
 
         public string FormulaPrompt
@@ -213,9 +151,6 @@ namespace ExcelSupport.ViewModels
         public bool HasChatResponse => !string.IsNullOrWhiteSpace(ChatResponse);
 
         // --- Commands ---
-        public ICommand TranslateJaToViCommand { get; }
-        public ICommand TranslateViToJaCommand { get; }
-        public ICommand OpenGlossaryDialogCommand { get; }
         public ICommand GenerateFormulaCommand { get; }
         public ICommand InsertFormulaToExcelCommand { get; }
         public ICommand CopyFormulaCommand { get; }
@@ -229,17 +164,6 @@ namespace ExcelSupport.ViewModels
 
         public AiAssistantViewModel()
         {
-            _enableGlossary = AiConfigManager.Current.EnableGlossary;
-
-            TranslateJaToViCommand = new RelayCommand(async _ => await ExecuteTranslateSelectionAsync(isJaToVi: true), _ => !IsBusy);
-            TranslateViToJaCommand = new RelayCommand(async _ => await ExecuteTranslateSelectionAsync(isJaToVi: false), _ => !IsBusy);
-            OpenGlossaryDialogCommand = new RelayCommand(_ =>
-            {
-                var dlg = new Views.GlossaryDialog(IsDarkTheme);
-                dlg.ShowDialog();
-                OnPropertyChanged(nameof(GlossaryCountText));
-            });
-
             GenerateFormulaCommand = new RelayCommand(async _ => await ExecuteGenerateFormulaAsync(), _ => !IsBusy && !string.IsNullOrWhiteSpace(FormulaPrompt));
             InsertFormulaToExcelCommand = new RelayCommand(_ => ExecuteInsertFormula());
             CopyFormulaCommand = new RelayCommand(_ => ExecuteCopyFormula());
@@ -251,182 +175,6 @@ namespace ExcelSupport.ViewModels
             ClearChatCommand = new RelayCommand(_ => ExecuteClearChat());
             CopyChatResponseCommand = new RelayCommand(_ => ExecuteCopyChatResponse());
         }
-
-        #region Translation Logic (Japanese <-> Vietnamese)
-
-        private async Task ExecuteTranslateSelectionAsync(bool isJaToVi)
-        {
-            var addIn = AddInEvents.Instance;
-            if (addIn == null) return;
-
-            var items = addIn.GetSelectedCellsText(maxCells: 300);
-            if (items == null || items.Count == 0)
-            {
-                TranslationSummary = "⚠️ Vui lòng quét chọn các ô có chứa chữ trên Excel trước khi bấm dịch.";
-                return;
-            }
-
-            IsBusy = true;
-            string dirLabel = isJaToVi ? "Nhật ➔ Việt" : "Việt ➔ Nhật";
-            StatusMessage = $"Đang dịch {items.Count} ô ({dirLabel})... ⏳";
-            TranslationSummary = string.Empty;
-
-            try
-            {
-                var config = AiConfigManager.Current;
-                string srcLang = isJaToVi ? "tiếng Nhật" : "tiếng Việt";
-                string tgtLang = isJaToVi ? "tiếng Việt" : "tiếng Nhật";
-
-                // Build Glossary Instruction
-                string glossaryInstructions = string.Empty;
-                if (EnableGlossary && config.Glossary != null && config.Glossary.Count > 0)
-                {
-                    var sb = new System.Text.StringBuilder();
-                    sb.AppendLine("\n\n[QUY TẮC THUẬT NGỮ BẮT BUỘC - GLOSSARY]:");
-                    int ruleIndex = 1;
-                    foreach (var g in config.Glossary)
-                    {
-                        if (string.IsNullOrWhiteSpace(g.Japanese) && string.IsNullOrWhiteSpace(g.Vietnamese)) continue;
-
-                        string noteStr = string.IsNullOrWhiteSpace(g.Note) ? string.Empty : $" (Ngữ cảnh: {g.Note})";
-                        if (isJaToVi)
-                        {
-                            sb.AppendLine($"{ruleIndex}. \"{g.Japanese}\" BẮT BUỘC dịch thành \"{g.Vietnamese}\"{noteStr}");
-                        }
-                        else
-                        {
-                            sb.AppendLine($"{ruleIndex}. \"{g.Vietnamese}\" BẮT BUỘC dịch thành \"{g.Japanese}\"{noteStr}");
-                        }
-                        ruleIndex++;
-                    }
-                    sb.AppendLine("LƯU Ý: Nếu trong văn bản nguồn có chứa các thuật ngữ trên, bạn BẮT BUỘC PHẢI DÙNG CHÍNH XÁC bản dịch tương ứng trong Glossary.");
-                    glossaryInstructions = sb.ToString();
-                }
-
-                // Build input JSON array
-                var inputList = items.Select((item, idx) => new { id = idx, text = item.OriginalText }).ToList();
-                string inputJson = JsonConvert.SerializeObject(inputList);
-
-                string systemPrompt = $"Bạn là chuyên gia biên dịch ngôn ngữ công sở chuyên nghiệp giữa {srcLang} và {tgtLang} trong môi trường Excel/Doanh nghiệp. " +
-                                      $"Hãy dịch từng mục trong mảng JSON được cung cấp sang {tgtLang}. " +
-                                      $"{glossaryInstructions}\n\n" +
-                                      $"Yêu cầu nghiêm ngặt: Trả về duy nhất một chuỗi JSON hợp lệ theo định dạng: " +
-                                      $"[{{\"id\": 0, \"trans\": \"bản dịch\"}}, ...] không kèm bất kỳ lời giải thích hay markdown nào khác.";
-
-                string userPrompt = $"Dịch mảng sau sang {tgtLang}:\n{inputJson}";
-
-                string aiReply = await Task.Run(() => OpenAiClientService.SendChatAsync(config, userPrompt, systemPrompt));
-
-                // Parse AI JSON response
-                var transMap = ParseTranslationResponse(aiReply);
-
-                for (int i = 0; i < items.Count; i++)
-                {
-                    if (transMap.TryGetValue(i, out string? translated) && !string.IsNullOrWhiteSpace(translated))
-                    {
-                        items[i].TranslatedText = translated;
-                    }
-                    else
-                    {
-                        items[i].TranslatedText = items[i].OriginalText;
-                    }
-                }
-
-                // Nếu người dùng chọn "Mở editor" -> Hiển thị form chỉnh sửa kết quả dịch
-                if (OpenEditor)
-                {
-                    var editorDlg = new Views.TranslationEditorDialog(items, isJaToVi, WriteToAdjacentColumn, IsDarkTheme);
-                    try
-                    {
-                        var addInInstance = AddInEvents.Instance;
-                        if (addInInstance?.ExcelAppInstance != null)
-                        {
-                            new System.Windows.Interop.WindowInteropHelper(editorDlg).Owner = (IntPtr)addInInstance.ExcelAppInstance.Hwnd;
-                        }
-                    }
-                    catch { }
-
-                    bool? dialogResult = editorDlg.ShowDialog();
-                    if (dialogResult != true)
-                    {
-                        TranslationSummary = "⏹️ Đã hủy chèn kết quả dịch.";
-                        return;
-                    }
-                }
-
-                // Write back to Excel
-                bool ok = addIn.WriteTranslatedCells(items, WriteToAdjacentColumn);
-                if (ok)
-                {
-                    string targetDesc = WriteToAdjacentColumn ? "ghi vào cột bên cạnh" : "ghi đè trực tiếp";
-                    string glossaryNote = (EnableGlossary && config.Glossary != null && config.Glossary.Count > 0)
-                        ? " (Đã áp dụng Glossary)" : string.Empty;
-                    TranslationSummary = $"✅ Đã dịch thành công {items.Count} ô ({dirLabel}){glossaryNote} và {targetDesc}!";
-                    TranslatedCellCount = items.Count;
-                }
-                else
-                {
-                    TranslationSummary = "❌ Không thể ghi kết quả dịch vào Excel. Vui lòng kiểm tra quyền chỉnh sửa bảng tính.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TranslationSummary = $"❌ Lỗi dịch thuật: {ex.Message}";
-            }
-            finally
-            {
-                IsBusy = false;
-                StatusMessage = string.Empty;
-            }
-        }
-
-        private static Dictionary<int, string> ParseTranslationResponse(string response)
-        {
-            var result = new Dictionary<int, string>();
-            if (string.IsNullOrWhiteSpace(response)) return result;
-
-            try
-            {
-                string cleaned = response.Trim();
-                int startIdx = cleaned.IndexOf('[');
-                int endIdx = cleaned.LastIndexOf(']');
-                if (startIdx >= 0 && endIdx > startIdx)
-                {
-                    cleaned = cleaned.Substring(startIdx, endIdx - startIdx + 1);
-                }
-
-                var array = JArray.Parse(cleaned);
-                foreach (var token in array)
-                {
-                    if (token is JObject obj)
-                    {
-                        int id = obj["id"]?.Value<int>() ?? -1;
-                        string trans = obj["trans"]?.ToString() ?? obj["translation"]?.ToString() ?? obj["text"]?.ToString() ?? "";
-                        if (id >= 0 && !string.IsNullOrEmpty(trans))
-                        {
-                            result[id] = trans.Trim();
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // Fallback nếu AI trả dạng từng dòng
-                var lines = response.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    string line = lines[i].Trim();
-                    line = Regex.Replace(line, @"^\d+[\.\:\-\)]\s*", "");
-                    if (!string.IsNullOrEmpty(line))
-                    {
-                        result[i] = line;
-                    }
-                }
-            }
-            return result;
-        }
-
-        #endregion
 
         #region Formula Generator Logic
 

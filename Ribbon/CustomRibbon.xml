@@ -329,6 +329,15 @@
 
         <!-- Group 7: Trợ Lý AI & Năng Suất -->
         <group id='grpAiTools' getLabel='GetRibbonLabel'>
+          <button id='btnAiTranslate'
+                  size='large'
+                  image='ai_translate_icon'
+                  getVisible='GetControlVisible'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnAiTranslate' />
+
           <button id='btnAiFormula'
                   size='large'
                   image='ai_formula_icon'

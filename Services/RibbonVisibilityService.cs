@@ -59,11 +59,17 @@ namespace ExcelSupport.Services
                 new() { ControlId = "btnQuickSortZA", GroupId = "grpQuickTools", GroupNameKey = "grpQuickTools", NameKey = "btnQuickSortZA", IconEmoji = "🔤" },
                 new() { ControlId = "btnCloseCurrentWb", GroupId = "grpQuickTools", GroupNameKey = "grpQuickTools", NameKey = "btnCloseCurrentWb", IconEmoji = "❌" },
 
-                // Group 5: Quản Trị Tập Tin (grpFileTools)
+                // Group 5: Quản Trị Tập Tin & Thiết Kế (grpFileTools)
                 new() { ControlId = "btnBatchFileConverter", GroupId = "grpFileTools", GroupNameKey = "grpFileTools", NameKey = "btnBatchFileConverter", IconEmoji = "🔄" },
                 new() { ControlId = "btnDesignPageCounter", GroupId = "grpFileTools", GroupNameKey = "grpFileTools", NameKey = "btnDesignPageCounter", IconEmoji = "📑" },
 
+                // Group: Tiện Ích IT / Khách Hàng Nhật Bản (grpJapanTools)
+                new() { ControlId = "btnJapaneseConvert", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnJapaneseConvert", IconEmoji = "🇯🇵" },
+                new() { ControlId = "btnKatakanaCheck", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnKatakanaCheck", IconEmoji = "🈁" },
+                new() { ControlId = "btnExportMarkdown", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnExportMarkdown", IconEmoji = "📝" },
+
                 // Group 7: Trợ Lý AI & Năng Suất (grpAiTools)
+                new() { ControlId = "btnAiTranslate", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiTranslate", IconEmoji = "🌐" },
                 new() { ControlId = "btnAiFormula", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiFormula", IconEmoji = "✨" },
                 new() { ControlId = "btnAiFormulaDoctor", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiFormulaDoctor", IconEmoji = "🩺" },
                 new() { ControlId = "btnSnapshotRollback", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnSnapshotRollback", IconEmoji = "📸" },

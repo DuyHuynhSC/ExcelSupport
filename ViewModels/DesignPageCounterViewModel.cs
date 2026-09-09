@@ -496,6 +496,13 @@ namespace ExcelSupport.ViewModels
                 ShapeFactor = 0.6,
                 Description = LocalizationService.Get("PageCounter_ProfileWeb_Desc")
             });
+            AvailableProfiles.Add(new ProjectProfilePresetItem
+            {
+                Name = LocalizationService.Get("PageCounter_ProfileA4Landscape"),
+                CharsPerPage = 3200,
+                ShapeFactor = 0.5,
+                Description = LocalizationService.Get("PageCounter_ProfileA4Landscape_Desc")
+            });
             _selectedProfile = AvailableProfiles[0];
             OnPropertyChanged(nameof(SelectedProfile));
 
@@ -504,6 +511,7 @@ namespace ExcelSupport.ViewModels
             AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_DensityVietnamese"), Value = 1200 });
             AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_Density800"), Value = 800 });
             AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_Density1500"), Value = 1500 });
+            AvailableDensityPresets.Add(new DensityPresetItem { Name = LocalizationService.Get("PageCounter_Density3200"), Value = 3200 });
             _selectedDensityPreset = AvailableDensityPresets.FirstOrDefault(p => p.Value == prevDensityVal) ?? AvailableDensityPresets[0];
             OnPropertyChanged(nameof(SelectedDensityPreset));
 

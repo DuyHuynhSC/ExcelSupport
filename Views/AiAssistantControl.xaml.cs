@@ -11,7 +11,7 @@ namespace ExcelSupport.Views
             InitializeComponent();
         }
 
-        private void OnSelectTranslationTabClick(object sender, RoutedEventArgs e)
+        private void OnSelectFormulaTabClick(object sender, RoutedEventArgs e)
         {
             if (DataContext is AiAssistantViewModel vm)
             {
@@ -19,19 +19,11 @@ namespace ExcelSupport.Views
             }
         }
 
-        private void OnSelectFormulaTabClick(object sender, RoutedEventArgs e)
-        {
-            if (DataContext is AiAssistantViewModel vm)
-            {
-                vm.SelectedSubTab = 1;
-            }
-        }
-
         private void OnSelectDebugTabClick(object sender, RoutedEventArgs e)
         {
             if (DataContext is AiAssistantViewModel vm)
             {
-                vm.SelectedSubTab = 2;
+                vm.SelectedSubTab = 1;
             }
         }
 
