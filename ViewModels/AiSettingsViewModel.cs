@@ -17,14 +17,6 @@ namespace ExcelSupport.ViewModels
         private ObservableCollection<AiConnectionProfile> _profiles = new ObservableCollection<AiConnectionProfile>();
         private AiConnectionProfile? _selectedProfile;
 
-        private string _profileName = string.Empty;
-        private string _baseUrl = string.Empty;
-        private string _apiKey = string.Empty;
-        private string _modelName = string.Empty;
-        private int _timeoutSeconds = 30;
-        private double _temperature = 0.3;
-        private int _maxTokens = 2048;
-
         private bool _isTesting;
         private string _testStatusMessage = string.Empty;
         private bool? _isTestSuccess;
@@ -44,91 +36,111 @@ namespace ExcelSupport.ViewModels
             {
                 if (SetProperty(ref _selectedProfile, value))
                 {
-                    LoadFromSelectedProfile(value);
+                    OnPropertyChanged(nameof(HasSelectedProfile));
+                    OnPropertyChanged(nameof(ProfileName));
+                    OnPropertyChanged(nameof(BaseUrl));
+                    OnPropertyChanged(nameof(ApiKey));
+                    OnPropertyChanged(nameof(ModelName));
+                    OnPropertyChanged(nameof(TimeoutSeconds));
+                    OnPropertyChanged(nameof(Temperature));
+                    OnPropertyChanged(nameof(MaxTokens));
+
+                    TestStatusMessage = string.Empty;
+                    IsTestSuccess = null;
+                    SaveNotification = string.Empty;
                 }
             }
         }
 
+        public bool HasSelectedProfile => SelectedProfile != null;
+
         public string ProfileName
         {
-            get => _profileName;
+            get => SelectedProfile?.Name ?? string.Empty;
             set
             {
-                if (SetProperty(ref _profileName, value) && SelectedProfile != null)
+                if (SelectedProfile != null && SelectedProfile.Name != value)
                 {
                     SelectedProfile.Name = value;
+                    OnPropertyChanged();
                 }
             }
         }
 
         public string BaseUrl
         {
-            get => _baseUrl;
+            get => SelectedProfile?.BaseUrl ?? string.Empty;
             set
             {
-                if (SetProperty(ref _baseUrl, value) && SelectedProfile != null)
+                if (SelectedProfile != null && SelectedProfile.BaseUrl != value)
                 {
                     SelectedProfile.BaseUrl = value;
+                    OnPropertyChanged();
                 }
             }
         }
 
         public string ApiKey
         {
-            get => _apiKey;
+            get => SelectedProfile?.ApiKey ?? string.Empty;
             set
             {
-                if (SetProperty(ref _apiKey, value) && SelectedProfile != null)
+                if (SelectedProfile != null && SelectedProfile.ApiKey != value)
                 {
                     SelectedProfile.ApiKey = value;
+                    OnPropertyChanged();
                 }
             }
         }
 
         public string ModelName
         {
-            get => _modelName;
+            get => SelectedProfile?.ModelName ?? string.Empty;
             set
             {
-                if (SetProperty(ref _modelName, value) && SelectedProfile != null)
+                if (SelectedProfile != null && SelectedProfile.ModelName != value)
                 {
                     SelectedProfile.ModelName = value;
+                    OnPropertyChanged();
                 }
             }
         }
 
         public int TimeoutSeconds
         {
-            get => _timeoutSeconds;
+            get => SelectedProfile?.TimeoutSeconds ?? 30;
             set
             {
-                if (SetProperty(ref _timeoutSeconds, value) && SelectedProfile != null)
+                if (SelectedProfile != null && SelectedProfile.TimeoutSeconds != value)
                 {
                     SelectedProfile.TimeoutSeconds = value;
+                    OnPropertyChanged();
                 }
             }
         }
 
         public double Temperature
         {
-            get => _temperature;
+            get => SelectedProfile?.Temperature ?? 0.3;
             set
             {
-                if (SetProperty(ref _temperature, value) && SelectedProfile != null)
+                if (SelectedProfile != null && Math.Abs(SelectedProfile.Temperature - value) > 0.001)
                 {
                     SelectedProfile.Temperature = value;
+                    OnPropertyChanged();
                 }
             }
         }
 
         public int MaxTokens
         {
-            get => _maxTokens;
+            get => SelectedProfile?.MaxTokens ?? 2048;
             set
             {
-                if (SetProperty(ref _maxTokens, value) && SelectedProfile != null)
+                if (SelectedProfile != null && SelectedProfile.MaxTokens != value)
                 {
                     SelectedProfile.MaxTokens = value;
+                    OnPropertyChanged();
                 }
             }
         }
@@ -182,21 +194,20 @@ namespace ExcelSupport.ViewModels
 
         public AiSettingsViewModel()
         {
-            TestConnectionCommand = new RelayCommand(async _ => await ExecuteTestConnectionAsync(), _ => !IsTesting);
+            TestConnectionCommand = new RelayCommand(async _ => await ExecuteTestConnectionAsync(), _ => !IsTesting && HasSelectedProfile);
             SaveSettingsCommand = new RelayCommand(_ => ExecuteSaveSettings());
             ResetDefaultsCommand = new RelayCommand(_ => ExecuteResetDefaults());
             AddProfileCommand = new RelayCommand(_ => ExecuteAddProfile());
             CloneProfileCommand = new RelayCommand(_ => ExecuteCloneProfile(), _ => SelectedProfile != null);
             DeleteProfileCommand = new RelayCommand(_ => ExecuteDeleteProfile(), _ => SelectedProfile != null);
             SetDefaultProfileCommand = new RelayCommand(_ => ExecuteSetDefaultProfile(), _ => SelectedProfile != null);
-            ApplyPresetCommand = new RelayCommand(preset => ExecuteApplyPreset(preset?.ToString()));
+            ApplyPresetCommand = new RelayCommand(preset => ExecuteApplyPreset(preset?.ToString()), _ => SelectedProfile != null);
 
             ReloadProfiles();
         }
 
         public void ReloadProfiles()
         {
-            var config = AiConfigManager.Current;
             var list = AiConfigManager.GetProfiles();
 
             _profiles.Clear();
@@ -215,42 +226,6 @@ namespace ExcelSupport.ViewModels
             {
                 SelectedProfile = _profiles.FirstOrDefault();
             }
-        }
-
-        private void LoadFromSelectedProfile(AiConnectionProfile? p)
-        {
-            if (p == null)
-            {
-                _profileName = string.Empty;
-                _baseUrl = string.Empty;
-                _apiKey = string.Empty;
-                _modelName = string.Empty;
-                _timeoutSeconds = 30;
-                _temperature = 0.3;
-                _maxTokens = 2048;
-            }
-            else
-            {
-                _profileName = p.Name;
-                _baseUrl = p.BaseUrl;
-                _apiKey = p.ApiKey;
-                _modelName = p.ModelName;
-                _timeoutSeconds = p.TimeoutSeconds > 0 ? p.TimeoutSeconds : 30;
-                _temperature = p.Temperature;
-                _maxTokens = p.MaxTokens > 0 ? p.MaxTokens : 2048;
-            }
-
-            OnPropertyChanged(nameof(ProfileName));
-            OnPropertyChanged(nameof(BaseUrl));
-            OnPropertyChanged(nameof(ApiKey));
-            OnPropertyChanged(nameof(ModelName));
-            OnPropertyChanged(nameof(TimeoutSeconds));
-            OnPropertyChanged(nameof(Temperature));
-            OnPropertyChanged(nameof(MaxTokens));
-
-            TestStatusMessage = string.Empty;
-            IsTestSuccess = null;
-            SaveNotification = string.Empty;
         }
 
         private void ExecuteAddProfile()

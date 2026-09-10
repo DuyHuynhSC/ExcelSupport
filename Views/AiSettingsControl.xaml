@@ -1,7 +1,9 @@
 <UserControl x:Class="ExcelSupport.Views.AiSettingsControl"
+             x:Name="RootAiSettingsControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ExcelSupport.ViewModels"
+             xmlns:views="clr-namespace:ExcelSupport.Views"
              xmlns:loc="clr-namespace:ExcelSupport.Helpers"
              FontFamily="Segoe UI" FontSize="12">
 
