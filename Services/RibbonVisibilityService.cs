@@ -68,6 +68,10 @@ namespace ExcelSupport.Services
                 new() { ControlId = "btnKatakanaCheck", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnKatakanaCheck", IconEmoji = "🈁" },
                 new() { ControlId = "btnExportMarkdown", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnExportMarkdown", IconEmoji = "📝" },
 
+                // Group 6: Thước Ngắm & Hiển Thị (grpViewTools)
+                new() { ControlId = "btnToggleGridRuler", GroupId = "grpViewTools", GroupNameKey = "grpViewTools", NameKey = "btnToggleGridRuler", IconEmoji = "📐" },
+                new() { ControlId = "mnuGridRulerOptions", GroupId = "grpViewTools", GroupNameKey = "grpViewTools", NameKey = "mnuGridRulerOptions", IconEmoji = "⚙️" },
+
                 // Group 7: Trợ Lý AI & Năng Suất (grpAiTools)
                 new() { ControlId = "btnAiTranslate", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiTranslate", IconEmoji = "🌐" },
                 new() { ControlId = "btnAiFormula", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiFormula", IconEmoji = "✨" },

@@ -295,6 +295,7 @@
           <toggleButton id='btnToggleGridRuler'
                         size='large'
                         image='ruler_icon'
+                        getVisible='GetControlVisible'
                         getLabel='GetRibbonLabel'
                         getScreentip='GetRibbonScreentip'
                         getSupertip='GetRibbonSupertip'
@@ -304,6 +305,7 @@
           <menu id='mnuGridRulerOptions'
                 size='large'
                 image='ruler_settings_icon'
+                getVisible='GetControlVisible'
                 getLabel='GetRibbonLabel'
                 getScreentip='GetRibbonScreentip'
                 getSupertip='GetRibbonSupertip'>

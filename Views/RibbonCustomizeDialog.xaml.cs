@@ -149,9 +149,10 @@ namespace ExcelSupport.Views
                 { "grpDataTools", 0 },
                 { "grpAuditTools", 1 },
                 { "grpJapanTools", 2 },
-                { "grpQuickTools", 3 },
-                { "grpFileTools", 4 },
-                { "grpAiTools", 5 }
+                { "grpViewTools", 3 },
+                { "grpQuickTools", 4 },
+                { "grpFileTools", 5 },
+                { "grpAiTools", 6 }
             };
 
             grouped = grouped.OrderBy(g => groupOrder.TryGetValue(g.Key, out int order) ? order : 99).ToList();
@@ -186,6 +187,7 @@ namespace ExcelSupport.Views
                 var groupIcon = group.Key == "grpDataTools" ? "📊" :
                                 group.Key == "grpAuditTools" ? "🔍" :
                                 group.Key == "grpJapanTools" ? "🇯🇵" :
+                                group.Key == "grpViewTools" ? "📐" :
                                 group.Key == "grpQuickTools" ? "⚡" :
                                 group.Key == "grpFileTools" ? "📁" : "🤖";
 
