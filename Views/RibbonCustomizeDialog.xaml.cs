@@ -53,7 +53,9 @@ namespace ExcelSupport.Views
         {
             InitializeComponent();
             _allControls = RibbonVisibilityService.GetAllControlsMetadata();
-            aiSettingsControl.DataContext = AddInEvents.MainViewModel?.AiSettings ?? new AiSettingsViewModel();
+            var aiVm = AddInEvents.MainViewModel?.AiSettings ?? new AiSettingsViewModel();
+            aiVm.ReloadProfiles();
+            aiSettingsControl.DataContext = aiVm;
             InitThemeSelection();
             BuildGroupSections();
 

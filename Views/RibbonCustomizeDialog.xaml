@@ -419,9 +419,9 @@
 
             <!-- ========== TAB 2: CẤU HÌNH AI NỘI BỘ ========== -->
             <TabItem Header="{loc:Loc Settings_TabAi}" Style="{StaticResource ModernTabItemStyle}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+                <Grid Margin="6,4">
                     <views:AiSettingsControl x:Name="aiSettingsControl"/>
-                </ScrollViewer>
+                </Grid>
             </TabItem>
         </TabControl>
     </Grid>

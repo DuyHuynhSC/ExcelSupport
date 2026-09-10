@@ -16,5 +16,8 @@ namespace ExcelSupport.Services
 
         public bool EnableGlossary { get; set; } = true;
         public List<GlossaryItem> Glossary { get; set; } = new List<GlossaryItem>();
+
+        public string? ActiveProfileId { get; set; }
+        public List<AiConnectionProfile> Profiles { get; set; } = new List<AiConnectionProfile>();
     }
 }

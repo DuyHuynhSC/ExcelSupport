@@ -23,7 +23,7 @@
 
         <!-- Style cho TextBox nhập cấu hình -->
         <Style x:Key="SettingsTextBoxStyle" TargetType="{x:Type TextBox}">
-            <Setter Property="Padding" Value="7,5"/>
+            <Setter Property="Padding" Value="8,6"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -33,7 +33,7 @@
                         <Border x:Name="border" Background="{TemplateBinding Background}" 
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="4">
+                                CornerRadius="5">
                             <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -53,11 +53,13 @@
                     <Setter Property="Background" Value="#FFFFFF"/>
                     <Setter Property="Foreground" Value="#1E293B"/>
                     <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                    <Setter Property="CaretBrush" Value="#0F172A"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Background" Value="#1E293B"/>
                     <Setter Property="Foreground" Value="#F8FAFC"/>
                     <Setter Property="BorderBrush" Value="#475569"/>
+                    <Setter Property="CaretBrush" Value="#38BDF8"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -67,14 +69,14 @@
             <Setter Property="Background" Value="#2563EB"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Padding" Value="12,7"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
                         <Border x:Name="border" Background="{TemplateBinding Background}" 
-                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -96,7 +98,7 @@
         <!-- Style cho Nút Phụ (Secondary Button) -->
         <Style x:Key="SecondaryButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Padding" Value="9,6"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Template">
@@ -105,7 +107,7 @@
                         <Border x:Name="border" Background="{TemplateBinding Background}" 
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -133,28 +135,134 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Preset Chip Button Style -->
+        <Style x:Key="PresetChipButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="0,0,6,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="12" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#3B82F6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="False">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="Foreground" Value="#2563EB"/>
+                    <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#93C5FD"/>
+                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ListBox Item Style for Profiles -->
+        <Style x:Key="ProfileListBoxItemStyle" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="6" Padding="10,8">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#CBD5E1"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="#1E3A8A"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#60A5FA"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="#334155"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="False">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="10" MaxWidth="360">
-            <!-- Header Tiêu đề Settings -->
-            <Border BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Background" Value="#EFF6FF"/>
-                        <Setter Property="BorderBrush" Value="#BFDBFE"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                <Setter Property="Background" Value="#1E3A8A"/>
-                                <Setter Property="BorderBrush" Value="#3B82F6"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <StackPanel>
+    <Grid Margin="12,10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 0. Header -->
+            <RowDefinition Height="*"/>    <!-- 1. 2-Column Master Detail -->
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 0. HEADER BANNER ==================== -->
+        <Border Grid.Row="0" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#EFF6FF"/>
+                    <Setter Property="BorderBrush" Value="#BFDBFE"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                            <Setter Property="Background" Value="#1E3A8A"/>
+                            <Setter Property="BorderBrush" Value="#3B82F6"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🤖" FontSize="15" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="{loc:Loc AiSet_HeaderTitle}" FontWeight="Bold" FontSize="12.5" VerticalAlignment="Center">
+                        <TextBlock Text="🤖" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc AiSet_HeaderTitle}" FontWeight="Bold" FontSize="13.5" VerticalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#1E3A8A"/>
@@ -168,10 +276,10 @@
                         </TextBlock>
                     </StackPanel>
                     <TextBlock Text="{loc:Loc AiSet_HeaderDesc}" 
-                               FontSize="10.5" Margin="0,3,0,0" TextWrapping="Wrap">
+                               FontSize="11" Margin="24,3,0,0" TextWrapping="Wrap">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#3B82F6"/>
+                                <Setter Property="Foreground" Value="#2563EB"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
                                         <Setter Property="Foreground" Value="#BFDBFE"/>
@@ -181,10 +289,24 @@
                         </TextBlock.Style>
                     </TextBlock>
                 </StackPanel>
-            </Border>
 
-            <!-- Card Form Cài Đặt -->
-            <Border BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                <!-- Status / Save Notification in Header -->
+                <TextBlock Grid.Column="1" Text="{Binding SaveNotification}" 
+                           FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0"
+                           TextWrapping="Wrap" MaxWidth="320"/>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 1. 2-COLUMN MASTER DETAIL ==================== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="310" MinWidth="260" MaxWidth="420"/> <!-- Left: Profiles List -->
+                <ColumnDefinition Width="14"/>                                 <!-- Spacer -->
+                <ColumnDefinition Width="*"/>                                  <!-- Right: Details Form -->
+            </Grid.ColumnDefinitions>
+
+            <!-- ========== LEFT COLUMN: PROFILES LIST & ACTIONS ========== -->
+            <Border Grid.Column="0" BorderThickness="1" CornerRadius="8" Padding="12">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="#FFFFFF"/>
@@ -197,66 +319,150 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Title -->
+                        <RowDefinition Height="*"/>    <!-- ListBox -->
+                        <RowDefinition Height="Auto"/> <!-- Action Buttons -->
+                        <RowDefinition Height="Auto"/> <!-- Quick Presets -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <TextBlock Grid.Row="0" Text="{loc:Loc AiSet_ProfilesListHeader}" FontWeight="Bold" FontSize="12.5" Margin="0,0,0,8">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#0F172A"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Foreground" Value="#F8FAFC"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- ListBox of AI Profiles -->
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Profiles}" 
+                             SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                             ItemContainerStyle="{StaticResource ProfileListBoxItemStyle}"
+                             BorderThickness="0" Background="Transparent"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding DisplaySummary}" FontSize="10.5" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#64748B"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                            <Setter Property="Foreground" Value="#94A3B8"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Default Badge -->
+                                    <Border Grid.Column="1" Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" 
+                                            CornerRadius="4" Padding="5,2" VerticalAlignment="Center" Margin="6,0,0,0" 
+                                            Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisConverter}}">
+                                        <TextBlock Text="⭐ Mặc định" FontSize="9.5" FontWeight="Bold" Foreground="#B45309"/>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Profile Management Buttons -->
+                    <WrapPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,8">
+                        <Button Command="{Binding AddProfileCommand}" Content="{loc:Loc AiSet_BtnAddProfile}" 
+                                Style="{StaticResource PrimaryButtonStyle}" Padding="8,5" Margin="0,0,5,5"/>
+                        <Button Command="{Binding SetDefaultProfileCommand}" Content="{loc:Loc AiSet_BtnSetDefault}" 
+                                Style="{StaticResource SecondaryButtonStyle}" Padding="8,5" Margin="0,0,5,5"
+                                ToolTip="{loc:Loc AiSet_BtnSetDefaultTip}"/>
+                        <Button Command="{Binding CloneProfileCommand}" Content="{loc:Loc AiSet_BtnCloneProfile}" 
+                                Style="{StaticResource SecondaryButtonStyle}" Padding="8,5" Margin="0,0,5,5"/>
+                        <Button Command="{Binding DeleteProfileCommand}" Content="{loc:Loc AiSet_BtnDeleteProfile}" 
+                                Style="{StaticResource SecondaryButtonStyle}" Padding="8,5" Margin="0,0,0,5"/>
+                    </WrapPanel>
+
+                    <!-- Quick Preset Templates -->
+                    <StackPanel Grid.Row="3" Margin="0,4,0,0">
+                        <TextBlock Text="{loc:Loc AiSet_QuickPresets}" FontSize="10.5" FontWeight="SemiBold" Margin="0,0,0,5">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#64748B"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Foreground" Value="#94A3B8"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <WrapPanel Orientation="Horizontal">
+                            <Button Content="OpenAI" Command="{Binding ApplyPresetCommand}" CommandParameter="openai" Style="{StaticResource PresetChipButtonStyle}"/>
+                            <Button Content="DeepSeek" Command="{Binding ApplyPresetCommand}" CommandParameter="deepseek" Style="{StaticResource PresetChipButtonStyle}"/>
+                            <Button Content="Ollama" Command="{Binding ApplyPresetCommand}" CommandParameter="ollama" Style="{StaticResource PresetChipButtonStyle}"/>
+                            <Button Content="Localhost Qwen" Command="{Binding ApplyPresetCommand}" CommandParameter="localhost" Style="{StaticResource PresetChipButtonStyle}"/>
+                            <Button Content="OpenRouter" Command="{Binding ApplyPresetCommand}" CommandParameter="openrouter" Style="{StaticResource PresetChipButtonStyle}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ========== RIGHT COLUMN: PROFILE DETAILS & TEST ========== -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
-                    <!-- Trường 1: Base URL -->
-                    <TextBlock Text="{loc:Loc AiSet_BaseUrlLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#334155"/>
+                    <!-- Card 1: Form Chi Tiết Cấu Hình -->
+                    <Border BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Foreground" Value="#E2E8F0"/>
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <TextBox Text="{Binding BaseUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
-                    <TextBlock Text="{loc:Loc AiSet_BaseUrlExample}" 
-                               FontSize="9.5" Foreground="#94A3B8" Margin="0,0,0,10"/>
+                        </Border.Style>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc AiSet_ProfileDetailHeader}" FontWeight="Bold" FontSize="13" Margin="0,0,0,12">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#0F172A"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
 
-                    <!-- Trường 2: Model Name -->
-                    <TextBlock Text="{loc:Loc AiSet_ModelLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#334155"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Foreground" Value="#E2E8F0"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <TextBox Text="{Binding ModelName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
-                    <TextBlock Text="{loc:Loc AiSet_ModelExample}" 
-                               FontSize="9.5" Foreground="#94A3B8" Margin="0,0,0,10"/>
-
-                    <!-- Trường 3: API Key -->
-                    <TextBlock Text="{loc:Loc AiSet_ApiKeyLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#334155"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Foreground" Value="#E2E8F0"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <TextBox Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
-                    <TextBlock Text="{loc:Loc AiSet_ApiKeyExample}" 
-                               FontSize="9.5" Foreground="#94A3B8" Margin="0,0,0,10"/>
-
-                    <!-- Trường 4: Timeout -->
-                    <Grid Margin="0,0,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="70"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock Text="{loc:Loc AiSet_TimeoutLabel}" FontWeight="SemiBold" FontSize="11.5">
+                            <!-- Trường 0: Tên Profile / Nhà Cung Cấp -->
+                            <TextBlock Text="{loc:Loc AiSet_ProfileNameLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="#334155"/>
@@ -268,169 +474,140 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                            <TextBlock Text="{loc:Loc AiSet_TimeoutDesc}" FontSize="9.5" Foreground="#94A3B8"/>
-                        </StackPanel>
-                        <TextBox Grid.Column="1" Text="{Binding TimeoutSeconds, UpdateSourceTrigger=PropertyChanged}" 
-                                 Style="{StaticResource SettingsTextBoxStyle}" HorizontalContentAlignment="Center"/>
-                    </Grid>
+                            <TextBox Text="{Binding ProfileName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,12"/>
 
-                    <!-- Hàng Nút Hành Động -->
-                    <Grid Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" 
-                                Command="{Binding SaveSettingsCommand}" 
-                                Style="{StaticResource PrimaryButtonStyle}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="💾 " FontSize="11" VerticalAlignment="Center"/>
-                                <TextBlock Text="{loc:Loc AiSet_BtnSave}" FontSize="11.5" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="2" 
-                                Command="{Binding ResetDefaultsCommand}" 
-                                Style="{StaticResource SecondaryButtonStyle}"
-                                ToolTip="{loc:Loc AiSet_ResetTip}">
-                            <TextBlock Text="{loc:Loc AiSet_BtnReset}" FontSize="11" VerticalAlignment="Center"/>
-                        </Button>
-                    </Grid>
-
-                    <!-- Thông báo Lưu -->
-                    <TextBlock Text="{Binding SaveNotification}" 
-                               FontSize="11" FontWeight="SemiBold" Foreground="#15803D" 
-                               Margin="0,8,0,0" HorizontalAlignment="Center"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Card Kiểm Tra Kết Nối -->
-            <Border BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Background" Value="#FFFFFF"/>
-                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                <Setter Property="Background" Value="#1E293B"/>
-                                <Setter Property="BorderBrush" Value="#334155"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc AiSet_TestTitle}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,6">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#1E293B"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                        <Setter Property="Foreground" Value="#F1F5F9"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <Button Command="{Binding TestConnectionCommand}" Style="{StaticResource SecondaryButtonStyle}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🔌 " FontSize="11" VerticalAlignment="Center"/>
-                            <TextBlock Text="{loc:Loc AiSet_BtnTest}" FontSize="11.5" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-
-                    <!-- Kết quả kiểm tra kết nối -->
-                    <Border Margin="0,8,0,0" CornerRadius="4" Padding="8,6">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasTestStatus}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                        <Setter Property="Background" Value="#F8FAFC"/>
-                                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
-                                        <Setter Property="BorderThickness" Value="1"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
-                                        <Setter Property="Background" Value="#F0FDF4"/>
-                                        <Setter Property="BorderBrush" Value="#BBF7D0"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsTestSuccess}" Value="False">
-                                        <Setter Property="Background" Value="#FEF2F2"/>
-                                        <Setter Property="BorderBrush" Value="#FECACA"/>
-                                    </DataTrigger>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding IsTestSuccess}" Value="True"/>
-                                            <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Background" Value="#064E3B"/>
-                                        <Setter Property="BorderBrush" Value="#059669"/>
-                                    </MultiDataTrigger>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding IsTestSuccess}" Value="False"/>
-                                            <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Background" Value="#7F1D1D"/>
-                                        <Setter Property="BorderBrush" Value="#DC2626"/>
-                                    </MultiDataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                                <TextBlock FontSize="11" FontWeight="Bold">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="⏳ Đang kiểm tra..."/>
-                                            <Setter Property="Foreground" Value="#2563EB"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
-                                                    <Setter Property="Text" Value="✅ KẾT NỐI THÀNH CÔNG"/>
-                                                    <Setter Property="Foreground" Value="#15803D"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsTestSuccess}" Value="False">
-                                                    <Setter Property="Text" Value="❌ KẾT NỐI THẤT BÀI"/>
-                                                    <Setter Property="Foreground" Value="#DC2626"/>
-                                                </DataTrigger>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsTestSuccess}" Value="True"/>
-                                                        <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Foreground" Value="#6EE7B7"/>
-                                                </MultiDataTrigger>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsTestSuccess}" Value="False"/>
-                                                        <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Foreground" Value="#FCA5A5"/>
-                                                </MultiDataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBlock Text="{Binding LatencyText}" FontSize="10.5" FontWeight="SemiBold" 
-                                           Margin="8,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="#15803D"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                    <Setter Property="Foreground" Value="#6EE7B7"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                            <TextBlock Text="{Binding TestStatusMessage}" FontSize="10.5" TextWrapping="Wrap">
+                            <!-- Trường 1: Base URL -->
+                            <TextBlock Text="{loc:Loc AiSet_BaseUrlLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="#334155"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox Text="{Binding BaseUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
+                            <TextBlock Text="{loc:Loc AiSet_BaseUrlExample}" FontSize="10" Foreground="#94A3B8" Margin="0,0,0,12"/>
+
+                            <!-- Trường 2: Model Name -->
+                            <TextBlock Text="{loc:Loc AiSet_ModelLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#334155"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox Text="{Binding ModelName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
+                            <TextBlock Text="{loc:Loc AiSet_ModelExample}" FontSize="10" Foreground="#94A3B8" Margin="0,0,0,12"/>
+
+                            <!-- Trường 3: API Key -->
+                            <TextBlock Text="{loc:Loc AiSet_ApiKeyLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#334155"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
+                            <TextBlock Text="{loc:Loc AiSet_ApiKeyExample}" FontSize="10" Foreground="#94A3B8" Margin="0,0,0,12"/>
+
+                            <!-- Trường 4 & 5: Timeout & Temperature -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Timeout -->
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{loc:Loc AiSet_TimeoutLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#334155"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                        <Setter Property="Foreground" Value="#E2E8F0"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBox Text="{Binding TimeoutSeconds, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
+                                    <TextBlock Text="{loc:Loc AiSet_TimeoutDesc}" FontSize="10" Foreground="#94A3B8"/>
+                                </StackPanel>
+
+                                <!-- Temperature -->
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{loc:Loc AiSet_TemperatureLabel}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#334155"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                        <Setter Property="Foreground" Value="#E2E8F0"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBox Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SettingsTextBoxStyle}" Margin="0,0,0,3"/>
+                                    <TextBlock Text="{loc:Loc AiSet_TemperatureDesc}" FontSize="10" Foreground="#94A3B8"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Hàng Nút Hành Động Lưu -->
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding SaveSettingsCommand}" Style="{StaticResource PrimaryButtonStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="💾 " FontSize="12" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Loc AiSet_BtnSave}" FontSize="12" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="2" Command="{Binding ResetDefaultsCommand}" Style="{StaticResource SecondaryButtonStyle}" ToolTip="{loc:Loc AiSet_ResetTip}">
+                                    <TextBlock Text="{loc:Loc AiSet_BtnReset}" FontSize="11.5" VerticalAlignment="Center"/>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 2: Kiểm Tra Kết Nối Máy Chủ AI -->
+                    <Border BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc AiSet_TestTitle}" FontWeight="Bold" FontSize="13" Margin="0,0,0,8">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#1E293B"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
                                                 <Setter Property="Foreground" Value="#F1F5F9"/>
@@ -439,10 +616,120 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
+                            
+                            <Button Command="{Binding TestConnectionCommand}" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🔌 " FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{loc:Loc AiSet_BtnTest}" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Kết quả kiểm tra kết nối -->
+                            <Border Margin="0,10,0,0" CornerRadius="6" Padding="12,10">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasTestStatus}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Setter Property="Background" Value="#F8FAFC"/>
+                                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                <Setter Property="Background" Value="#F0FDF4"/>
+                                                <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsTestSuccess}" Value="False">
+                                                <Setter Property="Background" Value="#FEF2F2"/>
+                                                <Setter Property="BorderBrush" Value="#FECACA"/>
+                                            </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsTestSuccess}" Value="True"/>
+                                                    <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#064E3B"/>
+                                                <Setter Property="BorderBrush" Value="#059669"/>
+                                            </MultiDataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsTestSuccess}" Value="False"/>
+                                                    <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#7F1D1D"/>
+                                                <Setter Property="BorderBrush" Value="#DC2626"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock FontSize="11.5" FontWeight="Bold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="⏳ Đang kiểm tra..."/>
+                                                    <Setter Property="Foreground" Value="#2563EB"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                                            <Setter Property="Text" Value="✅ KẾT NỐI THÀNH CÔNG"/>
+                                                            <Setter Property="Foreground" Value="#15803D"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsTestSuccess}" Value="False">
+                                                            <Setter Property="Text" Value="❌ KẾT NỐI THẤT BÀI"/>
+                                                            <Setter Property="Foreground" Value="#DC2626"/>
+                                                        </DataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsTestSuccess}" Value="True"/>
+                                                                <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Foreground" Value="#6EE7B7"/>
+                                                        </MultiDataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsTestSuccess}" Value="False"/>
+                                                                <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Foreground" Value="#FCA5A5"/>
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding LatencyText}" FontSize="11" FontWeight="SemiBold" 
+                                                   Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#15803D"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                            <Setter Property="Foreground" Value="#6EE7B7"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding TestStatusMessage}" FontSize="11" TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#334155"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                        <Setter Property="Foreground" Value="#F1F5F9"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
                 </StackPanel>
-            </Border>
-        </StackPanel>
-    </ScrollViewer>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
 </UserControl>
