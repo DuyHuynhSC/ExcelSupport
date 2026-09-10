@@ -1071,6 +1071,7 @@
   "AiTranslate_ColTranslated": "AI Translation (Editable)",
   "AiTranslate_TabGlossary": "📖 Glossary Dictionary",
   "AiTranslate_GlossarySubtitle": "Define mandatory domain terms that AI must follow strictly.",
+  "AiTranslate_GlossarySearchTip": "Search glossary (Japanese, Vietnamese, note)...",
   "AiTranslate_BtnAddTerm": "➕ Add Term",
   "AiTranslate_BtnDeleteTerm": "🗑️ Delete Selected",
   "AiTranslate_BtnImportCsv": "📂 Import CSV",

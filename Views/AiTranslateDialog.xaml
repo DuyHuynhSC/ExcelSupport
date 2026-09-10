@@ -8,7 +8,8 @@
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI" FontSize="12"
         TextOptions.TextFormattingMode="Display"
-        UseLayoutRounding="True">
+        UseLayoutRounding="True"
+        KeyDown="Window_KeyDown">
 
     <Window.Style>
         <Style TargetType="Window">
@@ -363,7 +364,9 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
             <Setter Property="FontSize" Value="11.5"/>
-            <Setter Property="RowHeight" Value="28"/>
+            <Setter Property="MinRowHeight" Value="32"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
                     <Setter Property="BorderBrush" Value="#E2E8F0"/>
@@ -379,6 +382,32 @@
                     <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
                     <Setter Property="Foreground" Value="#F8FAFC"/>
                 </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- DataGridCell Style to prevent default WPF blue cell highlight masking row colors -->
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
 
@@ -408,11 +437,11 @@
             <Setter Property="BorderBrush" Value="#F1F5F9"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="Background" Value="#F1F5F9"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#EFF6FF"/>
-                    <Setter Property="Foreground" Value="#1E40AF"/>
+                    <Setter Property="Background" Value="#DBEAFE"/>
+                    <Setter Property="Foreground" Value="#0F172A"/>
                 </Trigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
@@ -427,7 +456,7 @@
                         <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="#1E3A8A"/>
-                    <Setter Property="Foreground" Value="#93C5FD"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
                 </MultiDataTrigger>
             </Style.Triggers>
         </Style>
@@ -436,22 +465,22 @@
         <Style x:Key="CellAddressStyle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Padding" Value="8,6"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
-                    <Setter Property="Foreground" Value="#2563EB"/>
+                    <Setter Property="Foreground" Value="#1D4ED8"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                    <Setter Property="Foreground" Value="#60A5FA"/>
+                    <Setter Property="Foreground" Value="#93C5FD"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="CellOriginalStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
                     <Setter Property="Foreground" Value="#0F172A"/>
@@ -464,15 +493,15 @@
 
         <Style x:Key="CellTranslatedStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
-                    <Setter Property="Foreground" Value="#15803D"/>
+                    <Setter Property="Foreground" Value="#166534"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                    <Setter Property="Foreground" Value="#34D399"/>
+                    <Setter Property="Foreground" Value="#6EE7B7"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -481,6 +510,7 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="AcceptsReturn" Value="True"/>
             <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
                     <Setter Property="Background" Value="#FFFFFF"/>
@@ -766,14 +796,41 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Glossary Actions Toolbar -->
+                    <!-- Glossary Search Filter & Actions Toolbar -->
                     <Grid Grid.Row="0" Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="280"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc AiTranslate_GlossarySubtitle}" 
-                                   FontSize="11" VerticalAlignment="Center">
+
+                        <!-- Search Box -->
+                        <Border Grid.Column="0" BorderThickness="1" CornerRadius="4" Padding="6,2" Height="30" VerticalAlignment="Center">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#FFFFFF"/>
+                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Margin="2,0,6,0" VerticalAlignment="Center" Foreground="#94A3B8"/>
+                                <TextBox x:Name="TxtGlossarySearch" Grid.Column="1" BorderThickness="0" Background="Transparent" 
+                                         VerticalAlignment="Center" FontSize="11.5" ToolTip="{loc:Loc AiTranslate_GlossarySearchTip}" TextChanged="OnGlossarySearchTextChanged"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- <TextBlock Grid.Column="1" Text="{loc:Loc AiTranslate_GlossarySubtitle}" 
+                                   FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#64748B"/>
@@ -784,8 +841,9 @@
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
-                        </TextBlock>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        </TextBlock> -->
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="{loc:Loc AiTranslate_BtnAddTerm}" Style="{StaticResource BtnSecondary}" Height="30" Margin="0,0,6,0" Click="OnAddGlossaryTermClick" VerticalContentAlignment="Center"/>
                             <Button Content="{loc:Loc AiTranslate_BtnDeleteTerm}" Style="{StaticResource BtnSecondary}" Height="30" Margin="0,0,6,0" Click="OnDeleteGlossaryTermClick" VerticalContentAlignment="Center"/>
                             <Button Content="{loc:Loc AiTranslate_BtnImportCsv}" Style="{StaticResource BtnSecondary}" Height="30" Margin="0,0,6,0" Click="OnImportGlossaryCsvClick" VerticalContentAlignment="Center"/>

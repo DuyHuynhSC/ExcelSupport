@@ -27,6 +27,7 @@ namespace ExcelSupport.Views
         private readonly ObservableCollection<CellTextItem> _translationItems = new ObservableCollection<CellTextItem>();
         private readonly ObservableCollection<GlossaryItem> _glossaryItems = new ObservableCollection<GlossaryItem>();
         private readonly ICollectionView _translationView;
+        private readonly ICollectionView _glossaryView;
         private CancellationTokenSource? _translationCts;
         private static AiTranslateDialog? _currentInstance;
 
@@ -61,7 +62,9 @@ namespace ExcelSupport.Views
             DgTranslations.ItemsSource = _translationView;
 
             LoadGlossaryFromConfig();
-            DgGlossary.ItemsSource = _glossaryItems;
+            _glossaryView = CollectionViewSource.GetDefaultView(_glossaryItems);
+            _glossaryView.Filter = FilterGlossaryItem;
+            DgGlossary.ItemsSource = _glossaryView;
 
             Loaded += AiTranslateDialog_Loaded;
             Closing += AiTranslateDialog_Closing;
@@ -90,8 +93,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                _currentInstance.ShowDialog();
-                _currentInstance = null;
+                _currentInstance.Closed += (s, e) => { _currentInstance = null; };
+                _currentInstance.Show();
             }
             catch (Exception ex)
             {
@@ -102,7 +105,10 @@ namespace ExcelSupport.Views
 
         private void AiTranslateDialog_Loaded(object sender, RoutedEventArgs e)
         {
-            ScanSelectedCells();
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ScanSelectedCells();
+            }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
         private void AiTranslateDialog_Closing(object? sender, CancelEventArgs e)
@@ -273,6 +279,23 @@ namespace ExcelSupport.Views
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             _translationView.Refresh();
+        }
+
+        private bool FilterGlossaryItem(object obj)
+        {
+            if (obj is not GlossaryItem item) return false;
+
+            string query = TxtGlossarySearch?.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(query)) return true;
+
+            return (!string.IsNullOrEmpty(item.Japanese) && item.Japanese.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                   (!string.IsNullOrEmpty(item.Vietnamese) && item.Vietnamese.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                   (!string.IsNullOrEmpty(item.Note) && item.Note.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        private void OnGlossarySearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _glossaryView.Refresh();
         }
 
         private void OnCopyTableClick(object sender, RoutedEventArgs e)
@@ -458,15 +481,21 @@ namespace ExcelSupport.Views
 
             if (success)
             {
-                DialogResult = true;
                 Close();
             }
         }
 
         private void OnCancelClick(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
             Close();
+        }
+
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                Close();
+            }
         }
 
         #endregion

@@ -1071,6 +1071,7 @@
   "AiTranslate_ColTranslated": "Bản Dịch AI (Cho Phép Sửa Trực Tiếp)",
   "AiTranslate_TabGlossary": "📖 Thuật Ngữ Glossary",
   "AiTranslate_GlossarySubtitle": "Định nghĩa các thuật ngữ bắt buộc AI phải dịch chính xác theo quy ước dự án.",
+  "AiTranslate_GlossarySearchTip": "Tìm kiếm thuật ngữ (Nhật, Việt, ghi chú)...",
   "AiTranslate_BtnAddTerm": "➕ Thêm Thuật Ngữ",
   "AiTranslate_BtnDeleteTerm": "🗑️ Xóa Mục Chọn",
   "AiTranslate_BtnImportCsv": "📂 Nhập CSV",

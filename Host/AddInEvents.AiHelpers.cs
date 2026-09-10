@@ -199,16 +199,67 @@ namespace ExcelSupport
                     selection = _excelApp.Selection as Range;
                     if (selection == null) return list;
 
-                    Range? targetRange = selection;
+                    // Intersect with UsedRange to prevent freeze when whole column/sheet is selected (1,048,576 cells)
+                    Range? effectiveRange = selection;
+                    try
+                    {
+                        var ws = selection.Worksheet;
+                        if (ws != null)
+                        {
+                            var usedRange = ws.UsedRange;
+                            if (usedRange != null)
+                            {
+                                effectiveRange = _excelApp.Intersect(selection, usedRange);
+                                Marshal.ReleaseComObject(usedRange);
+                            }
+                            Marshal.ReleaseComObject(ws);
+                        }
+                    }
+                    catch
+                    {
+                        effectiveRange = selection;
+                    }
+
+                    if (effectiveRange == null) return list;
+
+                    Range? targetRange = effectiveRange;
                     if (visibleOnly)
                     {
+                        bool isSingleCell = false;
                         try
                         {
-                            targetRange = selection.SpecialCells(XlCellType.xlCellTypeVisible);
+                            if (effectiveRange.Areas.Count == 1 && effectiveRange.Rows.Count == 1 && effectiveRange.Columns.Count == 1)
+                            {
+                                isSingleCell = true;
+                            }
                         }
-                        catch
+                        catch { }
+
+                        if (isSingleCell)
                         {
-                            targetRange = selection;
+                            bool isHidden = false;
+                            try
+                            {
+                                var row = effectiveRange.EntireRow;
+                                var col = effectiveRange.EntireColumn;
+                                isHidden = (bool)row.Hidden || (bool)col.Hidden;
+                                Marshal.ReleaseComObject(row);
+                                Marshal.ReleaseComObject(col);
+                            }
+                            catch { }
+
+                            targetRange = isHidden ? null : effectiveRange;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                targetRange = effectiveRange.SpecialCells(XlCellType.xlCellTypeVisible);
+                            }
+                            catch
+                            {
+                                targetRange = effectiveRange;
+                            }
                         }
                     }
 
@@ -219,34 +270,70 @@ namespace ExcelSupport
                         {
                             try
                             {
-                                foreach (Range cell in area.Cells)
-                                {
-                                    try
-                                    {
-                                        string text = cell.Text?.ToString() ?? string.Empty;
-                                        if (!string.IsNullOrWhiteSpace(text))
-                                        {
-                                            list.Add(new CellTextItem
-                                            {
-                                                Row = cell.Row,
-                                                Column = cell.Column,
-                                                Address = cell.Address[false, false],
-                                                OriginalText = text.Trim()
-                                            });
+                                int rowCount = area.Rows.Count;
+                                int colCount = area.Columns.Count;
+                                int startRow = area.Row;
+                                int startCol = area.Column;
 
-                                            count++;
+                                if (rowCount == 1 && colCount == 1)
+                                {
+                                    object? val = area.Value2;
+                                    string text = val?.ToString() ?? string.Empty;
+                                    if (!string.IsNullOrWhiteSpace(text))
+                                    {
+                                        list.Add(new CellTextItem
+                                        {
+                                            Row = startRow,
+                                            Column = startCol,
+                                            Address = ConvertColIndexToLetter(startCol) + startRow,
+                                            OriginalText = text.Trim()
+                                        });
+                                        count++;
+                                    }
+                                }
+                                else
+                                {
+                                    // High-speed 2D array read (1 COM call instead of thousands)
+                                    if (area.Value2 is object[,] values)
+                                    {
+                                        int rMin = values.GetLowerBound(0);
+                                        int rMax = values.GetUpperBound(0);
+                                        int cMin = values.GetLowerBound(1);
+                                        int cMax = values.GetUpperBound(1);
+
+                                        for (int r = rMin; r <= rMax; r++)
+                                        {
+                                            for (int c = cMin; c <= cMax; c++)
+                                            {
+                                                object? val = values[r, c];
+                                                if (val != null)
+                                                {
+                                                    string text = val.ToString() ?? string.Empty;
+                                                    if (!string.IsNullOrWhiteSpace(text))
+                                                    {
+                                                        int curRow = startRow + (r - rMin);
+                                                        int curCol = startCol + (c - cMin);
+                                                        list.Add(new CellTextItem
+                                                        {
+                                                            Row = curRow,
+                                                            Column = curCol,
+                                                            Address = ConvertColIndexToLetter(curCol) + curRow,
+                                                            OriginalText = text.Trim()
+                                                        });
+
+                                                        count++;
+                                                        if (count >= maxCells) break;
+                                                    }
+                                                }
+                                            }
                                             if (count >= maxCells) break;
                                         }
-                                    }
-                                    finally
-                                    {
-                                        Marshal.ReleaseComObject(cell);
                                     }
                                 }
                             }
                             finally
                             {
-                                if (area != null && !ReferenceEquals(area, targetRange))
+                                if (area != null && !ReferenceEquals(area, targetRange) && !ReferenceEquals(area, effectiveRange) && !ReferenceEquals(area, selection))
                                 {
                                     Marshal.ReleaseComObject(area);
                                 }
@@ -255,10 +342,15 @@ namespace ExcelSupport
                             if (count >= maxCells) break;
                         }
 
-                        if (targetRange != null && !ReferenceEquals(targetRange, selection))
+                        if (targetRange != null && !ReferenceEquals(targetRange, effectiveRange) && !ReferenceEquals(targetRange, selection))
                         {
                             Marshal.ReleaseComObject(targetRange);
                         }
+                    }
+
+                    if (effectiveRange != null && !ReferenceEquals(effectiveRange, selection))
+                    {
+                        Marshal.ReleaseComObject(effectiveRange);
                     }
                 }
                 finally

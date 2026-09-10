@@ -1071,6 +1071,7 @@
   "AiTranslate_ColTranslated": "AI翻訳結果（直接編集可能）",
   "AiTranslate_TabGlossary": "📖 用語集 (Glossary)",
   "AiTranslate_GlossarySubtitle": "プロジェクト固有の専門用語・定訳を登録し、AI翻訳時に強制適用します。",
+  "AiTranslate_GlossarySearchTip": "用語検索（日本語、ベトナム語、備考）...",
   "AiTranslate_BtnAddTerm": "➕ 用語を追加",
   "AiTranslate_BtnDeleteTerm": "🗑️ 選択行を削除",
   "AiTranslate_BtnImportCsv": "📂 CSVインポート",
