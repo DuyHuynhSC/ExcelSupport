@@ -166,6 +166,59 @@ namespace ExcelSupport.Services
             }
         }
 
+        public static async Task<string> SendChatMessagesAsync(AiConfig config, System.Collections.Generic.IEnumerable<(string role, string content)> messages, string? systemPrompt = null)
+        {
+            string baseUrl = NormalizeBaseUrl(config.BaseUrl);
+            string endpoint = $"{baseUrl}/chat/completions";
+            string model = string.IsNullOrWhiteSpace(config.ModelName) ? "qwen-3.6" : config.ModelName.Trim();
+
+            var messagesArray = new JArray();
+            if (!string.IsNullOrWhiteSpace(systemPrompt))
+            {
+                messagesArray.Add(new JObject { ["role"] = "system", ["content"] = systemPrompt });
+            }
+
+            foreach (var (role, content) in messages)
+            {
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    messagesArray.Add(new JObject { ["role"] = role, ["content"] = content });
+                }
+            }
+
+            var payload = new JObject
+            {
+                ["model"] = model,
+                ["messages"] = messagesArray
+            };
+
+            if (IsReasoningModel(model))
+            {
+                payload["max_completion_tokens"] = config.MaxTokens;
+            }
+            else
+            {
+                payload["max_tokens"] = config.MaxTokens;
+                payload["temperature"] = config.Temperature;
+            }
+
+            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(Math.Max(10, config.TimeoutSeconds))))
+            {
+                using (var response = await SendWithFallbackAsync(endpoint, config.ApiKey, payload, cts.Token))
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string errDetail = ParseErrorMessage(responseBody) ?? response.ReasonPhrase ?? "Lỗi API";
+                        throw new InvalidOperationException($"Lỗi từ máy chủ AI (HTTP {(int)response.StatusCode}): {errDetail}");
+                    }
+
+                    return ExtractAssistantReply(responseBody) ?? string.Empty;
+                }
+            }
+        }
+
         private static async Task<HttpResponseMessage> SendWithFallbackAsync(string endpoint, string? apiKey, JObject payload, CancellationToken token)
         {
             var response = await SendSingleRequestAsync(endpoint, apiKey, payload, token);
