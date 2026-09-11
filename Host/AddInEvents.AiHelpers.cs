@@ -389,33 +389,28 @@ namespace ExcelSupport
         {
             if (string.IsNullOrEmpty(fullText)) return;
 
+            Range? singleCell = null;
             try
             {
-                int len = fullText.Length;
-                if (len == 0) return;
-
-                int charCount = len;
+                // Ensure single top-left cell for merged cells
                 try
                 {
-                    dynamic dynCell = cell;
-                    var charsObj = dynCell.Characters;
-                    if (charsObj != null)
-                    {
-                        int count = Convert.ToInt32(charsObj.Count);
-                        if (count > 0) charCount = Math.Min(count, len);
-                        Marshal.ReleaseComObject(charsObj);
-                    }
+                    singleCell = cell.Cells[1, 1] as Range;
                 }
                 catch { }
+                Range targetCell = singleCell ?? cell;
+
+                int len = fullText.Length;
+                if (len == 0) return;
 
                 var runs = new List<TextRunModel>();
                 TextRunModel? currentRun = null;
                 bool hasAnySpecialFormat = false;
 
-                for (int i = 1; i <= charCount; i++)
+                for (int i = 1; i <= len; i++)
                 {
-                    object? chObj = null;
-                    object? chFontObj = null;
+                    Characters? ch = null;
+                    Microsoft.Office.Interop.Excel.Font? chFont = null;
                     bool isStrike = false;
                     bool isBold = false;
                     bool isItalic = false;
@@ -423,27 +418,24 @@ namespace ExcelSupport
 
                     try
                     {
-                        dynamic dynCell = cell;
-                        chObj = dynCell.Characters[i, 1];
-                        if (chObj != null)
+                        ch = targetCell.get_Characters(i, 1);
+                        if (ch != null)
                         {
-                            dynamic ch = chObj;
-                            chFontObj = ch.Font;
-                            if (chFontObj != null)
+                            chFont = ch.Font;
+                            if (chFont != null)
                             {
-                                dynamic chFont = chFontObj;
                                 isStrike = IsComBoolTrue(chFont.Strikethrough);
                                 isBold = IsComBoolTrue(chFont.Bold);
                                 isItalic = IsComBoolTrue(chFont.Italic);
-                                colorHex = ParseOleColor(chFont.Color);
+                                colorHex = ParseOleColor(chFont.Color, chFont.ColorIndex);
                             }
                         }
                     }
                     catch { }
                     finally
                     {
-                        if (chFontObj != null) Marshal.ReleaseComObject(chFontObj);
-                        if (chObj != null) Marshal.ReleaseComObject(chObj);
+                        if (chFont != null) Marshal.ReleaseComObject(chFont);
+                        if (ch != null) Marshal.ReleaseComObject(ch);
                     }
 
                     if (isStrike || isBold || isItalic || colorHex != null)
@@ -475,19 +467,6 @@ namespace ExcelSupport
                     }
                 }
 
-                if (charCount < len)
-                {
-                    string remaining = fullText.Substring(charCount);
-                    if (currentRun != null && !currentRun.IsStrikethrough && !currentRun.IsBold && !currentRun.IsItalic && currentRun.ColorHex == null)
-                    {
-                        currentRun.Text += remaining;
-                    }
-                    else
-                    {
-                        runs.Add(new TextRunModel { Text = remaining });
-                    }
-                }
-
                 if (hasAnySpecialFormat && runs.Count > 0)
                 {
                     item.FormattedRuns = runs;
@@ -496,6 +475,13 @@ namespace ExcelSupport
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ExtractCellFormattedRuns error: {ex.Message}");
+            }
+            finally
+            {
+                if (singleCell != null && !ReferenceEquals(singleCell, cell))
+                {
+                    Marshal.ReleaseComObject(singleCell);
+                }
             }
         }
 
@@ -510,8 +496,20 @@ namespace ExcelSupport
             return false;
         }
 
-        private static string? ParseOleColor(object? colorVal)
+        private static string? ParseOleColor(object? colorVal, object? colorIndexVal = null)
         {
+            try
+            {
+                if (colorIndexVal != null && colorIndexVal != DBNull.Value)
+                {
+                    int cIndex = Convert.ToInt32(colorIndexVal);
+                    if (cIndex == 3) return "#FF0000"; // Red
+                    if (cIndex == 5) return "#0000FF"; // Blue
+                    if (cIndex == 10) return "#008000"; // Green
+                }
+            }
+            catch { }
+
             if (colorVal == null || colorVal == DBNull.Value) return null;
             try
             {
