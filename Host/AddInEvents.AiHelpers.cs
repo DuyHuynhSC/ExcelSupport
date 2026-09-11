@@ -174,6 +174,290 @@ namespace ExcelSupport
             }
         }
 
+        public string GetSheetChatContext(bool selectionOnly, int maxRows = 100, int maxCols = 25)
+        {
+            if (_excelApp == null) return string.Empty;
+
+            _Worksheet? ws = null;
+            Range? selection = null;
+            Range? usedRange = null;
+            Range? effectiveRange = null;
+            try
+            {
+                ws = _excelApp.ActiveSheet as _Worksheet;
+                if (ws == null) return string.Empty;
+
+                var wb = ws.Parent as Workbook;
+                string wbName = wb?.Name ?? string.Empty;
+                string wsName = ws.Name;
+                if (wb != null) Marshal.ReleaseComObject(wb);
+
+                var sb = new StringBuilder();
+                sb.AppendLine("[NGỮ CẢNH BẢNG TÍNH EXCEL]:");
+                sb.AppendLine($"- Workbook: {wbName}");
+                sb.AppendLine($"- Sheet: {wsName}");
+
+                // Ô ActiveCell
+                Range? activeCell = null;
+                try
+                {
+                    activeCell = _excelApp.ActiveCell;
+                    if (activeCell != null)
+                    {
+                        string cellAddr = activeCell.Address[false, false];
+                        string cellVal = activeCell.Text?.ToString() ?? string.Empty;
+                        string cellFormula = activeCell.Formula?.ToString() ?? string.Empty;
+                        sb.AppendLine($"- Ô đang chọn (ActiveCell): {cellAddr} (Giá trị: \"{cellVal}\", Công thức: \"{cellFormula}\")");
+                    }
+                }
+                catch { }
+                finally
+                {
+                    if (activeCell != null) Marshal.ReleaseComObject(activeCell);
+                }
+
+                selection = _excelApp.Selection as Range;
+                usedRange = ws.UsedRange;
+
+                bool hasSpecificSelection = false;
+                if (selection != null)
+                {
+                    try
+                    {
+                        long cellCount = 0;
+                        try { cellCount = Convert.ToInt64(selection.CountLarge); }
+                        catch { cellCount = selection.Count; }
+
+                        if (cellCount > 1)
+                        {
+                            hasSpecificSelection = true;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (selectionOnly || hasSpecificSelection)
+                {
+                    if (selection != null)
+                    {
+                        // Giới hạn trong UsedRange để tránh tràn khi chọn cả cột
+                        if (usedRange != null)
+                        {
+                            try
+                            {
+                                effectiveRange = _excelApp.Intersect(selection, usedRange);
+                            }
+                            catch
+                            {
+                                effectiveRange = selection;
+                            }
+                        }
+                        else
+                        {
+                            effectiveRange = selection;
+                        }
+
+                        if (effectiveRange != null)
+                        {
+                            string selAddr = effectiveRange.Address[false, false];
+                            sb.AppendLine($"\n[DỮ LIỆU VÙNG ĐƯỢC CHỌN ({selAddr})]:");
+                            AppendRangeDataToMarkdown(sb, effectiveRange, maxRows, maxCols);
+                            return sb.ToString();
+                        }
+                    }
+                }
+
+                // Chế độ toàn bộ Sheet (UsedRange đại diện)
+                if (usedRange != null && usedRange.Rows.Count > 0 && usedRange.Columns.Count > 0)
+                {
+                    int totalRows = usedRange.Rows.Count;
+                    int totalCols = usedRange.Columns.Count;
+                    string usedAddr = usedRange.Address[false, false];
+                    sb.AppendLine($"- Tổng kích thước vùng dữ liệu: {usedAddr} ({totalRows:N0} dòng x {totalCols} cột)");
+                    sb.AppendLine($"\n[DỮ LIỆU ĐẠI DIỆN CỦA SHEET (Tối đa {Math.Min(totalRows, maxRows)} dòng đầu / {Math.Min(totalCols, maxCols)} cột)]:");
+                    AppendRangeDataToMarkdown(sb, usedRange, maxRows, maxCols);
+                }
+                else
+                {
+                    sb.AppendLine("(Bảng tính hiện tại chưa có dữ liệu)");
+                }
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetSheetChatContext error: {ex.Message}");
+                return string.Empty;
+            }
+            finally
+            {
+                if (effectiveRange != null && !ReferenceEquals(effectiveRange, selection)) Marshal.ReleaseComObject(effectiveRange);
+                if (selection != null) Marshal.ReleaseComObject(selection);
+                if (usedRange != null) Marshal.ReleaseComObject(usedRange);
+                if (ws != null) Marshal.ReleaseComObject(ws);
+            }
+        }
+
+        private void AppendRangeDataToMarkdown(StringBuilder sb, Range range, int maxRows, int maxCols)
+        {
+            int rowCount = Math.Min(range.Rows.Count, maxRows);
+            int colCount = Math.Min(range.Columns.Count, maxCols);
+            int startRow = range.Row;
+            int startCol = range.Column;
+
+            if (range.Rows.Count == 1 && range.Columns.Count == 1)
+            {
+                string addr = ConvertColIndexToLetter(startCol) + startRow;
+                string val = range.Text?.ToString() ?? string.Empty;
+                sb.AppendLine("| Vị trí | Giá trị |");
+                sb.AppendLine("|---|---|");
+                sb.AppendLine($"| {addr} | {val} |");
+                return;
+            }
+
+            object? rawVal = null;
+            try
+            {
+                Range? subRange = null;
+                try
+                {
+                    var ws = range.Worksheet;
+                    subRange = ws.Range[ws.Cells[startRow, startCol], ws.Cells[startRow + rowCount - 1, startCol + colCount - 1]];
+                    rawVal = subRange?.Value2;
+                }
+                finally
+                {
+                    if (subRange != null) Marshal.ReleaseComObject(subRange);
+                }
+            }
+            catch
+            {
+                rawVal = range.Value2;
+            }
+
+            if (rawVal is object[,] grid)
+            {
+                int rMin = grid.GetLowerBound(0);
+                int rMax = Math.Min(grid.GetUpperBound(0), rMin + rowCount - 1);
+                int cMin = grid.GetLowerBound(1);
+                int cMax = Math.Min(grid.GetUpperBound(1), cMin + colCount - 1);
+
+                sb.Append("| Tọa độ ");
+                for (int c = cMin; c <= cMax; c++)
+                {
+                    int colIndex = startCol + (c - cMin);
+                    sb.Append($"| {ConvertColIndexToLetter(colIndex)} ");
+                }
+                sb.AppendLine("|");
+
+                sb.Append("|---");
+                for (int c = cMin; c <= cMax; c++)
+                {
+                    sb.Append("|---");
+                }
+                sb.AppendLine("|");
+
+                for (int r = rMin; r <= rMax; r++)
+                {
+                    int rowIndex = startRow + (r - rMin);
+                    sb.Append($"| **{rowIndex}** ");
+                    for (int c = cMin; c <= cMax; c++)
+                    {
+                        object? cellVal = grid[r, c];
+                        string text = cellVal?.ToString()?.Trim() ?? string.Empty;
+                        text = text.Replace("|", "\\|").Replace("\r\n", " ").Replace("\n", " ");
+                        if (text.Length > 60) text = text.Substring(0, 57) + "...";
+                        sb.Append($"| {text} ");
+                    }
+                    sb.AppendLine("|");
+                }
+
+                if (range.Rows.Count > maxRows)
+                {
+                    sb.AppendLine($"*(...Còn {range.Rows.Count - maxRows:N0} dòng nữa phía dưới được ẩn bớt để tối ưu tốc độ)*");
+                }
+            }
+        }
+
+        public bool NavigateToCell(string cellAddressOrRange)
+        {
+            if (_excelApp == null || string.IsNullOrWhiteSpace(cellAddressOrRange)) return false;
+
+            try
+            {
+                string raw = cellAddressOrRange.Trim().Trim('[', ']');
+                if (raw.StartsWith("ô ", StringComparison.OrdinalIgnoreCase) || raw.StartsWith("ô: ", StringComparison.OrdinalIgnoreCase))
+                {
+                    raw = raw.Substring(raw.IndexOf(' ') + 1).Trim();
+                }
+
+                string targetSheetName = string.Empty;
+                string cleanAddr = raw;
+
+                if (raw.Contains("!"))
+                {
+                    int bangIdx = raw.LastIndexOf('!');
+                    targetSheetName = raw.Substring(0, bangIdx).Trim().Trim('\'');
+                    cleanAddr = raw.Substring(bangIdx + 1).Trim();
+                }
+
+                ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
+                {
+                    try
+                    {
+                        dynamic app = _excelApp;
+                        dynamic? wb = app.ActiveWorkbook;
+                        if (wb == null) return;
+
+                        dynamic? ws = null;
+                        if (!string.IsNullOrEmpty(targetSheetName))
+                        {
+                            try { ws = wb.Worksheets[targetSheetName]; } catch { }
+                            if (ws == null)
+                            {
+                                try { ws = wb.Sheets[targetSheetName]; } catch { }
+                            }
+                        }
+                        else
+                        {
+                            ws = app.ActiveSheet;
+                        }
+
+                        if (ws != null)
+                        {
+                            try
+                            {
+                                if ((int)ws.Visible != (int)XlSheetVisibility.xlSheetVisible)
+                                {
+                                    ws.Visible = (int)XlSheetVisibility.xlSheetVisible;
+                                }
+                            }
+                            catch { }
+
+                            try { ws.Activate(); } catch { }
+
+                            dynamic targetRange = ws.Range[cleanAddr];
+                            if (targetRange != null)
+                            {
+                                app.Goto(targetRange, true);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"NavigateToCell QueueAsMacro error: {ex.Message}");
+                    }
+                });
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"NavigateToCell error: {ex.Message}");
+                return false;
+            }
+        }
+
         private static string ConvertColIndexToLetter(int colIndex)
         {
             string colLetter = string.Empty;
