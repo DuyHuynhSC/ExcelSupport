@@ -207,6 +207,7 @@ namespace ExcelSupport.Views
                 {
                     if (i < _translationItems.Count)
                     {
+                        _translationItems[i].TranslatedRuns = translatedList[i].TranslatedRuns;
                         _translationItems[i].TranslatedText = translatedList[i].TranslatedText;
                     }
                 }

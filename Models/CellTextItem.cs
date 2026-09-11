@@ -18,8 +18,33 @@ namespace ExcelSupport.Models
         public int Column { get; set; }
         public string Address { get; set; } = string.Empty;
         public string OriginalText { get; set; } = string.Empty;
-        public List<TextRunModel>? FormattedRuns { get; set; }
-        public List<TextRunModel>? TranslatedRuns { get; set; }
+        private List<TextRunModel>? _formattedRuns;
+        public List<TextRunModel>? FormattedRuns
+        {
+            get => _formattedRuns;
+            set
+            {
+                if (_formattedRuns != value)
+                {
+                    _formattedRuns = value;
+                    OnPropertyChanged(nameof(FormattedRuns));
+                }
+            }
+        }
+
+        private List<TextRunModel>? _translatedRuns;
+        public List<TextRunModel>? TranslatedRuns
+        {
+            get => _translatedRuns;
+            set
+            {
+                if (_translatedRuns != value)
+                {
+                    _translatedRuns = value;
+                    OnPropertyChanged(nameof(TranslatedRuns));
+                }
+            }
+        }
 
         private string _translatedText = string.Empty;
         public string TranslatedText

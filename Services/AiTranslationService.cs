@@ -224,19 +224,11 @@ namespace ExcelSupport.Services
             sb.AppendLine("- Không tự ý thêm bớt nội dung hay chèn ý kiến cá nhân.");
             sb.AppendLine("- Đảm bảo câu văn dịch mượt mà, đúng ngữ pháp của ngôn ngữ đích.");
             sb.AppendLine();
-            sb.AppendLine("[QUY TẮC BẢO TOÀN ĐỊNH DẠNG ĐẶC BIỆT - RICH TEXT TAGS]:");
-            sb.AppendLine("- Nếu văn bản nguồn chứa các thẻ định dạng như `<s color=\"...\">...</s>` hoặc `<s>...</s>` (gạch ngang / sửa đổi), `<color hex=\"...\">...</color>` (màu chữ), `<b>...</b>` (in đậm), `<i>...</i>` (in nghiêng), bạn BẮT BUỘC PHẢI GIỮ NGUYÊN các thẻ này và bao bọc đúng phần nội dung dịch tương ứng.");
-            sb.AppendLine("- Ví dụ nguồn: `処理が正常<s color=\"#FF0000\">に終了した後</s>、変更を行う` ➔ Bản dịch: `Xử lý bình thường<s color=\"#FF0000\">sau khi kết thúc</s>, thực hiện thay đổi`.");
-            sb.AppendLine("- Tuyệt đối không xóa thẻ hoặc tự ý thêm thẻ nếu nguồn không có.");
-
-            // Glossary
-            if (!string.IsNullOrWhiteSpace(glossarySection))
-            {
-                sb.AppendLine();
-                sb.AppendLine(glossarySection);
-            }
-
-            // Format constraints
+            sb.AppendLine("[QUY TẮC BẢO TOÀN ĐỊNH DẠNG ĐẶC BIỆT - BẮT BUỘC]:");
+            sb.AppendLine("- Nếu văn bản nguồn chứa các thẻ định dạng HTML/XML như `<s color=\"...\">...</s>` hoặc `<s>...</s>` (gạch ngang / sửa đổi), `<color hex=\"...\">...</color>` (chữ màu đỏ/màu khác), `<b>...</b>` (in đậm), `<i>...</i>` (in nghiêng), bạn BẮT BUỘC PHẢI GIỮ NGUYÊN các thẻ này và bao bọc đúng phần nội dung dịch tương ứng.");
+            sb.AppendLine("- Ví dụ nguồn: `・<s color=\"#FF0000\">画面.実行時パスによりCentral側のファイル出力を行う。</s>` ➔ Bản dịch: `・<s color=\"#FF0000\">Thực hiện output file phía Central theo đường dẫn thời gian chạy màn hình.</s>`");
+            sb.AppendLine("- Ví dụ nguồn: `・<color hex=\"#FF0000\">Local → Centralでファイル出力パスのチェックを行う。</color>` ➔ Bản dịch: `・<color hex=\"#FF0000\">Thực hiện kiểm tra đường dẫn output file từ Local → Central.</color>`");
+            sb.AppendLine("- Tuyệt đối không xóa thẻ, không làm mất thuộc tính màu `color=\"...\"`, `hex=\"...\"`, không dịch tên thẻ.");
             sb.AppendLine();
             sb.AppendLine("ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:");
             sb.AppendLine("Trả về DUY NHẤT một mảng JSON hợp lệ, không kèm giải thích, không bọc trong markdown hay bất kỳ văn bản nào ngoài JSON:");
@@ -360,74 +352,203 @@ namespace ExcelSupport.Services
                 return (taggedText, null);
             }
 
-            var pattern = @"<(?<tag>s|b|i|del|color|red|green|blue)(?:\s+(?:color|hex)=[""'](?<color>[^""']+)[""'])*>(?<content>.*?)</\k<tag>>";
-            var matches = Regex.Matches(taggedText, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-            if (matches.Count == 0)
-            {
-                return (taggedText, null);
-            }
-
             var runs = new List<TextRunModel>();
             var sbPlain = new StringBuilder();
-            int lastIdx = 0;
 
-            foreach (Match m in matches)
+            int boldDepth = 0;
+            int italicDepth = 0;
+            int strikeDepth = 0;
+            var colorStack = new Stack<string>();
+
+            int i = 0;
+            int len = taggedText.Length;
+            TextRunModel? currentRun = null;
+            bool hasAnySpecial = false;
+
+            while (i < len)
             {
-                if (m.Index > lastIdx)
+                if (taggedText[i] == '<')
                 {
-                    string before = taggedText.Substring(lastIdx, m.Index - lastIdx);
-                    runs.Add(new TextRunModel { Text = before });
-                    sbPlain.Append(before);
+                    int closeIdx = taggedText.IndexOf('>', i);
+                    if (closeIdx > i)
+                    {
+                        string tagContent = taggedText.Substring(i + 1, closeIdx - i - 1).Trim();
+                        if (TryProcessTag(tagContent, ref boldDepth, ref italicDepth, ref strikeDepth, colorStack, out bool isTag))
+                        {
+                            if (isTag)
+                            {
+                                i = closeIdx + 1;
+                                continue;
+                            }
+                        }
+                    }
                 }
 
-                string tagName = m.Groups["tag"].Value.ToLowerInvariant();
-                string colorAttr = m.Groups["color"].Value;
-                string content = m.Groups["content"].Value;
+                char c = taggedText[i];
+                sbPlain.Append(c);
 
-                bool isStrike = tagName == "s" || tagName == "del";
-                bool isBold = tagName == "b";
-                bool isItalic = tagName == "i";
-                string? colorHex = null;
-
-                if (!string.IsNullOrEmpty(colorAttr))
+                bool isB = boldDepth > 0;
+                bool isI = italicDepth > 0;
+                bool isS = strikeDepth > 0;
+                string? curColor = null;
+                if (colorStack.Count > 0)
                 {
-                    colorHex = NormalizeColorHex(colorAttr);
-                }
-                else if (tagName == "red")
-                {
-                    colorHex = "#FF0000";
-                }
-                else if (tagName == "blue")
-                {
-                    colorHex = "#0000FF";
-                }
-                else if (tagName == "green")
-                {
-                    colorHex = "#008000";
+                    string topColor = colorStack.Peek();
+                    if (!string.IsNullOrEmpty(topColor))
+                    {
+                        curColor = topColor.StartsWith("s:") ? topColor.Substring(2) : topColor;
+                    }
                 }
 
-                runs.Add(new TextRunModel
+                if (isB || isI || isS || curColor != null)
                 {
-                    Text = content,
-                    IsStrikethrough = isStrike,
-                    IsBold = isBold,
-                    IsItalic = isItalic,
-                    ColorHex = colorHex
-                });
-                sbPlain.Append(content);
+                    hasAnySpecial = true;
+                }
 
-                lastIdx = m.Index + m.Length;
+                if (currentRun != null &&
+                    currentRun.IsBold == isB &&
+                    currentRun.IsItalic == isI &&
+                    currentRun.IsStrikethrough == isS &&
+                    string.Equals(currentRun.ColorHex, curColor, StringComparison.OrdinalIgnoreCase))
+                {
+                    currentRun.Text += c;
+                }
+                else
+                {
+                    currentRun = new TextRunModel
+                    {
+                        Text = c.ToString(),
+                        IsBold = isB,
+                        IsItalic = isI,
+                        IsStrikethrough = isS,
+                        ColorHex = curColor
+                    };
+                    runs.Add(currentRun);
+                }
+
+                i++;
             }
 
-            if (lastIdx < taggedText.Length)
+            if (!hasAnySpecial || runs.Count == 0)
             {
-                string after = taggedText.Substring(lastIdx);
-                runs.Add(new TextRunModel { Text = after });
-                sbPlain.Append(after);
+                return (sbPlain.ToString(), null);
             }
 
             return (sbPlain.ToString(), runs);
+        }
+
+        private static bool TryProcessTag(
+            string tagContent,
+            ref int boldDepth,
+            ref int italicDepth,
+            ref int strikeDepth,
+            Stack<string> colorStack,
+            out bool isTag)
+        {
+            isTag = false;
+            if (string.IsNullOrWhiteSpace(tagContent)) return false;
+
+            bool isClosing = tagContent.StartsWith("/");
+            string trimmed = isClosing ? tagContent.Substring(1).Trim() : tagContent;
+
+            string tagName = trimmed;
+            int spaceIdx = trimmed.IndexOfAny(new[] { ' ', '\t', '\r', '\n' });
+            if (spaceIdx > 0)
+            {
+                tagName = trimmed.Substring(0, spaceIdx);
+            }
+            tagName = tagName.ToLowerInvariant();
+
+            if (tagName == "b" || tagName == "strong")
+            {
+                isTag = true;
+                if (isClosing) boldDepth = Math.Max(0, boldDepth - 1);
+                else boldDepth++;
+                return true;
+            }
+            if (tagName == "i" || tagName == "em")
+            {
+                isTag = true;
+                if (isClosing) italicDepth = Math.Max(0, italicDepth - 1);
+                else italicDepth++;
+                return true;
+            }
+            if (tagName == "s" || tagName == "del" || tagName == "strike")
+            {
+                isTag = true;
+                if (isClosing)
+                {
+                    strikeDepth = Math.Max(0, strikeDepth - 1);
+                    if (colorStack.Count > 0 && colorStack.Peek().StartsWith("s:"))
+                    {
+                        colorStack.Pop();
+                    }
+                }
+                else
+                {
+                    strikeDepth++;
+                    string? color = ExtractColorAttribute(trimmed);
+                    if (color != null)
+                    {
+                        colorStack.Push("s:" + color);
+                    }
+                }
+                return true;
+            }
+            if (tagName == "color" || tagName == "font" || tagName == "span")
+            {
+                isTag = true;
+                if (isClosing)
+                {
+                    if (colorStack.Count > 0) colorStack.Pop();
+                }
+                else
+                {
+                    string? color = ExtractColorAttribute(trimmed);
+                    if (color != null)
+                    {
+                        colorStack.Push(color);
+                    }
+                    else
+                    {
+                        colorStack.Push(colorStack.Count > 0 ? colorStack.Peek() : "");
+                    }
+                }
+                return true;
+            }
+            if (tagName == "red")
+            {
+                isTag = true;
+                if (isClosing) { if (colorStack.Count > 0) colorStack.Pop(); }
+                else colorStack.Push("#FF0000");
+                return true;
+            }
+            if (tagName == "blue")
+            {
+                isTag = true;
+                if (isClosing) { if (colorStack.Count > 0) colorStack.Pop(); }
+                else colorStack.Push("#0000FF");
+                return true;
+            }
+            if (tagName == "green")
+            {
+                isTag = true;
+                if (isClosing) { if (colorStack.Count > 0) colorStack.Pop(); }
+                else colorStack.Push("#008000");
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string? ExtractColorAttribute(string tag)
+        {
+            var m = Regex.Match(tag, @"(?:color|hex)\s*=\s*[""']?([^""'\s>]+)[""']?", RegexOptions.IgnoreCase);
+            if (m.Success)
+            {
+                return NormalizeColorHex(m.Groups[1].Value);
+            }
+            return null;
         }
 
         private static string NormalizeColorHex(string color)

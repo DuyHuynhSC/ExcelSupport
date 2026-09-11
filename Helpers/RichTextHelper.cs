@@ -26,13 +26,51 @@ namespace ExcelSupport.Helpers
             obj.SetValue(FormattedItemProperty, value);
         }
 
+        private static readonly DependencyProperty FormattedHandlerProperty =
+            DependencyProperty.RegisterAttached(
+                "FormattedHandler",
+                typeof(System.ComponentModel.PropertyChangedEventHandler),
+                typeof(RichTextHelper),
+                new PropertyMetadata(null));
+
         private static void OnFormattedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not TextBlock textBlock) return;
 
-            textBlock.Inlines.Clear();
+            if (e.OldValue is CellTextItem oldItem)
+            {
+                if (textBlock.GetValue(FormattedHandlerProperty) is System.ComponentModel.PropertyChangedEventHandler oldHandler)
+                {
+                    oldItem.PropertyChanged -= oldHandler;
+                    textBlock.ClearValue(FormattedHandlerProperty);
+                }
+            }
 
-            if (e.NewValue is not CellTextItem item) return;
+            if (e.NewValue is CellTextItem newItem)
+            {
+                System.ComponentModel.PropertyChangedEventHandler handler = (s, ev) =>
+                {
+                    if (ev.PropertyName == nameof(CellTextItem.FormattedRuns) ||
+                        ev.PropertyName == nameof(CellTextItem.OriginalText) ||
+                        string.IsNullOrEmpty(ev.PropertyName))
+                    {
+                        RenderFormattedInlines(textBlock, newItem);
+                    }
+                };
+                textBlock.SetValue(FormattedHandlerProperty, handler);
+                newItem.PropertyChanged += handler;
+
+                RenderFormattedInlines(textBlock, newItem);
+            }
+            else
+            {
+                textBlock.Inlines.Clear();
+            }
+        }
+
+        private static void RenderFormattedInlines(TextBlock textBlock, CellTextItem item)
+        {
+            textBlock.Inlines.Clear();
 
             if (item.FormattedRuns != null && item.FormattedRuns.Count > 0)
             {
@@ -89,13 +127,51 @@ namespace ExcelSupport.Helpers
             obj.SetValue(TranslatedItemProperty, value);
         }
 
+        private static readonly DependencyProperty TranslatedHandlerProperty =
+            DependencyProperty.RegisterAttached(
+                "TranslatedHandler",
+                typeof(System.ComponentModel.PropertyChangedEventHandler),
+                typeof(RichTextHelper),
+                new PropertyMetadata(null));
+
         private static void OnTranslatedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not TextBlock textBlock) return;
 
-            textBlock.Inlines.Clear();
+            if (e.OldValue is CellTextItem oldItem)
+            {
+                if (textBlock.GetValue(TranslatedHandlerProperty) is System.ComponentModel.PropertyChangedEventHandler oldHandler)
+                {
+                    oldItem.PropertyChanged -= oldHandler;
+                    textBlock.ClearValue(TranslatedHandlerProperty);
+                }
+            }
 
-            if (e.NewValue is not CellTextItem item) return;
+            if (e.NewValue is CellTextItem newItem)
+            {
+                System.ComponentModel.PropertyChangedEventHandler handler = (s, ev) =>
+                {
+                    if (ev.PropertyName == nameof(CellTextItem.TranslatedRuns) ||
+                        ev.PropertyName == nameof(CellTextItem.TranslatedText) ||
+                        string.IsNullOrEmpty(ev.PropertyName))
+                    {
+                        RenderTranslatedInlines(textBlock, newItem);
+                    }
+                };
+                textBlock.SetValue(TranslatedHandlerProperty, handler);
+                newItem.PropertyChanged += handler;
+
+                RenderTranslatedInlines(textBlock, newItem);
+            }
+            else
+            {
+                textBlock.Inlines.Clear();
+            }
+        }
+
+        private static void RenderTranslatedInlines(TextBlock textBlock, CellTextItem item)
+        {
+            textBlock.Inlines.Clear();
 
             if (item.TranslatedRuns != null && item.TranslatedRuns.Count > 0)
             {
