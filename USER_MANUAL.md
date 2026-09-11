@@ -26,6 +26,7 @@
 20. [Bác Sĩ Công Thức & Sửa Lỗi Tự Động (AI Formula Doctor)](#20-bác-sĩ-công-thức--sửa-lỗi-tự-động-ai-formula-doctor)
 21. [Sao Lưu & Khôi Phục Dữ Liệu Tức Thì (Sheet Snapshot & Instant Undo)](#21-sao-lưu--khôi-phục-dữ-liệu-tức-thì-sheet-snapshot--instant-undo)
 22. [Bộ Tiện Ích Chuyên Sâu IT / Khách Hàng Nhật Bản (Japan & IT Tools)](#22-bộ-tiện-ích-chuyên-sâu-it--khách-hàng-nhật-bản-japan--it-tools)
+23. [Bảng Lệnh Nhanh — Quick Command Palette (Ctrl + Shift + P)](#23-bảng-lệnh-nhanh--quick-command-palette-ctrl--shift--p)
 
 ---
 
@@ -436,6 +437,31 @@ Nhóm công cụ đặc thù trên thanh Ribbon (`Tiện Ích Nhật & IT` / `Ja
   - **Căn lề thông minh (Smart Alignment):** Tự động nhận diện cột số và căn phải (`---:`), cột chữ căn trái (`:---`).
   - **Xử lý xuống dòng an toàn:** Tự động chuyển đổi các ký tự xuống dòng `\n` trong ô thành thẻ `<br>` để bảo toàn cấu trúc bảng Markdown.
   - **Hộp thoại Tabbed Preview:** Xem trước giao diện bảng Markdown và HTML trực tiếp, kèm nút **`📋 Copy Markdown`** và **`📋 Copy HTML`** 1-Click sao chép vào Clipboard.
+
+---
+
+## 23. Bảng Lệnh Nhanh — Quick Command Palette (Ctrl + Shift + P)
+
+### 23.1 Tổng Quan
+**Quick Command Palette** mang phong cách tìm kiếm & kích hoạt lệnh siêu tốc của **VS Code / Raycast / Spotlight** trực tiếp vào Microsoft Excel. Thay vì phải tìm kiếm nút bấm trên 8 nhóm Ribbon hay ghi nhớ hàng chục phím tắt khác nhau, bạn có thể gọi bất kỳ tính năng nào chỉ trong 1 thao tác.
+
+* **Phím Tắt Toàn Cục:** **`Ctrl + Shift + P`** (hoặc bấm nút **`⚡ Command Palette`** tại nhóm **Điều Hướng** trên Ribbon).
+
+### 23.2 Tính Năng Nổi Bật
+1. **Tìm Kiếm Mờ Đa Ngữ (Smart Fuzzy Search):**
+   - Hỗ trợ gõ tiếng Việt không dấu: gõ `dich` $\rightarrow$ gợi ý ngay `Dịch Nhanh AI`, `loc` $\rightarrow$ `Bộ Lọc Nâng Cao`, `so sanh` $\rightarrow$ `So Sánh 2 File Excel`, `thuoc` $\rightarrow$ `Thước Ngắm`.
+   - Hỗ trợ từ khóa tiếng Anh & Nhật: `translate`, `compare`, `oracle`, `zenkaku`, `katakana`, `merge`, `clean`, `snapshot`, `doctor`.
+   - Hỗ trợ gõ từ viết tắt (Acronym): `af` $\rightarrow$ Advanced Filter, `df` $\rightarrow$ Duplicate Finder, `toc` $\rightarrow$ Table of Contents.
+   - Hỗ trợ tìm theo phím tắt: gõ `f3`, `ctrl+shift+t`, `ctrl+shift+q`.
+2. **Lịch Sử Lệnh Gần Đây (Recent Commands):**
+   - Khi mở bảng lệnh, các tính năng bạn vừa sử dụng gần nhất sẽ tự động được ưu tiên đưa lên đầu danh sách kèm huy hiệu `🕒 Gần đây`.
+   - Lịch sử được lưu trữ liên phiên làm việc để phục vụ thói quen sử dụng hàng ngày của bạn.
+3. **Điều Hướng Bàn Phím Siêu Tốc:**
+   - **`↑` / `↓`:** Di chuyển con trỏ duyệt danh sách lệnh.
+   - **`Enter`:** Kích hoạt ngay tính năng đang chọn và đóng bảng lệnh.
+   - **`Esc`:** Đóng nhanh bảng lệnh hoặc nhấp chuột ra ngoài cửa sổ Excel.
+4. **Giao Diện Hiện Đại Fluent Slate:**
+   - Tự động tương thích hoàn hảo với cả **Dark Theme** (Nền Slate đậm, bóng đổ sâu) và **Light Theme** (Trắng tinh tế, thanh thoát).
 
 ---
 

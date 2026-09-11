@@ -14,6 +14,14 @@
                         getPressed='GetTaskPanePressed' 
                         onAction='OnToggleTaskPane' />
           
+          <button id='btnCommandPalette'
+                  size='large'
+                  image='command_palette_icon'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnCommandPalette' />
+
           <button id='btnRefreshTree'
                   size='large'
                   imageMso='Refresh' 

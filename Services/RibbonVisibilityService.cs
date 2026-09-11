@@ -33,6 +33,9 @@ namespace ExcelSupport.Services
 
             var list = new List<RibbonControlMetadata>
             {
+                // Group 1: Bảng điều khiển chính (grpNavExplorer)
+                new() { ControlId = "btnCommandPalette", GroupId = "grpNavExplorer", GroupNameKey = "grpNavExplorer", NameKey = "btnCommandPalette", IconEmoji = "⚡" },
+
                 // Group 4: Xử Lý Dữ Liệu (grpDataTools)
                 new() { ControlId = "btnAdvancedFilter", GroupId = "grpDataTools", GroupNameKey = "grpDataTools", NameKey = "btnAdvancedFilter", IconEmoji = "⚡" },
                 new() { ControlId = "splitFilteredCopyPaste", GroupId = "grpDataTools", GroupNameKey = "grpDataTools", NameKey = "btnFilteredCopyPasteWizard", IconEmoji = "📋" },

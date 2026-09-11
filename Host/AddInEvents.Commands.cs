@@ -127,4 +127,20 @@ namespace ExcelSupport
             });
         }
     }
+
+    public static class CommandPaletteCommands
+    {
+        [ExcelCommand(ShortCut = "^+P", Name = "QuickCommandPaletteCommand")]
+        public static void OpenQuickCommandPalette()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    QuickCommandPaletteDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                }
+                catch { }
+            });
+        }
+    }
 }

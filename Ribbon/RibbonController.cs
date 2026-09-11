@@ -41,6 +41,10 @@ namespace ExcelSupport.Ribbon
 
         public override object? LoadImage(string imageId)
         {
+            if (imageId == "command_palette_icon")
+            {
+                return CreateCommandPaletteBitmap();
+            }
             if (imageId == "ai_quick_translate_icon" || imageId == "ai_translate_icon")
             {
                 return CreateAiTranslateBitmap();
@@ -210,6 +214,58 @@ namespace ExcelSupport.Ribbon
                 return CreateModeIcon("Col");
             }
             return base.LoadImage(imageId);
+        }
+
+        private Bitmap CreateCommandPaletteBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                using (var brush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(15, 23, 42), Color.FromArgb(30, 41, 59), 45f))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(2, 2, 28, 28), 6);
+                }
+
+                using (var borderPen = new Pen(Color.FromArgb(59, 130, 246), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 6);
+                }
+
+                using (var chevronPen = new Pen(Color.FromArgb(56, 189, 248), 2.2f))
+                {
+                    chevronPen.StartCap = LineCap.Round;
+                    chevronPen.EndCap = LineCap.Round;
+                    g.DrawLine(chevronPen, 8, 11, 13, 16);
+                    g.DrawLine(chevronPen, 13, 16, 8, 21);
+                }
+
+                using (var cursorPen = new Pen(Color.FromArgb(248, 250, 252), 2f))
+                {
+                    cursorPen.StartCap = LineCap.Round;
+                    cursorPen.EndCap = LineCap.Round;
+                    g.DrawLine(cursorPen, 16, 21, 23, 21);
+                }
+
+                using (var sparkBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                {
+                    PointF[] spark = new PointF[]
+                    {
+                        new PointF(22, 6),
+                        new PointF(18, 12),
+                        new PointF(21, 12),
+                        new PointF(19, 16),
+                        new PointF(24, 10),
+                        new PointF(21, 10)
+                    };
+                    g.FillPolygon(sparkBrush, spark);
+                }
+            }
+            return bmp;
         }
 
         private Bitmap CreateRibbonSettingsBitmap()
@@ -752,6 +808,11 @@ namespace ExcelSupport.Ribbon
             {
                 TaskPaneRegistry.ToggleTaskPane(AddInEvents.MainViewModel, pressed);
             }
+        }
+
+        public void OnCommandPalette(IRibbonControl control)
+        {
+            Views.QuickCommandPaletteDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnRefreshTree(IRibbonControl control)

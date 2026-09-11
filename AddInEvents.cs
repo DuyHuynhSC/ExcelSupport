@@ -74,6 +74,8 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+t", "AiQuickTranslateCommand");
                 _excelApp?.OnKey("^%T", "AiQuickTranslateCommand");
                 _excelApp?.OnKey("^%t", "AiQuickTranslateCommand");
+                _excelApp?.OnKey("^+P", "QuickCommandPaletteCommand");
+                _excelApp?.OnKey("^+p", "QuickCommandPaletteCommand");
             }
             catch { }
 
@@ -101,6 +103,8 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+t");
                 _excelApp?.OnKey("^%T");
                 _excelApp?.OnKey("^%t");
+                _excelApp?.OnKey("^+P");
+                _excelApp?.OnKey("^+p");
             }
             catch { }
 
