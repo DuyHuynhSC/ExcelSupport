@@ -531,6 +531,117 @@ namespace ExcelSupport
             }
         }
 
+        private static int? ConvertHexToOleColor(string? hex)
+        {
+            if (string.IsNullOrWhiteSpace(hex)) return null;
+            string cleanHex = hex!.Trim().TrimStart('#');
+            if (cleanHex.Length == 6 &&
+                int.TryParse(cleanHex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber, null, out int r) &&
+                int.TryParse(cleanHex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber, null, out int g) &&
+                int.TryParse(cleanHex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out int b))
+            {
+                // Win32 OLE Color: BGR (Red in lowest byte, Blue in highest byte)
+                return r | (g << 8) | (b << 16);
+            }
+            return null;
+        }
+
+        private static void ApplyCellFormatting(Range cell, CellTextItem item)
+        {
+            if (cell == null || string.IsNullOrEmpty(item.TranslatedText)) return;
+
+            var runs = item.TranslatedRuns;
+            // Fallback: If no translated runs but original had uniform format across whole cell
+            if ((runs == null || runs.Count == 0) && item.FormattedRuns != null && item.FormattedRuns.Count == 1)
+            {
+                var origRun = item.FormattedRuns[0];
+                if (origRun.IsStrikethrough || origRun.IsBold || origRun.IsItalic || !string.IsNullOrEmpty(origRun.ColorHex))
+                {
+                    Microsoft.Office.Interop.Excel.Font? cellFont = null;
+                    try
+                    {
+                        cellFont = cell.Font;
+                        if (cellFont != null)
+                        {
+                            if (origRun.IsStrikethrough) cellFont.Strikethrough = true;
+                            if (origRun.IsBold) cellFont.Bold = true;
+                            if (origRun.IsItalic) cellFont.Italic = true;
+                            if (!string.IsNullOrEmpty(origRun.ColorHex))
+                            {
+                                int? oleColor = ConvertHexToOleColor(origRun.ColorHex);
+                                if (oleColor.HasValue) cellFont.Color = oleColor.Value;
+                            }
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        if (cellFont != null) Marshal.ReleaseComObject(cellFont);
+                    }
+                    return;
+                }
+            }
+
+            if (runs == null || runs.Count == 0) return;
+
+            Range? targetCell = null;
+            try
+            {
+                targetCell = cell.Cells[1, 1] as Range ?? cell;
+                int textLen = item.TranslatedText.Length;
+                int charIndex = 1;
+
+                foreach (var run in runs)
+                {
+                    int runLen = run.Text?.Length ?? 0;
+                    if (runLen <= 0 || charIndex > textLen) break;
+
+                    int effectiveLen = Math.Min(runLen, textLen - charIndex + 1);
+
+                    if (run.IsStrikethrough || run.IsBold || run.IsItalic || !string.IsNullOrEmpty(run.ColorHex))
+                    {
+                        Characters? ch = null;
+                        Microsoft.Office.Interop.Excel.Font? chFont = null;
+                        try
+                        {
+                            ch = targetCell.get_Characters(charIndex, effectiveLen);
+                            if (ch != null)
+                            {
+                                chFont = ch.Font;
+                                if (chFont != null)
+                                {
+                                    if (run.IsStrikethrough) chFont.Strikethrough = true;
+                                    if (run.IsBold) chFont.Bold = true;
+                                    if (run.IsItalic) chFont.Italic = true;
+                                    if (!string.IsNullOrEmpty(run.ColorHex))
+                                    {
+                                        int? oleColor = ConvertHexToOleColor(run.ColorHex);
+                                        if (oleColor.HasValue) chFont.Color = oleColor.Value;
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                        finally
+                        {
+                            if (chFont != null) Marshal.ReleaseComObject(chFont);
+                            if (ch != null) Marshal.ReleaseComObject(ch);
+                        }
+                    }
+
+                    charIndex += runLen;
+                }
+            }
+            catch { }
+            finally
+            {
+                if (targetCell != null && !ReferenceEquals(targetCell, cell))
+                {
+                    Marshal.ReleaseComObject(targetCell);
+                }
+            }
+        }
+
         public bool WriteTranslatedCells(List<CellTextItem> items, bool writeToAdjacentColumn)
         {
             if (_excelApp == null || items == null || items.Count == 0) return false;
@@ -560,6 +671,8 @@ namespace ExcelSupport
                             {
                                 object? oldVal = cell.Value2;
                                 cell.Value2 = item.TranslatedText;
+
+                                ApplyCellFormatting(cell, item);
 
                                 backupList.Add(new TranslationUndoHelper.CellBackupItem
                                 {

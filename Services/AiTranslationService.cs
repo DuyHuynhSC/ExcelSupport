@@ -122,7 +122,7 @@ namespace ExcelSupport.Services
                     batchPayload.Add(new
                     {
                         id = bIdx,
-                        text = resultList[itemIdx].OriginalText
+                        text = resultList[itemIdx].GetTaggedOriginalText()
                     });
                 }
 
@@ -144,7 +144,9 @@ namespace ExcelSupport.Services
                         int itemIdx = currentBatchIndices[bIdx];
                         if (map.TryGetValue(bIdx, out string? transText) && !string.IsNullOrWhiteSpace(transText))
                         {
-                            resultList[itemIdx].TranslatedText = transText.Trim();
+                            var (plainText, runs) = ParseTaggedText(transText.Trim());
+                            resultList[itemIdx].TranslatedText = plainText;
+                            resultList[itemIdx].TranslatedRuns = runs;
                         }
                         else
                         {
@@ -221,6 +223,11 @@ namespace ExcelSupport.Services
             sb.AppendLine("- Giữ nguyên các ký tự xuống dòng (\\n), khoảng trắng đặc biệt, số thứ tự (1., 2., •, -), và mã định danh.");
             sb.AppendLine("- Không tự ý thêm bớt nội dung hay chèn ý kiến cá nhân.");
             sb.AppendLine("- Đảm bảo câu văn dịch mượt mà, đúng ngữ pháp của ngôn ngữ đích.");
+            sb.AppendLine();
+            sb.AppendLine("[QUY TẮC BẢO TOÀN ĐỊNH DẠNG ĐẶC BIỆT - RICH TEXT TAGS]:");
+            sb.AppendLine("- Nếu văn bản nguồn chứa các thẻ định dạng như `<s color=\"...\">...</s>` hoặc `<s>...</s>` (gạch ngang / sửa đổi), `<color hex=\"...\">...</color>` (màu chữ), `<b>...</b>` (in đậm), `<i>...</i>` (in nghiêng), bạn BẮT BUỘC PHẢI GIỮ NGUYÊN các thẻ này và bao bọc đúng phần nội dung dịch tương ứng.");
+            sb.AppendLine("- Ví dụ nguồn: `処理が正常<s color=\"#FF0000\">に終了した後</s>、変更を行う` ➔ Bản dịch: `Xử lý bình thường<s color=\"#FF0000\">sau khi kết thúc</s>, thực hiện thay đổi`.");
+            sb.AppendLine("- Tuyệt đối không xóa thẻ hoặc tự ý thêm thẻ nếu nguồn không có.");
 
             // Glossary
             if (!string.IsNullOrWhiteSpace(glossarySection))
@@ -342,6 +349,94 @@ namespace ExcelSupport.Services
             }
 
             return result;
+        }
+
+        public static (string plainText, List<TextRunModel>? runs) ParseTaggedText(string taggedText)
+        {
+            if (string.IsNullOrEmpty(taggedText)) return (string.Empty, null);
+
+            if (!taggedText.Contains("<") || !taggedText.Contains(">"))
+            {
+                return (taggedText, null);
+            }
+
+            var pattern = @"<(?<tag>s|b|i|del|color|red|green|blue)(?:\s+(?:color|hex)=[""'](?<color>[^""']+)[""'])*>(?<content>.*?)</\k<tag>>";
+            var matches = Regex.Matches(taggedText, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+            if (matches.Count == 0)
+            {
+                return (taggedText, null);
+            }
+
+            var runs = new List<TextRunModel>();
+            var sbPlain = new StringBuilder();
+            int lastIdx = 0;
+
+            foreach (Match m in matches)
+            {
+                if (m.Index > lastIdx)
+                {
+                    string before = taggedText.Substring(lastIdx, m.Index - lastIdx);
+                    runs.Add(new TextRunModel { Text = before });
+                    sbPlain.Append(before);
+                }
+
+                string tagName = m.Groups["tag"].Value.ToLowerInvariant();
+                string colorAttr = m.Groups["color"].Value;
+                string content = m.Groups["content"].Value;
+
+                bool isStrike = tagName == "s" || tagName == "del";
+                bool isBold = tagName == "b";
+                bool isItalic = tagName == "i";
+                string? colorHex = null;
+
+                if (!string.IsNullOrEmpty(colorAttr))
+                {
+                    colorHex = NormalizeColorHex(colorAttr);
+                }
+                else if (tagName == "red")
+                {
+                    colorHex = "#FF0000";
+                }
+                else if (tagName == "blue")
+                {
+                    colorHex = "#0000FF";
+                }
+                else if (tagName == "green")
+                {
+                    colorHex = "#008000";
+                }
+
+                runs.Add(new TextRunModel
+                {
+                    Text = content,
+                    IsStrikethrough = isStrike,
+                    IsBold = isBold,
+                    IsItalic = isItalic,
+                    ColorHex = colorHex
+                });
+                sbPlain.Append(content);
+
+                lastIdx = m.Index + m.Length;
+            }
+
+            if (lastIdx < taggedText.Length)
+            {
+                string after = taggedText.Substring(lastIdx);
+                runs.Add(new TextRunModel { Text = after });
+                sbPlain.Append(after);
+            }
+
+            return (sbPlain.ToString(), runs);
+        }
+
+        private static string NormalizeColorHex(string color)
+        {
+            if (color.StartsWith("#")) return color;
+            if (color.Equals("red", StringComparison.OrdinalIgnoreCase)) return "#FF0000";
+            if (color.Equals("blue", StringComparison.OrdinalIgnoreCase)) return "#0000FF";
+            if (color.Equals("green", StringComparison.OrdinalIgnoreCase)) return "#008000";
+            return color.StartsWith("#") ? color : ("#" + color);
         }
     }
 }

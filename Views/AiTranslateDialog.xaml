@@ -788,8 +788,21 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <!-- Translated Text (Editable) -->
-                            <DataGridTextColumn Header="{loc:Loc AiTranslate_ColTranslated}" Binding="{Binding TranslatedText, UpdateSourceTrigger=PropertyChanged}" Width="1.3*" ElementStyle="{StaticResource CellTranslatedStyle}" EditingElementStyle="{StaticResource CellEditingTextBoxStyle}"/>
+                            <!-- Translated Text (Editable & Rich Text Display) -->
+                            <DataGridTemplateColumn Header="{loc:Loc AiTranslate_ColTranslated}" Width="1.3*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Style="{StaticResource CellTranslatedStyle}"
+                                                   loc:RichTextHelper.TranslatedItem="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding TranslatedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource CellEditingTextBoxStyle}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
