@@ -101,14 +101,27 @@ namespace ExcelSupport
             });
         }
 
-        [ExcelCommand(ShortCut = "^+T", Name = "OpenAiTranslateDialogAltCommand")]
-        public static void OpenAiTranslateDialogAlt()
+        [ExcelCommand(ShortCut = "^+T", Name = "AiQuickTranslateCommand")]
+        public static void OpenAiQuickTranslatePopup()
         {
             ExcelAsyncUtil.QueueAsMacro(() =>
             {
                 try
                 {
-                    AiTranslateDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                    AiQuickTranslatePopup.ShowPopup(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                }
+                catch { }
+            });
+        }
+
+        [ExcelCommand(ShortCut = "^%T", Name = "AiQuickTranslateAltCommand")]
+        public static void OpenAiQuickTranslatePopupAlt()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    AiQuickTranslatePopup.ShowPopup(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
                 }
                 catch { }
             });
