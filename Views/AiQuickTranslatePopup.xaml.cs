@@ -120,12 +120,13 @@ namespace ExcelSupport.Views
                 PositionNearCursor(_currentInstance);
 
                 System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
-                _currentInstance.Show();
-                _currentInstance.Activate();
+                _currentInstance.ShowDialog();
+                _currentInstance = null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ShowPopup error: {ex.Message}");
+                WpfMessageBox.Show($"Không thể mở popup dịch nhanh:\n{ex.Message}", "Lỗi Dịch Nhanh", 
+                                   WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
             }
         }
 

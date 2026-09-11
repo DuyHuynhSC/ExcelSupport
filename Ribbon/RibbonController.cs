@@ -41,7 +41,7 @@ namespace ExcelSupport.Ribbon
 
         public override object? LoadImage(string imageId)
         {
-            if (imageId == "ai_translate_icon")
+            if (imageId == "ai_quick_translate_icon" || imageId == "ai_translate_icon")
             {
                 return CreateAiTranslateBitmap();
             }
@@ -931,6 +931,11 @@ namespace ExcelSupport.Ribbon
             {
                 System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             }
+        }
+
+        public void OnAiQuickTranslate(IRibbonControl control)
+        {
+            Views.AiQuickTranslatePopup.ShowPopup(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnAiTranslate(IRibbonControl control)
