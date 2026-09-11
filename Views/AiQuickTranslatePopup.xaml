@@ -8,12 +8,12 @@
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
-        Width="500"
-        MinHeight="160"
-        MaxHeight="480"
+        Width="560"
+        MinHeight="220"
+        MaxHeight="650"
         SizeToContent="Height"
         ResizeMode="CanResizeWithGrip"
-        WindowStartupLocation="Manual"
+        WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
@@ -223,11 +223,11 @@
                 </StackPanel>
 
                 <!-- Translation Result Display -->
-                <ScrollViewer x:Name="SvTranslation" VerticalScrollBarVisibility="Auto" MaxHeight="250" Visibility="Collapsed">
+                <ScrollViewer x:Name="SvTranslation" VerticalScrollBarVisibility="Auto" MaxHeight="350" Visibility="Collapsed">
                     <TextBlock x:Name="TxtTranslationResult" 
                                TextWrapping="Wrap" 
-                               FontSize="13" 
-                               LineHeight="20"
+                               FontSize="13.5" 
+                               LineHeight="21"
                                TextOptions.TextFormattingMode="Display">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -263,18 +263,20 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="VĂN BẢN GỐC:" FontSize="9.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,2"/>
-                    <TextBlock x:Name="TxtOriginalText" Grid.Row="1" FontSize="11" TextWrapping="Wrap" MaxHeight="60" TextTrimming="CharacterEllipsis">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#475569"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                        <Setter Property="Foreground" Value="#94A3B8"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <ScrollViewer Grid.Row="1" MaxHeight="90" VerticalScrollBarVisibility="Auto">
+                        <TextBlock x:Name="TxtOriginalText" FontSize="11.5" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#475569"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#94A3B8"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </ScrollViewer>
                 </Grid>
             </Border>
 

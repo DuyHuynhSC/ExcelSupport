@@ -116,8 +116,7 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                // Position smart near mouse cursor
-                PositionNearCursor(_currentInstance);
+                _currentInstance.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
                 System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
                 _currentInstance.ShowDialog();
@@ -127,35 +126,6 @@ namespace ExcelSupport.Views
             {
                 WpfMessageBox.Show($"Không thể mở popup dịch nhanh:\n{ex.Message}", "Lỗi Dịch Nhanh", 
                                    WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-            }
-        }
-
-        private static void PositionNearCursor(Window window)
-        {
-            try
-            {
-                var mousePos = System.Windows.Forms.Cursor.Position;
-                var currentScreen = System.Windows.Forms.Screen.FromPoint(mousePos);
-
-                double left = mousePos.X + 15;
-                double top = mousePos.Y + 15;
-
-                // Keep within screen bounds
-                if (left + window.Width > currentScreen.WorkingArea.Right)
-                {
-                    left = mousePos.X - window.Width - 10;
-                }
-                if (top + 250 > currentScreen.WorkingArea.Bottom)
-                {
-                    top = mousePos.Y - 260;
-                }
-
-                window.Left = Math.Max(currentScreen.WorkingArea.Left + 10, left);
-                window.Top = Math.Max(currentScreen.WorkingArea.Top + 10, top);
-            }
-            catch
-            {
-                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
         }
 
