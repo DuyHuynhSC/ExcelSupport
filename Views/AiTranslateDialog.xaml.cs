@@ -93,8 +93,9 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                _currentInstance.Closed += (s, e) => { _currentInstance = null; };
-                _currentInstance.Show();
+                System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
+                _currentInstance.ShowDialog();
+                _currentInstance = null;
             }
             catch (Exception ex)
             {
