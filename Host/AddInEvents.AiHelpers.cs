@@ -389,119 +389,106 @@ namespace ExcelSupport
         {
             if (string.IsNullOrEmpty(fullText)) return;
 
-            Microsoft.Office.Interop.Excel.Font? cellFont = null;
             try
             {
-                cellFont = cell.Font;
-                if (cellFont == null) return;
+                int len = fullText.Length;
+                if (len == 0) return;
 
-                object? strikeVal = null;
-                object? colorVal = null;
-                object? boldVal = null;
-                object? italicVal = null;
-
-                try { strikeVal = cellFont.Strikethrough; } catch { }
-                try { colorVal = cellFont.Color; } catch { }
-                try { boldVal = cellFont.Bold; } catch { }
-                try { italicVal = cellFont.Italic; } catch { }
-
-                bool isUniform = strikeVal != null && strikeVal != DBNull.Value &&
-                                 colorVal != null && colorVal != DBNull.Value &&
-                                 boldVal != null && boldVal != DBNull.Value &&
-                                 italicVal != null && italicVal != DBNull.Value;
-
-                if (isUniform)
+                int charCount = len;
+                try
                 {
-                    bool isStrike = strikeVal is true;
-                    bool isBold = boldVal is true;
-                    bool isItalic = italicVal is true;
-                    string? colorHex = ParseOleColor(colorVal);
+                    dynamic dynCell = cell;
+                    var charsObj = dynCell.Characters;
+                    if (charsObj != null)
+                    {
+                        int count = Convert.ToInt32(charsObj.Count);
+                        if (count > 0) charCount = Math.Min(count, len);
+                        Marshal.ReleaseComObject(charsObj);
+                    }
+                }
+                catch { }
+
+                var runs = new List<TextRunModel>();
+                TextRunModel? currentRun = null;
+                bool hasAnySpecialFormat = false;
+
+                for (int i = 1; i <= charCount; i++)
+                {
+                    object? chObj = null;
+                    object? chFontObj = null;
+                    bool isStrike = false;
+                    bool isBold = false;
+                    bool isItalic = false;
+                    string? colorHex = null;
+
+                    try
+                    {
+                        dynamic dynCell = cell;
+                        chObj = dynCell.Characters[i, 1];
+                        if (chObj != null)
+                        {
+                            dynamic ch = chObj;
+                            chFontObj = ch.Font;
+                            if (chFontObj != null)
+                            {
+                                dynamic chFont = chFontObj;
+                                isStrike = IsComBoolTrue(chFont.Strikethrough);
+                                isBold = IsComBoolTrue(chFont.Bold);
+                                isItalic = IsComBoolTrue(chFont.Italic);
+                                colorHex = ParseOleColor(chFont.Color);
+                            }
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        if (chFontObj != null) Marshal.ReleaseComObject(chFontObj);
+                        if (chObj != null) Marshal.ReleaseComObject(chObj);
+                    }
 
                     if (isStrike || isBold || isItalic || colorHex != null)
                     {
-                        item.FormattedRuns = new List<TextRunModel>
+                        hasAnySpecialFormat = true;
+                    }
+
+                    char c = fullText[i - 1];
+
+                    if (currentRun != null &&
+                        currentRun.IsStrikethrough == isStrike &&
+                        currentRun.IsBold == isBold &&
+                        currentRun.IsItalic == isItalic &&
+                        string.Equals(currentRun.ColorHex, colorHex, StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentRun.Text += c;
+                    }
+                    else
+                    {
+                        currentRun = new TextRunModel
                         {
-                            new TextRunModel
-                            {
-                                Text = fullText.Trim(),
-                                IsStrikethrough = isStrike,
-                                IsBold = isBold,
-                                IsItalic = isItalic,
-                                ColorHex = colorHex
-                            }
+                            Text = c.ToString(),
+                            IsStrikethrough = isStrike,
+                            IsBold = isBold,
+                            IsItalic = isItalic,
+                            ColorHex = colorHex
                         };
+                        runs.Add(currentRun);
                     }
-                    return;
                 }
 
-                // Mixed formatting across characters in the cell
-                var runs = new List<TextRunModel>();
-                TextRunModel? currentRun = null;
-                int len = fullText.Length;
-
-                for (int i = 1; i <= len; i++)
+                if (charCount < len)
                 {
-                    Characters? ch = null;
-                    Microsoft.Office.Interop.Excel.Font? chFont = null;
-                    try
+                    string remaining = fullText.Substring(charCount);
+                    if (currentRun != null && !currentRun.IsStrikethrough && !currentRun.IsBold && !currentRun.IsItalic && currentRun.ColorHex == null)
                     {
-                        ch = cell.Characters[i, 1];
-                        chFont = ch.Font;
-
-                        bool isStrike = false;
-                        bool isBold = false;
-                        bool isItalic = false;
-                        string? colorHex = null;
-
-                        try { isStrike = chFont.Strikethrough is true; } catch { }
-                        try { isBold = chFont.Bold is true; } catch { }
-                        try { isItalic = chFont.Italic is true; } catch { }
-                        try { colorHex = ParseOleColor(chFont.Color); } catch { }
-
-                        char c = fullText[i - 1];
-
-                        if (currentRun != null &&
-                            currentRun.IsStrikethrough == isStrike &&
-                            currentRun.IsBold == isBold &&
-                            currentRun.IsItalic == isItalic &&
-                            string.Equals(currentRun.ColorHex, colorHex, StringComparison.OrdinalIgnoreCase))
-                        {
-                            currentRun.Text += c;
-                        }
-                        else
-                        {
-                            currentRun = new TextRunModel
-                            {
-                                Text = c.ToString(),
-                                IsStrikethrough = isStrike,
-                                IsBold = isBold,
-                                IsItalic = isItalic,
-                                ColorHex = colorHex
-                            };
-                            runs.Add(currentRun);
-                        }
+                        currentRun.Text += remaining;
                     }
-                    catch
+                    else
                     {
-                        char c = fullText[i - 1];
-                        if (currentRun != null)
-                        {
-                            currentRun.Text += c;
-                        }
-                        else
-                        {
-                            currentRun = new TextRunModel { Text = c.ToString() };
-                            runs.Add(currentRun);
-                        }
-                    }
-                    finally
-                    {
-                        if (chFont != null) Marshal.ReleaseComObject(chFont);
-                        if (ch != null) Marshal.ReleaseComObject(ch);
+                        runs.Add(new TextRunModel { Text = remaining });
                     }
                 }
 
-                if (runs.Count > 0)
+                if (hasAnySpecialFormat && runs.Count > 0)
                 {
                     item.FormattedRuns = runs;
                 }
@@ -510,10 +497,17 @@ namespace ExcelSupport
             {
                 System.Diagnostics.Debug.WriteLine($"ExtractCellFormattedRuns error: {ex.Message}");
             }
-            finally
-            {
-                if (cellFont != null) Marshal.ReleaseComObject(cellFont);
-            }
+        }
+
+        private static bool IsComBoolTrue(object? val)
+        {
+            if (val == null || val == DBNull.Value) return false;
+            if (val is bool b) return b;
+            if (val is int i) return i != 0 && i != -4165 && i != -4142;
+            if (val is double d) return d != 0;
+            if (val is short s) return s != 0;
+            if (bool.TryParse(val.ToString(), out bool pb)) return pb;
+            return false;
         }
 
         private static string? ParseOleColor(object? colorVal)
@@ -521,13 +515,15 @@ namespace ExcelSupport
             if (colorVal == null || colorVal == DBNull.Value) return null;
             try
             {
-                int ole = Convert.ToInt32(colorVal);
-                int r = ole & 0xFF;
-                int g = (ole >> 8) & 0xFF;
-                int b = (ole >> 16) & 0xFF;
+                long ole = Convert.ToInt64(colorVal);
+                if (ole <= 0 || ole == 0xFFFFFF) return null;
 
-                // Treat default text color (black / 0,0,0) as null to inherit theme foreground
-                if (r <= 25 && g <= 25 && b <= 25) return null;
+                int r = (int)(ole & 0xFF);
+                int g = (int)((ole >> 8) & 0xFF);
+                int b = (int)((ole >> 16) & 0xFF);
+
+                // Treat near-black (0..30) as default text color
+                if (r <= 30 && g <= 30 && b <= 30) return null;
 
                 return $"#{r:X2}{g:X2}{b:X2}";
             }
