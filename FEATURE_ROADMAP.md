@@ -89,8 +89,8 @@ graph TD
 #### 5.2. AI Pattern Extractor & Flash Fill Pro — [P2]
 * Trích xuất thông tin có cấu trúc từ văn bản thô (Log lỗi, JSON chuỗi, mã sản phẩm) chỉ bằng 1–2 dòng ví dụ mẫu.
 
-#### 5.3. Chat With Sheet (Hỏi đáp trực tiếp với Sheet trong Task Pane) — [P3]
-* Tab Chat trong Task Pane cho phép hỏi đáp bằng tiếng Việt tự nhiên với dữ liệu trong Sheet kèm link nhảy tới ô dữ liệu.
+#### 5.3. Chat With Sheet (Hỏi đáp trực tiếp với Sheet trong Task Pane) — [Đã hoàn thành ✅]
+* Tab Chat trong Task Pane cho phép hỏi đáp bằng tiếng Việt tự nhiên với dữ liệu trong Sheet kèm link nhảy tới ô dữ liệu (`[A1]`, `[B2:D10]`), gợi ý công thức và chèn 1-click vào ô tính.
 
 ---
 
