@@ -9,6 +9,40 @@ namespace ExcelSupport.Views
         public AiAssistantControl()
         {
             InitializeComponent();
+            DataContextChanged += OnDataContextChanged;
+        }
+
+        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.OldValue is AiAssistantViewModel oldVm)
+            {
+                oldVm.SheetChatMessages.CollectionChanged -= OnSheetChatMessagesCollectionChanged;
+            }
+
+            if (e.NewValue is AiAssistantViewModel newVm)
+            {
+                newVm.SheetChatMessages.CollectionChanged += OnSheetChatMessagesCollectionChanged;
+            }
+        }
+
+        private void OnSheetChatMessagesCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                SheetChatScrollViewer?.ScrollToBottom();
+            });
+        }
+
+        private void OnSheetChatInputPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == 0)
+            {
+                if (DataContext is AiAssistantViewModel vm && vm.SendSheetChatCommand.CanExecute(null))
+                {
+                    vm.SendSheetChatCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
         }
 
         private void OnSelectFormulaTabClick(object sender, RoutedEventArgs e)

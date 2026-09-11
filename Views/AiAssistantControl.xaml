@@ -21,6 +21,86 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
+        <!-- Style cho Quick Prompt Pills -->
+        <Style x:Key="ChatPillButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="7,3"/>
+            <Setter Property="Margin" Value="0,0,4,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="pillBorder" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="11" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="pillBorder" Property="Background" Value="#E2E8F0"/>
+                                <Setter TargetName="pillBorder" Property="BorderBrush" Value="#94A3B8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="pillBorder" Property="Background" Value="#CBD5E1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#CBD5E1"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style cho Cell Badge Button (Nhảy ô) -->
+        <Style x:Key="CellBadgeButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#ECFDF5"/>
+            <Setter Property="Foreground" Value="#059669"/>
+            <Setter Property="BorderBrush" Value="#6EE7B7"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Margin" Value="0,0,4,3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="badgeBorder" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="badgeBorder" Property="Background" Value="#D1FAE5"/>
+                                <Setter TargetName="badgeBorder" Property="BorderBrush" Value="#10B981"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="badgeBorder" Property="Background" Value="#A7F3D0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                    <Setter Property="Background" Value="#064E3B"/>
+                    <Setter Property="Foreground" Value="#6EE7B7"/>
+                    <Setter Property="BorderBrush" Value="#047857"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Style cho Nút icon nhỏ (Copy, Clear, v.v.) -->
         <Style x:Key="IconActionButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="Transparent"/>
@@ -616,8 +696,8 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Card Hỏi Đáp Tự Do -->
-                <Border BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                <!-- ==================== CARD CHAT WITH SHEET (HỎI ĐÁP BẢNG TÍNH) ==================== -->
+                <Border BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,10">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Background" Value="#FFFFFF"/>
@@ -630,22 +710,230 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
+
                     <StackPanel>
-                        <TextBlock Text="{loc:Loc Ai_ChatHeader}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,4">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#1E293B"/>
+                        <!-- Thanh Tiêu Đề & Phạm Vi Ngữ Cảnh (Scope) -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="{loc:Loc Ai_ChatSheetTitle}" FontWeight="Bold" FontSize="11.5" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#1E293B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                <Setter Property="Foreground" Value="#F1F5F9"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!-- Checkbox / Toggle Chỉ Vùng Chọn -->
+                            <CheckBox Grid.Column="1" IsChecked="{Binding IsSelectionOnly}" 
+                                      VerticalAlignment="Center" Margin="0,0,6,0"
+                                      ToolTip="{loc:Loc Ai_ChatScopeSelectionTip}">
+                                <TextBlock Text="{loc:Loc Ai_ChatScopeSelection}" FontSize="10.5">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#475569"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
+                                                    <Setter Property="Foreground" Value="#94A3B8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </CheckBox>
+
+                            <!-- Nút Làm Mới / Chat Mới -->
+                            <Button Grid.Column="2" Command="{Binding ClearSheetChatCommand}" 
+                                    Style="{StaticResource IconActionButtonStyle}"
+                                    ToolTip="{loc:Loc Ai_BtnNewChat}">
+                                <TextBlock Text="🗑️" FontSize="11"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Dải Gợi Ý Câu Hỏi Mẫu (Quick Prompt Pills) -->
+                        <WrapPanel Margin="0,0,0,6">
+                            <Button Style="{StaticResource ChatPillButtonStyle}" 
+                                    Command="{Binding QuickPromptCommand}" 
+                                    CommandParameter="Hãy tóm tắt cấu trúc và các cột dữ liệu chính trong bảng tính này">
+                                <TextBlock Text="{loc:Loc Ai_PillSummarize}" FontSize="10.5"/>
+                            </Button>
+                            <Button Style="{StaticResource ChatPillButtonStyle}" 
+                                    Command="{Binding QuickPromptCommand}" 
+                                    CommandParameter="Kiểm tra bảng tính này có dữ liệu bất thường, lỗi công thức hoặc ô bị trống không?">
+                                <TextBlock Text="{loc:Loc Ai_PillAnomalies}" FontSize="10.5"/>
+                            </Button>
+                            <Button Style="{StaticResource ChatPillButtonStyle}" 
+                                    Command="{Binding QuickPromptCommand}" 
+                                    CommandParameter="Hãy tìm ra top 5 dòng có giá trị cao nhất trong bảng tính này">
+                                <TextBlock Text="{loc:Loc Ai_PillTopRank}" FontSize="10.5"/>
+                            </Button>
+                            <Button Style="{StaticResource ChatPillButtonStyle}" 
+                                    Command="{Binding QuickPromptCommand}" 
+                                    CommandParameter="Dựa vào cấu trúc dữ liệu này, hãy gợi ý cho tôi 2-3 công thức phân tích dữ liệu hiệu quả">
+                                <TextBlock Text="{loc:Loc Ai_PillSuggestFormula}" FontSize="10.5"/>
+                            </Button>
+                        </WrapPanel>
+
+                        <!-- Khung Danh Sách Tin Nhắn Hội Thoại (Chat Bubbles) -->
+                        <Border BorderThickness="1" CornerRadius="6" Margin="0,0,0,8" Padding="4">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F8FAFC"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                            <Setter Property="Foreground" Value="#F1F5F9"/>
+                                            <Setter Property="Background" Value="#0F172A"/>
+                                            <Setter Property="BorderBrush" Value="#334155"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        
-                        <TextBox Text="{Binding ChatPrompt, UpdateSourceTrigger=PropertyChanged}" 
-                                 Height="50" TextWrapping="Wrap" AcceptsReturn="True" 
+                            </Border.Style>
+
+                            <ScrollViewer x:Name="SheetChatScrollViewer" MaxHeight="320" MinHeight="140" 
+                                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding SheetChatMessages}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,3">
+                                                <!-- Bong bóng tin nhắn người dùng (Canh phải) -->
+                                                <Border HorizontalAlignment="Right" Margin="30,0,2,0" 
+                                                        Padding="9,6" CornerRadius="12,12,2,12" MaxWidth="280">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#2563EB"/>
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                                    <Setter Property="Background" Value="#1D4ED8"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding Content}" Foreground="#FFFFFF" 
+                                                               TextWrapping="Wrap" FontSize="11.5" LineHeight="17" 
+                                                               LineStackingStrategy="BlockLineHeight"/>
+                                                </Border>
+
+                                                <!-- Bong bóng tin nhắn Trợ lý AI (Canh trái) -->
+                                                <Border HorizontalAlignment="Left" Margin="2,0,30,0" 
+                                                        Padding="10,8" CornerRadius="12,12,12,2" BorderThickness="1" MaxWidth="290">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FFFFFF"/>
+                                                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsUser}" Value="False">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                                    <Setter Property="Background" Value="#1E293B"/>
+                                                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+
+                                                    <StackPanel>
+                                                        <!-- Nội dung văn bản câu trả lời -->
+                                                        <TextBlock Text="{Binding Content}" TextWrapping="Wrap" 
+                                                                   FontSize="11.5" LineHeight="17" 
+                                                                   LineStackingStrategy="BlockLineHeight" Margin="0,0,0,6">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#F1F5F9"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+
+                                                        <!-- Dải Badges Liên Kết Ô Tính (Nhấp để nhảy ô) -->
+                                                        <StackPanel Margin="0,2,0,4">
+                                                            <StackPanel.Style>
+                                                                <Style TargetType="StackPanel">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding HasReferencedCells}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </StackPanel.Style>
+
+                                                            <TextBlock Text="{loc:Loc Ai_ReferencedCells}" FontSize="10" FontWeight="SemiBold" 
+                                                                       Foreground="#64748B" Margin="0,0,0,2"/>
+
+                                                            <ItemsControl ItemsSource="{Binding ReferencedCells}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <WrapPanel/>
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Button Style="{StaticResource CellBadgeButtonStyle}" 
+                                                                                Command="{Binding DataContext.NavigateToCellCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                                CommandParameter="{Binding}"
+                                                                                ToolTip="Bấm để nhảy tới ô này trên bảng tính">
+                                                                            <StackPanel Orientation="Horizontal">
+                                                                                <TextBlock Text="🎯 " FontSize="9.5" VerticalAlignment="Center"/>
+                                                                                <TextBlock Text="{Binding}" FontSize="10.5" VerticalAlignment="Center"/>
+                                                                            </StackPanel>
+                                                                        </Button>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+
+                                                        <!-- Nút Chèn Công Thức Đề Xuất (1-Click) -->
+                                                        <Button Command="{Binding DataContext.ApplySuggestedFormulaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding SuggestedFormula}"
+                                                                Padding="6,3" Margin="0,4,0,0">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource AiPrimaryButtonStyle}">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding HasSuggestedFormula}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="🛠️ " FontSize="10" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{loc:Loc Ai_BtnInsertFormulaShort}" FontSize="10.5" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+
+                        <!-- Ô Nhập Câu Hỏi & Nút Gửi -->
+                        <TextBox x:Name="TxtSheetChatInput" 
+                                 Text="{Binding SheetChatInput, UpdateSourceTrigger=PropertyChanged}" 
+                                 PreviewKeyDown="OnSheetChatInputPreviewKeyDown"
+                                 Height="52" TextWrapping="Wrap" AcceptsReturn="True" 
                                  VerticalScrollBarVisibility="Auto"
                                  Padding="6" FontSize="11.5" BorderThickness="1" Margin="0,0,0,6">
                             <TextBox.Style>
@@ -670,13 +958,13 @@
                                 <ColumnDefinition Width="8"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Command="{Binding SendChatCommand}" Style="{StaticResource AiPrimaryButtonStyle}">
+                            <Button Grid.Column="0" Command="{Binding SendSheetChatCommand}" Style="{StaticResource AiPrimaryButtonStyle}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="💬 " FontSize="11" VerticalAlignment="Center"/>
                                     <TextBlock Text="{loc:Loc Ai_BtnSendChat}" FontSize="11.5" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Grid.Column="2" Command="{Binding ClearChatCommand}" Style="{StaticResource AiSecondaryButtonStyle}">
+                            <Button Grid.Column="2" Command="{Binding ClearSheetChatCommand}" Style="{StaticResource AiSecondaryButtonStyle}">
                                 <TextBlock Text="{loc:Loc Ai_BtnClear}" FontSize="11" VerticalAlignment="Center"/>
                             </Button>
                         </Grid>
