@@ -29,6 +29,7 @@ namespace ExcelSupport.ViewModels
         private SortOrder _workbookSortOrder = SortOrder.Original;
         private SortOrder _sheetSortOrder = SortOrder.Original;
         private bool _showHiddenSheets = false;
+        private bool _filterOnlyColoredSheets = false;
         private int _selectedTabIndex = 0;
 
         public int SelectedTabIndex
@@ -92,6 +93,23 @@ namespace ExcelSupport.ViewModels
         public string ShowHiddenSheetsTooltip => ShowHiddenSheets 
             ? "Đang hiển thị cả Sheet ẩn (Bấm để chỉ xem Sheet hiện)" 
             : "Đang ẩn các Sheet bị ẩn (Bấm để hiển thị tất cả)";
+
+        public bool FilterOnlyColoredSheets
+        {
+            get => _filterOnlyColoredSheets;
+            set
+            {
+                if (SetProperty(ref _filterOnlyColoredSheets, value))
+                {
+                    SheetsView?.Refresh();
+                    OnPropertyChanged(nameof(FilterColoredSheetsTooltip));
+                }
+            }
+        }
+
+        public string FilterColoredSheetsTooltip => FilterOnlyColoredSheets
+            ? (ExcelSupport.Services.LocalizationService.Instance["Nav_FilterColoredSheetsTip_On"] ?? "Đang lọc Sheet có màu Tab (Bấm để hiển thị lại tất cả Sheet)")
+            : (ExcelSupport.Services.LocalizationService.Instance["Nav_FilterColoredSheetsTip_Off"] ?? "Lọc chỉ Sheet có màu Tab (khác màu mặc định của Excel)");
 
         public SortOrder WorkbookSortOrder
         {
@@ -193,6 +211,7 @@ namespace ExcelSupport.ViewModels
         public ICommand ToggleWorkbookSortCommand { get; }
         public ICommand ToggleSheetSortCommand { get; }
         public ICommand ToggleShowHiddenSheetsCommand { get; }
+        public ICommand ToggleFilterColoredSheetsCommand { get; }
         public ICommand ToggleThemeCommand { get; }
         public ICommand CreateTocCommand { get; }
         public ICommand OpenToolsDialogCommand { get; }
@@ -285,6 +304,11 @@ namespace ExcelSupport.ViewModels
             ToggleShowHiddenSheetsCommand = new RelayCommand(_ =>
             {
                 ShowHiddenSheets = !ShowHiddenSheets;
+            });
+
+            ToggleFilterColoredSheetsCommand = new RelayCommand(_ =>
+            {
+                FilterOnlyColoredSheets = !FilterOnlyColoredSheets;
             });
 
             CreateTocCommand = new RelayCommand(param =>
@@ -387,6 +411,7 @@ namespace ExcelSupport.ViewModels
             if (item is WorksheetNodeViewModel ws)
             {
                 if (!_showHiddenSheets && ws.IsHidden) return false;
+                if (_filterOnlyColoredSheets && !ws.HasTabColor) return false;
                 if (string.IsNullOrWhiteSpace(SheetSearchText)) return true;
                 return IsTextMatchingTokens(ws.SheetName, SheetSearchText);
             }

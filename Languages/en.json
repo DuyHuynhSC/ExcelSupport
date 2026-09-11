@@ -668,6 +668,8 @@
   "Nav_SearchWorkbookTip": "Search Workbook (supports A|B|C for multiple files. Enter to open, Up/Down to navigate)",
   "Nav_SortSheetTip": "Sort Sheets list (A-Z / Z-A)",
   "Nav_SearchSheetTip": "Search Sheet (supports A|B|C for multiple sheets. Enter to activate, Up/Down to navigate)",
+  "Nav_FilterColoredSheetsTip_On": "Filtering sheets with tab color (Click to show all sheets)",
+  "Nav_FilterColoredSheetsTip_Off": "Filter only sheets with tab color (different from Excel default)",
   "Nav_ProtectedSheetTip": "This sheet is protected (Protected Sheet)",
   "Nav_TocTip": "Create Sheet Table of Contents (TOC)",
   "Nav_SplitMergeTip": "Split / Merge & Rename Sheets Tools",

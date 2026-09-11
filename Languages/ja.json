@@ -668,6 +668,8 @@
   "Nav_SearchWorkbookTip": "ブックを検索 (A|B|Cで複数指定可。Enterで開く、上下キーで選択)",
   "Nav_SortSheetTip": "シート一覧を並べ替え (A-Z / Z-A)",
   "Nav_SearchSheetTip": "シートを検索 (A|B|Cで複数指定可。Enterで切り替え、上下キーで選択)",
+  "Nav_FilterColoredSheetsTip_On": "色付きシートのみ表示中 (クリックですべてのシートを表示)",
+  "Nav_FilterColoredSheetsTip_Off": "色付きシートのみ絞り込み (Excelデフォルト以外の色)",
   "Nav_ProtectedSheetTip": "このシートは保護されています (Protected Sheet)",
   "Nav_TocTip": "目次シート作成 (TOC)",
   "Nav_SplitMergeTip": "シートの分割・結合・名前変更ツール",
