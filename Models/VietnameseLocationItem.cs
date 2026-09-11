@@ -1,4 +1,5 @@
 using System;
+using ExcelSupport.Services;
 
 namespace ExcelSupport.Models
 {
@@ -20,10 +21,10 @@ namespace ExcelSupport.Models
 
         public string TypeDescription => Type switch
         {
-            VietnameseLocationType.Cell => "Ô tính",
-            VietnameseLocationType.SheetName => "Tên Sheet",
-            VietnameseLocationType.Comment => "Ghi chú / Comment",
-            _ => "Khác"
+            VietnameseLocationType.Cell => LocalizationService.Get("VN_TypeCell"),
+            VietnameseLocationType.SheetName => LocalizationService.Get("VN_TypeSheetName"),
+            VietnameseLocationType.Comment => LocalizationService.Get("VN_TypeComment"),
+            _ => LocalizationService.Get("VN_TypeOther")
         };
     }
 }

@@ -220,27 +220,31 @@ namespace ExcelSupport.Views
         {
             if (_results.Count == 0)
             {
-                MessageBox.Show("Không có vị trí tiếng Việt nào để tạo báo cáo.", "Tạo Báo Cáo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(LocalizationService.Get("VN_MsgNoResultsToReport"), LocalizationService.Get("VN_ReportSheetTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             var addIn = AddInEvents.Instance;
             if (addIn == null) return;
 
-            addIn.CreateVietnameseReportSheet(_results.ToList());
+            bool ok = addIn.CreateVietnameseReportSheet(_results.ToList());
+            if (ok)
+            {
+                TxtStatus.Text = LocalizationService.Get("VN_ReportCreatedSuccess");
+            }
         }
 
         private void OnExportCsvClick(object sender, RoutedEventArgs e)
         {
             if (_results.Count == 0)
             {
-                MessageBox.Show("Danh sách kết quả đang trống, không có dữ liệu để xuất.", "Xuất Báo Cáo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(LocalizationService.Get("VN_MsgNoResultsToExport"), LocalizationService.Get("VN_ExportCsvErrorTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             using (var dlg = new SaveFileDialog())
             {
-                dlg.Title = "Lưu file kết quả kiểm tra tiếng Việt (CSV)";
+                dlg.Title = LocalizationService.Get("VN_ExportCsvTitle");
                 dlg.Filter = "File CSV (*.csv)|*.csv";
                 dlg.FileName = $"Vietnamese_Check_Report_{DateTime.Now:yyyyMMdd_HHmm}";
 
@@ -265,12 +269,12 @@ namespace ExcelSupport.Views
                         var utf8WithBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
                         File.WriteAllText(dlg.FileName, sb.ToString(), utf8WithBom);
 
-                        TxtStatus.Text = $"✅ Đã xuất {_results.Count} vị trí ra file CSV thành công!";
-                        MessageBox.Show($"✅ Đã xuất {_results.Count} vị trí ra file:\n{dlg.FileName}", "Xuất CSV Thành Công", MessageBoxButton.OK, MessageBoxImage.Information);
+                        TxtStatus.Text = string.Format(LocalizationService.Get("VN_ExportCsvSuccessFormat"), _results.Count);
+                        MessageBox.Show(string.Format(LocalizationService.Get("VN_ExportCsvSuccessMsg"), _results.Count, dlg.FileName), LocalizationService.Get("VN_ExportCsvSuccessTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Lỗi khi xuất file:\n{ex.Message}", "Lỗi Export", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show(string.Format(LocalizationService.Get("VN_ExportCsvError"), ex.Message), LocalizationService.Get("VN_ExportCsvErrorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
