@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using ExcelSupport.Models;
 using ExcelSupport.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -16,6 +18,25 @@ namespace ExcelSupport.ViewModels
         private int _selectedSubTab = 0; // 0: Sinh công thức, 1: Gỡ lỗi & Hỏi đáp
         private bool _isBusy;
         private string _statusMessage = string.Empty;
+
+        // --- Chat With Sheet Properties ---
+        public ObservableCollection<ChatSheetMessageItem> SheetChatMessages { get; } = new ObservableCollection<ChatSheetMessageItem>();
+
+        private string _sheetChatInput = string.Empty;
+        public string SheetChatInput
+        {
+            get => _sheetChatInput;
+            set => SetProperty(ref _sheetChatInput, value);
+        }
+
+        private bool _isSelectionOnly;
+        public bool IsSelectionOnly
+        {
+            get => _isSelectionOnly;
+            set => SetProperty(ref _isSelectionOnly, value);
+        }
+
+        public bool HasSheetChatMessages => SheetChatMessages.Count > 0;
 
         // --- Formula Generator Properties ---
         private string _formulaPrompt = string.Empty;
@@ -162,6 +183,13 @@ namespace ExcelSupport.ViewModels
         public ICommand ClearChatCommand { get; }
         public ICommand CopyChatResponseCommand { get; }
 
+        // --- Chat With Sheet Commands ---
+        public ICommand SendSheetChatCommand { get; }
+        public ICommand ClearSheetChatCommand { get; }
+        public ICommand NavigateToCellCommand { get; }
+        public ICommand ApplySuggestedFormulaCommand { get; }
+        public ICommand QuickPromptCommand { get; }
+
         public AiAssistantViewModel()
         {
             GenerateFormulaCommand = new RelayCommand(async _ => await ExecuteGenerateFormulaAsync(), _ => !IsBusy && !string.IsNullOrWhiteSpace(FormulaPrompt));
@@ -174,6 +202,14 @@ namespace ExcelSupport.ViewModels
             ClearFormulaCommand = new RelayCommand(_ => ExecuteClearFormula());
             ClearChatCommand = new RelayCommand(_ => ExecuteClearChat());
             CopyChatResponseCommand = new RelayCommand(_ => ExecuteCopyChatResponse());
+
+            SendSheetChatCommand = new RelayCommand(async _ => await ExecuteSendSheetChatAsync(), _ => !IsBusy && !string.IsNullOrWhiteSpace(SheetChatInput));
+            ClearSheetChatCommand = new RelayCommand(_ => ExecuteClearSheetChat());
+            NavigateToCellCommand = new RelayCommand(param => ExecuteNavigateToCell(param as string));
+            ApplySuggestedFormulaCommand = new RelayCommand(param => ExecuteApplySuggestedFormula(param as string));
+            QuickPromptCommand = new RelayCommand(async param => await ExecuteQuickPromptAsync(param as string));
+
+            InitWelcomeMessage();
         }
 
         #region Formula Generator Logic
@@ -497,6 +533,190 @@ namespace ExcelSupport.ViewModels
             s = Regex.Replace(s, @"(\r?\n){3,}", "\n\n");
 
             return s.Trim();
+        }
+
+        #endregion
+
+        #region Chat With Sheet Logic
+
+        private void InitWelcomeMessage()
+        {
+            SheetChatMessages.Clear();
+            SheetChatMessages.Add(new ChatSheetMessageItem
+            {
+                IsUser = false,
+                Content = "👋 Xin chào! Tôi là Trợ lý AI Bảng tính (Chat With Sheet).\n\n" +
+                          "Bạn có thể hỏi bất kỳ điều gì về bảng tính hiện tại, ví dụ:\n" +
+                          "• Tóm tắt cấu trúc bảng & các cột dữ liệu\n" +
+                          "• Tìm kiếm giá trị lớn nhất, nhỏ nhất, bất thường\n" +
+                          "• Viết công thức phân tích hoặc tính toán theo điều kiện\n\n" +
+                          "💡 Mẹo: Bạn có thể click vào các tọa độ ô được AI nhắc tới để Excel tự động nhảy đến ô đó!"
+            });
+            OnPropertyChanged(nameof(HasSheetChatMessages));
+        }
+
+        private void ExecuteClearSheetChat()
+        {
+            InitWelcomeMessage();
+            SheetChatInput = string.Empty;
+            StatusMessage = string.Empty;
+        }
+
+        private void ExecuteNavigateToCell(string? cellAddress)
+        {
+            if (string.IsNullOrWhiteSpace(cellAddress)) return;
+            var addIn = AddInEvents.Instance;
+            if (addIn != null)
+            {
+                addIn.NavigateToCell(cellAddress!);
+            }
+        }
+
+        private void ExecuteApplySuggestedFormula(string? formula)
+        {
+            string targetFormula = !string.IsNullOrWhiteSpace(formula) ? formula! : FixedFormula;
+            if (string.IsNullOrWhiteSpace(targetFormula)) return;
+
+            var addIn = AddInEvents.Instance;
+            if (addIn != null)
+            {
+                bool ok = addIn.InsertFormulaToActiveCell(targetFormula);
+                if (ok)
+                {
+                    StatusMessage = "🛠️ Đã chèn công thức đề xuất vào ô đang chọn!";
+                }
+            }
+        }
+
+        private async Task ExecuteQuickPromptAsync(string? prompt)
+        {
+            if (string.IsNullOrWhiteSpace(prompt)) return;
+            SheetChatInput = prompt!;
+            await ExecuteSendSheetChatAsync();
+        }
+
+        private async Task ExecuteSendSheetChatAsync()
+        {
+            string userQuestion = SheetChatInput?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(userQuestion)) return;
+
+            // 1. Thêm tin nhắn của người dùng vào giao diện ngay lập tức
+            var userItem = new ChatSheetMessageItem
+            {
+                IsUser = true,
+                Content = userQuestion
+            };
+            SheetChatMessages.Add(userItem);
+            SheetChatInput = string.Empty;
+            OnPropertyChanged(nameof(HasSheetChatMessages));
+
+            IsBusy = true;
+            StatusMessage = "AI đang đọc dữ liệu Sheet và suy nghĩ... ⏳";
+
+            try
+            {
+                var config = AiConfigManager.Current;
+                var addIn = AddInEvents.Instance;
+                string sheetData = addIn?.GetSheetChatContext(IsSelectionOnly) ?? string.Empty;
+
+                string systemPrompt = 
+                    "Bạn là Trợ lý AI Bảng tính (Chat With Sheet) cao cấp, chuyên gia phân tích dữ liệu Excel.\n" +
+                    "Bạn giao tiếp bằng tiếng Việt tự nhiên, ngắn gọn, lịch sự, chuyên nghiệp và đi thẳng vào trọng tâm.\n\n" +
+                    "QUY TẮC QUAN TRỌNG (BẮT BUỘC TUÂN THỦ):\n" +
+                    "1. Dữ liệu bảng tính hiện tại được cung cấp dưới dạng Markdown. Hãy căn cứ CHÍNH XÁC vào dữ liệu này để trả lời.\n" +
+                    "2. Khi nhắc tới bất kỳ ô hoặc vùng ô cụ thể nào, hãy LUÔN đặt trong ngoặc vuông dạng [CộtDòng] (ví dụ: [A1], [B5], [C2:D10], [DoanhThu!C5]) để hệ thống tạo liên kết click nhảy ô cho người dùng.\n" +
+                    "3. Nếu người dùng hỏi cách tính toán hoặc đề xuất công thức Excel, hãy cung cấp công thức chuẩn xác bắt đầu bằng dấu '=' trong khối code: ```excel\n=CÔNG_THỨC\n```\n" +
+                    "4. Trình bày câu trả lời rõ ràng, dùng bullet point (•), biểu tượng (📌, 🔢, 💡, ⚠️) và in đậm tiêu đề quan trọng.";
+
+                // Chuẩn bị danh sách lịch sử hội thoại (lấy tối đa 6 lượt tin nhắn gần nhất)
+                var historyList = new List<(string role, string content)>();
+
+                // Đưa context dữ liệu sheet vào câu hỏi hiện tại hoặc lượt đầu tiên
+                string promptWithContext = $"[DỮ LIỆU BẢNG TÍNH HIỆN TẠI]:\n{sheetData}\n\n[CÂU HỎI CỦA NGƯỜI DÙNG]:\n{userQuestion}";
+
+                int historyStartIndex = Math.Max(0, SheetChatMessages.Count - 7);
+                for (int i = historyStartIndex; i < SheetChatMessages.Count - 1; i++)
+                {
+                    var msg = SheetChatMessages[i];
+                    if (msg.IsUser)
+                    {
+                        historyList.Add(("user", msg.Content));
+                    }
+                    else
+                    {
+                        historyList.Add(("assistant", msg.Content));
+                    }
+                }
+
+                // Lượt hiện tại kèm ngữ cảnh bảng tính
+                historyList.Add(("user", promptWithContext));
+
+                string reply = await Task.Run(() => OpenAiClientService.SendChatMessagesAsync(config, historyList, systemPrompt));
+
+                var assistantItem = new ChatSheetMessageItem
+                {
+                    IsUser = false,
+                    Content = reply.Trim()
+                };
+
+                // Trích xuất các ô được nhắc tới
+                ExtractReferencedCells(reply, assistantItem);
+
+                // Trích xuất công thức đề xuất nếu có
+                string suggestedFormula = ExtractFormula(reply);
+                if (!string.IsNullOrWhiteSpace(suggestedFormula))
+                {
+                    assistantItem.SuggestedFormula = suggestedFormula;
+                }
+
+                SheetChatMessages.Add(assistantItem);
+                OnPropertyChanged(nameof(HasSheetChatMessages));
+            }
+            catch (Exception ex)
+            {
+                SheetChatMessages.Add(new ChatSheetMessageItem
+                {
+                    IsUser = false,
+                    Content = $"❌ Lỗi khi hỏi đáp với Sheet: {ex.Message}"
+                });
+                OnPropertyChanged(nameof(HasSheetChatMessages));
+            }
+            finally
+            {
+                IsBusy = false;
+                StatusMessage = string.Empty;
+            }
+        }
+
+        private static void ExtractReferencedCells(string text, ChatSheetMessageItem item)
+        {
+            if (string.IsNullOrWhiteSpace(text) || item == null) return;
+
+            var added = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Pattern 1: [A1] hoặc [Sheet1!A1:B10] hoặc ['Tên Sheet'!C5]
+            var bracketMatches = Regex.Matches(text, @"\[((?:'[^']+'!|[A-Za-z0-9_]+!)?\$?[A-Za-z]{1,3}\$?[0-9]+(?::\$?[A-Za-z]{1,3}\$?[0-9]+)?)\]");
+            foreach (Match m in bracketMatches)
+            {
+                string cell = m.Groups[1].Value.Trim();
+                if (!string.IsNullOrEmpty(cell) && added.Add(cell))
+                {
+                    item.ReferencedCells.Add(cell);
+                }
+            }
+
+            // Pattern 2: ô A1 hoặc ô B5:C10
+            var wordMatches = Regex.Matches(text, @"(?:\bô|\bvùng)\s+([A-Za-z]{1,3}[0-9]+(?::[A-Za-z]{1,3}[0-9]+)?)\b", RegexOptions.IgnoreCase);
+            foreach (Match m in wordMatches)
+            {
+                string cell = m.Groups[1].Value.Trim();
+                if (!string.IsNullOrEmpty(cell) && added.Add(cell))
+                {
+                    item.ReferencedCells.Add(cell);
+                }
+            }
+
+            item.NotifyCellsChanged();
         }
 
         #endregion
