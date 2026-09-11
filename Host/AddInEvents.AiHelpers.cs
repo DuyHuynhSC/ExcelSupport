@@ -281,13 +281,15 @@ namespace ExcelSupport
                                     string text = val?.ToString() ?? string.Empty;
                                     if (!string.IsNullOrWhiteSpace(text))
                                     {
-                                        list.Add(new CellTextItem
+                                        var item = new CellTextItem
                                         {
                                             Row = startRow,
                                             Column = startCol,
                                             Address = ConvertColIndexToLetter(startCol) + startRow,
                                             OriginalText = text.Trim()
-                                        });
+                                        };
+                                        ExtractCellFormattedRuns(area, text, item);
+                                        list.Add(item);
                                         count++;
                                     }
                                 }
@@ -313,13 +315,30 @@ namespace ExcelSupport
                                                     {
                                                         int curRow = startRow + (r - rMin);
                                                         int curCol = startCol + (c - cMin);
-                                                        list.Add(new CellTextItem
+                                                        var item = new CellTextItem
                                                         {
                                                             Row = curRow,
                                                             Column = curCol,
                                                             Address = ConvertColIndexToLetter(curCol) + curRow,
                                                             OriginalText = text.Trim()
-                                                        });
+                                                        };
+
+                                                        Range? singleCell = null;
+                                                        try
+                                                        {
+                                                            singleCell = area.Cells[r - rMin + 1, c - cMin + 1] as Range;
+                                                            if (singleCell != null)
+                                                            {
+                                                                ExtractCellFormattedRuns(singleCell, text, item);
+                                                            }
+                                                        }
+                                                        catch { }
+                                                        finally
+                                                        {
+                                                            if (singleCell != null) Marshal.ReleaseComObject(singleCell);
+                                                        }
+
+                                                        list.Add(item);
 
                                                         count++;
                                                         if (count >= maxCells) break;
@@ -364,6 +383,158 @@ namespace ExcelSupport
             }
 
             return list;
+        }
+
+        private void ExtractCellFormattedRuns(Range cell, string fullText, CellTextItem item)
+        {
+            if (string.IsNullOrEmpty(fullText)) return;
+
+            Microsoft.Office.Interop.Excel.Font? cellFont = null;
+            try
+            {
+                cellFont = cell.Font;
+                if (cellFont == null) return;
+
+                object? strikeVal = null;
+                object? colorVal = null;
+                object? boldVal = null;
+                object? italicVal = null;
+
+                try { strikeVal = cellFont.Strikethrough; } catch { }
+                try { colorVal = cellFont.Color; } catch { }
+                try { boldVal = cellFont.Bold; } catch { }
+                try { italicVal = cellFont.Italic; } catch { }
+
+                bool isUniform = strikeVal != null && strikeVal != DBNull.Value &&
+                                 colorVal != null && colorVal != DBNull.Value &&
+                                 boldVal != null && boldVal != DBNull.Value &&
+                                 italicVal != null && italicVal != DBNull.Value;
+
+                if (isUniform)
+                {
+                    bool isStrike = strikeVal is true;
+                    bool isBold = boldVal is true;
+                    bool isItalic = italicVal is true;
+                    string? colorHex = ParseOleColor(colorVal);
+
+                    if (isStrike || isBold || isItalic || colorHex != null)
+                    {
+                        item.FormattedRuns = new List<TextRunModel>
+                        {
+                            new TextRunModel
+                            {
+                                Text = fullText.Trim(),
+                                IsStrikethrough = isStrike,
+                                IsBold = isBold,
+                                IsItalic = isItalic,
+                                ColorHex = colorHex
+                            }
+                        };
+                    }
+                    return;
+                }
+
+                // Mixed formatting across characters in the cell
+                var runs = new List<TextRunModel>();
+                TextRunModel? currentRun = null;
+                int len = fullText.Length;
+
+                for (int i = 1; i <= len; i++)
+                {
+                    Characters? ch = null;
+                    Microsoft.Office.Interop.Excel.Font? chFont = null;
+                    try
+                    {
+                        ch = cell.Characters[i, 1];
+                        chFont = ch.Font;
+
+                        bool isStrike = false;
+                        bool isBold = false;
+                        bool isItalic = false;
+                        string? colorHex = null;
+
+                        try { isStrike = chFont.Strikethrough is true; } catch { }
+                        try { isBold = chFont.Bold is true; } catch { }
+                        try { isItalic = chFont.Italic is true; } catch { }
+                        try { colorHex = ParseOleColor(chFont.Color); } catch { }
+
+                        char c = fullText[i - 1];
+
+                        if (currentRun != null &&
+                            currentRun.IsStrikethrough == isStrike &&
+                            currentRun.IsBold == isBold &&
+                            currentRun.IsItalic == isItalic &&
+                            string.Equals(currentRun.ColorHex, colorHex, StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentRun.Text += c;
+                        }
+                        else
+                        {
+                            currentRun = new TextRunModel
+                            {
+                                Text = c.ToString(),
+                                IsStrikethrough = isStrike,
+                                IsBold = isBold,
+                                IsItalic = isItalic,
+                                ColorHex = colorHex
+                            };
+                            runs.Add(currentRun);
+                        }
+                    }
+                    catch
+                    {
+                        char c = fullText[i - 1];
+                        if (currentRun != null)
+                        {
+                            currentRun.Text += c;
+                        }
+                        else
+                        {
+                            currentRun = new TextRunModel { Text = c.ToString() };
+                            runs.Add(currentRun);
+                        }
+                    }
+                    finally
+                    {
+                        if (chFont != null) Marshal.ReleaseComObject(chFont);
+                        if (ch != null) Marshal.ReleaseComObject(ch);
+                    }
+                }
+
+                if (runs.Count > 0)
+                {
+                    item.FormattedRuns = runs;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ExtractCellFormattedRuns error: {ex.Message}");
+            }
+            finally
+            {
+                if (cellFont != null) Marshal.ReleaseComObject(cellFont);
+            }
+        }
+
+        private static string? ParseOleColor(object? colorVal)
+        {
+            if (colorVal == null || colorVal == DBNull.Value) return null;
+            try
+            {
+                int ole = Convert.ToInt32(colorVal);
+                int r = ole & 0xFF;
+                int g = (ole >> 8) & 0xFF;
+                int b = (ole >> 16) & 0xFF;
+
+                // Treat default text color (black / 0,0,0) as null to inherit theme foreground
+                if (r <= 25 && g <= 25 && b <= 25) return null;
+
+                return $"#{r:X2}{g:X2}{b:X2}";
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public bool WriteTranslatedCells(List<CellTextItem> items, bool writeToAdjacentColumn)
