@@ -70,8 +70,10 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^+W", "ToggleTaskPaneCommand");
                 _excelApp?.OnKey("^+w", "ToggleTaskPaneCommand");
                 _excelApp?.OnKey("{F3}", "OpenAiTranslateDialogCommand");
-                _excelApp?.OnKey("^+T", "OpenAiTranslateDialogCommand");
-                _excelApp?.OnKey("^+t", "OpenAiTranslateDialogCommand");
+                _excelApp?.OnKey("^+T", "AiQuickTranslateCommand");
+                _excelApp?.OnKey("^+t", "AiQuickTranslateCommand");
+                _excelApp?.OnKey("^%T", "AiQuickTranslateCommand");
+                _excelApp?.OnKey("^%t", "AiQuickTranslateCommand");
             }
             catch { }
 
@@ -97,6 +99,8 @@ namespace ExcelSupport
                 _excelApp?.OnKey("{F3}");
                 _excelApp?.OnKey("^+T");
                 _excelApp?.OnKey("^+t");
+                _excelApp?.OnKey("^%T");
+                _excelApp?.OnKey("^%t");
             }
             catch { }
 
