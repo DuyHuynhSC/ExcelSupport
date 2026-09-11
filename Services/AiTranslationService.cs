@@ -128,8 +128,52 @@ namespace ExcelSupport.Services
 
                 string inputJson = JsonConvert.SerializeObject(batchPayload, Formatting.None);
 
+                // Match glossary terms specifically for this batch chunk
+                var matchedTerms = new List<GlossaryItem>();
+                var allTerms = (customGlossary ?? config.Glossary)?.Where(g => !string.IsNullOrWhiteSpace(g.Japanese) && !string.IsNullOrWhiteSpace(g.Vietnamese)).ToList();
+                if (enableGlossary && allTerms != null && allTerms.Count > 0)
+                {
+                    var chunkTexts = currentBatchIndices.Select(idx => resultList[idx].OriginalText ?? "").ToList();
+                    string combinedChunkText = string.Join("\n", chunkTexts);
+                    foreach (var term in allTerms)
+                    {
+                        if (combinedChunkText.IndexOf(term.Japanese, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            combinedChunkText.IndexOf(term.Vietnamese, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            matchedTerms.Add(term);
+                        }
+                    }
+                }
+
+                var sbUser = new StringBuilder();
+                if (matchedTerms.Count > 0)
+                {
+                    sbUser.AppendLine("[BẢNG THUẬT NGỮ GLOSSARY CẦN ÁP DỤNG CHÍNH XÁC CHO CÁC CÂU NÀY - ƯU TIÊN CAO NHẤT]:");
+                    foreach (var m in matchedTerms)
+                    {
+                        string note = string.IsNullOrWhiteSpace(m.Note) ? "" : $" (Ghi chú: {m.Note})";
+                        if (direction == TranslationDirection.JapaneseToVietnamese)
+                        {
+                            sbUser.AppendLine($"• \"{m.Japanese}\" ➔ BẮT BUỘC DỊCH LÀ: \"{m.Vietnamese}\"{note}");
+                        }
+                        else if (direction == TranslationDirection.VietnameseToJapanese)
+                        {
+                            sbUser.AppendLine($"• \"{m.Vietnamese}\" ➔ BẮT BUỘC DỊCH LÀ: \"{m.Japanese}\"{note}");
+                        }
+                        else
+                        {
+                            sbUser.AppendLine($"• \"{m.Japanese}\" (Tiếng Nhật) ⇋ \"{m.Vietnamese}\" (Tiếng Việt){note}");
+                        }
+                    }
+                    sbUser.AppendLine("BẮT BUỘC: Khi xuất hiện các từ trên, bạn PHẢI dùng chính xác từ dịch tương ứng trong danh sách, tuyệt đối không dịch khác!");
+                    sbUser.AppendLine();
+                }
+
+                sbUser.AppendLine("Dịch mảng các đoạn văn bản trong Excel sau đây theo đúng yêu cầu:");
+                sbUser.AppendLine(inputJson);
+
                 string systemPrompt = BuildSystemPrompt(direction, tone, glossarySection);
-                string userPrompt = $"Dịch mảng các đoạn văn bản trong Excel sau đây theo đúng yêu cầu:\n{inputJson}";
+                string userPrompt = sbUser.ToString();
 
                 progress?.Report((processedCount, totalToProcess, $"Đang dịch {processedCount + 1}-{processedCount + currentBatchIndices.Count} / {totalToProcess} ô..."));
 

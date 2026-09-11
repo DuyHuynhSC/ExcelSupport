@@ -164,6 +164,15 @@ namespace ExcelSupport.Views
                 return;
             }
 
+            try
+            {
+                DgGlossary.CommitEdit();
+                DgGlossary.CommitEdit(DataGridEditingUnit.Row, true);
+                DgTranslations.CommitEdit();
+                DgTranslations.CommitEdit(DataGridEditingUnit.Row, true);
+            }
+            catch { }
+
             // Read options
             var direction = GetSelectedDirection();
             var tone = GetSelectedTone();
