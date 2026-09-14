@@ -19,6 +19,15 @@ namespace ExcelSupport.Services
         public static int CachedColCount => (CachedValues != null && CachedValues.Count > 0) ? CachedValues[0].Count : 0;
 
         /// <summary>
+        /// Cập nhật bộ đệm dữ liệu tùy chỉnh (dùng cho Special Copy hoặc các tính năng sao chép khác)
+        /// </summary>
+        public static void SetCustomCache(List<List<object?>> values, List<List<string?>>? formulas = null)
+        {
+            CachedValues = values;
+            CachedFormulas = formulas;
+        }
+
+        /// <summary>
         /// Sao chép chỉ các ô hiển thị (Visible Cells Only) vào Clipboard và bộ nhớ đệm
         /// </summary>
         public static FilteredPasteResult CopyVisibleCells(ExcelApp? app, Range? sourceRange = null)

@@ -215,9 +215,9 @@ namespace ExcelSupport.Views
             }
 
             // 2. Join Mode
-            if (RbModeAll.IsChecked == true) options.JoinMode = SpecialCopyJoinMode.AllCells;
+            if (RbModeByRow.IsChecked == true) options.JoinMode = SpecialCopyJoinMode.ByRow;
             else if (RbModeByColumn.IsChecked == true) options.JoinMode = SpecialCopyJoinMode.ByColumn;
-            else options.JoinMode = SpecialCopyJoinMode.ByRow;
+            else options.JoinMode = SpecialCopyJoinMode.AllCells;
 
             // 3. Quote Mode
             if (RbQuoteAutoCsv.IsChecked == true) options.QuoteMode = SpecialCopyQuoteMode.AutoCsv;
@@ -435,7 +435,6 @@ namespace ExcelSupport.Views
         {
             if (_excelApp == null) return;
 
-            // Đảm bảo dữ liệu đã được sinh và đưa vào clipboard
             var options = BuildOptions();
             var copyResult = SpecialCopyService.ExecuteSpecialCopy(_excelApp, _sourceRange, options);
             if (!copyResult.Success)
@@ -444,12 +443,44 @@ namespace ExcelSupport.Views
                 return;
             }
 
-            // Hỏi hoặc dán trực tiếp vào ô hiện tại
-            var pasteResult = SpecialCopyService.PasteSpecialCopy(_excelApp);
+            Range? targetRange = null;
+            try
+            {
+                this.Visibility = Visibility.Hidden;
+
+                dynamic app = _excelApp;
+                dynamic result = app.InputBox(
+                    Prompt: LocalizationService.Get("FCP_PromptPickTarget"),
+                    Title: LocalizationService.Get("FCP_TitlePickTarget"),
+                    Default: _excelApp.ActiveCell?.Address[false, false] ?? "A1",
+                    Type: 8);
+
+                targetRange = result as Range;
+            }
+            catch
+            {
+                // Người dùng bấm Cancel trên InputBox
+                this.Visibility = Visibility.Visible;
+                this.Activate();
+                return;
+            }
+            finally
+            {
+                this.Visibility = Visibility.Visible;
+                this.Activate();
+            }
+
+            if (targetRange == null) return;
+
+            var pasteResult = SpecialCopyService.PasteSpecialCopy(_excelApp, targetRange);
             if (pasteResult.Success)
             {
                 TxtFooterStatus.Text = pasteResult.Message;
-                WpfMessageBox.Show(this, pasteResult.Message, LocalizationService.Get("SC_Title"), MessageBoxButton.OK, MessageBoxImage.Information);
+                WpfMessageBox.Show(this, 
+                    $"{pasteResult.Message}\n\n👉 Dữ liệu chuỗi nối đã được ghi thành công vào ô [{targetRange.Address[false, false]}]!", 
+                    LocalizationService.Get("SC_Title"), 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Information);
             }
             else
             {

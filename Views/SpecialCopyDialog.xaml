@@ -395,8 +395,8 @@
                         <StackPanel>
                             <!-- Chế độ nối -->
                             <TextBlock Text="{loc:Loc SC_JoinModeHeader}" Style="{StaticResource SubSectionHeaderStyle}"/>
-                            <RadioButton x:Name="RbModeByRow" Content="{loc:Loc SC_ModeByRow}" IsChecked="True" Checked="OnOptionChanged"/>
-                            <RadioButton x:Name="RbModeAll" Content="{loc:Loc SC_ModeAll}" Checked="OnOptionChanged"/>
+                            <RadioButton x:Name="RbModeAll" Content="{loc:Loc SC_ModeAll}" IsChecked="True" Checked="OnOptionChanged"/>
+                            <RadioButton x:Name="RbModeByRow" Content="{loc:Loc SC_ModeByRow}" Checked="OnOptionChanged"/>
                             <RadioButton x:Name="RbModeByColumn" Content="{loc:Loc SC_ModeByColumn}" Checked="OnOptionChanged"/>
 
                             <Separator Margin="0,8,0,8">

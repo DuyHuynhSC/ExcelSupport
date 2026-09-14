@@ -129,6 +129,18 @@ namespace ExcelSupport.Ribbon
             {
                 return CreateFilteredPasteBitmap();
             }
+            if (imageId == "comma_icon")
+            {
+                return CreateCommaBitmap();
+            }
+            if (imageId == "semicolon_icon")
+            {
+                return CreateSemicolonBitmap();
+            }
+            if (imageId == "pipe_icon")
+            {
+                return CreatePipeBitmap();
+            }
             if (imageId == "manual_icon")
             {
                 return CreateManualBitmap();
@@ -2021,6 +2033,102 @@ namespace ExcelSupport.Ribbon
                         new PointF(21f, 21f)
                     };
                     g.DrawPolygon(funnelPen, pts);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateCommaBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                g.Clear(Color.Transparent);
+
+                // Nền bo góc xanh dương hiện đại
+                using (var bgBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(37, 99, 235), Color.FromArgb(29, 78, 216), 45f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(2, 2, 28, 28), 6);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(30, 64, 175), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 6);
+                }
+
+                // Dấu phẩy màu trắng nổi bật ở giữa
+                using (var font = new System.Drawing.Font("Segoe UI", 20f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                {
+                    g.DrawString(",", font, textBrush, new RectangleF(0, -3, 32, 32), sf);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateSemicolonBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                g.Clear(Color.Transparent);
+
+                // Nền bo góc tím violet hiện đại
+                using (var bgBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(124, 58, 237), Color.FromArgb(109, 40, 217), 45f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(2, 2, 28, 28), 6);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(91, 33, 182), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 6);
+                }
+
+                // Dấu chấm phẩy màu trắng nổi bật ở giữa
+                using (var font = new System.Drawing.Font("Segoe UI", 18f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                {
+                    g.DrawString(";", font, textBrush, new RectangleF(0, -2, 32, 32), sf);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreatePipeBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                g.Clear(Color.Transparent);
+
+                // Nền bo góc xanh mòng két (teal)
+                using (var bgBrush = new LinearGradientBrush(new Rectangle(2, 2, 28, 28),
+                    Color.FromArgb(13, 148, 136), Color.FromArgb(15, 118, 110), 45f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(2, 2, 28, 28), 6);
+                }
+                using (var borderPen = new Pen(Color.FromArgb(17, 94, 89), 1.2f))
+                {
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(2, 2, 28, 28), 6);
+                }
+
+                // Dấu gạch đứng màu trắng ở giữa
+                using (var font = new System.Drawing.Font("Segoe UI", 18f, FontStyle.Bold))
+                using (var textBrush = new SolidBrush(Color.White))
+                using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                {
+                    g.DrawString("|", font, textBrush, new RectangleF(0, -1, 32, 32), sf);
                 }
             }
             return bmp;

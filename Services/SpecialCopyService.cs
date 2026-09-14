@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using ExcelSupport.Models;
 using Microsoft.Office.Interop.Excel;
@@ -33,6 +34,9 @@ namespace ExcelSupport.Services
 
             try
             {
+                // Hủy chế độ CutCopyMode trước đó của Excel (xóa đường viền nhấp nháy marching ants)
+                try { app.CutCopyMode = (XlCutCopyMode)0; } catch { }
+
                 Range? rng = sourceRange ?? (app.Selection as Range);
                 if (rng == null)
                 {
@@ -103,27 +107,24 @@ namespace ExcelSupport.Services
                 string delimiter = options.GetDelimiterString();
                 var lines = new List<string>();
 
-                if (options.JoinMode == SpecialCopyJoinMode.ByRow)
+                if (options.JoinMode == SpecialCopyJoinMode.AllCells)
                 {
-                    foreach (var kvp in rowDictValues)
+                    // Nối tất cả các ô (toàn bộ các dòng và các cột) thành 1 chuỗi / 1 dòng duy nhất
+                    var allCellStrings = new List<string>();
+                    foreach (var rowKvp in rowDictValues)
                     {
-                        var cellStrings = new List<string>();
-                        foreach (var colVal in kvp.Value)
+                        foreach (var colVal in rowKvp.Value)
                         {
                             object? val = colVal.Value;
                             if (options.SkipBlanks && IsBlank(val)) continue;
-                            cellStrings.Add(FormatCellString(val, delimiter, options));
-                        }
-
-                        if (cellStrings.Count > 0 || !options.SkipBlanks)
-                        {
-                            lines.Add(string.Join(delimiter, cellStrings));
+                            allCellStrings.Add(FormatCellString(val, delimiter, options));
                         }
                     }
+                    lines.Add(string.Join(delimiter, allCellStrings));
                 }
                 else if (options.JoinMode == SpecialCopyJoinMode.ByColumn)
                 {
-                    // Nhóm theo cột
+                    // Nhóm theo từng cột: mỗi cột nối thành 1 dòng
                     var colDictValues = new SortedDictionary<int, SortedDictionary<int, object?>>();
                     foreach (var rowKvp in rowDictValues)
                     {
@@ -155,31 +156,47 @@ namespace ExcelSupport.Services
                         }
                     }
                 }
-                else // SpecialCopyJoinMode.AllCells
+                else // SpecialCopyJoinMode.ByRow
                 {
-                    var allCellStrings = new List<string>();
-                    foreach (var rowKvp in rowDictValues)
+                    // Nhóm theo từng dòng: mỗi dòng các cột nối lại với nhau
+                    foreach (var kvp in rowDictValues)
                     {
-                        foreach (var colVal in rowKvp.Value)
+                        var cellStrings = new List<string>();
+                        foreach (var colVal in kvp.Value)
                         {
                             object? val = colVal.Value;
                             if (options.SkipBlanks && IsBlank(val)) continue;
-                            allCellStrings.Add(FormatCellString(val, delimiter, options));
+                            cellStrings.Add(FormatCellString(val, delimiter, options));
+                        }
+
+                        if (cellStrings.Count > 0 || !options.SkipBlanks)
+                        {
+                            lines.Add(string.Join(delimiter, cellStrings));
                         }
                     }
-                    lines.Add(string.Join(delimiter, allCellStrings));
                 }
 
                 string fullText = string.Join(Environment.NewLine, lines);
 
-                // Lưu vào bộ nhớ đệm
+                // Lưu vào bộ nhớ đệm SpecialCopy
                 CachedSpecialCopyText = fullText;
                 CachedSpecialCopyLines = lines;
 
-                // Đưa vào Windows Clipboard chuẩn Unicode
-                SetClipboardText(fullText);
+                // Đồng bộ vào FilteredCopyPasteService để nếu bấm "Paste to Visible Cells" thì vẫn nhận chuỗi nối
+                var cacheMatrix = new List<List<object?>>();
+                foreach (var line in lines)
+                {
+                    cacheMatrix.Add(new List<object?> { line });
+                }
+                FilteredCopyPasteService.SetCustomCache(cacheMatrix);
 
-                result.Success = true;
+                // Đưa vào Windows Clipboard chuẩn Unicode (có cơ chế thử lại nhiều lần nếu clipboard bị lock)
+                bool clipOk = SetClipboardTextWithRetry(fullText);
+
+                // Đảm bảo Excel CutCopyMode được giải phóng để Ctrl+V dán từ Windows Clipboard
+                try { app.CutCopyMode = (XlCutCopyMode)0; } catch { }
+
+                result.Success = clipOk;
                 result.ResultText = fullText;
                 result.TotalCellsProcessed = totalCells;
                 result.TotalLines = lines.Count;
@@ -199,14 +216,14 @@ namespace ExcelSupport.Services
         }
 
         /// <summary>
-        /// Sao chép nhanh 1-chạm với dấu nối chỉ định
+        /// Sao chép nhanh 1-chạm với dấu nối chỉ định (mặc định nối toàn bộ các ô/dòng được chọn thành 1 dòng CSV)
         /// </summary>
         public static SpecialCopyResult QuickCopy(ExcelApp? app, SpecialCopyDelimiter delimiter)
         {
             var options = new SpecialCopyOptions
             {
                 Delimiter = delimiter,
-                JoinMode = SpecialCopyJoinMode.ByRow,
+                JoinMode = SpecialCopyJoinMode.AllCells, // Nối toàn bộ các ô đã chọn (cả dòng và cột) thành 1 dòng CSV
                 QuoteMode = SpecialCopyQuoteMode.None,
                 SkipBlanks = false,
                 TrimSpaces = false,
@@ -305,6 +322,9 @@ namespace ExcelSupport.Services
                         currentRow++;
                     }
 
+                    // Giải phóng CutCopyMode
+                    try { app.CutCopyMode = (XlCutCopyMode)0; } catch { }
+
                     result.Success = true;
                     result.RowsPasted = pastedCount;
                     result.Message = string.Format(LocalizationService.Get("SC_MsgPasteSuccess"), pastedCount);
@@ -367,20 +387,33 @@ namespace ExcelSupport.Services
             return val == null || string.IsNullOrWhiteSpace(val.ToString());
         }
 
-        private static void SetClipboardText(string text)
+        public static bool SetClipboardTextWithRetry(string text, int retries = 10, int delayMs = 50)
         {
-            try
+            for (int i = 0; i < retries; i++)
             {
-                var dataObj = new System.Windows.Forms.DataObject();
-                dataObj.SetData(System.Windows.Forms.DataFormats.UnicodeText, true, text);
-                dataObj.SetData(System.Windows.Forms.DataFormats.Text, true, text);
-                System.Windows.Forms.Clipboard.SetDataObject(dataObj, true);
+                try
+                {
+                    var dataObj = new System.Windows.Forms.DataObject();
+                    dataObj.SetData(System.Windows.Forms.DataFormats.UnicodeText, true, text);
+                    dataObj.SetData(System.Windows.Forms.DataFormats.Text, true, text);
+                    dataObj.SetData(System.Windows.Forms.DataFormats.StringFormat, true, text);
+                    System.Windows.Forms.Clipboard.SetDataObject(dataObj, true, 5, 50);
+                    return true;
+                }
+                catch
+                {
+                    try
+                    {
+                        System.Windows.Clipboard.SetText(text);
+                        return true;
+                    }
+                    catch
+                    {
+                        Thread.Sleep(delayMs);
+                    }
+                }
             }
-            catch
-            {
-                // Fallback nếu SetDataObject bị xung đột với ứng dụng clipboard khác
-                try { System.Windows.Forms.Clipboard.SetText(text); } catch { }
-            }
+            return false;
         }
 
         public static string GetDelimiterDisplay(SpecialCopyDelimiter delimiter)

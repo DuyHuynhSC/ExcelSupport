@@ -33,7 +33,7 @@ namespace ExcelSupport.Models
     {
         public SpecialCopyDelimiter Delimiter { get; set; } = SpecialCopyDelimiter.Comma;
         public string CustomDelimiter { get; set; } = ", ";
-        public SpecialCopyJoinMode JoinMode { get; set; } = SpecialCopyJoinMode.ByRow;
+        public SpecialCopyJoinMode JoinMode { get; set; } = SpecialCopyJoinMode.AllCells;
         public SpecialCopyQuoteMode QuoteMode { get; set; } = SpecialCopyQuoteMode.None;
         public bool SkipBlanks { get; set; } = false;
         public bool TrimSpaces { get; set; } = false;
