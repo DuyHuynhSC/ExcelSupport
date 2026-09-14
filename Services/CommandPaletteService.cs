@@ -284,6 +284,70 @@ namespace ExcelSupport.Services
                 },
                 new PaletteCommandItem
                 {
+                    Id = "special_copy_wizard",
+                    TitleKey = "btnSpecialCopyWizard",
+                    DescriptionKey = "btnSpecialCopyWizard_SuperTip",
+                    CategoryKey = "grpDataTools",
+                    IconEmoji = "⚡",
+                    Keywords = new List<string> { "special copy", "noi chuoi", "concatenate", "csv row", "join cells", "copy delimiter", "phay", "cham phay", "pipe" },
+                    Action = () => SpecialCopyDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
+                },
+                new PaletteCommandItem
+                {
+                    Id = "special_copy_comma",
+                    TitleKey = "btnSpecialCopyComma",
+                    DescriptionKey = "btnSpecialCopyComma_SuperTip",
+                    CategoryKey = "grpDataTools",
+                    IconEmoji = "⚡",
+                    Keywords = new List<string> { "special copy comma", "noi dau phay", "join comma", "copy comma" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance;
+                        var result = SpecialCopyService.QuickCopy(app, SpecialCopyDelimiter.Comma);
+                        if (result.Success)
+                            System.Windows.MessageBox.Show($"{result.Message}\n\n👉 Nhấn Ctrl + V để dán vào ô tính hoặc ứng dụng khác!", LocalizationService.Get("btnCommandPalette"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        else
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("btnCommandPalette"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "special_copy_pipe",
+                    TitleKey = "btnSpecialCopyPipe",
+                    DescriptionKey = "btnSpecialCopyPipe_SuperTip",
+                    CategoryKey = "grpDataTools",
+                    IconEmoji = "⚡",
+                    Keywords = new List<string> { "special copy pipe", "noi dau pipe", "join pipe", "gach dung" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance;
+                        var result = SpecialCopyService.QuickCopy(app, SpecialCopyDelimiter.Pipe);
+                        if (result.Success)
+                            System.Windows.MessageBox.Show($"{result.Message}\n\n👉 Nhấn Ctrl + V để dán vào ô tính hoặc ứng dụng khác!", LocalizationService.Get("btnCommandPalette"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        else
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("btnCommandPalette"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "special_paste",
+                    TitleKey = "btnSpecialPaste",
+                    DescriptionKey = "btnSpecialPaste_SuperTip",
+                    CategoryKey = "grpDataTools",
+                    IconEmoji = "📥",
+                    Keywords = new List<string> { "special paste", "dan chuoi noi", "paste joined" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance;
+                        var result = SpecialCopyService.PasteSpecialCopy(app);
+                        if (result.Success)
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("btnCommandPalette"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        else
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("btnCommandPalette"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    }
+                },
+                new PaletteCommandItem
+                {
                     Id = "duplicate_finder",
                     TitleKey = "btnDuplicateFinder",
                     DescriptionKey = "btnDuplicateFinder_SuperTip",

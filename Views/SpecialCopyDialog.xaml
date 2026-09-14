@@ -1,0 +1,581 @@
+<Window x:Class="ExcelSupport.Views.SpecialCopyDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        mc:Ignorable="d"
+        Title="{loc:Loc SC_WindowTitle}" 
+        Height="660" Width="920"
+        MinHeight="540" MinWidth="800"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <!-- Button Styles -->
+        <Style x:Key="SpecialPrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#107C41"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#15803D"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SpecialActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SpecialSecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Sub-Card Styles -->
+        <Style x:Key="SubCardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Source Badge Style -->
+        <Style x:Key="SourceBadgeStyle" TargetType="Border">
+            <Setter Property="Background" Value="#EFF6FF"/>
+            <Setter Property="BorderBrush" Value="#BFDBFE"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#172554"/>
+                    <Setter Property="BorderBrush" Value="#1E40AF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Section Header Style -->
+        <Style x:Key="SubSectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- RadioButton & CheckBox Styles -->
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,3,10,3"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,3,0,3"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0. Header -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1. Body: 2 Columns (Options & Live Preview) -->
+            <RowDefinition Height="*"/>
+            <!-- 2. Footer -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 0. HEADER ==================== -->
+        <Border Grid.Row="0" Padding="20,12" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="⚡" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock FontWeight="Bold" FontSize="14.5" Text="{loc:Loc SC_Title}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Text="{loc:Loc SC_SubTitle}" FontSize="11.5" Margin="30,2,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#64748B"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 1. BODY ==================== -->
+        <Grid Grid.Row="1" Margin="16,12,16,12">
+            <Grid.ColumnDefinitions>
+                <!-- Cột trái: Cấu hình và tùy chọn (Width 400) -->
+                <ColumnDefinition Width="420"/>
+                <ColumnDefinition Width="14"/>
+                <!-- Cột phải: Xem trước kết quả -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT COLUMN: TÙY CHỌN NỐI CHUỖI -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Khung chọn vùng nguồn -->
+                    <Border CornerRadius="8" Padding="14" BorderThickness="1" Margin="0,0,0,10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc SC_SourceHeader}" FontWeight="Bold" FontSize="12.5" Foreground="#2563EB" Margin="0,0,0,8"/>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="TxtSourceRange" Height="30" Padding="8,5" FontSize="12" VerticalContentAlignment="Center">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Background" Value="#FFFFFF"/>
+                                            <Setter Property="Foreground" Value="#0F172A"/>
+                                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Background" Value="#0F172A"/>
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                                <Button Grid.Column="1" Content="{loc:Loc Common_PickOnExcel}" Style="{StaticResource SpecialActionBtn}" Margin="6,0,0,0" Click="OnPickSourceOnExcelClick"/>
+                                <Button Grid.Column="2" Content="{loc:Loc Common_CurrentSelection}" Style="{StaticResource SpecialSecondaryBtn}" Margin="4,0,0,0" Click="OnGetSourceSelectionClick"/>
+                            </Grid>
+
+                            <Border Style="{StaticResource SourceBadgeStyle}">
+                                <TextBlock x:Name="TxtSourceInfo" Text="{loc:Loc SC_SourceNoSelect}" FontSize="11.5" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#1E40AF"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Foreground" Value="#93C5FD"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Khung chọn Dấu phân cách (Delimiter) -->
+                    <Border CornerRadius="8" Padding="14" BorderThickness="1" Margin="0,0,0,10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc SC_DelimiterHeader}" Style="{StaticResource SubSectionHeaderStyle}"/>
+                            
+                            <WrapPanel Orientation="Horizontal" Margin="0,2,0,4">
+                                <RadioButton x:Name="RbComma" Content="{loc:Loc SC_DelimComma}" IsChecked="True" Checked="OnOptionChanged"/>
+                                <RadioButton x:Name="RbCommaSpace" Content="{loc:Loc SC_DelimCommaSpace}" Checked="OnOptionChanged"/>
+                                <RadioButton x:Name="RbSemicolon" Content="{loc:Loc SC_DelimSemicolon}" Checked="OnOptionChanged"/>
+                                <RadioButton x:Name="RbPipe" Content="{loc:Loc SC_DelimPipe}" Checked="OnOptionChanged"/>
+                                <RadioButton x:Name="RbTab" Content="{loc:Loc SC_DelimTab}" Checked="OnOptionChanged"/>
+                                <RadioButton x:Name="RbSpace" Content="{loc:Loc SC_DelimSpace}" Checked="OnOptionChanged"/>
+                                <RadioButton x:Name="RbNewline" Content="{loc:Loc SC_DelimNewline}" Checked="OnOptionChanged"/>
+                            </WrapPanel>
+
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton Grid.Column="0" x:Name="RbCustom" Content="{loc:Loc SC_DelimCustom}" Checked="OnOptionChanged"/>
+                                <TextBox Grid.Column="1" x:Name="TxtCustomDelimiter" Height="26" Margin="4,0,0,0" Padding="6,2" FontSize="12" 
+                                         VerticalContentAlignment="Center" Text=" - " TextChanged="OnCustomDelimiterChanged">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Background" Value="#FFFFFF"/>
+                                            <Setter Property="Foreground" Value="#0F172A"/>
+                                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Background" Value="#0F172A"/>
+                                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Khung Chế độ nối & Tùy chọn nâng cao -->
+                    <Border CornerRadius="8" Padding="14" BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#1E293B"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <StackPanel>
+                            <!-- Chế độ nối -->
+                            <TextBlock Text="{loc:Loc SC_JoinModeHeader}" Style="{StaticResource SubSectionHeaderStyle}"/>
+                            <RadioButton x:Name="RbModeByRow" Content="{loc:Loc SC_ModeByRow}" IsChecked="True" Checked="OnOptionChanged"/>
+                            <RadioButton x:Name="RbModeAll" Content="{loc:Loc SC_ModeAll}" Checked="OnOptionChanged"/>
+                            <RadioButton x:Name="RbModeByColumn" Content="{loc:Loc SC_ModeByColumn}" Checked="OnOptionChanged"/>
+
+                            <Separator Margin="0,8,0,8">
+                                <Separator.Style>
+                                    <Style TargetType="Separator">
+                                        <Setter Property="Background" Value="#E2E8F0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Background" Value="#334155"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Separator.Style>
+                            </Separator>
+
+                            <!-- Bọc ngoặc -->
+                            <TextBlock Text="{loc:Loc SC_QuoteModeHeader}" Style="{StaticResource SubSectionHeaderStyle}"/>
+                            <RadioButton x:Name="RbQuoteNone" Content="{loc:Loc SC_QuoteNone}" IsChecked="True" Checked="OnOptionChanged"/>
+                            <RadioButton x:Name="RbQuoteAutoCsv" Content="{loc:Loc SC_QuoteAutoCsv}" Checked="OnOptionChanged"/>
+                            <RadioButton x:Name="RbQuoteAlwaysDouble" Content="{loc:Loc SC_QuoteAlwaysDouble}" Checked="OnOptionChanged"/>
+                            <RadioButton x:Name="RbQuoteSingleSql" Content="{loc:Loc SC_QuoteSingleSql}" Checked="OnOptionChanged"/>
+
+                            <Separator Margin="0,8,0,8">
+                                <Separator.Style>
+                                    <Style TargetType="Separator">
+                                        <Setter Property="Background" Value="#E2E8F0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Background" Value="#334155"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Separator.Style>
+                            </Separator>
+
+                            <!-- Xử lý dữ liệu -->
+                            <TextBlock Text="{loc:Loc SC_FilterOptionsHeader}" Style="{StaticResource SubSectionHeaderStyle}"/>
+                            <CheckBox x:Name="ChkVisibleOnly" Content="{loc:Loc SC_VisibleOnly}" IsChecked="True" Checked="OnOptionChanged" Unchecked="OnOptionChanged"/>
+                            <CheckBox x:Name="ChkSkipBlanks" Content="{loc:Loc SC_SkipBlanks}" Checked="OnOptionChanged" Unchecked="OnOptionChanged"/>
+                            <CheckBox x:Name="ChkTrimSpaces" Content="{loc:Loc SC_TrimSpaces}" Checked="OnOptionChanged" Unchecked="OnOptionChanged"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- RIGHT COLUMN: XEM TRƯỚC KẾT QUẢ THỜI GIAN THỰC (LIVE PREVIEW) -->
+            <Border Grid.Column="2" CornerRadius="8" Padding="16" BorderThickness="1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#FFFFFF"/>
+                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Background" Value="#1E293B"/>
+                                <Setter Property="BorderBrush" Value="#334155"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header Preview -->
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{loc:Loc SC_PreviewHeader}" FontWeight="Bold" FontSize="12.5" Foreground="#107C41" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" x:Name="TxtPreviewStats" Text="0 ô | 0 dòng" FontSize="11.5" Foreground="#64748B" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Live Preview Text Box -->
+                    <TextBox Grid.Row="1" x:Name="TxtPreview" 
+                             IsReadOnly="True" 
+                             AcceptsReturn="True" 
+                             VerticalScrollBarVisibility="Auto" 
+                             HorizontalScrollBarVisibility="Auto" 
+                             TextWrapping="NoWrap"
+                             FontFamily="Consolas, Cascadia Code, Courier New"
+                             FontSize="12"
+                             Padding="10"
+                             Margin="0,0,0,10">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Background" Value="#F8FAFC"/>
+                                <Setter Property="Foreground" Value="#0F172A"/>
+                                <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#0B1120"/>
+                                        <Setter Property="Foreground" Value="#E2E8F0"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+
+                    <!-- Khung thông tin hướng dẫn dán -->
+                    <Border Grid.Row="2" Style="{StaticResource SubCardBorderStyle}" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc SC_PasteTipHeader}" FontWeight="SemiBold" FontSize="11.5" Foreground="#1E293B">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#1E293B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{loc:Loc SC_PasteTip1}" FontSize="11" Foreground="#64748B" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                            <TextBlock Text="{loc:Loc SC_PasteTip2}" FontSize="11" Foreground="#64748B" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 2 nút hành động lớn tại cột xem trước -->
+                    <Grid Grid.Row="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" x:Name="BtnCopyToClipboard" Content="{loc:Loc SC_BtnCopyClipboard}" 
+                                Style="{StaticResource SpecialPrimaryBtn}" Margin="0,0,6,0" Click="OnCopyToClipboardClick"/>
+                        <Button Grid.Column="1" x:Name="BtnPasteToExcel" Content="{loc:Loc SC_BtnPasteExcel}" 
+                                Style="{StaticResource SpecialActionBtn}" Margin="6,0,0,0" Click="OnPasteToExcelClick"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ==================== 2. FOOTER ==================== -->
+        <Border Grid.Row="2" Padding="20,12" BorderThickness="0,1,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtFooterStatus" Text="{loc:Loc Common_Ready}" 
+                           VerticalAlignment="Center" FontSize="12">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#64748B"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Foreground" Value="#CBD5E1"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="{loc:Loc Common_Close}" Width="80" Style="{StaticResource SpecialSecondaryBtn}" Click="OnCloseClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

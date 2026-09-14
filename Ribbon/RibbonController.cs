@@ -994,6 +994,79 @@ namespace ExcelSupport.Ribbon
             }
         }
 
+        public void OnSpecialCopyWizard(IRibbonControl control)
+        {
+            Views.SpecialCopyDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnSpecialCopyComma(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            var result = Services.SpecialCopyService.QuickCopy(app, Models.SpecialCopyDelimiter.Comma);
+            if (result.Success)
+            {
+                System.Windows.MessageBox.Show(
+                    $"{result.Message}\n\n👉 Nhấn Ctrl + V để dán vào ô Excel hoặc ứng dụng khác!", 
+                    "Special Copy - Dấu phẩy (,)", 
+                    System.Windows.MessageBoxButton.OK, 
+                    System.Windows.MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+
+        public void OnSpecialCopySemicolon(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            var result = Services.SpecialCopyService.QuickCopy(app, Models.SpecialCopyDelimiter.Semicolon);
+            if (result.Success)
+            {
+                System.Windows.MessageBox.Show(
+                    $"{result.Message}\n\n👉 Nhấn Ctrl + V để dán vào ô Excel hoặc ứng dụng khác!", 
+                    "Special Copy - Chấm phẩy (;)", 
+                    System.Windows.MessageBoxButton.OK, 
+                    System.Windows.MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+
+        public void OnSpecialCopyPipe(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            var result = Services.SpecialCopyService.QuickCopy(app, Models.SpecialCopyDelimiter.Pipe);
+            if (result.Success)
+            {
+                System.Windows.MessageBox.Show(
+                    $"{result.Message}\n\n👉 Nhấn Ctrl + V để dán vào ô Excel hoặc ứng dụng khác!", 
+                    "Special Copy - Dấu gạch đứng (|)", 
+                    System.Windows.MessageBoxButton.OK, 
+                    System.Windows.MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+
+        public void OnSpecialPaste(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            var result = Services.SpecialCopyService.PasteSpecialCopy(app);
+            if (result.Success)
+            {
+                System.Windows.MessageBox.Show(result.Message, "Dán Dữ Liệu Thành Công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+
         public void OnAiQuickTranslate(IRibbonControl control)
         {
             Views.AiQuickTranslatePopup.ShowPopup(AddInEvents.MainViewModel?.IsDarkTheme ?? false);

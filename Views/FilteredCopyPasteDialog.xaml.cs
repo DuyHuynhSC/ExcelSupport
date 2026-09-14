@@ -304,6 +304,11 @@ namespace ExcelSupport.Views
             }
         }
 
+        private void OnOpenSpecialCopyClick(object sender, RoutedEventArgs e)
+        {
+            SpecialCopyDialog.ShowWindow(this.IsDarkTheme);
+        }
+
         private void OnPasteTargetClick(object sender, RoutedEventArgs e)
         {
             if (_excelApp == null) return;

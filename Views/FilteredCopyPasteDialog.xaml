@@ -384,7 +384,14 @@
                         </StackPanel>
                     </Border>
 
-                    <Button Grid.Row="4" x:Name="BtnCopySource" Content="{loc:Loc FCP_BtnCopySource}" Style="{StaticResource FilterPasteActionBtn}" HorizontalAlignment="Stretch" Click="OnCopySourceClick"/>
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" x:Name="BtnCopySource" Content="{loc:Loc FCP_BtnCopySource}" Style="{StaticResource FilterPasteActionBtn}" HorizontalAlignment="Stretch" Margin="0,0,6,0" Click="OnCopySourceClick"/>
+                        <Button Grid.Column="1" x:Name="BtnSpecialCopy" Content="⚡ Special Copy..." Style="{StaticResource FilterPasteSecondaryBtn}" Click="OnOpenSpecialCopyClick"/>
+                    </Grid>
                 </Grid>
             </Border>
 

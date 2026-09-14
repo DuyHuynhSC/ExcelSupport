@@ -184,6 +184,37 @@
                         getScreentip='GetRibbonScreentip'
                         getSupertip='GetRibbonSupertip'
                         onAction='OnFilteredCopyPasteWizard' />
+                <menuSeparator id='sepSpecialCopy' />
+                <button id='btnSpecialCopyWizard'
+                        imageMso='AutoFormat'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnSpecialCopyWizard' />
+                <button id='btnSpecialCopyComma'
+                        imageMso='PivotItemGroup'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnSpecialCopyComma' />
+                <button id='btnSpecialCopySemicolon'
+                        imageMso='PivotItemUngroup'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnSpecialCopySemicolon' />
+                <button id='btnSpecialCopyPipe'
+                        imageMso='FormatColumns'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnSpecialCopyPipe' />
+                <button id='btnSpecialPaste'
+                        imageMso='Paste'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        onAction='OnSpecialPaste' />
               </menu>
             </splitButton>
           </box>
