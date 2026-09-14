@@ -76,6 +76,7 @@ namespace ExcelSupport.Services
                 new() { ControlId = "mnuGridRulerOptions", GroupId = "grpViewTools", GroupNameKey = "grpViewTools", NameKey = "mnuGridRulerOptions", IconEmoji = "⚙️" },
 
                 // Group 7: Trợ Lý AI & Năng Suất (grpAiTools)
+                new() { ControlId = "btnAiQuickTranslate", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiQuickTranslate", IconEmoji = "⚡" },
                 new() { ControlId = "btnAiTranslate", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiTranslate", IconEmoji = "🌐" },
                 new() { ControlId = "btnAiFormula", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiFormula", IconEmoji = "✨" },
                 new() { ControlId = "btnAiFormulaDoctor", GroupId = "grpAiTools", GroupNameKey = "grpAiTools", NameKey = "btnAiFormulaDoctor", IconEmoji = "🩺" },

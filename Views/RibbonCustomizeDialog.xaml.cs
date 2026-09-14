@@ -146,13 +146,14 @@ namespace ExcelSupport.Views
             // Order groups logically
             var groupOrder = new Dictionary<string, int>
             {
-                { "grpDataTools", 0 },
-                { "grpAuditTools", 1 },
-                { "grpJapanTools", 2 },
-                { "grpViewTools", 3 },
-                { "grpQuickTools", 4 },
-                { "grpFileTools", 5 },
-                { "grpAiTools", 6 }
+                { "grpNavExplorer", 0 },
+                { "grpDataTools", 1 },
+                { "grpAuditTools", 2 },
+                { "grpJapanTools", 3 },
+                { "grpViewTools", 4 },
+                { "grpQuickTools", 5 },
+                { "grpFileTools", 6 },
+                { "grpAiTools", 7 }
             };
 
             grouped = grouped.OrderBy(g => groupOrder.TryGetValue(g.Key, out int order) ? order : 99).ToList();
@@ -184,7 +185,8 @@ namespace ExcelSupport.Views
                 headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
                 var headerTitleStack = new StackPanel { Orientation = WpfOrientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-                var groupIcon = group.Key == "grpDataTools" ? "📊" :
+                var groupIcon = group.Key == "grpNavExplorer" ? "🧭" :
+                                group.Key == "grpDataTools" ? "📊" :
                                 group.Key == "grpAuditTools" ? "🔍" :
                                 group.Key == "grpJapanTools" ? "🇯🇵" :
                                 group.Key == "grpViewTools" ? "📐" :

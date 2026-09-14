@@ -17,6 +17,7 @@
           <button id='btnCommandPalette'
                   size='large'
                   image='command_palette_icon'
+                  getVisible='GetControlVisible'
                   getLabel='GetRibbonLabel'
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
