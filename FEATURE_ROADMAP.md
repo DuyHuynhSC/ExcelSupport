@@ -54,6 +54,33 @@ graph TD
 #### 2.3. Test Case Status Consolidator & Dashboard — [P2]
 * Tự động quét 10–50 sheet test case riêng lẻ trong Workbook, tổng hợp tỷ lệ Pass/Fail/Pending, xuất 1 Sheet Dashboard tổng hợp kèm thanh tiến độ (Progress Bar) trực quan.
 
+#### 2.4. Project Document & Quick Spec Launcher (Quản lý File Dự Án & Mở Nhanh TKCT / TKCB / Test Spec) — [Ưu tiên P0 - ✅ Đã hoàn thành]
+* **Vấn đề giải quyết:** Trong dự án phần mềm/khách hàng Nhật Bản, tài liệu thiết kế (TKCT, TKCB, Chỉ thị test) gồm hàng trăm/nghìn file phân bổ trong nhiều folder phức tạp. Khi đang xem ma trận WBS, backlog, test case hoặc bảng danh mục màn hình trên Excel, việc phải mở Windows Explorer tìm từng file tốn rất nhiều thời gian.
+* **Mô tả hoạt động & Luồng người dùng (User Flow):**
+  - **Quản lý theo Profile Dự Án (Project Profiles):**
+    - Cấu hình linh hoạt theo từng dự án (Project A, Project B...). Lưu trữ tại `%APPDATA%\ExcelSupport\project_profiles.json`.
+    - Mỗi Profile gồm: Tên dự án, Thư mục gốc (Root Folder), Thư mục TKCT (Detailed Design), Thư mục TKCB (Basic Design), Thư mục Chỉ thị Test (Test Spec).
+    - Cho phép chọn Profile đang kích hoạt (Active Project Profile) dễ dàng từ Ribbon hoặc popup cài đặt.
+  - **Kích hoạt nhanh từ Cell qua Phím tắt (Hotkeys):**
+    - Người dùng chọn ô chứa Screen ID, Table ID, Program ID hoặc Tên chức năng (ví dụ: `SCR_001`, `M_USER`, `B_CALC_01`).
+    - `Ctrl + Shift + D`: Tìm và mở **TKCT (Detailed Design)**.
+    - `Ctrl + Shift + B`: Tìm và mở **TKCB (Basic Design)**.
+    - `Ctrl + Shift + J`: Tìm và mở **Chỉ thị Test (Test Spec)**.
+  - **Cơ chế tìm kiếm thông minh (Smart Search Engine):**
+    - **Quét đệ quy (Recursive Search):** Quét toàn bộ thư mục chỉ định và tất cả thư mục con bên trong (phù hợp khi dự án chia folder theo Module/Subsystem).
+    - **Khớp từ khóa (Contains Match):** Khớp linh hoạt tên file chứa từ khóa trong Cell (tự động trim khoảng trắng, chuẩn hóa tên).
+    - **Hỗ trợ đa định dạng:** Tìm và mở các file `.xlsx`, `.xlsm`, `.xls`, `.docx`, `.pdf`, `.pptx`.
+  - **Nhận diện Version & Hộp thoại chọn nhanh (Version Picker Popup):**
+    - Tự động nhận diện version trong tên file bằng Regex (ví dụ: `_v1.0`, `_v1.1`, `_ver2.0`, `_20260915`).
+    - **Nếu chỉ tìm thấy 1 file duy nhất:** Mở file trực tiếp ngay lập tức.
+    - **Nếu tìm thấy nhiều file / nhiều version:** Hiển thị popup **Version Selector Dialog** nhỏ gọn giữa màn hình:
+      - Danh sách version kèm Tên file, Thư mục chứa, Ngày sửa đổi (`Last Modified`), Kích thước file.
+      - Tự động highlight và focus vào bản mới nhất (**Latest Version**).
+      - Nhấn `Enter` hoặc phím số `1`, `2`, `3`... để mở ngay.
+      - Tùy chọn **Mở dạng chỉ đọc (Read-Only)** để bảo vệ an toàn tài liệu thiết kế gốc không bị chỉnh sửa ngoài ý muốn.
+  - **Tích hợp Ribbon & Command Palette:**
+    - Nút quản lý trên Ribbon nhóm `grpJapanTools` và tích hợp lệnh vào Command Palette (`Ctrl + Shift + P`).
+
 ---
 
 ### 🧹 3. Sức Khỏe File & Tối Ưu Bảng Tính (Workbook Optimizer & Hygiene)
@@ -98,10 +125,11 @@ graph TD
 
 | STT | Tính năng | Đối tượng hưởng lợi | Giá trị nghiệp vụ | Độ phức tạp | Giai đoạn đề xuất |
 |:---:|---|---|:---:|:---:|:---:|
-| 1 | **Quick Command Palette (`Ctrl + Shift + P`)** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1** |
-| 2 | **Spec to Code / DDL Generator** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1** |
-| 3 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
-| 4 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |
-| 5 | **Excel to SQL INSERT/MERGE Script** | Dev, DBA | ⭐⭐⭐⭐ | Thấp | **Phase 2** |
-| 6 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |
-| 7 | **Multi-Database Support (Postgres/MySQL)** | Backend Dev | ⭐⭐⭐⭐ | Trung bình | **Phase 3** |
+| 1 | **Quick Command Palette (`Ctrl + Shift + P`)** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
+| 2 | **Project Document & Quick Spec Launcher** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
+| 3 | **Spec to Code / DDL Generator** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1** |
+| 4 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
+| 5 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |
+| 6 | **Excel to SQL INSERT/MERGE Script** | Dev, DBA | ⭐⭐⭐⭐ | Thấp | **Phase 2** |
+| 7 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |
+| 8 | **Multi-Database Support (Postgres/MySQL)** | Backend Dev | ⭐⭐⭐⭐ | Trung bình | **Phase 3** |

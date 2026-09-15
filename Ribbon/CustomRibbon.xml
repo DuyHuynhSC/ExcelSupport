@@ -302,6 +302,42 @@
 
         <!-- Group: Tiện Ích IT / Khách Hàng Nhật Bản -->
         <group id='grpJapanTools' getLabel='GetRibbonLabel'>
+          <splitButton id='splitSpecLauncher' size='large' getVisible='GetControlVisible'>
+            <button id='btnSpecLauncher'
+                    image='spec_launcher_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnLaunchDetailedDesign' />
+            <menu id='mnuSpecLauncher'>
+              <button id='btnLaunchDetailedDesign'
+                      image='doc_tkct_icon'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnLaunchDetailedDesign' />
+              <button id='btnLaunchBasicDesign'
+                      image='doc_tkcb_icon'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnLaunchBasicDesign' />
+              <button id='btnLaunchTestSpec'
+                      image='doc_test_icon'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnLaunchTestSpec' />
+              <menuSeparator id='sepSpecProfile' />
+              <button id='btnProjectProfileSettings'
+                      image='project_settings_icon'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnProjectProfileSettings' />
+            </menu>
+          </splitButton>
+
           <button id='btnJapaneseConvert'
                   size='large'
                   image='zenkaku_icon'

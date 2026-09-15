@@ -67,6 +67,7 @@ namespace ExcelSupport.Services
                 new() { ControlId = "btnDesignPageCounter", GroupId = "grpFileTools", GroupNameKey = "grpFileTools", NameKey = "btnDesignPageCounter", IconEmoji = "📑" },
 
                 // Group: Tiện Ích IT / Khách Hàng Nhật Bản (grpJapanTools)
+                new() { ControlId = "splitSpecLauncher", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnSpecLauncher", IconEmoji = "🚀" },
                 new() { ControlId = "btnJapaneseConvert", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnJapaneseConvert", IconEmoji = "🇯🇵" },
                 new() { ControlId = "btnKatakanaCheck", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnKatakanaCheck", IconEmoji = "🈁" },
                 new() { ControlId = "btnExportMarkdown", GroupId = "grpJapanTools", GroupNameKey = "grpJapanTools", NameKey = "btnExportMarkdown", IconEmoji = "📝" },

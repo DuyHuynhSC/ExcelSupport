@@ -438,6 +438,29 @@ Nhóm công cụ đặc thù trên thanh Ribbon (`Tiện Ích Nhật & IT` / `Ja
   - **Xử lý xuống dòng an toàn:** Tự động chuyển đổi các ký tự xuống dòng `\n` trong ô thành thẻ `<br>` để bảo toàn cấu trúc bảng Markdown.
   - **Hộp thoại Tabbed Preview:** Xem trước giao diện bảng Markdown và HTML trực tiếp, kèm nút **`📋 Copy Markdown`** và **`📋 Copy HTML`** 1-Click sao chép vào Clipboard.
 
+### 22.4 Quản Lý File Dự Án & Mở Nhanh Tài Liệu Thiết Kế (Project Document & Quick Spec Launcher)
+* **Vấn đề giải quyết:** Trong dự án phần mềm với khách hàng Nhật Bản, tài liệu thiết kế (TKCT, TKCB, Chỉ thị test) gồm hàng trăm/nghìn file phân bổ trong cấu trúc folder phức tạp. Khi đang xem ma trận WBS, backlog, danh mục màn hình hoặc test case trên Excel, việc tìm kiếm thủ công từng file tốn rất nhiều thời gian.
+* **Bộ Phím Tắt Kích Hoạt Siêu Tốc:**
+  - **`Ctrl + Shift + D`**: Tìm và mở **Thiết Kế Chi Tiết (TKCT - Detailed Design / 詳細設計書)**.
+  - **`Ctrl + Shift + B`**: Tìm và mở **Thiết Kế Cơ Bản (TKCB - Basic Design / 基本設計書)**.
+  - **`Ctrl + Shift + J`**: Tìm và mở **Chỉ Thị Test (Test Specification / テスト仕様書)**.
+  - Hoặc bấm cụm nút **`🚀 Tài Liệu Dự Án`** tại nhóm **Tiện Ích Nhật & IT** trên Ribbon hoặc qua Command Palette (`Ctrl + Shift + P`).
+* **Luồng hoạt động thông minh:**
+  1. Người dùng chọn ô Excel chứa Screen ID, Table ID, Program ID hoặc từ khóa bất kỳ (ví dụ: `SCR_001`, `M_USER`, `B_CALC_01`).
+  2. Bấm phím tắt tương ứng (`Ctrl + Shift + D/B/J`).
+  3. **Nếu chỉ tìm thấy 1 file duy nhất:** File được mở trực tiếp ngay lập tức (file Excel mở trong Excel, file Word/PDF/PowerPoint mở bằng ứng dụng mặc định).
+  4. **Nếu tìm thấy nhiều file hoặc nhiều version:** Hiển thị popup **Version Selector Dialog** nhỏ gọn:
+     - Tự động nhận diện version trong tên file bằng Regex (`_v1.0`, `_v1.1`, `_ver2.0`, `_20260915`, `_rev01`).
+     - Tự động bôi đậm và focus vào bản mới nhất (**⭐ MỚI NHẤT / LATEST**).
+     - Phím số chọn nhanh: Bấm phím số **`1`**, **`2`**, **`3`**... **`9`** trên bàn phím để mở ngay file tương ứng!
+     - Bấm **`Enter`** để mở file đang chọn, **`F5`** để mở thư mục chứa file trong Windows Explorer.
+     - Tùy chọn **Mở dạng chỉ đọc (Read-Only)** để bảo vệ an toàn tài liệu thiết kế gốc không bị chỉnh sửa ngoài ý muốn.
+* **Quản Lý Profile Dự Án (Project Profiles):**
+  - Lưu trữ cấu hình tại `%APPDATA%\ExcelSupport\project_profiles.json`.
+  - Hỗ trợ thêm/sửa/xóa/nhân bản nhiều dự án khác nhau (Project A, Project B...).
+  - Cấu hình linh hoạt: Thư mục gốc (Root Folder), Thư mục TKCT, Thư mục TKCB, Thư mục Chỉ thị Test, phần mở rộng file hỗ trợ (`.xlsx;.xlsm;.xls;.docx;.pdf;.pptx`), tùy chọn mặc định mở Read-Only.
+  - Tích hợp tính năng **Quét Thử (Test Search)** ngay trong hộp thoại cài đặt để kiểm tra quy tắc tìm kiếm trước khi sử dụng.
+
 ---
 
 ## 23. Bảng Lệnh Nhanh — Quick Command Palette (Ctrl + Shift + P)

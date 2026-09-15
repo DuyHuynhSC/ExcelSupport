@@ -143,4 +143,49 @@ namespace ExcelSupport
             });
         }
     }
+
+    public static class SpecLauncherCommands
+    {
+        [ExcelCommand(ShortCut = "^+D", Name = "OpenDetailedDesignCommand")]
+        public static void OpenDetailedDesign()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    var app = (ExcelApp)ExcelDnaUtil.Application;
+                    ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.DetailedDesign);
+                }
+                catch { }
+            });
+        }
+
+        [ExcelCommand(ShortCut = "^+B", Name = "OpenBasicDesignCommand")]
+        public static void OpenBasicDesign()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    var app = (ExcelApp)ExcelDnaUtil.Application;
+                    ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.BasicDesign);
+                }
+                catch { }
+            });
+        }
+
+        [ExcelCommand(ShortCut = "^+J", Name = "OpenTestSpecCommand")]
+        public static void OpenTestSpec()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    var app = (ExcelApp)ExcelDnaUtil.Application;
+                    ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.TestSpec);
+                }
+                catch { }
+            });
+        }
+    }
 }

@@ -462,6 +462,61 @@ namespace ExcelSupport.Services
                 // ==================== 6. TIỆN ÍCH IT & KHÁCH HÀNG NHẬT (grpJapanTools) ====================
                 new PaletteCommandItem
                 {
+                    Id = "launch_detailed_design",
+                    TitleKey = "btnLaunchDetailedDesign",
+                    DescriptionKey = "btnLaunchDetailedDesign_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "📄",
+                    ShortcutText = "Ctrl + Shift + D",
+                    Keywords = new List<string> { "tkct", "detailed design", "thiet ke chi tiet", "spec", "screen id", "table id", "launcher", "mo tkct" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.DetailedDesign);
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "launch_basic_design",
+                    TitleKey = "btnLaunchBasicDesign",
+                    DescriptionKey = "btnLaunchBasicDesign_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "📐",
+                    ShortcutText = "Ctrl + Shift + B",
+                    Keywords = new List<string> { "tkcb", "basic design", "thiet ke co ban", "spec", "screen id", "table id", "launcher", "mo tkcb" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.BasicDesign);
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "launch_test_spec",
+                    TitleKey = "btnLaunchTestSpec",
+                    DescriptionKey = "btnLaunchTestSpec_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "🧪",
+                    ShortcutText = "Ctrl + Shift + J",
+                    Keywords = new List<string> { "test spec", "chi thi test", "test case", "chi thi", "kiem thu", "launcher", "mo test" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.TestSpec);
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "project_profile_settings",
+                    TitleKey = "btnProjectProfileSettings",
+                    DescriptionKey = "btnProjectProfileSettings_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "⚙️",
+                    Keywords = new List<string> { "project profile", "du an", "cau hinh du an", "profile setting", "spec folder", "thu muc thiet ke" },
+                    Action = () => ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
+                },
+                new PaletteCommandItem
+                {
                     Id = "japanese_convert",
                     TitleKey = "btnJapaneseConvert",
                     DescriptionKey = "btnJapaneseConvert_SuperTip",

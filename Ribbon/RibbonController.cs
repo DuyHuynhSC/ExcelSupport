@@ -41,6 +41,26 @@ namespace ExcelSupport.Ribbon
 
         public override object? LoadImage(string imageId)
         {
+            if (imageId == "spec_launcher_icon")
+            {
+                return CreateSpecLauncherBitmap();
+            }
+            if (imageId == "doc_tkct_icon")
+            {
+                return CreateDocTkctBitmap();
+            }
+            if (imageId == "doc_tkcb_icon")
+            {
+                return CreateDocTkcbBitmap();
+            }
+            if (imageId == "doc_test_icon")
+            {
+                return CreateDocTestBitmap();
+            }
+            if (imageId == "project_settings_icon")
+            {
+                return CreateProjectSettingsBitmap();
+            }
             if (imageId == "command_palette_icon")
             {
                 return CreateCommandPaletteBitmap();
@@ -952,6 +972,29 @@ namespace ExcelSupport.Ribbon
         public void OnDesignPageCounter(IRibbonControl control)
         {
             Views.DesignPageCounterDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnLaunchDetailedDesign(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Services.ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.DetailedDesign);
+        }
+
+        public void OnLaunchBasicDesign(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Services.ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.BasicDesign);
+        }
+
+        public void OnLaunchTestSpec(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Services.ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.TestSpec);
+        }
+
+        public void OnProjectProfileSettings(IRibbonControl control)
+        {
+            Views.ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnJapaneseConvert(IRibbonControl control)
@@ -2489,6 +2532,170 @@ namespace ExcelSupport.Ribbon
                 using (var textBrushJa = new SolidBrush(Color.FromArgb(254, 240, 138)))
                 {
                     g.DrawString("あ", fontJa, textBrushJa, 15, 3);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateSpecLauncherBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Folder base: Màu xanh dương Indigo #2563EB -> #1D4ED8
+                using (var folderBrush = new LinearGradientBrush(new Rectangle(2, 6, 28, 23),
+                    Color.FromArgb(37, 99, 235), Color.FromArgb(29, 78, 216), 45f))
+                {
+                    FillRoundedRectangle(g, folderBrush, new Rectangle(2, 6, 28, 23), 3);
+                }
+
+                // Folder tab top:
+                using (var tabBrush = new SolidBrush(Color.FromArgb(59, 130, 246)))
+                {
+                    FillRoundedRectangle(g, tabBrush, new Rectangle(2, 3, 12, 6), 2);
+                }
+
+                // White paper sheet popping out
+                using (var paperBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                {
+                    FillRoundedRectangle(g, paperBrush, new Rectangle(7, 5, 18, 14), 2);
+                }
+                using (var lineBrush = new SolidBrush(Color.FromArgb(148, 163, 184)))
+                {
+                    g.FillRectangle(lineBrush, 10, 8, 12, 1);
+                    g.FillRectangle(lineBrush, 10, 11, 12, 1);
+                    g.FillRectangle(lineBrush, 10, 14, 8, 1);
+                }
+
+                // Front pocket of folder:
+                using (var pocketBrush = new LinearGradientBrush(new Rectangle(2, 12, 28, 17),
+                    Color.FromArgb(30, 64, 175), Color.FromArgb(29, 78, 216), 90f))
+                {
+                    FillRoundedRectangle(g, pocketBrush, new Rectangle(2, 12, 28, 17), 3);
+                }
+
+                // Rocket / Quick Launch badge in amber/yellow at bottom right
+                using (var badgeBrush = new SolidBrush(Color.FromArgb(245, 158, 11)))
+                {
+                    g.FillEllipse(badgeBrush, 17, 16, 13, 13);
+                }
+                using (var badgePen = new Pen(Color.White, 1.2f))
+                {
+                    g.DrawEllipse(badgePen, 17, 16, 13, 13);
+                }
+
+                // Lightning / Fast Arrow symbol inside badge
+                using (var boltBrush = new SolidBrush(Color.White))
+                {
+                    var points = new PointF[]
+                    {
+                        new PointF(24, 18),
+                        new PointF(21, 22),
+                        new PointF(24, 22),
+                        new PointF(22, 27),
+                        new PointF(26, 21),
+                        new PointF(23, 21)
+                    };
+                    g.FillPolygon(boltBrush, points);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateDocTkctBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Document sheet: Blue
+                using (var brush = new SolidBrush(Color.FromArgb(37, 99, 235)))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(1, 1, 14, 14), 2);
+                }
+                using (var textBrush = new SolidBrush(Color.White))
+                using (var font = new System.Drawing.Font("Arial", 5.5f, FontStyle.Bold))
+                {
+                    g.DrawString("TK", font, textBrush, 2, 1);
+                    g.DrawString("CT", font, textBrush, 2, 7);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateDocTkcbBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Document sheet: Emerald Green
+                using (var brush = new SolidBrush(Color.FromArgb(16, 124, 65)))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(1, 1, 14, 14), 2);
+                }
+                using (var textBrush = new SolidBrush(Color.White))
+                using (var font = new System.Drawing.Font("Arial", 5.5f, FontStyle.Bold))
+                {
+                    g.DrawString("TK", font, textBrush, 2, 1);
+                    g.DrawString("CB", font, textBrush, 2, 7);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateDocTestBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Document sheet: Purple / Violet
+                using (var brush = new SolidBrush(Color.FromArgb(124, 58, 237)))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(1, 1, 14, 14), 2);
+                }
+                using (var textBrush = new SolidBrush(Color.White))
+                using (var font = new System.Drawing.Font("Arial", 5.0f, FontStyle.Bold))
+                {
+                    g.DrawString("TEST", font, textBrush, 1, 4);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateProjectSettingsBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Slate gray folder
+                using (var brush = new SolidBrush(Color.FromArgb(71, 85, 105)))
+                {
+                    FillRoundedRectangle(g, brush, new Rectangle(1, 2, 14, 12), 2);
+                }
+
+                // Gear circle in center
+                using (var gearBrush = new SolidBrush(Color.FromArgb(241, 245, 249)))
+                {
+                    g.FillEllipse(gearBrush, 5, 4, 6, 6);
+                }
+                using (var holeBrush = new SolidBrush(Color.FromArgb(71, 85, 105)))
+                {
+                    g.FillEllipse(holeBrush, 6, 5, 4, 4);
                 }
             }
             return bmp;

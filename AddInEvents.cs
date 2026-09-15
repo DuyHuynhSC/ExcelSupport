@@ -76,6 +76,12 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^%t", "AiQuickTranslateCommand");
                 _excelApp?.OnKey("^+P", "QuickCommandPaletteCommand");
                 _excelApp?.OnKey("^+p", "QuickCommandPaletteCommand");
+                _excelApp?.OnKey("^+D", "OpenDetailedDesignCommand");
+                _excelApp?.OnKey("^+d", "OpenDetailedDesignCommand");
+                _excelApp?.OnKey("^+B", "OpenBasicDesignCommand");
+                _excelApp?.OnKey("^+b", "OpenBasicDesignCommand");
+                _excelApp?.OnKey("^+J", "OpenTestSpecCommand");
+                _excelApp?.OnKey("^+j", "OpenTestSpecCommand");
             }
             catch { }
 
@@ -105,6 +111,12 @@ namespace ExcelSupport
                 _excelApp?.OnKey("^%t");
                 _excelApp?.OnKey("^+P");
                 _excelApp?.OnKey("^+p");
+                _excelApp?.OnKey("^+D");
+                _excelApp?.OnKey("^+d");
+                _excelApp?.OnKey("^+B");
+                _excelApp?.OnKey("^+b");
+                _excelApp?.OnKey("^+J");
+                _excelApp?.OnKey("^+j");
             }
             catch { }
 
