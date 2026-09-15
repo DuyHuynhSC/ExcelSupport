@@ -68,6 +68,22 @@ namespace ExcelSupport.Services
             ProfilesUpdated?.Invoke();
         }
 
+        public static void SaveAllProfiles(List<ProjectProfile> profiles, string? activeProfileId)
+        {
+            lock (SyncLock)
+            {
+                var config = CurrentConfig;
+                config.Profiles = new List<ProjectProfile>(profiles);
+                config.ActiveProfileId = !string.IsNullOrWhiteSpace(activeProfileId)
+                    ? activeProfileId
+                    : config.Profiles.FirstOrDefault()?.Id;
+                SaveConfig(config);
+            }
+
+            ActiveProfileChanged?.Invoke();
+            ProfilesUpdated?.Invoke();
+        }
+
         public static void SaveProfile(ProjectProfile profile)
         {
             lock (SyncLock)

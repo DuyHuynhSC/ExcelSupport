@@ -109,7 +109,9 @@ namespace ExcelSupport.Views
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             lblDocType.Text = ProjectDocumentLauncherService.GetDocTypeShortBadge(_docType);
-            lblKeyword.Text = string.IsNullOrWhiteSpace(_keyword) ? "(Tất cả)" : _keyword;
+            lblKeyword.Text = string.IsNullOrWhiteSpace(_keyword) 
+                ? LocalizationService.Get("Common_All_Parens", "(Tất cả)") 
+                : _keyword;
             lblProfileName.Text = _profile.Name;
             txtFilter.Text = _keyword;
 

@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         Title="{loc:Loc SpecProfile_WindowTitle}"
-        Width="880" Height="620"
-        MinWidth="780" MinHeight="500"
+        Width="900" Height="630"
+        MinWidth="800" MinHeight="500"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Display"
@@ -59,7 +59,7 @@
             <Setter Property="BorderBrush" Value="#CBD5E1"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Padding" Value="10,5"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -85,12 +85,18 @@
             </Setter>
         </Style>
 
+        <!-- Compact Secondary Button for Left Panel -->
+        <Style x:Key="ProfCompactSecondaryBtn" TargetType="Button" BasedOn="{StaticResource ProfSecondaryBtn}">
+            <Setter Property="Padding" Value="4,5"/>
+            <Setter Property="FontSize" Value="11.5"/>
+        </Style>
+
         <!-- Danger Button -->
         <Style x:Key="ProfDangerBtn" TargetType="Button">
             <Setter Property="Background" Value="#EF4444"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="4,5"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
@@ -122,9 +128,9 @@
             <StackPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="⚙️" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="CÀI ĐẶT PROFILE DỰ ÁN &amp; THƯ MỤC TÀI LIỆU THIẾT KẾ" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock Text="{loc:Loc SpecProfile_HeaderTitle}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
-                <TextBlock Text="Quản lý đường dẫn thư mục tài liệu thiết kế (TKCT, TKCB, Test Spec) theo từng dự án phục vụ tra cứu nhanh bằng phím tắt."
+                <TextBlock Text="{loc:Loc SpecProfile_HeaderSubtitle}"
                            FontSize="12" Foreground="#64748B" Margin="28,2,0,0"/>
             </StackPanel>
         </Border>
@@ -132,7 +138,7 @@
         <!-- Main Body: Two Columns (Left: Profile List, Right: Profile Details) -->
         <Grid Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="285"/>
                 <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -147,7 +153,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Danh sách dự án" FontWeight="Bold" FontSize="13" Margin="4,0,0,8"/>
+                    <TextBlock Grid.Row="0" Text="{loc:Loc SpecProfile_ProjectListTitle}" FontWeight="Bold" FontSize="13" Margin="4,0,0,8"/>
 
                     <ListBox x:Name="lstProfiles" Grid.Row="1" 
                              BorderThickness="0" 
@@ -185,9 +191,9 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="0" Content="➕ Thêm" Style="{StaticResource ProfSecondaryBtn}" Margin="0,0,2,0" Click="OnAddProfileClick"/>
-                        <Button Grid.Column="1" Content="📋 Bản sao" Style="{StaticResource ProfSecondaryBtn}" Margin="2,0,2,0" Click="OnCloneProfileClick"/>
-                        <Button Grid.Column="2" Content="🗑️ Xóa" Style="{StaticResource ProfDangerBtn}" Margin="2,0,0,0" Click="OnDeleteProfileClick"/>
+                        <Button Grid.Column="0" Content="{loc:Loc SpecProfile_BtnAdd}" Style="{StaticResource ProfCompactSecondaryBtn}" Margin="0,0,2,0" Click="OnAddProfileClick"/>
+                        <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BtnClone}" Style="{StaticResource ProfCompactSecondaryBtn}" Margin="2,0,2,0" Click="OnCloneProfileClick"/>
+                        <Button Grid.Column="2" Content="{loc:Loc SpecProfile_BtnDelete}" Style="{StaticResource ProfDangerBtn}" Margin="2,0,0,0" Click="OnDeleteProfileClick"/>
                     </Grid>
                 </Grid>
             </Border>
@@ -205,29 +211,29 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
-                                <TextBlock Text="Trạng thái dự án: " FontSize="12" Foreground="#64748B"/>
-                                <TextBlock x:Name="lblActiveStatus" Text="Đang kích hoạt (Active)" FontWeight="Bold" FontSize="12" Foreground="#15803D"/>
+                                <TextBlock Text="{loc:Loc SpecProfile_StatusLabel}" FontSize="12" Foreground="#64748B"/>
+                                <TextBlock x:Name="lblActiveStatus" Text="{loc:Loc SpecProfile_StatusActive}" FontWeight="Bold" FontSize="12" Foreground="#15803D"/>
                             </StackPanel>
 
                             <Button x:Name="btnSetActive" Grid.Column="1" 
-                                    Content="⭐ Đặt Làm Dự Án Đang Kích Hoạt" 
+                                    Content="{loc:Loc SpecProfile_BtnSetActive}" 
                                     Style="{StaticResource ProfSecondaryBtn}"
                                     Click="OnSetActiveClick"/>
                         </Grid>
 
                         <!-- Project Name -->
-                        <TextBlock Text="Tên Dự Án (Project Name):" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBlock Text="{loc:Loc SpecProfile_ProjectName}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
                         <TextBox x:Name="txtName" Height="28" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
 
                         <!-- Root Folder -->
-                        <TextBlock Text="Thư Mục Gốc Dự Án (Root Folder):" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBlock Text="{loc:Loc SpecProfile_RootFolder}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="txtRootFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
-                            <Button Grid.Column="1" Content="📁 Duyệt..." Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseRootFolderClick"/>
+                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseRootFolderClick"/>
                         </Grid>
 
                         <!-- Detailed Design Folder (TKCT) -->
@@ -236,8 +242,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="📄 Thư Mục Thiết Kế Chi Tiết (TKCT - Detailed Design):" FontWeight="SemiBold" FontSize="12"/>
-                            <TextBlock x:Name="lblTkctStatus" Grid.Column="1" Text="✓ Hợp lệ" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkctFolder}" FontWeight="SemiBold" FontSize="12"/>
+                            <TextBlock x:Name="lblTkctStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
                         </Grid>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
@@ -245,7 +251,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="txtTkctFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
-                            <Button Grid.Column="1" Content="📁 Duyệt..." Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkctFolderClick"/>
+                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkctFolderClick"/>
                         </Grid>
 
                         <!-- Basic Design Folder (TKCB) -->
@@ -254,8 +260,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="📐 Thư Mục Thiết Kế Cơ Bản (TKCB - Basic Design):" FontWeight="SemiBold" FontSize="12"/>
-                            <TextBlock x:Name="lblTkcbStatus" Grid.Column="1" Text="✓ Hợp lệ" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkcbFolder}" FontWeight="SemiBold" FontSize="12"/>
+                            <TextBlock x:Name="lblTkcbStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
                         </Grid>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
@@ -263,7 +269,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="txtTkcbFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
-                            <Button Grid.Column="1" Content="📁 Duyệt..." Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkcbFolderClick"/>
+                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkcbFolderClick"/>
                         </Grid>
 
                         <!-- Test Spec Folder -->
@@ -272,8 +278,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="🧪 Thư Mục Chỉ Thị Test (Test Specification):" FontWeight="SemiBold" FontSize="12"/>
-                            <TextBlock x:Name="lblTestStatus" Grid.Column="1" Text="✓ Hợp lệ" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TestFolder}" FontWeight="SemiBold" FontSize="12"/>
+                            <TextBlock x:Name="lblTestStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
                         </Grid>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
@@ -281,23 +287,23 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="txtTestFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
-                            <Button Grid.Column="1" Content="📁 Duyệt..." Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTestFolderClick"/>
+                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTestFolderClick"/>
                         </Grid>
 
                         <!-- File Extensions Filter -->
-                        <TextBlock Text="Định dạng file hỗ trợ (phân tách bởi dấu ;):" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBlock Text="{loc:Loc SpecProfile_Extensions}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
                         <TextBox x:Name="txtExtensions" Height="28" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,0,10"
                                  Text=".xlsx;.xlsm;.xls;.docx;.pdf;.pptx"/>
 
                         <!-- Read-Only Default Option -->
                         <CheckBox x:Name="chkReadOnlyDefault" 
-                                  Content="Mặc định mở tài liệu dạng chỉ đọc (Read-Only) để bảo vệ an toàn tài liệu gốc"
+                                  Content="{loc:Loc SpecProfile_ReadOnlyDefault}"
                                   Margin="0,0,0,12"/>
 
                         <!-- Test Search Section -->
                         <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,4,0,0">
                             <StackPanel>
-                                <TextBlock Text="🔍 Thử nghiệm tìm kiếm trong dự án:" FontWeight="Bold" FontSize="12" Margin="0,0,0,6"/>
+                                <TextBlock Text="{loc:Loc SpecProfile_TestSectionTitle}" FontWeight="Bold" FontSize="12" Margin="0,0,0,6"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -311,9 +317,9 @@
                                         <ComboBoxItem Content="TKCB"/>
                                         <ComboBoxItem Content="Test Spec"/>
                                     </ComboBox>
-                                    <Button Grid.Column="2" Content="Quét Thử" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnTestSearchClick"/>
+                                    <Button Grid.Column="2" Content="{loc:Loc SpecProfile_BtnTestScan}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnTestSearchClick"/>
                                 </Grid>
-                                <TextBlock x:Name="lblTestResult" Text="Nhập từ khóa và bấm Quét Thử để kiểm tra kết quả tìm kiếm..." 
+                                <TextBlock x:Name="lblTestResult" Text="{loc:Loc SpecProfile_TestPrompt}" 
                                            FontSize="11" Foreground="#64748B" Margin="0,6,0,0"/>
                             </StackPanel>
                         </Border>
@@ -330,11 +336,11 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="11" Foreground="#94A3B8"
-                       Text="Cấu hình được lưu tự động tại %APPDATA%\ExcelSupport\project_profiles.json"/>
+                       Text="{loc:Loc SpecProfile_StorageNote}"/>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="Đóng" Style="{StaticResource ProfSecondaryBtn}" Margin="0,0,8,0" Click="OnCloseClick"/>
-                <Button Content="💾 Lưu Cấu Hình" Style="{StaticResource ProfPrimaryBtn}" Click="OnSaveClick"/>
+                <Button Content="{loc:Loc SpecProfile_BtnClose}" Style="{StaticResource ProfSecondaryBtn}" Margin="0,0,8,0" Click="OnCloseClick"/>
+                <Button Content="{loc:Loc SpecProfile_BtnSave}" Style="{StaticResource ProfPrimaryBtn}" Click="OnSaveClick"/>
             </StackPanel>
         </Grid>
     </Grid>

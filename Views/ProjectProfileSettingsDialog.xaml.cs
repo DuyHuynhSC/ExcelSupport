@@ -177,17 +177,17 @@ namespace ExcelSupport.Views
             bool isActive = _selectedProfile.Id == _activeProfileId;
             if (isActive)
             {
-                lblActiveStatus.Text = "Đang kích hoạt (Active)";
+                lblActiveStatus.Text = LocalizationService.Get("SpecProfile_StatusActive", "Đang kích hoạt (Active)");
                 lblActiveStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(21, 128, 61)); // Green
                 btnSetActive.IsEnabled = false;
-                btnSetActive.Content = "✓ Đang Kích Hoạt";
+                btnSetActive.Content = LocalizationService.Get("SpecProfile_BtnIsActive", "✓ Đang Kích Hoạt");
             }
             else
             {
-                lblActiveStatus.Text = "Không kích hoạt";
+                lblActiveStatus.Text = LocalizationService.Get("SpecProfile_StatusInactive", "Không kích hoạt");
                 lblActiveStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(100, 116, 139)); // Slate
                 btnSetActive.IsEnabled = true;
-                btnSetActive.Content = "⭐ Đặt Làm Dự Án Đang Kích Hoạt";
+                btnSetActive.Content = LocalizationService.Get("SpecProfile_BtnSetActive", "⭐ Đặt Làm Dự Án Đang Kích Hoạt");
             }
         }
 
@@ -204,17 +204,17 @@ namespace ExcelSupport.Views
         {
             if (string.IsNullOrWhiteSpace(targetPath))
             {
-                lblStatus.Text = "— Chưa cấu hình";
+                lblStatus.Text = LocalizationService.Get("SpecProfile_StatusNotConfigured", "— Chưa cấu hình");
                 lblStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(148, 163, 184));
             }
             else if (Directory.Exists(targetPath))
             {
-                lblStatus.Text = "✓ Hợp lệ";
+                lblStatus.Text = LocalizationService.Get("SpecProfile_StatusValid", "✓ Hợp lệ");
                 lblStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(21, 128, 61));
             }
             else
             {
-                lblStatus.Text = "⚠ Không tìm thấy";
+                lblStatus.Text = LocalizationService.Get("SpecProfile_StatusNotFound", "⚠ Không tìm thấy");
                 lblStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(217, 119, 6));
             }
         }
@@ -242,7 +242,7 @@ namespace ExcelSupport.Views
 
             var newProf = new ProjectProfile
             {
-                Name = $"Dự Án Mới {_profiles.Count + 1}",
+                Name = $"{LocalizationService.Get("SpecProfile_NewProjectPrefix", "Dự Án Mới")} {_profiles.Count + 1}",
                 RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 DetailedDesignFolder = "Detailed_Design",
                 BasicDesignFolder = "Basic_Design",
@@ -282,16 +282,18 @@ namespace ExcelSupport.Views
             if (_profiles.Count <= 1)
             {
                 WpfMessageBox.Show(
-                    "Cần duy trì ít nhất 1 Profile dự án trong hệ thống.",
-                    "Thông Báo",
+                    this,
+                    LocalizationService.Get("SpecProfile_MinProfilePrompt", "Cần duy trì ít nhất 1 Profile dự án trong hệ thống."),
+                    LocalizationService.Get("Common_Notice", "Thông Báo"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 return;
             }
 
             var result = WpfMessageBox.Show(
-                $"Bạn có chắc chắn muốn xóa profile dự án '{_selectedProfile.Name}'?",
-                "Xác Nhận Xóa",
+                this,
+                string.Format(LocalizationService.Get("SpecProfile_DeleteConfirmPrompt", "Bạn có chắc chắn muốn xóa profile dự án '{0}'?"), _selectedProfile.Name),
+                LocalizationService.Get("SpecProfile_DeleteConfirmTitle", "Xác Nhận Xóa"),
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
@@ -314,7 +316,7 @@ namespace ExcelSupport.Views
         {
             using var fbd = new FolderBrowserDialog
             {
-                Description = "Chọn thư mục gốc của dự án:",
+                Description = LocalizationService.Get("SpecProfile_BrowseRootDesc", "Chọn thư mục gốc của dự án:"),
                 SelectedPath = Directory.Exists(txtRootFolder.Text) ? txtRootFolder.Text : string.Empty
             };
 
@@ -326,17 +328,17 @@ namespace ExcelSupport.Views
 
         private void OnBrowseTkctFolderClick(object sender, RoutedEventArgs e)
         {
-            BrowseSubFolder(txtTkctFolder, "Chọn thư mục Thiết Kế Chi Tiết (TKCT / Detailed Design):");
+            BrowseSubFolder(txtTkctFolder, LocalizationService.Get("SpecProfile_BrowseTkctDesc", "Chọn thư mục Thiết Kế Chi Tiết (TKCT / Detailed Design):"));
         }
 
         private void OnBrowseTkcbFolderClick(object sender, RoutedEventArgs e)
         {
-            BrowseSubFolder(txtTkcbFolder, "Chọn thư mục Thiết Kế Cơ Bản (TKCB / Basic Design):");
+            BrowseSubFolder(txtTkcbFolder, LocalizationService.Get("SpecProfile_BrowseTkcbDesc", "Chọn thư mục Thiết Kế Cơ Bản (TKCB / Basic Design):"));
         }
 
         private void OnBrowseTestFolderClick(object sender, RoutedEventArgs e)
         {
-            BrowseSubFolder(txtTestFolder, "Chọn thư mục Chỉ Thị Test (Test Specification):");
+            BrowseSubFolder(txtTestFolder, LocalizationService.Get("SpecProfile_BrowseTestDesc", "Chọn thư mục Chỉ Thị Test (Test Specification):"));
         }
 
         private void BrowseSubFolder(System.Windows.Controls.TextBox targetBox, string description)
@@ -380,7 +382,7 @@ namespace ExcelSupport.Views
             string keyword = txtTestKeyword.Text.Trim();
             if (string.IsNullOrWhiteSpace(keyword))
             {
-                lblTestResult.Text = "⚠ Vui lòng nhập từ khóa test (ví dụ: SCR, M_USER, 001)...";
+                lblTestResult.Text = LocalizationService.Get("SpecProfile_TestEnterKeywordPrompt", "⚠ Vui lòng nhập từ khóa test (ví dụ: SCR, M_USER, 001)...");
                 lblTestResult.Foreground = new SolidColorBrush(WpfColor.FromRgb(217, 119, 6));
                 return;
             }
@@ -395,7 +397,7 @@ namespace ExcelSupport.Views
             string targetFolder = _selectedProfile.GetTargetFolder(docType);
             if (!Directory.Exists(targetFolder))
             {
-                lblTestResult.Text = $"⚠ Thư mục không tồn tại: {targetFolder}";
+                lblTestResult.Text = string.Format(LocalizationService.Get("SpecProfile_TestFolderNotExistPrompt", "⚠ Thư mục không tồn tại: {0}"), targetFolder);
                 lblTestResult.Foreground = new SolidColorBrush(WpfColor.FromRgb(239, 68, 68));
                 return;
             }
@@ -403,44 +405,45 @@ namespace ExcelSupport.Views
             var hits = ProjectDocumentLauncherService.SearchFiles(_selectedProfile, docType, keyword);
             if (hits.Count == 0)
             {
-                lblTestResult.Text = $"Không tìm thấy file nào khớp với từ khóa '{keyword}' trong thư mục {Path.GetFileName(targetFolder)}.";
+                lblTestResult.Text = string.Format(LocalizationService.Get("SpecProfile_TestNoMatchesPrompt", "Không tìm thấy file nào khớp với từ khóa '{0}' trong thư mục {1}."), keyword, Path.GetFileName(targetFolder));
                 lblTestResult.Foreground = new SolidColorBrush(WpfColor.FromRgb(100, 116, 139));
             }
             else
             {
                 var latest = hits.FirstOrDefault(h => h.IsLatest);
-                string sampleVer = latest != null ? $" (Bản mới nhất: {latest.FileName})" : "";
-                lblTestResult.Text = $"✓ Tìm thấy {hits.Count} file khớp!{sampleVer}";
+                string sampleVer = latest != null ? $" ({LocalizationService.Get("SpecProfile_TestLatestVer", "Bản mới nhất")}: {latest.FileName})" : "";
+                lblTestResult.Text = string.Format(LocalizationService.Get("SpecProfile_TestMatchesFoundPrompt", "✓ Tìm thấy {0} file khớp!{1}"), hits.Count, sampleVer);
                 lblTestResult.Foreground = new SolidColorBrush(WpfColor.FromRgb(21, 128, 61));
             }
         }
 
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
-            SaveCurrentFormToModel();
-
-            // Lưu toàn bộ danh sách profiles và active profile vào config
-            var config = ProjectProfileManager.CurrentConfig;
-            config.Profiles = _profiles;
-            config.ActiveProfileId = _activeProfileId ?? _profiles.FirstOrDefault()?.Id;
-
-            foreach (var p in _profiles)
+            try
             {
-                ProjectProfileManager.SaveProfile(p);
-            }
+                SaveCurrentFormToModel();
 
-            if (!string.IsNullOrWhiteSpace(config.ActiveProfileId))
+                // Lưu toàn bộ danh sách profiles và active profile vào config một cách an toàn
+                ProjectProfileManager.SaveAllProfiles(_profiles, _activeProfileId);
+
+                WpfMessageBox.Show(
+                    this,
+                    LocalizationService.Get("SpecProfile_SaveSuccess", "Đã lưu thành công cấu hình Profile dự án!"),
+                    LocalizationService.Get("Common_Success", "Thành Công"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                Close();
+            }
+            catch (Exception ex)
             {
-                ProjectProfileManager.SetActiveProfile(config.ActiveProfileId!);
+                WpfMessageBox.Show(
+                    this,
+                    $"Lỗi: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
-
-            WpfMessageBox.Show(
-                "Đã lưu thành công cấu hình Profile dự án!",
-                "Thành Công",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-
-            Close();
         }
 
         private void OnCloseClick(object sender, RoutedEventArgs e)
