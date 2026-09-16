@@ -26,6 +26,11 @@ namespace ExcelSupport
         private ExcelApp? _excelApp;
         public ExcelApp? ExcelAppInstance => _excelApp;
         private bool _isBatchProcessing = false;
+        public bool IsBatchProcessing
+        {
+            get => _isBatchProcessing;
+            set => _isBatchProcessing = value;
+        }
 
         public void AutoOpen()
         {
@@ -41,6 +46,14 @@ namespace ExcelSupport
                     {
                         ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown
                     };
+                }
+                catch { }
+            }
+            else
+            {
+                try
+                {
+                    WpfApplication.Current.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
                 }
                 catch { }
             }

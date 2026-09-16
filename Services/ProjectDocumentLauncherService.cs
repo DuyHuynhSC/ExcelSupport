@@ -162,78 +162,87 @@ namespace ExcelSupport.Services
         /// </summary>
         public static LaunchResult LaunchFromSelection(ExcelApp? app, SpecDocumentType docType, bool? forceReadOnly = null)
         {
-            if (app == null)
+            try
             {
-                app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
-            }
+                if (app == null)
+                {
+                    app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                }
 
-            var profile = ProjectProfileManager.GetActiveProfile();
-            if (profile == null)
-            {
-                return LaunchResult.Fail(
-                    LocalizationService.Get("SpecLauncher_NoProfileMsg", 
-                        "Chưa có Profile dự án nào được thiết lập. Vui lòng mở 'Cài Đặt Profile' để thiết lập đường dẫn tài liệu."));
-            }
+                var profile = ProjectProfileManager.GetActiveProfile();
+                if (profile == null)
+                {
+                    return LaunchResult.Fail(
+                        LocalizationService.Get("SpecLauncher_NoProfileMsg", 
+                            "Chưa có Profile dự án nào được thiết lập. Vui lòng mở 'Cài Đặt Profile' để thiết lập đường dẫn tài liệu."));
+                }
 
-            string targetFolder = profile.GetTargetFolder(docType);
-            if (string.IsNullOrWhiteSpace(targetFolder) || !Directory.Exists(targetFolder))
-            {
-                string docTypeName = GetDocTypeName(docType);
-                return LaunchResult.Fail(
-                    string.Format(LocalizationService.Get("SpecLauncher_FolderNotFoundMsg",
-                        "Thư mục tài liệu {0} của dự án '{1}' chưa được thiết lập hoặc không tồn tại:\n{2}"),
-                        docTypeName, profile.Name, targetFolder));
-            }
+                string targetFolder = profile.GetTargetFolder(docType);
+                if (string.IsNullOrWhiteSpace(targetFolder) || !Directory.Exists(targetFolder))
+                {
+                    string docTypeName = GetDocTypeName(docType);
+                    return LaunchResult.Fail(
+                        string.Format(LocalizationService.Get("SpecLauncher_FolderNotFoundMsg",
+                            "Thư mục tài liệu {0} của dự án '{1}' chưa được thiết lập hoặc không tồn tại:\n{2}"),
+                            docTypeName, profile.Name, targetFolder));
+                }
 
-            // Lấy danh sách từ khóa từ vùng chọn Excel
-            var keywords = ExtractKeywordsFromSelection(app);
-            bool isReadOnly = forceReadOnly ?? profile.OpenReadOnlyDefault;
+                // Lấy danh sách từ khóa từ vùng chọn Excel
+                var keywords = ExtractKeywordsFromSelection(app);
+                bool isReadOnly = forceReadOnly ?? profile.OpenReadOnlyDefault;
 
-            // Nếu không có từ khóa nào (người dùng chọn ô trống)
-            if (keywords.Count == 0)
-            {
-                return LaunchResult.Fail(
-                    LocalizationService.Get("SpecLauncher_EmptySelectionMsg",
-                        "Vui lòng chọn ô có chứa từ khóa hoặc tên file tài liệu cần mở!"));
-            }
+                // Nếu không có từ khóa nào (người dùng chọn ô trống)
+                if (keywords.Count == 0)
+                {
+                    return LaunchResult.Fail(
+                        LocalizationService.Get("SpecLauncher_EmptySelectionMsg",
+                            "Vui lòng chọn ô có chứa từ khóa hoặc tên file tài liệu cần mở!"));
+                }
 
-            // Tìm kiếm file đệ quy
-            var results = SearchFiles(profile, docType, keywords);
+                // Tìm kiếm file đệ quy
+                var results = SearchFiles(profile, docType, keywords);
 
-            if (results.Count == 0)
-            {
-                string docTypeName = GetDocTypeName(docType);
-                string kwDisplay = string.Join(", ", keywords.Take(5));
-                if (keywords.Count > 5) kwDisplay += $" (+{keywords.Count - 5})";
+                if (results.Count == 0)
+                {
+                    string docTypeName = GetDocTypeName(docType);
+                    string kwDisplay = string.Join(", ", keywords.Take(5));
+                    if (keywords.Count > 5) kwDisplay += $" (+{keywords.Count - 5})";
 
-                return LaunchResult.Fail(
-                    string.Format(LocalizationService.Get("SpecLauncher_NoFilesFoundMsg",
-                        "Không tìm thấy file tài liệu {0} nào khớp với từ khóa đã chọn: '{1}'\n\nThư mục quét:\n{2}"),
-                        docTypeName, kwDisplay, targetFolder));
-            }
+                    return LaunchResult.Fail(
+                        string.Format(LocalizationService.Get("SpecLauncher_NoFilesFoundMsg",
+                            "Không tìm thấy file tài liệu {0} nào khớp với từ khóa đã chọn: '{1}'\n\nThư mục quét:\n{2}"),
+                            docTypeName, kwDisplay, targetFolder));
+                }
 
-            // Nếu là TKCT / TKCB VÀ chỉ chọn 1 ô duy nhất VÀ chỉ tìm thấy đúng 1 file -> Mở trực tiếp ngay lập tức!
-            if (docType != SpecDocumentType.TestSpec && keywords.Count == 1 && results.Count == 1)
-            {
-                OpenMultipleFilesAsync(new[] { results[0].FilePath }, isReadOnly, app);
+                // Nếu là TKCT / TKCB VÀ chỉ chọn 1 ô duy nhất VÀ chỉ tìm thấy đúng 1 file -> Mở trực tiếp ngay lập tức!
+                if (docType != SpecDocumentType.TestSpec && keywords.Count == 1 && results.Count == 1)
+                {
+                    OpenMultipleFilesAsync(new[] { results[0].FilePath }, isReadOnly, app);
+                    return LaunchResult.Ok();
+                }
+
+                // Với Chỉ Thị Test (TestSpec) HOẶC khi chọn một vùng (keywords.Count > 1) HOẶC khi tìm thấy nhiều file:
+                // Luôn mở hộp thoại hiển thị danh sách các file để người dùng xem và lựa chọn!
+                string keywordSummary = string.Join(", ", keywords.Take(4));
+                if (keywords.Count > 4) keywordSummary += $" (+{keywords.Count - 4})";
+
+                SpecVersionSelectorDialog.ShowWindow(
+                    profile, 
+                    docType, 
+                    keywordSummary, 
+                    results, 
+                    isReadOnly, 
+                    AddInEvents.MainViewModel?.IsDarkTheme ?? false,
+                    keywords);
+
                 return LaunchResult.Ok();
             }
-
-            // Với Chỉ Thị Test (TestSpec) HOẶC khi chọn một vùng (keywords.Count > 1) HOẶC khi tìm thấy nhiều file:
-            // Luôn mở hộp thoại hiển thị danh sách các file để người dùng xem và lựa chọn!
-            string keywordSummary = string.Join(", ", keywords.Take(4));
-            if (keywords.Count > 4) keywordSummary += $" (+{keywords.Count - 4})";
-
-            SpecVersionSelectorDialog.ShowWindow(
-                profile, 
-                docType, 
-                keywordSummary, 
-                results, 
-                isReadOnly, 
-                AddInEvents.MainViewModel?.IsDarkTheme ?? false,
-                keywords);
-
-            return LaunchResult.Ok();
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LaunchFromSelection] Error: {ex}");
+                return LaunchResult.Fail(
+                    string.Format(LocalizationService.Get("SpecLauncher_GeneralError", "Đã xảy ra lỗi khi tìm kiếm tài liệu:\n{0}"), ex.Message));
+            }
         }
 
         /// <summary>
@@ -474,9 +483,16 @@ namespace ExcelSupport.Services
                     app ??= AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
                     if (app == null) return;
 
+                    if (AddInEvents.Instance != null)
+                    {
+                        AddInEvents.Instance.IsBatchProcessing = true;
+                    }
+
                     bool prevScreen = true;
                     bool prevAlerts = true;
                     bool prevEvents = true;
+
+                    var failedFiles = new List<string>();
 
                     try
                     {
@@ -505,12 +521,13 @@ namespace ExcelSupport.Services
 
                                 if (!alreadyOpen)
                                 {
-                                    app.Workbooks.Open(filePath, UpdateLinks: 0, ReadOnly: isReadOnly);
+                                    app.Workbooks.Open(filePath, ReadOnly: isReadOnly);
                                 }
                             }
                             catch (Exception ex)
                             {
                                 Debug.WriteLine($"[OpenMultipleFilesAsync] Error opening {filePath}: {ex.Message}");
+                                failedFiles.Add($"{Path.GetFileName(filePath)} ({ex.Message})");
                             }
                         }
                     }
@@ -521,12 +538,30 @@ namespace ExcelSupport.Services
                         try { app.ScreenUpdating = true; } catch { }
                         try { app.Visible = true; } catch { }
 
-                        try { AddInEvents.Instance?.QueueRefresh(); } catch { }
+                        if (AddInEvents.Instance != null)
+                        {
+                            AddInEvents.Instance.IsBatchProcessing = false;
+                            try { AddInEvents.Instance.QueueRefresh(); } catch { }
+                        }
+                    }
+
+                    if (failedFiles.Count > 0)
+                    {
+                        System.Windows.MessageBox.Show(
+                            string.Format(LocalizationService.Get("SpecLauncher_SomeFilesOpenError", "Không thể mở các file tài liệu sau:\n{0}"), string.Join("\n", failedFiles)),
+                            "Thông Báo",
+                            System.Windows.MessageBoxButton.OK,
+                            System.Windows.MessageBoxImage.Warning);
                     }
                 }
                 catch (Exception exOverall)
                 {
                     Debug.WriteLine($"[OpenMultipleFilesAsync] Global macro error: {exOverall.Message}");
+                    System.Windows.MessageBox.Show(
+                        exOverall.Message,
+                        "Thông Báo",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
                 }
             });
         }

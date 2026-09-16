@@ -1312,5 +1312,7 @@
   "SpecLauncher_NoProfileMsg": "Chưa có Profile dự án nào được thiết lập. Vui lòng mở 'Cài Đặt Profile' để thiết lập đường dẫn tài liệu.",
   "SpecLauncher_FolderNotFoundMsg": "Thư mục tài liệu {0} của dự án '{1}' chưa được thiết lập hoặc không tồn tại:\n{2}",
   "SpecLauncher_EmptySelectionMsg": "Vui lòng chọn ô có chứa từ khóa hoặc tên file tài liệu cần mở!",
-  "SpecLauncher_NoFilesFoundMsg": "Không tìm thấy file tài liệu {0} nào khớp với từ khóa đã chọn: '{1}'\n\nThư mục quét:\n{2}"
+  "SpecLauncher_NoFilesFoundMsg": "Không tìm thấy file tài liệu {0} nào khớp với từ khóa đã chọn: '{1}'\n\nThư mục quét:\n{2}",
+  "SpecLauncher_GeneralError": "Đã xảy ra lỗi khi tìm kiếm tài liệu:\n{0}",
+  "SpecLauncher_SomeFilesOpenError": "Không thể mở các file tài liệu sau:\n{0}"
 }

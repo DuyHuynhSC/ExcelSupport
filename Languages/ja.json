@@ -1312,5 +1312,7 @@
   "SpecLauncher_NoProfileMsg": "プロジェクトプロファイルが設定されていません。「プロファイル設定」を開いて設計書フォルダを設定してください。",
   "SpecLauncher_FolderNotFoundMsg": "プロジェクト「{1}」の {0} フォルダが未設定か、存在しません:\n{2}",
   "SpecLauncher_EmptySelectionMsg": "開きたい設計書のキーワードまたはファイル名が含まれるセルを選択してください！",
-  "SpecLauncher_NoFilesFoundMsg": "選択したキーワード「{1}」に一致する {0} ファイルが見つかりませんでした。\n\n検索フォルダ:\n{2}"
+  "SpecLauncher_NoFilesFoundMsg": "選択したキーワード「{1}」に一致する {0} ファイルが見つかりませんでした。\n\n検索フォルダ:\n{2}",
+  "SpecLauncher_GeneralError": "設計書検索中にエラーが発生しました:\n{0}",
+  "SpecLauncher_SomeFilesOpenError": "以下の設計書ファイルを開けませんでした:\n{0}"
 }

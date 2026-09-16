@@ -322,6 +322,7 @@ namespace ExcelSupport.Views
                 else
                 {
                     System.Windows.MessageBox.Show(
+                        this,
                         LocalizationService.Get("SpecLauncher_NoFileAvailable", "Không có file tài liệu nào trong danh sách để mở."),
                         "Thông Báo",
                         MessageBoxButton.OK,
@@ -337,6 +338,7 @@ namespace ExcelSupport.Views
                 if (missingFiles.Count == 1 && selectedItems.Count == 1)
                 {
                     System.Windows.MessageBox.Show(
+                        this,
                         string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), missingFiles[0].FilePath),
                         "Thông Báo",
                         MessageBoxButton.OK,
@@ -347,6 +349,7 @@ namespace ExcelSupport.Views
                 {
                     string missingList = string.Join("\n", missingFiles.Select(m => $"• {m.FileName} ({m.FilePath})"));
                     System.Windows.MessageBox.Show(
+                        this,
                         string.Format(LocalizationService.Get("SpecLauncher_SomeFilesNotFound", "Các file sau đây không tồn tại trên đĩa:\n{0}"), missingList),
                         "Thông Báo",
                         MessageBoxButton.OK,
@@ -383,6 +386,7 @@ namespace ExcelSupport.Views
                 else
                 {
                     System.Windows.MessageBox.Show(
+                        this,
                         string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), selected.FilePath),
                         "Thông Báo",
                         MessageBoxButton.OK,
@@ -399,6 +403,7 @@ namespace ExcelSupport.Views
             else
             {
                 System.Windows.MessageBox.Show(
+                    this,
                     string.Format(LocalizationService.Get("SpecProfile_TestFolderNotExistPrompt", "⚠ Thư mục không tồn tại: {0}"), targetFolder),
                     "Thông Báo",
                     MessageBoxButton.OK,
