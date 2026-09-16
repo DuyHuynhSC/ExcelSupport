@@ -128,6 +128,10 @@ namespace ExcelSupport.Views
 
         private void RefreshProfileList()
         {
+            foreach (var p in _profiles)
+            {
+                p.IsActive = (p.Id == _activeProfileId);
+            }
             lstProfiles.ItemsSource = null;
             lstProfiles.ItemsSource = _profiles;
         }
@@ -184,19 +188,59 @@ namespace ExcelSupport.Views
             if (_selectedProfile == null) return;
 
             bool isActive = _selectedProfile.Id == _activeProfileId;
+            bool isDark = IsDarkTheme;
+
             if (isActive)
             {
                 lblActiveStatus.Text = LocalizationService.Get("SpecProfile_StatusActive", "Đang kích hoạt (Active)");
-                lblActiveStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(21, 128, 61)); // Green
+                lblActiveStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(21, 128, 61)); // Green #15803D
+                iconActiveStatus.Text = "🟢";
                 btnSetActive.IsEnabled = false;
                 btnSetActive.Content = LocalizationService.Get("SpecProfile_BtnIsActive", "✓ Đang Kích Hoạt");
+
+                // Tô viền và nền màu xanh cho phần bên phải của Profile khi đang active
+                if (isDark)
+                {
+                    borderRightPanel.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(34, 197, 94)); // #22C55E
+                    borderRightPanel.BorderThickness = new Thickness(2);
+                    borderRightPanel.Background = new SolidColorBrush(WpfColor.FromRgb(10, 36, 22)); // Subtle dark green #0A2416
+                    borderActiveBanner.Background = new SolidColorBrush(WpfColor.FromRgb(15, 48, 30));
+                    borderActiveBanner.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(34, 197, 94));
+                }
+                else
+                {
+                    borderRightPanel.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(22, 163, 74)); // #16A34A
+                    borderRightPanel.BorderThickness = new Thickness(2);
+                    borderRightPanel.Background = new SolidColorBrush(WpfColor.FromRgb(240, 253, 244)); // #F0FDF4
+                    borderActiveBanner.Background = new SolidColorBrush(WpfColor.FromRgb(220, 252, 231)); // #DCFCE7
+                    borderActiveBanner.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(134, 239, 172)); // #86EFAC
+                }
             }
             else
             {
                 lblActiveStatus.Text = LocalizationService.Get("SpecProfile_StatusInactive", "Không kích hoạt");
                 lblActiveStatus.Foreground = new SolidColorBrush(WpfColor.FromRgb(100, 116, 139)); // Slate
+                iconActiveStatus.Text = "⚪";
                 btnSetActive.IsEnabled = true;
                 btnSetActive.Content = LocalizationService.Get("SpecProfile_BtnSetActive", "⭐ Đặt Làm Dự Án Đang Kích Hoạt");
+
+                // Trả về màu bình thường khi không active
+                if (isDark)
+                {
+                    borderRightPanel.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(51, 65, 85)); // #334155
+                    borderRightPanel.BorderThickness = new Thickness(1);
+                    borderRightPanel.Background = new SolidColorBrush(WpfColor.FromRgb(15, 23, 42)); // #0F172A
+                    borderActiveBanner.Background = new SolidColorBrush(WpfColor.FromRgb(30, 41, 59)); // #1E293B
+                    borderActiveBanner.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(51, 65, 85));
+                }
+                else
+                {
+                    borderRightPanel.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(203, 213, 225)); // #CBD5E1
+                    borderRightPanel.BorderThickness = new Thickness(1);
+                    borderRightPanel.Background = new SolidColorBrush(WpfColor.FromRgb(255, 255, 255)); // White
+                    borderActiveBanner.Background = new SolidColorBrush(WpfColor.FromRgb(241, 245, 249)); // #F1F5F9
+                    borderActiveBanner.BorderBrush = new SolidColorBrush(WpfColor.FromRgb(226, 232, 240)); // #E2E8F0
+                }
             }
         }
 

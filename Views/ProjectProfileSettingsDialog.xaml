@@ -174,8 +174,17 @@
                                     <!-- Active Badge -->
                                     <Border Grid.Column="1" x:Name="bdActive" 
                                             Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" 
-                                            CornerRadius="4" Padding="4,1" VerticalAlignment="Center" Margin="4,0,0,0"
-                                            Visibility="Collapsed">
+                                            CornerRadius="4" Padding="4,1" VerticalAlignment="Center" Margin="4,0,0,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
                                         <TextBlock Text="ACTIVE" FontWeight="Bold" FontSize="9" Foreground="#15803D"/>
                                     </Border>
                                 </Grid>
@@ -199,27 +208,31 @@
             </Border>
 
             <!-- Right Panel: Profile Configuration Form -->
-            <Border Grid.Column="2" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+            <Border x:Name="borderRightPanel" Grid.Column="2" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
                     BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="14">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <!-- Active Status & Set Active Button -->
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                        <Border x:Name="borderActiveBanner" CornerRadius="6" Padding="10,8" Margin="0,0,0,12" 
+                                Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
-                                <TextBlock Text="{loc:Loc SpecProfile_StatusLabel}" FontSize="12" Foreground="#64748B"/>
-                                <TextBlock x:Name="lblActiveStatus" Text="{loc:Loc SpecProfile_StatusActive}" FontWeight="Bold" FontSize="12" Foreground="#15803D"/>
-                            </StackPanel>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
+                                    <TextBlock x:Name="iconActiveStatus" Text="⚪" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{loc:Loc SpecProfile_StatusLabel}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="lblActiveStatus" Text="{loc:Loc SpecProfile_StatusActive}" FontWeight="Bold" FontSize="12" Foreground="#15803D" VerticalAlignment="Center"/>
+                                </StackPanel>
 
-                            <Button x:Name="btnSetActive" Grid.Column="1" 
-                                    Content="{loc:Loc SpecProfile_BtnSetActive}" 
-                                    Style="{StaticResource ProfSecondaryBtn}"
-                                    Click="OnSetActiveClick"/>
-                        </Grid>
+                                <Button x:Name="btnSetActive" Grid.Column="1" 
+                                        Content="{loc:Loc SpecProfile_BtnSetActive}" 
+                                        Style="{StaticResource ProfSecondaryBtn}"
+                                        Click="OnSetActiveClick"/>
+                            </Grid>
+                        </Border>
 
                         <!-- Project Name -->
                         <TextBlock Text="{loc:Loc SpecProfile_ProjectName}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>

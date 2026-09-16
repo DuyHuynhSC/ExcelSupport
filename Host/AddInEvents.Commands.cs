@@ -38,7 +38,7 @@ namespace ExcelSupport
             });
         }
 
-        [ExcelCommand(ShortCut = "^+!H", Name = "ClearDesignHighlightSelectionCommand")]
+        [ExcelCommand(ShortCut = "^+%H", Name = "ClearDesignHighlightSelectionCommand")]
         public static void ClearDesignHighlightSelection()
         {
             ExcelAsyncUtil.QueueAsMacro(() =>
@@ -149,55 +149,55 @@ namespace ExcelSupport
         [ExcelCommand(ShortCut = "^+D", Name = "OpenDetailedDesignCommand")]
         public static void OpenDetailedDesign()
         {
-            ExcelAsyncUtil.QueueAsMacro(() =>
+            try
             {
-                try
+                var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.DetailedDesign);
+                if (!result.Success && !string.IsNullOrEmpty(result.Message))
                 {
-                    var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
-                    var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.DetailedDesign);
-                    if (!result.Success && !string.IsNullOrEmpty(result.Message))
-                    {
-                        System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    }
+                    System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 }
-                catch { }
-            });
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
         }
 
         [ExcelCommand(ShortCut = "^+B", Name = "OpenBasicDesignCommand")]
         public static void OpenBasicDesign()
         {
-            ExcelAsyncUtil.QueueAsMacro(() =>
+            try
             {
-                try
+                var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.BasicDesign);
+                if (!result.Success && !string.IsNullOrEmpty(result.Message))
                 {
-                    var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
-                    var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.BasicDesign);
-                    if (!result.Success && !string.IsNullOrEmpty(result.Message))
-                    {
-                        System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    }
+                    System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 }
-                catch { }
-            });
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
         }
 
         [ExcelCommand(ShortCut = "^+J", Name = "OpenTestSpecCommand")]
         public static void OpenTestSpec()
         {
-            ExcelAsyncUtil.QueueAsMacro(() =>
+            try
             {
-                try
+                var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.TestSpec);
+                if (!result.Success && !string.IsNullOrEmpty(result.Message))
                 {
-                    var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
-                    var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.TestSpec);
-                    if (!result.Success && !string.IsNullOrEmpty(result.Message))
-                    {
-                        System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    }
+                    System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 }
-                catch { }
-            });
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
         }
     }
 }

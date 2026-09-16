@@ -70,33 +70,45 @@ namespace ExcelSupport
 
             HookExcelEvents();
 
+            // 1. Dọn dẹp bất kỳ hook OnKey COM nào có thể đang ghi đè sai
             try
             {
-                _excelApp?.OnKey("^+Q", "OracleQuickQueryCommand");
-                _excelApp?.OnKey("^+q", "OracleQuickQueryCommand");
-                _excelApp?.OnKey("^+H", "ApplyDesignHighlightSelectionCommand");
-                _excelApp?.OnKey("^+h", "ApplyDesignHighlightSelectionCommand");
-                _excelApp?.OnKey("^+%H", "ClearDesignHighlightSelectionCommand");
-                _excelApp?.OnKey("^+%h", "ClearDesignHighlightSelectionCommand");
-                _excelApp?.OnKey("^+M", "ExportMarkdownTableCommand");
-                _excelApp?.OnKey("^+m", "ExportMarkdownTableCommand");
-                _excelApp?.OnKey("^+W", "ToggleTaskPaneCommand");
-                _excelApp?.OnKey("^+w", "ToggleTaskPaneCommand");
-                _excelApp?.OnKey("{F3}", "OpenAiTranslateDialogCommand");
-                _excelApp?.OnKey("^+T", "AiQuickTranslateCommand");
-                _excelApp?.OnKey("^+t", "AiQuickTranslateCommand");
-                _excelApp?.OnKey("^%T", "AiQuickTranslateCommand");
-                _excelApp?.OnKey("^%t", "AiQuickTranslateCommand");
-                _excelApp?.OnKey("^+P", "QuickCommandPaletteCommand");
-                _excelApp?.OnKey("^+p", "QuickCommandPaletteCommand");
-                _excelApp?.OnKey("^+D", "OpenDetailedDesignCommand");
-                _excelApp?.OnKey("^+d", "OpenDetailedDesignCommand");
-                _excelApp?.OnKey("^+B", "OpenBasicDesignCommand");
-                _excelApp?.OnKey("^+b", "OpenBasicDesignCommand");
-                _excelApp?.OnKey("^+J", "OpenTestSpecCommand");
-                _excelApp?.OnKey("^+j", "OpenTestSpecCommand");
+                string[] allKeys = {
+                    "^+Q", "^+q", "^+H", "^+h", "^+%H", "^+%h", "^+M", "^+m",
+                    "^+W", "^+w", "{F3}", "^+T", "^+t", "^%T", "^%t",
+                    "^+P", "^+p", "^+D", "^+d", "^+B", "^+b", "^+J", "^+j"
+                };
+                foreach (var k in allKeys)
+                {
+                    try { _excelApp?.OnKey(k); } catch { }
+                }
             }
             catch { }
+
+            // 2. Đăng ký phím tắt qua C-API xlcOnKey của Excel-DNA để gọi trực tiếp XLL macro
+            RegisterKey("^+Q", "OracleQuickQueryCommand");
+            RegisterKey("^+q", "OracleQuickQueryCommand");
+            RegisterKey("^+H", "ApplyDesignHighlightSelectionCommand");
+            RegisterKey("^+h", "ApplyDesignHighlightSelectionCommand");
+            RegisterKey("^+%H", "ClearDesignHighlightSelectionCommand");
+            RegisterKey("^+%h", "ClearDesignHighlightSelectionCommand");
+            RegisterKey("^+M", "ExportMarkdownTableCommand");
+            RegisterKey("^+m", "ExportMarkdownTableCommand");
+            RegisterKey("^+W", "ToggleTaskPaneCommand");
+            RegisterKey("^+w", "ToggleTaskPaneCommand");
+            RegisterKey("{F3}", "OpenAiTranslateDialogCommand");
+            RegisterKey("^+T", "AiQuickTranslateCommand");
+            RegisterKey("^+t", "AiQuickTranslateCommand");
+            RegisterKey("^%T", "AiQuickTranslateAltCommand");
+            RegisterKey("^%t", "AiQuickTranslateAltCommand");
+            RegisterKey("^+P", "QuickCommandPaletteCommand");
+            RegisterKey("^+p", "QuickCommandPaletteCommand");
+            RegisterKey("^+D", "OpenDetailedDesignCommand");
+            RegisterKey("^+d", "OpenDetailedDesignCommand");
+            RegisterKey("^+B", "OpenBasicDesignCommand");
+            RegisterKey("^+b", "OpenBasicDesignCommand");
+            RegisterKey("^+J", "OpenTestSpecCommand");
+            RegisterKey("^+j", "OpenTestSpecCommand");
 
             QueueRefresh();
         }
@@ -105,33 +117,16 @@ namespace ExcelSupport
         {
             UnhookExcelEvents();
 
-            try
+            string[] allKeys = {
+                "^+Q", "^+q", "^+H", "^+h", "^+%H", "^+%h", "^+M", "^+m",
+                "^+W", "^+w", "{F3}", "^+T", "^+t", "^%T", "^%t",
+                "^+P", "^+p", "^+D", "^+d", "^+B", "^+b", "^+J", "^+j"
+            };
+            foreach (var k in allKeys)
             {
-                _excelApp?.OnKey("^+Q");
-                _excelApp?.OnKey("^+q");
-                _excelApp?.OnKey("^+H");
-                _excelApp?.OnKey("^+h");
-                _excelApp?.OnKey("^+%H");
-                _excelApp?.OnKey("^+%h");
-                _excelApp?.OnKey("^+M");
-                _excelApp?.OnKey("^+m");
-                _excelApp?.OnKey("^+W");
-                _excelApp?.OnKey("^+w");
-                _excelApp?.OnKey("{F3}");
-                _excelApp?.OnKey("^+T");
-                _excelApp?.OnKey("^+t");
-                _excelApp?.OnKey("^%T");
-                _excelApp?.OnKey("^%t");
-                _excelApp?.OnKey("^+P");
-                _excelApp?.OnKey("^+p");
-                _excelApp?.OnKey("^+D");
-                _excelApp?.OnKey("^+d");
-                _excelApp?.OnKey("^+B");
-                _excelApp?.OnKey("^+b");
-                _excelApp?.OnKey("^+J");
-                _excelApp?.OnKey("^+j");
+                UnregisterKey(k);
+                try { _excelApp?.OnKey(k); } catch { }
             }
-            catch { }
 
             if (MainViewModel != null)
             {
@@ -181,6 +176,27 @@ namespace ExcelSupport
         public void RefreshWorkbookTreePublic()
         {
             QueueRefresh();
+        }
+
+        private static void RegisterKey(string key, string macroName)
+        {
+            try
+            {
+                XlCall.Excel(XlCall.xlcOnKey, key, macroName);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RegisterKey] Error registering {key} -> {macroName}: {ex.Message}");
+            }
+        }
+
+        private static void UnregisterKey(string key)
+        {
+            try
+            {
+                XlCall.Excel(XlCall.xlcOnKey, key);
+            }
+            catch { }
         }
 
         #region Event Hooking & Realtime Synchronization

@@ -43,6 +43,12 @@ namespace ExcelSupport.Models
         public string RootFolder { get; set; } = string.Empty;
 
         /// <summary>
+        /// Trạng thái đang kích hoạt (chỉ dùng cho hiển thị UI)
+        /// </summary>
+        [Newtonsoft.Json.JsonIgnore]
+        public bool IsActive { get; set; }
+
+        /// <summary>
         /// Thư mục chứa tài liệu Thiết Kế Chi Tiết (TKCT) - Tiếng Việt.
         /// </summary>
         public string DetailedDesignFolderVi { get; set; } = string.Empty;
