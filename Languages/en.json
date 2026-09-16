@@ -1303,5 +1303,8 @@
   "SpecProfile_TestFolderNotExistPrompt": "⚠ Directory does not exist: {0}",
   "SpecProfile_TestNoMatchesPrompt": "No files found matching keyword '{0}' in directory {1}.",
   "SpecProfile_TestMatchesFoundPrompt": "✓ Found {0} matching file(s)!{1}",
-  "SpecProfile_TestLatestVer": "Latest version"
+  "SpecProfile_TestLatestVer": "Latest version",
+  "SpecLauncher_NoFileAvailable": "No document files available in the list to open.",
+  "SpecLauncher_SomeFilesNotFound": "The following files do not exist on disk:\n{0}",
+  "SpecLauncher_BtnOpenFilesFormat": "🚀 Open {0} Documents"
 }

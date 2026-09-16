@@ -201,6 +201,7 @@
                 BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Margin="0,0,0,12">
             <ListBox x:Name="lstFiles" 
                      BorderThickness="0" 
+                     SelectionMode="Extended"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      MouseDoubleClick="OnListMouseDoubleClick"
@@ -235,7 +236,8 @@
                                         </Border>
 
                                         <!-- Detected Version Badge -->
-                                        <Border Background="#F1F5F9" CornerRadius="3" Padding="4,1" Margin="6,0,0,0">
+                                        <Border Background="#F1F5F9" CornerRadius="3" Padding="4,1" Margin="6,0,0,0"
+                                                Visibility="{Binding HasVersion, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="{Binding DetectedVersion}" FontSize="10" Foreground="#475569" FontWeight="SemiBold"/>
                                         </Border>
                                     </StackPanel>
@@ -284,7 +286,8 @@
                         Margin="0,0,8,0"
                         Click="OnOpenFolderClick"/>
 
-                <Button Content="{loc:Loc SpecLauncher_BtnOpenFile}" 
+                <Button x:Name="btnOpenSelected"
+                        Content="{loc:Loc SpecLauncher_BtnOpenFile}" 
                         Style="{StaticResource PrimaryActionBtn}" 
                         Click="OnOpenSelectedClick"/>
             </StackPanel>

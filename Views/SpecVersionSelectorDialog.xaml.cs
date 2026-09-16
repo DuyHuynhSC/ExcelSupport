@@ -219,6 +219,13 @@ namespace ExcelSupport.Views
                 }
             }
 
+            if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                lstFiles.SelectAll();
+                e.Handled = true;
+                return;
+            }
+
             if (e.Key == Key.Enter && isListFocused)
             {
                 OpenSelectedFile();
@@ -233,7 +240,20 @@ namespace ExcelSupport.Views
 
         private void OnListSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Tùy chọn cập nhật giao diện khi chọn item
+            if (btnOpenSelected != null)
+            {
+                int count = lstFiles.SelectedItems.Count;
+                if (count > 1)
+                {
+                    btnOpenSelected.Content = string.Format(
+                        LocalizationService.Get("SpecLauncher_BtnOpenFilesFormat", "🚀 Mở {0} Tài Liệu"),
+                        count);
+                }
+                else
+                {
+                    btnOpenSelected.Content = LocalizationService.Get("SpecLauncher_BtnOpenFile", "🚀 Mở Tài Liệu");
+                }
+            }
         }
 
         private void OnRescanClick(object sender, RoutedEventArgs e)
@@ -250,24 +270,62 @@ namespace ExcelSupport.Views
 
         private void OpenSelectedFile()
         {
-            var selected = lstFiles.SelectedItem as SpecSearchResultItem;
-            if (selected == null)
+            var selectedItems = lstFiles.SelectedItems.Cast<SpecSearchResultItem>().ToList();
+            if (selectedItems.Count == 0)
             {
                 if (_filteredResults.Count > 0)
                 {
-                    selected = _filteredResults[0];
+                    selectedItems.Add(_filteredResults[0]);
                 }
                 else
                 {
+                    WpfMessageBox.Show(
+                        this,
+                        LocalizationService.Get("SpecLauncher_NoFileAvailable", "Không có file tài liệu nào trong danh sách để mở."),
+                        LocalizationService.Get("Common_Notice", "Thông Báo"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
                     return;
                 }
             }
+
+            // Kiểm tra các file có tồn tại trên đĩa không trước khi đóng dialog
+            var missingFiles = selectedItems.Where(s => !File.Exists(s.FilePath)).ToList();
+            if (missingFiles.Count > 0)
+            {
+                if (missingFiles.Count == 1 && selectedItems.Count == 1)
+                {
+                    WpfMessageBox.Show(
+                        this,
+                        string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), missingFiles[0].FilePath),
+                        LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+                else
+                {
+                    string missingList = string.Join("\n", missingFiles.Select(m => $"• {m.FileName} ({m.FilePath})"));
+                    WpfMessageBox.Show(
+                        this,
+                        string.Format(LocalizationService.Get("SpecLauncher_SomeFilesNotFound", "Các file sau đây không tồn tại trên đĩa:\n{0}"), missingList),
+                        LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+            }
+
+            var validFiles = selectedItems.Where(s => File.Exists(s.FilePath)).ToList();
+            if (validFiles.Count == 0) return;
 
             bool isReadOnly = chkReadOnly.IsChecked == true;
             Close();
 
             // Mở file sau khi dialog đóng
-            ProjectDocumentLauncherService.OpenFile(selected.FilePath, isReadOnly);
+            foreach (var item in validFiles)
+            {
+                ProjectDocumentLauncherService.OpenFile(item.FilePath, isReadOnly);
+            }
         }
 
         private void OnOpenFolderClick(object sender, RoutedEventArgs e)
@@ -278,14 +336,38 @@ namespace ExcelSupport.Views
         private void OpenSelectedFolder()
         {
             var selected = lstFiles.SelectedItem as SpecSearchResultItem;
-            if (selected != null && File.Exists(selected.FilePath))
+            if (selected != null)
             {
-                ProjectDocumentLauncherService.OpenContainingFolder(selected.FilePath);
+                if (File.Exists(selected.FilePath))
+                {
+                    ProjectDocumentLauncherService.OpenContainingFolder(selected.FilePath);
+                    return;
+                }
+                else
+                {
+                    WpfMessageBox.Show(
+                        this,
+                        string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), selected.FilePath),
+                        LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            string targetFolder = _profile.GetTargetFolder(_docType);
+            if (Directory.Exists(targetFolder))
+            {
+                ProjectDocumentLauncherService.OpenContainingFolder(targetFolder);
             }
             else
             {
-                string targetFolder = _profile.GetTargetFolder(_docType);
-                ProjectDocumentLauncherService.OpenContainingFolder(targetFolder);
+                WpfMessageBox.Show(
+                    this,
+                    string.Format(LocalizationService.Get("SpecProfile_TestFolderNotExistPrompt", "⚠ Thư mục không tồn tại: {0}"), targetFolder),
+                    LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
             }
         }
 

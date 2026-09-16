@@ -26,8 +26,142 @@ namespace ExcelSupport.Services
             @"(?:[_\-\s])(20\d{2}[-_]?\d{2}[-_]?\d{2})",
             RegexOptions.Compiled);
 
+        private class Win32WindowOwner : System.Windows.Forms.IWin32Window
+        {
+            public IntPtr Handle { get; }
+            public Win32WindowOwner(IntPtr handle) => Handle = handle;
+        }
+
+        public static System.Windows.Forms.DialogResult ShowExcelMessageBox(
+            ExcelApp? app,
+            string text,
+            string caption,
+            System.Windows.Forms.MessageBoxButtons buttons,
+            System.Windows.Forms.MessageBoxIcon icon)
+        {
+            try
+            {
+                IntPtr hwnd = IntPtr.Zero;
+                if (app != null)
+                {
+                    try { hwnd = new IntPtr(app.Hwnd); } catch { }
+                }
+                if (hwnd == IntPtr.Zero)
+                {
+                    var addIn = AddInEvents.Instance;
+                    if (addIn?.ExcelAppInstance != null)
+                    {
+                        try { hwnd = new IntPtr(addIn.ExcelAppInstance.Hwnd); } catch { }
+                    }
+                }
+
+                if (hwnd != IntPtr.Zero)
+                {
+                    return System.Windows.Forms.MessageBox.Show(new Win32WindowOwner(hwnd), text, caption, buttons, icon);
+                }
+                else
+                {
+                    return System.Windows.Forms.MessageBox.Show(text, caption, buttons, icon);
+                }
+            }
+            catch
+            {
+                return System.Windows.Forms.DialogResult.None;
+            }
+        }
+
         /// <summary>
-        /// Kích hoạt tìm kiếm và mở tài liệu từ ô đang chọn trên Excel
+        /// Trích xuất danh sách tất cả các từ khóa không trùng lặp từ vùng ô đang chọn (Selection)
+        /// </summary>
+        public static List<string> ExtractKeywordsFromSelection(ExcelApp? app)
+        {
+            var keywords = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (app == null) return keywords;
+
+            try
+            {
+                var selection = app.Selection as Microsoft.Office.Interop.Excel.Range;
+                if (selection != null)
+                {
+                    int totalCells = 0;
+                    foreach (Microsoft.Office.Interop.Excel.Range area in selection.Areas)
+                    {
+                        long areaCells = 1;
+                        try { areaCells = area.CountLarge; } catch { areaCells = 1; }
+
+                        if (areaCells == 1)
+                        {
+                            object val = area.Text ?? area.Value2;
+                            string s = val?.ToString()?.Trim() ?? string.Empty;
+                            if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
+                            {
+                                keywords.Add(s);
+                            }
+                            totalCells++;
+                        }
+                        else
+                        {
+                            object raw = area.Value2;
+                            if (raw is object[,] valArray)
+                            {
+                                int rCount = valArray.GetLength(0);
+                                int cCount = valArray.GetLength(1);
+                                for (int r = 1; r <= rCount && totalCells < 500; r++)
+                                {
+                                    for (int c = 1; c <= cCount && totalCells < 500; c++)
+                                    {
+                                        object cell = valArray[r, c];
+                                        string s = cell?.ToString()?.Trim() ?? string.Empty;
+                                        if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
+                                        {
+                                            keywords.Add(s);
+                                        }
+                                        totalCells++;
+                                    }
+                                }
+                            }
+                            else if (raw != null)
+                            {
+                                string s = raw.ToString()?.Trim() ?? string.Empty;
+                                if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
+                                {
+                                    keywords.Add(s);
+                                }
+                                totalCells++;
+                            }
+                        }
+
+                        if (totalCells >= 500) break;
+                    }
+                }
+            }
+            catch { }
+
+            // Fallback nếu Selection không trích xuất được từ khóa nào
+            if (keywords.Count == 0)
+            {
+                try
+                {
+                    if (app.ActiveCell != null)
+                    {
+                        object cellVal = app.ActiveCell.Text ?? app.ActiveCell.Value;
+                        string s = cellVal?.ToString()?.Trim() ?? string.Empty;
+                        if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
+                        {
+                            keywords.Add(s);
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            return keywords;
+        }
+
+        /// <summary>
+        /// Kích hoạt tìm kiếm và mở tài liệu từ ô hoặc vùng ô đang chọn trên Excel
         /// </summary>
         public static void LaunchFromSelection(ExcelApp? app, SpecDocumentType docType, bool? forceReadOnly = null)
         {
@@ -39,14 +173,15 @@ namespace ExcelSupport.Services
             var profile = ProjectProfileManager.GetActiveProfile();
             if (profile == null)
             {
-                var ask = WpfMessageBox.Show(
+                var ask = ShowExcelMessageBox(
+                    app,
                     LocalizationService.Get("SpecLauncher_NoProfilePrompt", 
                         "Chưa có Profile dự án nào được thiết lập. Bạn có muốn mở Cài Đặt Profile Dự Án ngay bây giờ?"),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    System.Windows.Forms.MessageBoxButtons.YesNo,
+                    System.Windows.Forms.MessageBoxIcon.Question);
 
-                if (ask == MessageBoxResult.Yes)
+                if (ask == System.Windows.Forms.DialogResult.Yes)
                 {
                     ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
                 }
@@ -57,81 +192,90 @@ namespace ExcelSupport.Services
             if (string.IsNullOrWhiteSpace(targetFolder) || !Directory.Exists(targetFolder))
             {
                 string docTypeName = GetDocTypeName(docType);
-                var ask = WpfMessageBox.Show(
+                var ask = ShowExcelMessageBox(
+                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_FolderNotFoundPrompt",
                         "Thư mục tài liệu {0} của dự án '{1}' chưa được thiết lập hoặc không tồn tại:\n{2}\n\nBạn có muốn mở Cài Đặt Profile Dự Án để cập nhật đường dẫn?"),
                         docTypeName, profile.Name, targetFolder),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    System.Windows.Forms.MessageBoxButtons.YesNo,
+                    System.Windows.Forms.MessageBoxIcon.Warning);
 
-                if (ask == MessageBoxResult.Yes)
+                if (ask == System.Windows.Forms.DialogResult.Yes)
                 {
                     ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
                 }
                 return;
             }
 
-            // Lấy từ khóa từ ô đang chọn
-            string keyword = string.Empty;
-            try
-            {
-                if (app.ActiveCell != null)
-                {
-                    object cellVal = app.ActiveCell.Text ?? app.ActiveCell.Value;
-                    if (cellVal != null)
-                    {
-                        keyword = cellVal.ToString()?.Trim() ?? string.Empty;
-                    }
-                }
-            }
-            catch { }
-
+            // Lấy danh sách từ khóa từ vùng chọn Excel
+            var keywords = ExtractKeywordsFromSelection(app);
             bool isReadOnly = forceReadOnly ?? profile.OpenReadOnlyDefault;
 
-            // Nếu ô không có text, mở hộp thoại chọn version với ô tìm kiếm để người dùng tự nhập từ khóa
-            if (string.IsNullOrWhiteSpace(keyword))
+            // Nếu không có từ khóa nào, mở hộp thoại chọn version với ô tìm kiếm rỗng
+            if (keywords.Count == 0)
             {
                 SpecVersionSelectorDialog.ShowWindow(profile, docType, string.Empty, new List<SpecSearchResultItem>(), isReadOnly, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
                 return;
             }
 
             // Tìm kiếm file đệ quy
-            var results = SearchFiles(profile, docType, keyword);
+            var results = SearchFiles(profile, docType, keywords);
 
             if (results.Count == 0)
             {
                 string docTypeName = GetDocTypeName(docType);
-                var promptResult = WpfMessageBox.Show(
+                string kwDisplay = string.Join(", ", keywords.Take(5));
+                if (keywords.Count > 5) kwDisplay += $" (+{keywords.Count - 5})";
+
+                var promptResult = ShowExcelMessageBox(
+                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_NoFilesFoundPrompt",
                         "Không tìm thấy tài liệu {0} nào chứa từ khóa: '{1}'\n\nThư mục quét:\n{2}\n\nBạn có muốn mở thư mục này trong Windows Explorer để kiểm tra không?"),
-                        docTypeName, keyword, targetFolder),
+                        docTypeName, kwDisplay, targetFolder),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Information);
+                    System.Windows.Forms.MessageBoxButtons.YesNo,
+                    System.Windows.Forms.MessageBoxIcon.Information);
 
-                if (promptResult == MessageBoxResult.Yes)
+                if (promptResult == System.Windows.Forms.DialogResult.Yes)
                 {
                     OpenContainingFolder(targetFolder);
                 }
                 return;
             }
 
-            // Nếu chỉ tìm thấy đúng 1 file duy nhất -> Mở trực tiếp ngay lập tức!
-            if (results.Count == 1)
+            // Nếu là TKCT / TKCB VÀ chỉ chọn 1 ô duy nhất VÀ chỉ tìm thấy đúng 1 file -> Mở trực tiếp ngay lập tức!
+            if (docType != SpecDocumentType.TestSpec && keywords.Count == 1 && results.Count == 1)
             {
                 OpenFile(results[0].FilePath, isReadOnly, app);
                 return;
             }
 
-            // Nếu tìm thấy nhiều file hoặc nhiều version -> Mở hộp thoại Version Selector
-            SpecVersionSelectorDialog.ShowWindow(profile, docType, keyword, results, isReadOnly, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+            // Với Chỉ Thị Test (TestSpec) HOẶC khi chọn một vùng (keywords.Count > 1) HOẶC khi tìm thấy nhiều file:
+            // Luôn mở hộp thoại hiển thị danh sách các file để người dùng xem và lựa chọn!
+            string keywordSummary = string.Join(", ", keywords.Take(4));
+            if (keywords.Count > 4) keywordSummary += $" (+{keywords.Count - 4})";
+
+            SpecVersionSelectorDialog.ShowWindow(profile, docType, keywordSummary, results, isReadOnly, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         /// <summary>
-        /// Tìm kiếm đệ quy toàn bộ file trong thư mục chỉ định của profile khớp với từ khóa
+        /// Tìm kiếm đệ quy toàn bộ file trong thư mục chỉ định của profile khớp với 1 từ khóa
         /// </summary>
         public static List<SpecSearchResultItem> SearchFiles(ProjectProfile profile, SpecDocumentType docType, string keyword)
+        {
+            var kwList = new List<string>();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                kwList.Add(keyword.Trim());
+            }
+            return SearchFiles(profile, docType, kwList);
+        }
+
+        /// <summary>
+        /// Tìm kiếm đệ quy toàn bộ file trong thư mục chỉ định của profile khớp với danh sách các từ khóa (vùng chọn)
+        /// </summary>
+        public static List<SpecSearchResultItem> SearchFiles(ProjectProfile profile, SpecDocumentType docType, IEnumerable<string> keywords)
         {
             var list = new List<SpecSearchResultItem>();
             string targetFolder = profile.GetTargetFolder(docType);
@@ -164,9 +308,19 @@ namespace ExcelSupport.Services
                 allowedExtensions.Add(".pptx");
             }
 
-            // Chuẩn hóa từ khóa tìm kiếm (bỏ khoảng trắng, kiểm tra biến thể _ và -)
-            string normalizedKeyword = keyword.Trim();
-            string keywordNoSep = normalizedKeyword.Replace("_", "").Replace("-", "").Replace(" ", "");
+            // Chuẩn hóa danh sách từ khóa tìm kiếm
+            var kwList = keywords?
+                .Where(k => !string.IsNullOrWhiteSpace(k))
+                .Select(k => k.Trim())
+                .ToList() ?? new List<string>();
+
+            var kwPairs = kwList.Select(k => new
+            {
+                Raw = k,
+                NoSep = k.Replace("_", "").Replace("-", "").Replace(" ", "")
+            }).ToList();
+
+            var addedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Quét đệ quy thư mục an toàn (bỏ qua folder không có quyền truy cập)
             var allFiles = SafeEnumerateFiles(targetFolder);
@@ -175,17 +329,36 @@ namespace ExcelSupport.Services
             {
                 string ext = Path.GetExtension(filePath);
                 if (!allowedExtensions.Contains(ext)) continue;
+                if (addedPaths.Contains(filePath)) continue;
 
                 string fileName = Path.GetFileName(filePath);
                 string fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
 
-                // Khớp Contains Match không phân biệt hoa thường
-                bool isMatch = fileNameWithoutExt.IndexOf(normalizedKeyword, StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isMatch = false;
 
-                if (!isMatch && keywordNoSep.Length > 2)
+                if (kwPairs.Count == 0)
+                {
+                    // Nếu không có từ khóa nào (mở danh sách trống), hiển thị tất cả file
+                    isMatch = true;
+                }
+                else
                 {
                     string fileNameNoSep = fileNameWithoutExt.Replace("_", "").Replace("-", "").Replace(" ", "");
-                    isMatch = fileNameNoSep.IndexOf(keywordNoSep, StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    foreach (var kw in kwPairs)
+                    {
+                        if (fileNameWithoutExt.IndexOf(kw.Raw, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            isMatch = true;
+                            break;
+                        }
+
+                        if (kw.NoSep.Length > 2 && fileNameNoSep.IndexOf(kw.NoSep, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            isMatch = true;
+                            break;
+                        }
+                    }
                 }
 
                 if (isMatch)
@@ -203,7 +376,10 @@ namespace ExcelSupport.Services
                         }
                         catch { }
 
-                        string detectedVer = ExtractVersion(fileNameWithoutExt);
+                        // Đối với Chỉ Thị Test (TestSpec), tài liệu không phân version -> không trích xuất version
+                        string detectedVer = (docType != SpecDocumentType.TestSpec)
+                            ? ExtractVersion(fileNameWithoutExt)
+                            : string.Empty;
 
                         list.Add(new SpecSearchResultItem
                         {
@@ -216,25 +392,39 @@ namespace ExcelSupport.Services
                             LastModified = fi.LastWriteTime,
                             FileSizeBytes = fi.Length
                         });
+
+                        addedPaths.Add(filePath);
                     }
                     catch { }
                 }
             }
 
-            // Sắp xếp ưu tiên bản mới nhất:
-            // 1. Phân tích version/date kết hợp ngày sửa đổi LastWriteTime giảm dần
-            list.Sort((a, b) =>
+            // Sắp xếp kết quả:
+            if (docType == SpecDocumentType.TestSpec)
             {
-                int verCompare = CompareVersions(b.DetectedVersion, a.DetectedVersion);
-                if (verCompare != 0) return verCompare;
-                return b.LastModified.CompareTo(a.LastModified);
-            });
+                // Chỉ thị test không có version: sắp xếp theo tên file, không đánh dấu bản LATEST
+                list.Sort((a, b) => string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i].IsLatest = false;
+                    list[i].ItemIndex = i + 1;
+                }
+            }
+            else
+            {
+                // TKCT / TKCB: sắp xếp ưu tiên bản version mới nhất, sau đó ngày sửa đổi
+                list.Sort((a, b) =>
+                {
+                    int verCompare = CompareVersions(b.DetectedVersion, a.DetectedVersion);
+                    if (verCompare != 0) return verCompare;
+                    return b.LastModified.CompareTo(a.LastModified);
+                });
 
-            // Đánh dấu IsLatest và gán ItemIndex (1-9) cho phím tắt nhanh
-            for (int i = 0; i < list.Count; i++)
-            {
-                list[i].IsLatest = (i == 0);
-                list[i].ItemIndex = i + 1;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i].IsLatest = (i == 0);
+                    list[i].ItemIndex = i + 1;
+                }
             }
 
             return list;
@@ -247,11 +437,12 @@ namespace ExcelSupport.Services
         {
             if (!File.Exists(filePath))
             {
-                WpfMessageBox.Show(
+                ShowExcelMessageBox(
+                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), filePath),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Error);
                 return false;
             }
 
@@ -296,11 +487,12 @@ namespace ExcelSupport.Services
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show(
+                ShowExcelMessageBox(
+                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_ErrorOpeningFile", "Không thể mở file tài liệu:\n{0}\n\nLỗi: {1}"), filePath, ex.Message),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Error);
                 return false;
             }
         }

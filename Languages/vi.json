@@ -1303,5 +1303,8 @@
   "SpecProfile_TestFolderNotExistPrompt": "⚠ Thư mục không tồn tại: {0}",
   "SpecProfile_TestNoMatchesPrompt": "Không tìm thấy file nào khớp với từ khóa '{0}' trong thư mục {1}.",
   "SpecProfile_TestMatchesFoundPrompt": "✓ Tìm thấy {0} file khớp!{1}",
-  "SpecProfile_TestLatestVer": "Bản mới nhất"
+  "SpecProfile_TestLatestVer": "Bản mới nhất",
+  "SpecLauncher_NoFileAvailable": "Không có file tài liệu nào trong danh sách để mở.",
+  "SpecLauncher_SomeFilesNotFound": "Các file sau đây không tồn tại trên đĩa:\n{0}",
+  "SpecLauncher_BtnOpenFilesFormat": "🚀 Mở {0} Tài Liệu"
 }

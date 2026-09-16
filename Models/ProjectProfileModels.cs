@@ -150,6 +150,7 @@ namespace ExcelSupport.Models
         public long FileSizeBytes { get; set; }
         public bool IsLatest { get; set; }
         public int ItemIndex { get; set; }
+        public bool HasVersion => !string.IsNullOrWhiteSpace(DetectedVersion);
 
         public string FormattedSize
         {

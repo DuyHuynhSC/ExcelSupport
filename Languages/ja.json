@@ -1303,5 +1303,8 @@
   "SpecProfile_TestFolderNotExistPrompt": "⚠ フォルダが存在しません: {0}",
   "SpecProfile_TestNoMatchesPrompt": "フォルダ {1} 内でキーワード「{0}」に一致するファイルが見つかりませんでした。",
   "SpecProfile_TestMatchesFoundPrompt": "✓ 一致するファイルが {0} 件見つかりました！{1}",
-  "SpecProfile_TestLatestVer": "最新版"
+  "SpecProfile_TestLatestVer": "最新版",
+  "SpecLauncher_NoFileAvailable": "開くことができる設計書ファイルが一覧にありません。",
+  "SpecLauncher_SomeFilesNotFound": "以下のファイルはディスク上に存在しません:\n{0}",
+  "SpecLauncher_BtnOpenFilesFormat": "🚀 {0}件の設計書を開く"
 }
