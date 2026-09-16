@@ -39,6 +39,7 @@ namespace ExcelSupport.Views
         private string _keyword;
         private List<SpecSearchResultItem> _allResults;
         private List<SpecSearchResultItem> _filteredResults;
+        private List<string> _initialKeywords;
 
         public SpecVersionSelectorDialog(
             ProjectProfile profile, 
@@ -46,14 +47,18 @@ namespace ExcelSupport.Views
             string keyword, 
             List<SpecSearchResultItem> initialResults,
             bool isReadOnly,
-            bool isDarkTheme = false)
+            bool isDarkTheme = false,
+            IEnumerable<string>? initialKeywords = null)
         {
             InitializeComponent();
             _profile = profile;
             _docType = docType;
-            _keyword = keyword;
+            _keyword = keyword ?? string.Empty;
             _allResults = initialResults ?? new List<SpecSearchResultItem>();
             _filteredResults = new List<SpecSearchResultItem>(_allResults);
+            _initialKeywords = initialKeywords != null
+                ? initialKeywords.Where(k => !string.IsNullOrWhiteSpace(k)).Distinct().ToList()
+                : (string.IsNullOrWhiteSpace(keyword) ? new List<string>() : new List<string> { keyword! });
 
             IsDarkTheme = isDarkTheme;
             chkReadOnly.IsChecked = isReadOnly;
@@ -74,7 +79,8 @@ namespace ExcelSupport.Views
             string keyword,
             List<SpecSearchResultItem> initialResults,
             bool isReadOnly = false,
-            bool isDarkTheme = false)
+            bool isDarkTheme = false,
+            IEnumerable<string>? initialKeywords = null)
         {
             try
             {
@@ -84,7 +90,7 @@ namespace ExcelSupport.Views
                     return;
                 }
 
-                _currentInstance = new SpecVersionSelectorDialog(profile, docType, keyword, initialResults, isReadOnly, isDarkTheme);
+                _currentInstance = new SpecVersionSelectorDialog(profile, docType, keyword, initialResults, isReadOnly, isDarkTheme, initialKeywords);
 
                 try
                 {
@@ -109,21 +115,44 @@ namespace ExcelSupport.Views
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             lblDocType.Text = ProjectDocumentLauncherService.GetDocTypeShortBadge(_docType);
-            lblKeyword.Text = string.IsNullOrWhiteSpace(_keyword) 
-                ? LocalizationService.Get("Common_All_Parens", "(Tất cả)") 
-                : _keyword;
             lblProfileName.Text = _profile.Name;
-            txtFilter.Text = _keyword;
+
+            bool isMultiKeyword = _initialKeywords != null && _initialKeywords.Count > 1;
+
+            if (isMultiKeyword)
+            {
+                lblKeyword.Text = string.Format(
+                    LocalizationService.Get("SpecLauncher_MultiKeywordsBadge", "{0} mục được chọn ({1})"),
+                    _initialKeywords!.Count,
+                    _keyword);
+                // QUAN TRỌNG: Khi chọn một vùng (nhiều ô), txtFilter để TRỐNG để không lọc mất danh sách _allResults!
+                txtFilter.Text = string.Empty;
+            }
+            else
+            {
+                lblKeyword.Text = string.IsNullOrWhiteSpace(_keyword) 
+                    ? LocalizationService.Get("Common_All_Parens", "(Tất cả)") 
+                    : _keyword;
+                txtFilter.Text = _keyword;
+            }
 
             RefreshList();
 
-            if (lstFiles.Items.Count > 0)
+            if (isMultiKeyword && lstFiles.Items.Count > 0)
+            {
+                // Tự động chọn tất cả các file tìm thấy để người dùng bấm Mở hàng loạt dễ dàng
+                lstFiles.SelectAll();
+            }
+            else if (lstFiles.Items.Count > 0)
             {
                 lstFiles.SelectedIndex = 0;
             }
 
             txtFilter.Focus();
-            txtFilter.SelectAll();
+            if (!string.IsNullOrEmpty(txtFilter.Text))
+            {
+                txtFilter.SelectAll();
+            }
         }
 
         private void RefreshList()
@@ -145,14 +174,29 @@ namespace ExcelSupport.Views
             for (int i = 0; i < _filteredResults.Count; i++)
             {
                 _filteredResults[i].ItemIndex = i + 1;
-                _filteredResults[i].IsLatest = (i == 0);
+                _filteredResults[i].IsLatest = (_docType != SpecDocumentType.TestSpec && i == 0);
             }
 
             lstFiles.ItemsSource = _filteredResults;
 
-            if (_filteredResults.Count > 0)
+            UpdateOpenButtonText();
+        }
+
+        private void UpdateOpenButtonText()
+        {
+            if (btnOpenSelected != null)
             {
-                lstFiles.SelectedIndex = 0;
+                int count = lstFiles.SelectedItems.Count;
+                if (count > 1)
+                {
+                    btnOpenSelected.Content = string.Format(
+                        LocalizationService.Get("SpecLauncher_BtnOpenFilesFormat", "🚀 Mở {0} Tài Liệu"),
+                        count);
+                }
+                else
+                {
+                    btnOpenSelected.Content = LocalizationService.Get("SpecLauncher_BtnOpenFile", "🚀 Mở Tài Liệu");
+                }
             }
         }
 
@@ -240,26 +284,24 @@ namespace ExcelSupport.Views
 
         private void OnListSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (btnOpenSelected != null)
-            {
-                int count = lstFiles.SelectedItems.Count;
-                if (count > 1)
-                {
-                    btnOpenSelected.Content = string.Format(
-                        LocalizationService.Get("SpecLauncher_BtnOpenFilesFormat", "🚀 Mở {0} Tài Liệu"),
-                        count);
-                }
-                else
-                {
-                    btnOpenSelected.Content = LocalizationService.Get("SpecLauncher_BtnOpenFile", "🚀 Mở Tài Liệu");
-                }
-            }
+            UpdateOpenButtonText();
         }
 
         private void OnRescanClick(object sender, RoutedEventArgs e)
         {
             string searchKw = txtFilter.Text.Trim();
-            _allResults = ProjectDocumentLauncherService.SearchFiles(_profile, _docType, searchKw);
+            if (!string.IsNullOrWhiteSpace(searchKw))
+            {
+                _allResults = ProjectDocumentLauncherService.SearchFiles(_profile, _docType, searchKw);
+            }
+            else if (_initialKeywords != null && _initialKeywords.Count > 0)
+            {
+                _allResults = ProjectDocumentLauncherService.SearchFiles(_profile, _docType, _initialKeywords);
+            }
+            else
+            {
+                _allResults = ProjectDocumentLauncherService.SearchFiles(_profile, _docType, string.Empty);
+            }
             RefreshList();
         }
 

@@ -1306,5 +1306,7 @@
   "SpecProfile_TestLatestVer": "Latest version",
   "SpecLauncher_NoFileAvailable": "No document files available in the list to open.",
   "SpecLauncher_SomeFilesNotFound": "The following files do not exist on disk:\n{0}",
-  "SpecLauncher_BtnOpenFilesFormat": "🚀 Open {0} Documents"
+  "SpecLauncher_BtnOpenFilesFormat": "🚀 Open {0} Documents",
+  "SpecLauncher_EmptySelectionPrompt": "The selected cell in Excel has no keyword or document name.\n\nDo you want to browse all documents in the target folder?",
+  "SpecLauncher_MultiKeywordsBadge": "{0} items selected ({1})"
 }

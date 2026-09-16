@@ -26,47 +26,43 @@ namespace ExcelSupport.Services
             @"(?:[_\-\s])(20\d{2}[-_]?\d{2}[-_]?\d{2})",
             RegexOptions.Compiled);
 
-        private class Win32WindowOwner : System.Windows.Forms.IWin32Window
-        {
-            public IntPtr Handle { get; }
-            public Win32WindowOwner(IntPtr handle) => Handle = handle;
-        }
-
-        public static System.Windows.Forms.DialogResult ShowExcelMessageBox(
-            ExcelApp? app,
+        public static MessageBoxResult ShowExcelMessageBox(
             string text,
             string caption,
-            System.Windows.Forms.MessageBoxButtons buttons,
-            System.Windows.Forms.MessageBoxIcon icon)
+            MessageBoxButton buttons = MessageBoxButton.OK,
+            MessageBoxImage icon = MessageBoxImage.Information)
         {
             try
             {
-                IntPtr hwnd = IntPtr.Zero;
-                if (app != null)
-                {
-                    try { hwnd = new IntPtr(app.Hwnd); } catch { }
-                }
-                if (hwnd == IntPtr.Zero)
-                {
-                    var addIn = AddInEvents.Instance;
-                    if (addIn?.ExcelAppInstance != null)
-                    {
-                        try { hwnd = new IntPtr(addIn.ExcelAppInstance.Hwnd); } catch { }
-                    }
-                }
-
-                if (hwnd != IntPtr.Zero)
-                {
-                    return System.Windows.Forms.MessageBox.Show(new Win32WindowOwner(hwnd), text, caption, buttons, icon);
-                }
-                else
-                {
-                    return System.Windows.Forms.MessageBox.Show(text, caption, buttons, icon);
-                }
+                return WpfMessageBox.Show(text, caption, buttons, icon);
             }
-            catch
+            catch (Exception ex)
             {
-                return System.Windows.Forms.DialogResult.None;
+                Debug.WriteLine($"[ShowExcelMessageBox] WpfMessageBox error: {ex.Message}");
+                try
+                {
+                    var formsButtons = buttons switch
+                    {
+                        MessageBoxButton.YesNo => System.Windows.Forms.MessageBoxButtons.YesNo,
+                        MessageBoxButton.YesNoCancel => System.Windows.Forms.MessageBoxButtons.YesNoCancel,
+                        _ => System.Windows.Forms.MessageBoxButtons.OK
+                    };
+                    var formsIcon = icon switch
+                    {
+                        MessageBoxImage.Error => System.Windows.Forms.MessageBoxIcon.Error,
+                        MessageBoxImage.Warning => System.Windows.Forms.MessageBoxIcon.Warning,
+                        MessageBoxImage.Question => System.Windows.Forms.MessageBoxIcon.Question,
+                        _ => System.Windows.Forms.MessageBoxIcon.Information
+                    };
+                    var dr = System.Windows.Forms.MessageBox.Show(text, caption, formsButtons, formsIcon);
+                    return dr == System.Windows.Forms.DialogResult.Yes ? MessageBoxResult.Yes :
+                           dr == System.Windows.Forms.DialogResult.No ? MessageBoxResult.No : MessageBoxResult.OK;
+                }
+                catch (Exception exForms)
+                {
+                    Debug.WriteLine($"[ShowExcelMessageBox] FormsMessageBox error: {exForms.Message}");
+                    return MessageBoxResult.None;
+                }
             }
         }
 
@@ -79,6 +75,20 @@ namespace ExcelSupport.Services
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             if (app == null) return keywords;
+
+            void AddText(string rawText)
+            {
+                if (string.IsNullOrWhiteSpace(rawText)) return;
+                var lines = rawText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    string trimmed = line.Trim();
+                    if (!string.IsNullOrWhiteSpace(trimmed) && seen.Add(trimmed))
+                    {
+                        keywords.Add(trimmed);
+                    }
+                }
+            }
 
             try
             {
@@ -94,11 +104,7 @@ namespace ExcelSupport.Services
                         if (areaCells == 1)
                         {
                             object val = area.Text ?? area.Value2;
-                            string s = val?.ToString()?.Trim() ?? string.Empty;
-                            if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
-                            {
-                                keywords.Add(s);
-                            }
+                            AddText(val?.ToString() ?? string.Empty);
                             totalCells++;
                         }
                         else
@@ -113,22 +119,14 @@ namespace ExcelSupport.Services
                                     for (int c = 1; c <= cCount && totalCells < 500; c++)
                                     {
                                         object cell = valArray[r, c];
-                                        string s = cell?.ToString()?.Trim() ?? string.Empty;
-                                        if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
-                                        {
-                                            keywords.Add(s);
-                                        }
+                                        AddText(cell?.ToString() ?? string.Empty);
                                         totalCells++;
                                     }
                                 }
                             }
                             else if (raw != null)
                             {
-                                string s = raw.ToString()?.Trim() ?? string.Empty;
-                                if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
-                                {
-                                    keywords.Add(s);
-                                }
+                                AddText(raw.ToString() ?? string.Empty);
                                 totalCells++;
                             }
                         }
@@ -147,11 +145,7 @@ namespace ExcelSupport.Services
                     if (app.ActiveCell != null)
                     {
                         object cellVal = app.ActiveCell.Text ?? app.ActiveCell.Value;
-                        string s = cellVal?.ToString()?.Trim() ?? string.Empty;
-                        if (!string.IsNullOrWhiteSpace(s) && seen.Add(s))
-                        {
-                            keywords.Add(s);
-                        }
+                        AddText(cellVal?.ToString() ?? string.Empty);
                     }
                 }
                 catch { }
@@ -174,14 +168,13 @@ namespace ExcelSupport.Services
             if (profile == null)
             {
                 var ask = ShowExcelMessageBox(
-                    app,
                     LocalizationService.Get("SpecLauncher_NoProfilePrompt", 
                         "Chưa có Profile dự án nào được thiết lập. Bạn có muốn mở Cài Đặt Profile Dự Án ngay bây giờ?"),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    System.Windows.Forms.MessageBoxButtons.YesNo,
-                    System.Windows.Forms.MessageBoxIcon.Question);
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
 
-                if (ask == System.Windows.Forms.DialogResult.Yes)
+                if (ask == MessageBoxResult.Yes)
                 {
                     ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
                 }
@@ -193,15 +186,14 @@ namespace ExcelSupport.Services
             {
                 string docTypeName = GetDocTypeName(docType);
                 var ask = ShowExcelMessageBox(
-                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_FolderNotFoundPrompt",
                         "Thư mục tài liệu {0} của dự án '{1}' chưa được thiết lập hoặc không tồn tại:\n{2}\n\nBạn có muốn mở Cài Đặt Profile Dự Án để cập nhật đường dẫn?"),
                         docTypeName, profile.Name, targetFolder),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    System.Windows.Forms.MessageBoxButtons.YesNo,
-                    System.Windows.Forms.MessageBoxIcon.Warning);
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
 
-                if (ask == System.Windows.Forms.DialogResult.Yes)
+                if (ask == MessageBoxResult.Yes)
                 {
                     ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
                 }
@@ -212,10 +204,21 @@ namespace ExcelSupport.Services
             var keywords = ExtractKeywordsFromSelection(app);
             bool isReadOnly = forceReadOnly ?? profile.OpenReadOnlyDefault;
 
-            // Nếu không có từ khóa nào, mở hộp thoại chọn version với ô tìm kiếm rỗng
+            // Nếu không có từ khóa nào (người dùng chọn ô trống)
             if (keywords.Count == 0)
             {
-                SpecVersionSelectorDialog.ShowWindow(profile, docType, string.Empty, new List<SpecSearchResultItem>(), isReadOnly, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                var ask = ShowExcelMessageBox(
+                    LocalizationService.Get("SpecLauncher_EmptySelectionPrompt",
+                        "Ô đang chọn trên Excel không có nội dung từ khóa hoặc tên tài liệu.\n\nBạn có muốn mở danh sách toàn bộ tài liệu trong thư mục để tìm kiếm không?"),
+                    LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (ask == MessageBoxResult.Yes)
+                {
+                    var allDocs = SearchFiles(profile, docType, string.Empty);
+                    SpecVersionSelectorDialog.ShowWindow(profile, docType, string.Empty, allDocs, isReadOnly, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                }
                 return;
             }
 
@@ -229,15 +232,14 @@ namespace ExcelSupport.Services
                 if (keywords.Count > 5) kwDisplay += $" (+{keywords.Count - 5})";
 
                 var promptResult = ShowExcelMessageBox(
-                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_NoFilesFoundPrompt",
                         "Không tìm thấy tài liệu {0} nào chứa từ khóa: '{1}'\n\nThư mục quét:\n{2}\n\nBạn có muốn mở thư mục này trong Windows Explorer để kiểm tra không?"),
                         docTypeName, kwDisplay, targetFolder),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    System.Windows.Forms.MessageBoxButtons.YesNo,
-                    System.Windows.Forms.MessageBoxIcon.Information);
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
 
-                if (promptResult == System.Windows.Forms.DialogResult.Yes)
+                if (promptResult == MessageBoxResult.Yes)
                 {
                     OpenContainingFolder(targetFolder);
                 }
@@ -256,7 +258,14 @@ namespace ExcelSupport.Services
             string keywordSummary = string.Join(", ", keywords.Take(4));
             if (keywords.Count > 4) keywordSummary += $" (+{keywords.Count - 4})";
 
-            SpecVersionSelectorDialog.ShowWindow(profile, docType, keywordSummary, results, isReadOnly, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+            SpecVersionSelectorDialog.ShowWindow(
+                profile, 
+                docType, 
+                keywordSummary, 
+                results, 
+                isReadOnly, 
+                AddInEvents.MainViewModel?.IsDarkTheme ?? false,
+                keywords);
         }
 
         /// <summary>
@@ -438,11 +447,10 @@ namespace ExcelSupport.Services
             if (!File.Exists(filePath))
             {
                 ShowExcelMessageBox(
-                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), filePath),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
                 return false;
             }
 
@@ -488,11 +496,10 @@ namespace ExcelSupport.Services
             catch (Exception ex)
             {
                 ShowExcelMessageBox(
-                    app,
                     string.Format(LocalizationService.Get("SpecLauncher_ErrorOpeningFile", "Không thể mở file tài liệu:\n{0}\n\nLỗi: {1}"), filePath, ex.Message),
                     LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
-                    System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
                 return false;
             }
         }

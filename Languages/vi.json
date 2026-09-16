@@ -1306,5 +1306,7 @@
   "SpecProfile_TestLatestVer": "Bản mới nhất",
   "SpecLauncher_NoFileAvailable": "Không có file tài liệu nào trong danh sách để mở.",
   "SpecLauncher_SomeFilesNotFound": "Các file sau đây không tồn tại trên đĩa:\n{0}",
-  "SpecLauncher_BtnOpenFilesFormat": "🚀 Mở {0} Tài Liệu"
+  "SpecLauncher_BtnOpenFilesFormat": "🚀 Mở {0} Tài Liệu",
+  "SpecLauncher_EmptySelectionPrompt": "Ô đang chọn trên Excel không có nội dung từ khóa hoặc tên tài liệu.\n\nBạn có muốn mở danh sách toàn bộ tài liệu trong thư mục để tìm kiếm không?",
+  "SpecLauncher_MultiKeywordsBadge": "{0} mục được chọn ({1})"
 }

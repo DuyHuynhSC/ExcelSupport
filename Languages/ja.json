@@ -1306,5 +1306,7 @@
   "SpecProfile_TestLatestVer": "最新版",
   "SpecLauncher_NoFileAvailable": "開くことができる設計書ファイルが一覧にありません。",
   "SpecLauncher_SomeFilesNotFound": "以下のファイルはディスク上に存在しません:\n{0}",
-  "SpecLauncher_BtnOpenFilesFormat": "🚀 {0}件の設計書を開く"
+  "SpecLauncher_BtnOpenFilesFormat": "🚀 {0}件の設計書を開く",
+  "SpecLauncher_EmptySelectionPrompt": "選択中のセルにはキーワードや設計書名がありません。\n\n対象フォルダー内のすべての設計書一覧を開いて検索しますか？",
+  "SpecLauncher_MultiKeywordsBadge": "{0} 件選択中 ({1})"
 }
