@@ -166,4 +166,16 @@ namespace ExcelSupport.Models
 
         public bool IsExcelFile => Extension == ".xlsx" || Extension == ".xlsm" || Extension == ".xls";
     }
+
+    /// <summary>
+    /// Kết quả thực thi khởi chạy mở tài liệu thiết kế
+    /// </summary>
+    public class LaunchResult
+    {
+        public bool Success { get; set; } = true;
+        public string Message { get; set; } = string.Empty;
+
+        public static LaunchResult Ok() => new LaunchResult { Success = true };
+        public static LaunchResult Fail(string message) => new LaunchResult { Success = false, Message = message };
+    }
 }

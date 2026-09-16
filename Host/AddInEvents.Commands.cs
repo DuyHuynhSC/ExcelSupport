@@ -153,8 +153,12 @@ namespace ExcelSupport
             {
                 try
                 {
-                    var app = (ExcelApp)ExcelDnaUtil.Application;
-                    ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.DetailedDesign);
+                    var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                    var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.DetailedDesign);
+                    if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                    {
+                        System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    }
                 }
                 catch { }
             });
@@ -167,8 +171,12 @@ namespace ExcelSupport
             {
                 try
                 {
-                    var app = (ExcelApp)ExcelDnaUtil.Application;
-                    ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.BasicDesign);
+                    var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                    var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.BasicDesign);
+                    if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                    {
+                        System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    }
                 }
                 catch { }
             });
@@ -181,8 +189,12 @@ namespace ExcelSupport
             {
                 try
                 {
-                    var app = (ExcelApp)ExcelDnaUtil.Application;
-                    ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.TestSpec);
+                    var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                    var result = ProjectDocumentLauncherService.LaunchFromSelection(app, Models.SpecDocumentType.TestSpec);
+                    if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                    {
+                        System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    }
                 }
                 catch { }
             });

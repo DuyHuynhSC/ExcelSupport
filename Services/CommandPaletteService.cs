@@ -472,7 +472,11 @@ namespace ExcelSupport.Services
                     Action = () =>
                     {
                         var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
-                        ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.DetailedDesign);
+                        var result = ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.DetailedDesign);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
                     }
                 },
                 new PaletteCommandItem
@@ -487,7 +491,11 @@ namespace ExcelSupport.Services
                     Action = () =>
                     {
                         var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
-                        ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.BasicDesign);
+                        var result = ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.BasicDesign);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
                     }
                 },
                 new PaletteCommandItem
@@ -502,7 +510,11 @@ namespace ExcelSupport.Services
                     Action = () =>
                     {
                         var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
-                        ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.TestSpec);
+                        var result = ProjectDocumentLauncherService.LaunchFromSelection(app, SpecDocumentType.TestSpec);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
                     }
                 },
                 new PaletteCommandItem

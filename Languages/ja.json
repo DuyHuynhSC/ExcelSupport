@@ -1308,5 +1308,9 @@
   "SpecLauncher_SomeFilesNotFound": "以下のファイルはディスク上に存在しません:\n{0}",
   "SpecLauncher_BtnOpenFilesFormat": "🚀 {0}件の設計書を開く",
   "SpecLauncher_EmptySelectionPrompt": "選択中のセルにはキーワードや設計書名がありません。\n\n対象フォルダー内のすべての設計書一覧を開いて検索しますか？",
-  "SpecLauncher_MultiKeywordsBadge": "{0} 件選択中 ({1})"
+  "SpecLauncher_MultiKeywordsBadge": "{0} 件選択中 ({1})",
+  "SpecLauncher_NoProfileMsg": "プロジェクトプロファイルが設定されていません。「プロファイル設定」を開いて設計書フォルダを設定してください。",
+  "SpecLauncher_FolderNotFoundMsg": "プロジェクト「{1}」の {0} フォルダが未設定か、存在しません:\n{2}",
+  "SpecLauncher_EmptySelectionMsg": "開きたい設計書のキーワードまたはファイル名が含まれるセルを選択してください！",
+  "SpecLauncher_NoFilesFoundMsg": "選択したキーワード「{1}」に一致する {0} ファイルが見つかりませんでした。\n\n検索フォルダ:\n{2}"
 }

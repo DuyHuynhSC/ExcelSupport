@@ -321,10 +321,9 @@ namespace ExcelSupport.Views
                 }
                 else
                 {
-                    WpfMessageBox.Show(
-                        this,
+                    System.Windows.MessageBox.Show(
                         LocalizationService.Get("SpecLauncher_NoFileAvailable", "Không có file tài liệu nào trong danh sách để mở."),
-                        LocalizationService.Get("Common_Notice", "Thông Báo"),
+                        "Thông Báo",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
                     return;
@@ -337,21 +336,19 @@ namespace ExcelSupport.Views
             {
                 if (missingFiles.Count == 1 && selectedItems.Count == 1)
                 {
-                    WpfMessageBox.Show(
-                        this,
+                    System.Windows.MessageBox.Show(
                         string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), missingFiles[0].FilePath),
-                        LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                        "Thông Báo",
                         MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        MessageBoxImage.Warning);
                     return;
                 }
                 else
                 {
                     string missingList = string.Join("\n", missingFiles.Select(m => $"• {m.FileName} ({m.FilePath})"));
-                    WpfMessageBox.Show(
-                        this,
+                    System.Windows.MessageBox.Show(
                         string.Format(LocalizationService.Get("SpecLauncher_SomeFilesNotFound", "Các file sau đây không tồn tại trên đĩa:\n{0}"), missingList),
-                        LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                        "Thông Báo",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
                 }
@@ -361,13 +358,11 @@ namespace ExcelSupport.Views
             if (validFiles.Count == 0) return;
 
             bool isReadOnly = chkReadOnly.IsChecked == true;
+            var filePaths = validFiles.Select(f => f.FilePath).ToList();
             Close();
 
-            // Mở file sau khi dialog đóng
-            foreach (var item in validFiles)
-            {
-                ProjectDocumentLauncherService.OpenFile(item.FilePath, isReadOnly);
-            }
+            // Mở an toàn qua QueueAsMacro trên luồng Excel để tránh lỗi không xác định và crash Excel
+            ProjectDocumentLauncherService.OpenMultipleFilesAsync(filePaths, isReadOnly);
         }
 
         private void OnOpenFolderClick(object sender, RoutedEventArgs e)
@@ -387,10 +382,9 @@ namespace ExcelSupport.Views
                 }
                 else
                 {
-                    WpfMessageBox.Show(
-                        this,
+                    System.Windows.MessageBox.Show(
                         string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), selected.FilePath),
-                        LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                        "Thông Báo",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
                     return;
@@ -404,10 +398,9 @@ namespace ExcelSupport.Views
             }
             else
             {
-                WpfMessageBox.Show(
-                    this,
+                System.Windows.MessageBox.Show(
                     string.Format(LocalizationService.Get("SpecProfile_TestFolderNotExistPrompt", "⚠ Thư mục không tồn tại: {0}"), targetFolder),
-                    LocalizationService.Get("SpecLauncher_WindowTitle", "Project Document & Quick Spec Launcher"),
+                    "Thông Báo",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }
