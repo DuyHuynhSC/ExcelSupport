@@ -1314,5 +1314,21 @@
   "SpecLauncher_EmptySelectionMsg": "開きたい設計書のキーワードまたはファイル名が含まれるセルを選択してください！",
   "SpecLauncher_NoFilesFoundMsg": "選択したキーワード「{1}」に一致する {0} ファイルが見つかりませんでした。\n\n検索フォルダ:\n{2}",
   "SpecLauncher_GeneralError": "設計書検索中にエラーが発生しました:\n{0}",
-  "SpecLauncher_SomeFilesOpenError": "以下の設計書ファイルを開けませんでした:\n{0}"
+  "SpecLauncher_SomeFilesOpenError": "以下の設計書ファイルを開けませんでした:\n{0}",
+  "SpecProfile_DoNotSearchSubfolders": "サブフォルダーを検索しない (現在のフォルダーのみ)",
+  "SpecProfile_TkctGroup": "詳細設計書 (TKCT):",
+  "SpecProfile_TkctViFolder": "詳細設計書フォルダ (ベトナム語):",
+  "SpecProfile_TkctJaFolder": "詳細設計書フォルダ (日本語):",
+  "SpecProfile_TkcbGroup": "基本設計書 (TKCB):",
+  "SpecProfile_TkcbViFolder": "基本設計書フォルダ (ベトナム語):",
+  "SpecProfile_TkcbJaFolder": "基本設計書フォルダ (日本語):",
+  "SpecProfile_BrowseTkctViDesc": "詳細設計書 (ベトナム語) フォルダを選択してください:",
+  "SpecProfile_BrowseTkctJaDesc": "詳細設計書 (日本語) フォルダを選択してください:",
+  "SpecProfile_BrowseTkcbViDesc": "基本設計書 (ベトナム語) フォルダを選択してください:",
+  "SpecProfile_BrowseTkcbJaDesc": "基本設計書 (日本語) フォルダを選択してください:",
+  "SpecLauncher_TabVi": "🇻🇳 ベトナム語",
+  "SpecLauncher_TabJa": "🇯🇵 日本語",
+  "SpecLauncher_TabViFormat": "🇻🇳 ベトナム語 ({0})",
+  "SpecLauncher_TabJaFormat": "🇯🇵 日本語 ({0})",
+  "SpecLauncher_NoFilesFoundTabMsg": "このフォルダにファイルが見つかりませんでした。"
 }

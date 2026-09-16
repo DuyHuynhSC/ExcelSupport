@@ -43,22 +43,66 @@ namespace ExcelSupport.Models
         public string RootFolder { get; set; } = string.Empty;
 
         /// <summary>
-        /// Thư mục chứa tài liệu Thiết Kế Chi Tiết (TKCT / Detailed Design).
-        /// Có thể là đường dẫn tuyệt đối hoặc tương đối so với RootFolder.
+        /// Thư mục chứa tài liệu Thiết Kế Chi Tiết (TKCT) - Tiếng Việt.
         /// </summary>
-        public string DetailedDesignFolder { get; set; } = string.Empty;
+        public string DetailedDesignFolderVi { get; set; } = string.Empty;
 
         /// <summary>
-        /// Thư mục chứa tài liệu Thiết Kế Cơ Bản (TKCB / Basic Design).
-        /// Có thể là đường dẫn tuyệt đối hoặc tương đối so với RootFolder.
+        /// Thư mục chứa tài liệu Thiết Kế Chi Tiết (TKCT) - Tiếng Nhật.
         /// </summary>
-        public string BasicDesignFolder { get; set; } = string.Empty;
+        public string DetailedDesignFolderJa { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Thư mục chứa tài liệu Thiết Kế Cơ Bản (TKCB) - Tiếng Việt.
+        /// </summary>
+        public string BasicDesignFolderVi { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Thư mục chứa tài liệu Thiết Kế Cơ Bản (TKCB) - Tiếng Nhật.
+        /// </summary>
+        public string BasicDesignFolderJa { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Tương thích ngược cấu hình cũ: DetailedDesignFolder map với DetailedDesignFolderVi
+        /// </summary>
+        public string DetailedDesignFolder
+        {
+            get => !string.IsNullOrEmpty(DetailedDesignFolderVi) ? DetailedDesignFolderVi : string.Empty;
+            set
+            {
+                if (string.IsNullOrEmpty(DetailedDesignFolderVi) && !string.IsNullOrEmpty(value))
+                {
+                    DetailedDesignFolderVi = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Tương thích ngược cấu hình cũ: BasicDesignFolder map với BasicDesignFolderVi
+        /// </summary>
+        public string BasicDesignFolder
+        {
+            get => !string.IsNullOrEmpty(BasicDesignFolderVi) ? BasicDesignFolderVi : string.Empty;
+            set
+            {
+                if (string.IsNullOrEmpty(BasicDesignFolderVi) && !string.IsNullOrEmpty(value))
+                {
+                    BasicDesignFolderVi = value;
+                }
+            }
+        }
 
         /// <summary>
         /// Thư mục chứa tài liệu Chỉ Thị Test (Test Spec).
         /// Có thể là đường dẫn tuyệt đối hoặc tương đối so với RootFolder.
         /// </summary>
         public string TestSpecFolder { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Nếu là true, không tìm kiếm đệ quy vào các thư mục con (chỉ tìm trong thư mục cấp 1).
+        /// Mặc định là false (tìm kiếm toàn bộ thư mục con).
+        /// </summary>
+        public bool DoNotSearchSubfolders { get; set; } = false;
 
         /// <summary>
         /// Mặc định mở tài liệu ở chế độ chỉ đọc (Read-Only) để tránh vô tình chỉnh sửa tài liệu gốc
@@ -77,21 +121,23 @@ namespace ExcelSupport.Models
         public DateTime LastModified { get; set; } = DateTime.Now;
 
         /// <summary>
-        /// Lấy đường dẫn tuyệt đối thực tế của thư mục theo loại tài liệu
+        /// Lấy đường dẫn tuyệt đối thực tế của thư mục theo loại tài liệu và ngôn ngữ
         /// </summary>
-        public string GetTargetFolder(SpecDocumentType docType)
+        public string GetTargetFolder(SpecDocumentType docType, string? language = "vi")
         {
+            bool isJa = string.Equals(language, "ja", StringComparison.OrdinalIgnoreCase);
+
             string folder = docType switch
             {
-                SpecDocumentType.DetailedDesign => DetailedDesignFolder,
-                SpecDocumentType.BasicDesign => BasicDesignFolder,
+                SpecDocumentType.DetailedDesign => isJa ? DetailedDesignFolderJa : DetailedDesignFolderVi,
+                SpecDocumentType.BasicDesign => isJa ? BasicDesignFolderJa : BasicDesignFolderVi,
                 SpecDocumentType.TestSpec => TestSpecFolder,
                 _ => string.Empty
             };
 
             if (string.IsNullOrWhiteSpace(folder))
             {
-                return RootFolder;
+                return string.Empty;
             }
 
             // Nếu là đường dẫn tuyệt đối đã có drive letter hoặc root UNC
@@ -116,9 +162,12 @@ namespace ExcelSupport.Models
                 Id = Guid.NewGuid().ToString(),
                 Name = $"{Name} (Bản sao)",
                 RootFolder = RootFolder,
-                DetailedDesignFolder = DetailedDesignFolder,
-                BasicDesignFolder = BasicDesignFolder,
+                DetailedDesignFolderVi = DetailedDesignFolderVi,
+                DetailedDesignFolderJa = DetailedDesignFolderJa,
+                BasicDesignFolderVi = BasicDesignFolderVi,
+                BasicDesignFolderJa = BasicDesignFolderJa,
                 TestSpecFolder = TestSpecFolder,
+                DoNotSearchSubfolders = DoNotSearchSubfolders,
                 OpenReadOnlyDefault = OpenReadOnlyDefault,
                 FileExtensions = FileExtensions,
                 LastModified = DateTime.Now
@@ -145,6 +194,7 @@ namespace ExcelSupport.Models
         public string DirectoryPath { get; set; } = string.Empty;
         public string RelativeDirectory { get; set; } = string.Empty;
         public SpecDocumentType DocType { get; set; }
+        public string Language { get; set; } = "vi"; // "vi" hoặc "ja"
         public string DetectedVersion { get; set; } = string.Empty;
         public DateTime LastModified { get; set; }
         public long FileSizeBytes { get; set; }

@@ -1314,5 +1314,21 @@
   "SpecLauncher_EmptySelectionMsg": "Please select cell(s) containing document keywords or filenames to open!",
   "SpecLauncher_NoFilesFoundMsg": "No {0} document files found matching selected keyword: '{1}'\n\nSearch folder:\n{2}",
   "SpecLauncher_GeneralError": "An error occurred while searching documents:\n{0}",
-  "SpecLauncher_SomeFilesOpenError": "Could not open the following document files:\n{0}"
+  "SpecLauncher_SomeFilesOpenError": "Could not open the following document files:\n{0}",
+  "SpecProfile_DoNotSearchSubfolders": "Do not search subfolders (Current folder only)",
+  "SpecProfile_TkctGroup": "Detailed Design (TKCT):",
+  "SpecProfile_TkctViFolder": "Detailed Design Folder (Vietnamese):",
+  "SpecProfile_TkctJaFolder": "Detailed Design Folder (Japanese):",
+  "SpecProfile_TkcbGroup": "Basic Design (TKCB):",
+  "SpecProfile_TkcbViFolder": "Basic Design Folder (Vietnamese):",
+  "SpecProfile_TkcbJaFolder": "Basic Design Folder (Japanese):",
+  "SpecProfile_BrowseTkctViDesc": "Select Detailed Design folder (Vietnamese):",
+  "SpecProfile_BrowseTkctJaDesc": "Select Detailed Design folder (Japanese):",
+  "SpecProfile_BrowseTkcbViDesc": "Select Basic Design folder (Vietnamese):",
+  "SpecProfile_BrowseTkcbJaDesc": "Select Basic Design folder (Japanese):",
+  "SpecLauncher_TabVi": "🇻🇳 Vietnamese",
+  "SpecLauncher_TabJa": "🇯🇵 Japanese",
+  "SpecLauncher_TabViFormat": "🇻🇳 Vietnamese ({0})",
+  "SpecLauncher_TabJaFormat": "🇯🇵 Japanese ({0})",
+  "SpecLauncher_NoFilesFoundTabMsg": "No files found in this folder."
 }

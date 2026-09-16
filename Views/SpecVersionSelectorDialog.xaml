@@ -58,6 +58,58 @@
             </Style.Triggers>
         </Style>
 
+        <!-- DataTemplate for SpecSearchResultItem in ListBoxes -->
+        <DataTemplate x:Key="DocItemTemplate">
+            <Border Padding="8,6" Margin="2,1" CornerRadius="4" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Index Badge (1-9) -->
+                    <Border Grid.Column="0" Style="{StaticResource KeycapBadge}" 
+                            VerticalAlignment="Center" Margin="0,0,10,0" Width="24" Height="24">
+                        <TextBlock Text="{Binding ItemIndex}" FontWeight="Bold" FontSize="12" 
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- File Details -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding FileName}" FontWeight="Bold" FontSize="13" 
+                                       TextTrimming="CharacterEllipsis"/>
+                            
+                            <!-- Latest Version Badge -->
+                            <Border Style="{StaticResource LatestBadge}" Margin="8,0,0,0"
+                                    Visibility="{Binding IsLatest, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{loc:Loc SpecLauncher_LatestBadge}" FontWeight="Bold" FontSize="10" Foreground="#D97706"/>
+                            </Border>
+
+                            <!-- Detected Version Badge -->
+                            <Border Background="#F1F5F9" CornerRadius="3" Padding="4,1" Margin="6,0,0,0"
+                                    Visibility="{Binding HasVersion, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding DetectedVersion}" FontSize="10" Foreground="#475569" FontWeight="SemiBold"/>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Relative Directory -->
+                        <TextBlock Text="{Binding RelativeDirectory}" FontSize="11" Foreground="#64748B" 
+                                   Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- Metadata: Modified Time & File Size -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0,4,0">
+                        <TextBlock Text="{Binding LastModified, StringFormat={}{0:yyyy-MM-dd HH:mm}}" 
+                                   FontSize="11" Foreground="#64748B" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding FormattedSize}" FontSize="11" FontWeight="SemiBold" 
+                                   Foreground="#94A3B8" HorizontalAlignment="Right" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <!-- Primary Button -->
         <Style x:Key="PrimaryActionBtn" TargetType="Button">
             <Setter Property="Background" Value="#2563EB"/>
@@ -196,70 +248,44 @@
                     Click="OnRescanClick"/>
         </Grid>
 
-        <!-- Result Candidates List -->
-        <Border Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
-                BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Margin="0,0,0,12">
-            <ListBox x:Name="lstFiles" 
-                     BorderThickness="0" 
-                     SelectionMode="Extended"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     MouseDoubleClick="OnListMouseDoubleClick"
-                     SelectionChanged="OnListSelectionChanged">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Border Padding="8,6" Margin="2,1" CornerRadius="4" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+        <!-- Result Candidates Tabs (Tab Tiếng Việt & Tab Tiếng Nhật) -->
+        <TabControl x:Name="tabDocs" Grid.Row="2" Margin="0,0,0,12" 
+                    BorderBrush="#CBD5E1" BorderThickness="1" 
+                    Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                    SelectionChanged="OnTabSelectionChanged">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="FontSize" Value="12.5"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Padding" Value="14,6"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                </Style>
+            </TabControl.Resources>
 
-                                <!-- Index Badge (1-9) -->
-                                <Border Grid.Column="0" Style="{StaticResource KeycapBadge}" 
-                                        VerticalAlignment="Center" Margin="0,0,10,0" Width="24" Height="24">
-                                    <TextBlock Text="{Binding ItemIndex}" FontWeight="Bold" FontSize="12" 
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
+            <!-- Tab Tiếng Việt -->
+            <TabItem x:Name="tabVi" Header="{loc:Loc SpecLauncher_TabVi}">
+                <ListBox x:Name="lstFilesVi" 
+                         BorderThickness="0" 
+                         SelectionMode="Extended"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         MouseDoubleClick="OnListMouseDoubleClick"
+                         SelectionChanged="OnListSelectionChanged"
+                         ItemTemplate="{StaticResource DocItemTemplate}"/>
+            </TabItem>
 
-                                <!-- File Details -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding FileName}" FontWeight="Bold" FontSize="13" 
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        
-                                        <!-- Latest Version Badge -->
-                                        <Border Style="{StaticResource LatestBadge}" Margin="8,0,0,0"
-                                                Visibility="{Binding IsLatest, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="{loc:Loc SpecLauncher_LatestBadge}" FontWeight="Bold" FontSize="10" Foreground="#D97706"/>
-                                        </Border>
-
-                                        <!-- Detected Version Badge -->
-                                        <Border Background="#F1F5F9" CornerRadius="3" Padding="4,1" Margin="6,0,0,0"
-                                                Visibility="{Binding HasVersion, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="{Binding DetectedVersion}" FontSize="10" Foreground="#475569" FontWeight="SemiBold"/>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- Relative Directory -->
-                                    <TextBlock Text="{Binding RelativeDirectory}" FontSize="11" Foreground="#64748B" 
-                                               Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
-                                </StackPanel>
-
-                                <!-- Metadata: Modified Time & File Size -->
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0,4,0">
-                                    <TextBlock Text="{Binding LastModified, StringFormat={}{0:yyyy-MM-dd HH:mm}}" 
-                                               FontSize="11" Foreground="#64748B" HorizontalAlignment="Right"/>
-                                    <TextBlock Text="{Binding FormattedSize}" FontSize="11" FontWeight="SemiBold" 
-                                               Foreground="#94A3B8" HorizontalAlignment="Right" Margin="0,2,0,0"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </Border>
+            <!-- Tab Tiếng Nhật -->
+            <TabItem x:Name="tabJa" Header="{loc:Loc SpecLauncher_TabJa}">
+                <ListBox x:Name="lstFilesJa" 
+                         BorderThickness="0" 
+                         SelectionMode="Extended"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         MouseDoubleClick="OnListMouseDoubleClick"
+                         SelectionChanged="OnListSelectionChanged"
+                         ItemTemplate="{StaticResource DocItemTemplate}"/>
+            </TabItem>
+        </TabControl>
 
         <!-- Bottom Controls & Hints -->
         <Grid Grid.Row="3">

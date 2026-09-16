@@ -47,13 +47,13 @@ Mọi thông báo hiển thị cho người dùng (`MessageBox`, `TextBlock.Text
 using ExcelSupport.Services;
 using WpfMessageBox = System.Windows.MessageBox;
 
-// Lấy chuỗi có fallback mặc định
+// Lấy chuỗi không tham số (hoặc có fallback mặc định)
 string msg = LocalizationService.Get("MyFeature_SuccessMsg", "Thao tác thành công!");
 
-// Format chuỗi có tham số
-string formatted = string.Format(
-    LocalizationService.Get("MyFeature_ItemCountFormat", "Đã xử lý {0} mục thành công."),
-    count);
+// Chuỗi có tham số định dạng ({0}, {1}...): truyền tham số trực tiếp vào LocalizationService.Get
+// LƯU Ý: Tuyệt đối KHÔNG lồng string.Format(LocalizationService.Get("Key", "Fallback {0}"), count)
+// vì chuỗi fallback sẽ bị hiểu nhầm là tham số args[0], gây lỗi FormatException!
+string formatted = LocalizationService.Get("MyFeature_ItemCountFormat", count);
 
 // Hiển thị MessageBox luôn kèm owner 'this' để modal đúng cửa sổ
 WpfMessageBox.Show(

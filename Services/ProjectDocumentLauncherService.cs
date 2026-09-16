@@ -176,12 +176,31 @@ namespace ExcelSupport.Services
                         LocalizationService.Get("SpecLauncher_NoProfileMsg"));
                 }
 
-                string targetFolder = profile.GetTargetFolder(docType);
-                if (string.IsNullOrWhiteSpace(targetFolder) || !Directory.Exists(targetFolder))
+                // Kiểm tra thư mục tương ứng
+                if (docType == SpecDocumentType.DetailedDesign || docType == SpecDocumentType.BasicDesign)
                 {
-                    string docTypeName = GetDocTypeName(docType);
-                    return LaunchResult.Fail(
-                        LocalizationService.Get("SpecLauncher_FolderNotFoundMsg", docTypeName, profile.Name, targetFolder));
+                    string folderVi = profile.GetTargetFolder(docType, "vi");
+                    string folderJa = profile.GetTargetFolder(docType, "ja");
+                    bool hasVi = !string.IsNullOrWhiteSpace(folderVi) && Directory.Exists(folderVi);
+                    bool hasJa = !string.IsNullOrWhiteSpace(folderJa) && Directory.Exists(folderJa);
+
+                    if (!hasVi && !hasJa)
+                    {
+                        string docTypeName = GetDocTypeName(docType);
+                        string pathDesc = $"VN: {folderVi}\nJP: {folderJa}";
+                        return LaunchResult.Fail(
+                            LocalizationService.Get("SpecLauncher_FolderNotFoundMsg", docTypeName, profile.Name, pathDesc));
+                    }
+                }
+                else
+                {
+                    string targetFolder = profile.GetTargetFolder(docType);
+                    if (string.IsNullOrWhiteSpace(targetFolder) || !Directory.Exists(targetFolder))
+                    {
+                        string docTypeName = GetDocTypeName(docType);
+                        return LaunchResult.Fail(
+                            LocalizationService.Get("SpecLauncher_FolderNotFoundMsg", docTypeName, profile.Name, targetFolder));
+                    }
                 }
 
                 // Lấy danh sách từ khóa từ vùng chọn Excel
@@ -195,7 +214,7 @@ namespace ExcelSupport.Services
                         LocalizationService.Get("SpecLauncher_EmptySelectionMsg"));
                 }
 
-                // Tìm kiếm file đệ quy
+                // Tìm kiếm file
                 var results = SearchFiles(profile, docType, keywords);
 
                 if (results.Count == 0)
@@ -204,19 +223,31 @@ namespace ExcelSupport.Services
                     string kwDisplay = string.Join(", ", keywords.Take(5));
                     if (keywords.Count > 5) kwDisplay += $" (+{keywords.Count - 5})";
 
+                    string folderDesc = (docType == SpecDocumentType.TestSpec)
+                        ? profile.GetTargetFolder(docType)
+                        : $"{profile.GetTargetFolder(docType, "vi")} | {profile.GetTargetFolder(docType, "ja")}";
+
                     return LaunchResult.Fail(
-                        LocalizationService.Get("SpecLauncher_NoFilesFoundMsg", docTypeName, kwDisplay, targetFolder));
+                        LocalizationService.Get("SpecLauncher_NoFilesFoundMsg", docTypeName, kwDisplay, folderDesc));
                 }
 
-                // Nếu là TKCT / TKCB VÀ chỉ chọn 1 ô duy nhất VÀ chỉ tìm thấy đúng 1 file -> Mở trực tiếp ngay lập tức!
-                if (docType != SpecDocumentType.TestSpec && keywords.Count == 1 && results.Count == 1)
+                // 1. Đối với Chỉ Thị Test (TestSpec) -> Mở trực tiếp toàn bộ các file tìm thấy ngay lập tức mà không hiển thị form kết quả
+                if (docType == SpecDocumentType.TestSpec)
+                {
+                    var filePaths = results.Select(r => r.FilePath).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    OpenMultipleFilesAsync(filePaths, isReadOnly, app);
+                    return LaunchResult.Ok();
+                }
+
+                // 2. Nếu là TKCT / TKCB VÀ chỉ chọn 1 ô duy nhất VÀ chỉ tìm thấy đúng 1 file -> Mở trực tiếp ngay lập tức!
+                if (keywords.Count == 1 && results.Count == 1)
                 {
                     OpenMultipleFilesAsync(new[] { results[0].FilePath }, isReadOnly, app);
                     return LaunchResult.Ok();
                 }
 
-                // Với Chỉ Thị Test (TestSpec) HOẶC khi chọn một vùng (keywords.Count > 1) HOẶC khi tìm thấy nhiều file:
-                // Luôn mở hộp thoại hiển thị danh sách các file để người dùng xem và lựa chọn!
+                // 3. Với TKCT / TKCB khi có nhiều file hoặc chọn vùng nhiều ô:
+                // Mở hộp thoại hiển thị 2 Tab (Tiếng Việt & Tiếng Nhật) để người dùng xem và chọn!
                 string keywordSummary = string.Join(", ", keywords.Take(4));
                 if (keywords.Count > 4) keywordSummary += $" (+{keywords.Count - 4})";
 
@@ -258,12 +289,6 @@ namespace ExcelSupport.Services
         public static List<SpecSearchResultItem> SearchFiles(ProjectProfile profile, SpecDocumentType docType, IEnumerable<string> keywords)
         {
             var list = new List<SpecSearchResultItem>();
-            string targetFolder = profile.GetTargetFolder(docType);
-
-            if (string.IsNullOrWhiteSpace(targetFolder) || !Directory.Exists(targetFolder))
-            {
-                return list;
-            }
 
             // Chuẩn bị danh sách định dạng hỗ trợ
             var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -294,16 +319,53 @@ namespace ExcelSupport.Services
                 .Select(k => k.Trim())
                 .ToList() ?? new List<string>();
 
-            var kwPairs = kwList.Select(k => new
+            var kwPairs = kwList.Select(k => new KeywordPair
             {
                 Raw = k,
                 NoSep = k.Replace("_", "").Replace("-", "").Replace(" ", "")
             }).ToList();
 
+            bool searchSubfolders = !profile.DoNotSearchSubfolders;
+
+            if (docType == SpecDocumentType.DetailedDesign || docType == SpecDocumentType.BasicDesign)
+            {
+                string folderVi = profile.GetTargetFolder(docType, "vi");
+                if (!string.IsNullOrWhiteSpace(folderVi) && Directory.Exists(folderVi))
+                {
+                    list.AddRange(ScanFolder(folderVi, profile, docType, "vi", kwPairs, allowedExtensions, searchSubfolders));
+                }
+
+                string folderJa = profile.GetTargetFolder(docType, "ja");
+                if (!string.IsNullOrWhiteSpace(folderJa) && Directory.Exists(folderJa))
+                {
+                    list.AddRange(ScanFolder(folderJa, profile, docType, "ja", kwPairs, allowedExtensions, searchSubfolders));
+                }
+            }
+            else
+            {
+                string targetFolder = profile.GetTargetFolder(docType);
+                if (!string.IsNullOrWhiteSpace(targetFolder) && Directory.Exists(targetFolder))
+                {
+                    list.AddRange(ScanFolder(targetFolder, profile, docType, "vi", kwPairs, allowedExtensions, searchSubfolders));
+                }
+            }
+
+            return list;
+        }
+
+        private static List<SpecSearchResultItem> ScanFolder(
+            string targetFolder,
+            ProjectProfile profile,
+            SpecDocumentType docType,
+            string language,
+            List<KeywordPair> kwPairs,
+            HashSet<string> allowedExtensions,
+            bool searchSubfolders)
+        {
+            var list = new List<SpecSearchResultItem>();
             var addedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Quét đệ quy thư mục an toàn (bỏ qua folder không có quyền truy cập)
-            var allFiles = SafeEnumerateFiles(targetFolder);
+            var allFiles = SafeEnumerateFiles(targetFolder, searchSubfolders);
 
             foreach (var filePath in allFiles)
             {
@@ -318,7 +380,6 @@ namespace ExcelSupport.Services
 
                 if (kwPairs.Count == 0)
                 {
-                    // Nếu không có từ khóa nào (mở danh sách trống), hiển thị tất cả file
                     isMatch = true;
                 }
                 else
@@ -368,6 +429,7 @@ namespace ExcelSupport.Services
                             DirectoryPath = Path.GetDirectoryName(filePath) ?? string.Empty,
                             RelativeDirectory = string.IsNullOrWhiteSpace(relativeDir) ? "." : relativeDir,
                             DocType = docType,
+                            Language = language,
                             DetectedVersion = detectedVer,
                             LastModified = fi.LastWriteTime,
                             FileSizeBytes = fi.Length
@@ -382,7 +444,6 @@ namespace ExcelSupport.Services
             // Sắp xếp kết quả:
             if (docType == SpecDocumentType.TestSpec)
             {
-                // Chỉ thị test không có version: sắp xếp theo tên file, không đánh dấu bản LATEST
                 list.Sort((a, b) => string.Compare(a.FileName, b.FileName, StringComparison.OrdinalIgnoreCase));
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -392,7 +453,6 @@ namespace ExcelSupport.Services
             }
             else
             {
-                // TKCT / TKCB: sắp xếp ưu tiên bản version mới nhất, sau đó ngày sửa đổi
                 list.Sort((a, b) =>
                 {
                     int verCompare = CompareVersions(b.DetectedVersion, a.DetectedVersion);
@@ -408,6 +468,12 @@ namespace ExcelSupport.Services
             }
 
             return list;
+        }
+
+        private class KeywordPair
+        {
+            public string Raw { get; set; } = string.Empty;
+            public string NoSep { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -652,7 +718,7 @@ namespace ExcelSupport.Services
             return string.Compare(cleanA, cleanB, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static IEnumerable<string> SafeEnumerateFiles(string rootDirectory)
+        private static IEnumerable<string> SafeEnumerateFiles(string rootDirectory, bool searchSubfolders = true)
         {
             var stack = new Stack<string>();
             stack.Push(rootDirectory);
@@ -674,6 +740,11 @@ namespace ExcelSupport.Services
                     {
                         yield return file;
                     }
+                }
+
+                if (!searchSubfolders)
+                {
+                    continue;
                 }
 
                 string[]? subDirs = null;

@@ -11,6 +11,8 @@ using ExcelSupport.Host;
 using ExcelSupport.Models;
 using ExcelSupport.Services;
 using WpfMessageBox = System.Windows.MessageBox;
+using WpfListBox = System.Windows.Controls.ListBox;
+using WpfTabControl = System.Windows.Controls.TabControl;
 
 namespace ExcelSupport.Views
 {
@@ -38,8 +40,14 @@ namespace ExcelSupport.Views
         private SpecDocumentType _docType;
         private string _keyword;
         private List<SpecSearchResultItem> _allResults;
-        private List<SpecSearchResultItem> _filteredResults;
+        private List<SpecSearchResultItem> _allResultsVi;
+        private List<SpecSearchResultItem> _allResultsJa;
+        private List<SpecSearchResultItem> _filteredResultsVi = new List<SpecSearchResultItem>();
+        private List<SpecSearchResultItem> _filteredResultsJa = new List<SpecSearchResultItem>();
         private List<string> _initialKeywords;
+
+        private WpfListBox? ActiveListBox => (tabDocs?.SelectedItem == tabJa) ? lstFilesJa : lstFilesVi;
+        private List<SpecSearchResultItem> ActiveFilteredResults => (tabDocs?.SelectedItem == tabJa) ? _filteredResultsJa : _filteredResultsVi;
 
         public SpecVersionSelectorDialog(
             ProjectProfile profile, 
@@ -55,7 +63,8 @@ namespace ExcelSupport.Views
             _docType = docType;
             _keyword = keyword ?? string.Empty;
             _allResults = initialResults ?? new List<SpecSearchResultItem>();
-            _filteredResults = new List<SpecSearchResultItem>(_allResults);
+            _allResultsVi = _allResults.Where(r => string.Equals(r.Language, "vi", StringComparison.OrdinalIgnoreCase)).ToList();
+            _allResultsJa = _allResults.Where(r => string.Equals(r.Language, "ja", StringComparison.OrdinalIgnoreCase)).ToList();
             _initialKeywords = initialKeywords != null
                 ? initialKeywords.Where(k => !string.IsNullOrWhiteSpace(k)).Distinct().ToList()
                 : (string.IsNullOrWhiteSpace(keyword) ? new List<string>() : new List<string> { keyword! });
@@ -125,7 +134,7 @@ namespace ExcelSupport.Views
                     "SpecLauncher_MultiKeywordsBadge",
                     _initialKeywords!.Count,
                     _keyword);
-                // QUAN TRỌNG: Khi chọn một vùng (nhiều ô), txtFilter để TRỐNG để không lọc mất danh sách _allResults!
+                // Khi chọn một vùng (nhiều ô), txtFilter để TRỐNG để không lọc mất danh sách ban đầu!
                 txtFilter.Text = string.Empty;
             }
             else
@@ -138,14 +147,27 @@ namespace ExcelSupport.Views
 
             RefreshList();
 
-            if (isMultiKeyword && lstFiles.Items.Count > 0)
+            // Nếu Tab Tiếng Việt không có file nhưng Tab Tiếng Nhật có file -> Tự động chuyển sang Tab Tiếng Nhật
+            if (_filteredResultsVi.Count == 0 && _filteredResultsJa.Count > 0)
             {
-                // Tự động chọn tất cả các file tìm thấy để người dùng bấm Mở hàng loạt dễ dàng
-                lstFiles.SelectAll();
+                tabDocs.SelectedItem = tabJa;
             }
-            else if (lstFiles.Items.Count > 0)
+            else
             {
-                lstFiles.SelectedIndex = 0;
+                tabDocs.SelectedItem = tabVi;
+            }
+
+            var activeList = ActiveListBox;
+            if (activeList != null)
+            {
+                if (isMultiKeyword && activeList.Items.Count > 0)
+                {
+                    activeList.SelectAll();
+                }
+                else if (activeList.Items.Count > 0)
+                {
+                    activeList.SelectedIndex = 0;
+                }
             }
 
             txtFilter.Focus();
@@ -160,33 +182,58 @@ namespace ExcelSupport.Views
             string filterText = txtFilter.Text.Trim();
             if (string.IsNullOrWhiteSpace(filterText))
             {
-                _filteredResults = new List<SpecSearchResultItem>(_allResults);
+                _filteredResultsVi = new List<SpecSearchResultItem>(_allResultsVi);
+                _filteredResultsJa = new List<SpecSearchResultItem>(_allResultsJa);
             }
             else
             {
-                _filteredResults = _allResults
+                _filteredResultsVi = _allResultsVi
+                    .Where(f => f.FileName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                f.RelativeDirectory.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                f.DetectedVersion.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .ToList();
+
+                _filteredResultsJa = _allResultsJa
                     .Where(f => f.FileName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0 ||
                                 f.RelativeDirectory.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0 ||
                                 f.DetectedVersion.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
             }
 
-            for (int i = 0; i < _filteredResults.Count; i++)
+            for (int i = 0; i < _filteredResultsVi.Count; i++)
             {
-                _filteredResults[i].ItemIndex = i + 1;
-                _filteredResults[i].IsLatest = (_docType != SpecDocumentType.TestSpec && i == 0);
+                _filteredResultsVi[i].ItemIndex = i + 1;
+                _filteredResultsVi[i].IsLatest = (_docType != SpecDocumentType.TestSpec && i == 0);
             }
 
-            lstFiles.ItemsSource = _filteredResults;
+            for (int i = 0; i < _filteredResultsJa.Count; i++)
+            {
+                _filteredResultsJa[i].ItemIndex = i + 1;
+                _filteredResultsJa[i].IsLatest = (_docType != SpecDocumentType.TestSpec && i == 0);
+            }
+
+            lstFilesVi.ItemsSource = _filteredResultsVi;
+            lstFilesJa.ItemsSource = _filteredResultsJa;
+
+            tabVi.Header = LocalizationService.Get("SpecLauncher_TabViFormat", _filteredResultsVi.Count);
+            tabJa.Header = LocalizationService.Get("SpecLauncher_TabJaFormat", _filteredResultsJa.Count);
 
             UpdateOpenButtonText();
         }
 
+        private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.Source is WpfTabControl)
+            {
+                UpdateOpenButtonText();
+            }
+        }
+
         private void UpdateOpenButtonText()
         {
-            if (btnOpenSelected != null)
+            if (btnOpenSelected != null && ActiveListBox != null)
             {
-                int count = lstFiles.SelectedItems.Count;
+                int count = ActiveListBox.SelectedItems.Count;
                 if (count > 1)
                 {
                     btnOpenSelected.Content = LocalizationService.Get("SpecLauncher_BtnOpenFilesFormat", count);
@@ -205,10 +252,11 @@ namespace ExcelSupport.Views
 
         private void OnFilterPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.Down && lstFiles.Items.Count > 0)
+            var activeList = ActiveListBox;
+            if (e.Key == Key.Down && activeList != null && activeList.Items.Count > 0)
             {
-                lstFiles.Focus();
-                if (lstFiles.SelectedIndex < 0) lstFiles.SelectedIndex = 0;
+                activeList.Focus();
+                if (activeList.SelectedIndex < 0) activeList.SelectedIndex = 0;
                 e.Handled = true;
             }
             else if (e.Key == Key.Enter)
@@ -234,9 +282,11 @@ namespace ExcelSupport.Views
                 return;
             }
 
+            var activeList = ActiveListBox;
+            var activeFiltered = ActiveFilteredResults;
+
             // Phím tắt chọn nhanh 1 - 9:
-            // Khi người dùng đang focus ở danh sách hoặc bấm kèm Alt
-            bool isListFocused = lstFiles.IsFocused || lstFiles.IsKeyboardFocusWithin;
+            bool isListFocused = activeList != null && (activeList.IsFocused || activeList.IsKeyboardFocusWithin);
             bool isAltPressed = (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt;
 
             int numberPressed = -1;
@@ -249,12 +299,12 @@ namespace ExcelSupport.Views
                 numberPressed = e.Key - Key.NumPad1 + 1;
             }
 
-            if (numberPressed > 0 && (isListFocused || isAltPressed))
+            if (numberPressed > 0 && activeList != null && (isListFocused || isAltPressed))
             {
                 int targetIndex = numberPressed - 1;
-                if (targetIndex >= 0 && targetIndex < _filteredResults.Count)
+                if (targetIndex >= 0 && targetIndex < activeFiltered.Count)
                 {
-                    lstFiles.SelectedIndex = targetIndex;
+                    activeList.SelectedIndex = targetIndex;
                     OpenSelectedFile();
                     e.Handled = true;
                     return;
@@ -263,7 +313,7 @@ namespace ExcelSupport.Views
 
             if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
-                lstFiles.SelectAll();
+                activeList?.SelectAll();
                 e.Handled = true;
                 return;
             }
@@ -300,6 +350,10 @@ namespace ExcelSupport.Views
             {
                 _allResults = ProjectDocumentLauncherService.SearchFiles(_profile, _docType, string.Empty);
             }
+
+            _allResultsVi = _allResults.Where(r => string.Equals(r.Language, "vi", StringComparison.OrdinalIgnoreCase)).ToList();
+            _allResultsJa = _allResults.Where(r => string.Equals(r.Language, "ja", StringComparison.OrdinalIgnoreCase)).ToList();
+
             RefreshList();
         }
 
@@ -310,12 +364,17 @@ namespace ExcelSupport.Views
 
         private void OpenSelectedFile()
         {
-            var selectedItems = lstFiles.SelectedItems.Cast<SpecSearchResultItem>().ToList();
+            var activeList = ActiveListBox;
+            var activeFiltered = ActiveFilteredResults;
+
+            if (activeList == null) return;
+
+            var selectedItems = activeList.SelectedItems.Cast<SpecSearchResultItem>().ToList();
             if (selectedItems.Count == 0)
             {
-                if (_filteredResults.Count > 0)
+                if (activeFiltered.Count > 0)
                 {
-                    selectedItems.Add(_filteredResults[0]);
+                    selectedItems.Add(activeFiltered[0]);
                 }
                 else
                 {
@@ -373,7 +432,8 @@ namespace ExcelSupport.Views
 
         private void OpenSelectedFolder()
         {
-            var selected = lstFiles.SelectedItem as SpecSearchResultItem;
+            var activeList = ActiveListBox;
+            var selected = activeList?.SelectedItem as SpecSearchResultItem;
             if (selected != null)
             {
                 if (File.Exists(selected.FilePath))
@@ -393,7 +453,8 @@ namespace ExcelSupport.Views
                 }
             }
 
-            string targetFolder = _profile.GetTargetFolder(_docType);
+            string targetLang = (tabDocs.SelectedItem == tabJa) ? "ja" : "vi";
+            string targetFolder = _profile.GetTargetFolder(_docType, targetLang);
             if (Directory.Exists(targetFolder))
             {
                 ProjectDocumentLauncherService.OpenContainingFolder(targetFolder);

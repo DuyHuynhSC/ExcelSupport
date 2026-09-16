@@ -236,41 +236,117 @@
                             <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseRootFolderClick"/>
                         </Grid>
 
-                        <!-- Detailed Design Folder (TKCT) -->
-                        <Grid Margin="0,0,0,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkctFolder}" FontWeight="SemiBold" FontSize="12"/>
-                            <TextBlock x:Name="lblTkctStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="txtTkctFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
-                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkctFolderClick"/>
-                        </Grid>
+                        <!-- Detailed Design (TKCT) Group -->
+                        <Border CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F8FAFC"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#334155"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc SpecProfile_TkctGroup}" FontWeight="Bold" FontSize="12.5" Foreground="#1E40AF" Margin="0,0,0,6"/>
+                                
+                                <!-- TKCT Tiếng Việt -->
+                                <Grid Margin="0,0,0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkctViFolder}" FontWeight="SemiBold" FontSize="11.5"/>
+                                    <TextBlock x:Name="lblTkctViStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="txtTkctViFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
+                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkctViFolderClick"/>
+                                </Grid>
 
-                        <!-- Basic Design Folder (TKCB) -->
-                        <Grid Margin="0,0,0,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkcbFolder}" FontWeight="SemiBold" FontSize="12"/>
-                            <TextBlock x:Name="lblTkcbStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="txtTkcbFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
-                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkcbFolderClick"/>
-                        </Grid>
+                                <!-- TKCT Tiếng Nhật -->
+                                <Grid Margin="0,0,0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkctJaFolder}" FontWeight="SemiBold" FontSize="11.5"/>
+                                    <TextBlock x:Name="lblTkctJaStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="txtTkctJaFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
+                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkctJaFolderClick"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Basic Design (TKCB) Group -->
+                        <Border CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#F8FAFC"/>
+                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Background" Value="#1E293B"/>
+                                            <Setter Property="BorderBrush" Value="#334155"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc SpecProfile_TkcbGroup}" FontWeight="Bold" FontSize="12.5" Foreground="#1E40AF" Margin="0,0,0,6"/>
+                                
+                                <!-- TKCB Tiếng Việt -->
+                                <Grid Margin="0,0,0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkcbViFolder}" FontWeight="SemiBold" FontSize="11.5"/>
+                                    <TextBlock x:Name="lblTkcbViStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="txtTkcbViFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
+                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkcbViFolderClick"/>
+                                </Grid>
+
+                                <!-- TKCB Tiếng Nhật -->
+                                <Grid Margin="0,0,0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Loc SpecProfile_TkcbJaFolder}" FontWeight="SemiBold" FontSize="11.5"/>
+                                    <TextBlock x:Name="lblTkcbJaStatus" Grid.Column="1" Text="{loc:Loc SpecProfile_StatusValid}" FontSize="11" Foreground="#15803D" FontWeight="Bold"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="txtTkcbJaFolder" Grid.Column="0" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnFolderFieldChanged"/>
+                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkcbJaFolderClick"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Test Spec Folder -->
                         <Grid Margin="0,0,0,4">
@@ -294,6 +370,11 @@
                         <TextBlock Text="{loc:Loc SpecProfile_Extensions}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
                         <TextBox x:Name="txtExtensions" Height="28" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,0,10"
                                  Text=".xlsx;.xlsm;.xls;.docx;.pdf;.pptx"/>
+
+                        <!-- Do Not Search Subfolders Checkbox -->
+                        <CheckBox x:Name="chkDoNotSearchSubfolders" 
+                                  Content="{loc:Loc SpecProfile_DoNotSearchSubfolders}"
+                                  Margin="0,0,0,6"/>
 
                         <!-- Read-Only Default Option -->
                         <CheckBox x:Name="chkReadOnlyDefault" 

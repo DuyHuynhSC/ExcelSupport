@@ -105,9 +105,12 @@ namespace ExcelSupport.Views
                 Id = p.Id,
                 Name = p.Name,
                 RootFolder = p.RootFolder,
-                DetailedDesignFolder = p.DetailedDesignFolder,
-                BasicDesignFolder = p.BasicDesignFolder,
+                DetailedDesignFolderVi = p.DetailedDesignFolderVi,
+                DetailedDesignFolderJa = p.DetailedDesignFolderJa,
+                BasicDesignFolderVi = p.BasicDesignFolderVi,
+                BasicDesignFolderJa = p.BasicDesignFolderJa,
                 TestSpecFolder = p.TestSpecFolder,
+                DoNotSearchSubfolders = p.DoNotSearchSubfolders,
                 OpenReadOnlyDefault = p.OpenReadOnlyDefault,
                 FileExtensions = p.FileExtensions,
                 LastModified = p.LastModified
@@ -142,10 +145,13 @@ namespace ExcelSupport.Views
             {
                 txtName.Text = _selectedProfile.Name;
                 txtRootFolder.Text = _selectedProfile.RootFolder;
-                txtTkctFolder.Text = _selectedProfile.DetailedDesignFolder;
-                txtTkcbFolder.Text = _selectedProfile.BasicDesignFolder;
+                txtTkctViFolder.Text = _selectedProfile.DetailedDesignFolderVi;
+                txtTkctJaFolder.Text = _selectedProfile.DetailedDesignFolderJa;
+                txtTkcbViFolder.Text = _selectedProfile.BasicDesignFolderVi;
+                txtTkcbJaFolder.Text = _selectedProfile.BasicDesignFolderJa;
                 txtTestFolder.Text = _selectedProfile.TestSpecFolder;
                 txtExtensions.Text = _selectedProfile.FileExtensions;
+                chkDoNotSearchSubfolders.IsChecked = _selectedProfile.DoNotSearchSubfolders;
                 chkReadOnlyDefault.IsChecked = _selectedProfile.OpenReadOnlyDefault;
 
                 UpdateActiveStatusUI();
@@ -163,10 +169,13 @@ namespace ExcelSupport.Views
 
             _selectedProfile.Name = txtName.Text.Trim();
             _selectedProfile.RootFolder = txtRootFolder.Text.Trim();
-            _selectedProfile.DetailedDesignFolder = txtTkctFolder.Text.Trim();
-            _selectedProfile.BasicDesignFolder = txtTkcbFolder.Text.Trim();
+            _selectedProfile.DetailedDesignFolderVi = txtTkctViFolder.Text.Trim();
+            _selectedProfile.DetailedDesignFolderJa = txtTkctJaFolder.Text.Trim();
+            _selectedProfile.BasicDesignFolderVi = txtTkcbViFolder.Text.Trim();
+            _selectedProfile.BasicDesignFolderJa = txtTkcbJaFolder.Text.Trim();
             _selectedProfile.TestSpecFolder = txtTestFolder.Text.Trim();
             _selectedProfile.FileExtensions = txtExtensions.Text.Trim();
+            _selectedProfile.DoNotSearchSubfolders = chkDoNotSearchSubfolders.IsChecked == true;
             _selectedProfile.OpenReadOnlyDefault = chkReadOnlyDefault.IsChecked == true;
         }
 
@@ -195,8 +204,10 @@ namespace ExcelSupport.Views
         {
             if (_selectedProfile == null) return;
 
-            ValidateFolderField(lblTkctStatus, _selectedProfile.GetTargetFolder(SpecDocumentType.DetailedDesign));
-            ValidateFolderField(lblTkcbStatus, _selectedProfile.GetTargetFolder(SpecDocumentType.BasicDesign));
+            ValidateFolderField(lblTkctViStatus, _selectedProfile.GetTargetFolder(SpecDocumentType.DetailedDesign, "vi"));
+            ValidateFolderField(lblTkctJaStatus, _selectedProfile.GetTargetFolder(SpecDocumentType.DetailedDesign, "ja"));
+            ValidateFolderField(lblTkcbViStatus, _selectedProfile.GetTargetFolder(SpecDocumentType.BasicDesign, "vi"));
+            ValidateFolderField(lblTkcbJaStatus, _selectedProfile.GetTargetFolder(SpecDocumentType.BasicDesign, "ja"));
             ValidateFolderField(lblTestStatus, _selectedProfile.GetTargetFolder(SpecDocumentType.TestSpec));
         }
 
@@ -244,9 +255,12 @@ namespace ExcelSupport.Views
             {
                 Name = $"{LocalizationService.Get("SpecProfile_NewProjectPrefix", "Dự Án Mới")} {_profiles.Count + 1}",
                 RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                DetailedDesignFolder = "Detailed_Design",
-                BasicDesignFolder = "Basic_Design",
+                DetailedDesignFolderVi = "Detailed_Design/VI",
+                DetailedDesignFolderJa = "Detailed_Design/JA",
+                BasicDesignFolderVi = "Basic_Design/VI",
+                BasicDesignFolderJa = "Basic_Design/JA",
                 TestSpecFolder = "Test_Specification",
+                DoNotSearchSubfolders = false,
                 FileExtensions = ".xlsx;.xlsm;.xls;.docx;.pdf;.pptx",
                 OpenReadOnlyDefault = false
             };
@@ -326,14 +340,24 @@ namespace ExcelSupport.Views
             }
         }
 
-        private void OnBrowseTkctFolderClick(object sender, RoutedEventArgs e)
+        private void OnBrowseTkctViFolderClick(object sender, RoutedEventArgs e)
         {
-            BrowseSubFolder(txtTkctFolder, LocalizationService.Get("SpecProfile_BrowseTkctDesc", "Chọn thư mục Thiết Kế Chi Tiết (TKCT / Detailed Design):"));
+            BrowseSubFolder(txtTkctViFolder, LocalizationService.Get("SpecProfile_BrowseTkctViDesc", "Chọn thư mục TKCT (Tiếng Việt):"));
         }
 
-        private void OnBrowseTkcbFolderClick(object sender, RoutedEventArgs e)
+        private void OnBrowseTkctJaFolderClick(object sender, RoutedEventArgs e)
         {
-            BrowseSubFolder(txtTkcbFolder, LocalizationService.Get("SpecProfile_BrowseTkcbDesc", "Chọn thư mục Thiết Kế Cơ Bản (TKCB / Basic Design):"));
+            BrowseSubFolder(txtTkctJaFolder, LocalizationService.Get("SpecProfile_BrowseTkctJaDesc", "Chọn thư mục TKCT (Tiếng Nhật):"));
+        }
+
+        private void OnBrowseTkcbViFolderClick(object sender, RoutedEventArgs e)
+        {
+            BrowseSubFolder(txtTkcbViFolder, LocalizationService.Get("SpecProfile_BrowseTkcbViDesc", "Chọn thư mục TKCB (Tiếng Việt):"));
+        }
+
+        private void OnBrowseTkcbJaFolderClick(object sender, RoutedEventArgs e)
+        {
+            BrowseSubFolder(txtTkcbJaFolder, LocalizationService.Get("SpecProfile_BrowseTkcbJaDesc", "Chọn thư mục TKCB (Tiếng Nhật):"));
         }
 
         private void OnBrowseTestFolderClick(object sender, RoutedEventArgs e)
