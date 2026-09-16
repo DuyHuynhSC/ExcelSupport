@@ -121,8 +121,8 @@ namespace ExcelSupport.Views
 
             if (isMultiKeyword)
             {
-                lblKeyword.Text = string.Format(
-                    LocalizationService.Get("SpecLauncher_MultiKeywordsBadge", "{0} mục được chọn ({1})"),
+                lblKeyword.Text = LocalizationService.Get(
+                    "SpecLauncher_MultiKeywordsBadge",
                     _initialKeywords!.Count,
                     _keyword);
                 // QUAN TRỌNG: Khi chọn một vùng (nhiều ô), txtFilter để TRỐNG để không lọc mất danh sách _allResults!
@@ -131,7 +131,7 @@ namespace ExcelSupport.Views
             else
             {
                 lblKeyword.Text = string.IsNullOrWhiteSpace(_keyword) 
-                    ? LocalizationService.Get("Common_All_Parens", "(Tất cả)") 
+                    ? LocalizationService.Get("Common_All_Parens") 
                     : _keyword;
                 txtFilter.Text = _keyword;
             }
@@ -189,13 +189,11 @@ namespace ExcelSupport.Views
                 int count = lstFiles.SelectedItems.Count;
                 if (count > 1)
                 {
-                    btnOpenSelected.Content = string.Format(
-                        LocalizationService.Get("SpecLauncher_BtnOpenFilesFormat", "🚀 Mở {0} Tài Liệu"),
-                        count);
+                    btnOpenSelected.Content = LocalizationService.Get("SpecLauncher_BtnOpenFilesFormat", count);
                 }
                 else
                 {
-                    btnOpenSelected.Content = LocalizationService.Get("SpecLauncher_BtnOpenFile", "🚀 Mở Tài Liệu");
+                    btnOpenSelected.Content = LocalizationService.Get("SpecLauncher_BtnOpenFile");
                 }
             }
         }
@@ -339,7 +337,7 @@ namespace ExcelSupport.Views
                 {
                     System.Windows.MessageBox.Show(
                         this,
-                        string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), missingFiles[0].FilePath),
+                        LocalizationService.Get("SpecLauncher_FileNotFound", missingFiles[0].FilePath),
                         "Thông Báo",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
@@ -350,7 +348,7 @@ namespace ExcelSupport.Views
                     string missingList = string.Join("\n", missingFiles.Select(m => $"• {m.FileName} ({m.FilePath})"));
                     System.Windows.MessageBox.Show(
                         this,
-                        string.Format(LocalizationService.Get("SpecLauncher_SomeFilesNotFound", "Các file sau đây không tồn tại trên đĩa:\n{0}"), missingList),
+                        LocalizationService.Get("SpecLauncher_SomeFilesNotFound", missingList),
                         "Thông Báo",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
@@ -387,7 +385,7 @@ namespace ExcelSupport.Views
                 {
                     System.Windows.MessageBox.Show(
                         this,
-                        string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), selected.FilePath),
+                        LocalizationService.Get("SpecLauncher_FileNotFound", selected.FilePath),
                         "Thông Báo",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
@@ -404,7 +402,7 @@ namespace ExcelSupport.Views
             {
                 System.Windows.MessageBox.Show(
                     this,
-                    string.Format(LocalizationService.Get("SpecProfile_TestFolderNotExistPrompt", "⚠ Thư mục không tồn tại: {0}"), targetFolder),
+                    LocalizationService.Get("SpecProfile_TestFolderNotExistPrompt", targetFolder),
                     "Thông Báo",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);

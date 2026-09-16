@@ -85,7 +85,11 @@ namespace ExcelSupport.Services
 
             if (_translations.TryGetValue(CurrentLanguage, out var dict) && dict.TryGetValue(key, out var text))
             {
-                return args.Length > 0 ? string.Format(text, args) : text;
+                if (args.Length > 0)
+                {
+                    try { return string.Format(text, args); } catch { return text; }
+                }
+                return text;
             }
 
             // Fallback sang tiếng Việt nếu key chưa được dịch ở ngôn ngữ hiện hành
@@ -93,7 +97,11 @@ namespace ExcelSupport.Services
                 _translations.TryGetValue(AppLanguage.Vietnamese, out var viDict) &&
                 viDict.TryGetValue(key, out var viText))
             {
-                return args.Length > 0 ? string.Format(viText, args) : viText;
+                if (args.Length > 0)
+                {
+                    try { return string.Format(viText, args); } catch { return viText; }
+                }
+                return viText;
             }
 
             return key;

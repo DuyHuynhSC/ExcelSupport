@@ -173,8 +173,7 @@ namespace ExcelSupport.Services
                 if (profile == null)
                 {
                     return LaunchResult.Fail(
-                        LocalizationService.Get("SpecLauncher_NoProfileMsg", 
-                            "Chưa có Profile dự án nào được thiết lập. Vui lòng mở 'Cài Đặt Profile' để thiết lập đường dẫn tài liệu."));
+                        LocalizationService.Get("SpecLauncher_NoProfileMsg"));
                 }
 
                 string targetFolder = profile.GetTargetFolder(docType);
@@ -182,9 +181,7 @@ namespace ExcelSupport.Services
                 {
                     string docTypeName = GetDocTypeName(docType);
                     return LaunchResult.Fail(
-                        string.Format(LocalizationService.Get("SpecLauncher_FolderNotFoundMsg",
-                            "Thư mục tài liệu {0} của dự án '{1}' chưa được thiết lập hoặc không tồn tại:\n{2}"),
-                            docTypeName, profile.Name, targetFolder));
+                        LocalizationService.Get("SpecLauncher_FolderNotFoundMsg", docTypeName, profile.Name, targetFolder));
                 }
 
                 // Lấy danh sách từ khóa từ vùng chọn Excel
@@ -195,8 +192,7 @@ namespace ExcelSupport.Services
                 if (keywords.Count == 0)
                 {
                     return LaunchResult.Fail(
-                        LocalizationService.Get("SpecLauncher_EmptySelectionMsg",
-                            "Vui lòng chọn ô có chứa từ khóa hoặc tên file tài liệu cần mở!"));
+                        LocalizationService.Get("SpecLauncher_EmptySelectionMsg"));
                 }
 
                 // Tìm kiếm file đệ quy
@@ -209,9 +205,7 @@ namespace ExcelSupport.Services
                     if (keywords.Count > 5) kwDisplay += $" (+{keywords.Count - 5})";
 
                     return LaunchResult.Fail(
-                        string.Format(LocalizationService.Get("SpecLauncher_NoFilesFoundMsg",
-                            "Không tìm thấy file tài liệu {0} nào khớp với từ khóa đã chọn: '{1}'\n\nThư mục quét:\n{2}"),
-                            docTypeName, kwDisplay, targetFolder));
+                        LocalizationService.Get("SpecLauncher_NoFilesFoundMsg", docTypeName, kwDisplay, targetFolder));
                 }
 
                 // Nếu là TKCT / TKCB VÀ chỉ chọn 1 ô duy nhất VÀ chỉ tìm thấy đúng 1 file -> Mở trực tiếp ngay lập tức!
@@ -241,7 +235,7 @@ namespace ExcelSupport.Services
             {
                 Debug.WriteLine($"[LaunchFromSelection] Error: {ex}");
                 return LaunchResult.Fail(
-                    string.Format(LocalizationService.Get("SpecLauncher_GeneralError", "Đã xảy ra lỗi khi tìm kiếm tài liệu:\n{0}"), ex.Message));
+                    LocalizationService.Get("SpecLauncher_GeneralError", ex.Message));
             }
         }
 
@@ -424,7 +418,7 @@ namespace ExcelSupport.Services
             if (!File.Exists(filePath))
             {
                 System.Windows.MessageBox.Show(
-                    string.Format(LocalizationService.Get("SpecLauncher_FileNotFound", "File tài liệu không tồn tại trên đĩa:\n{0}"), filePath),
+                    LocalizationService.Get("SpecLauncher_FileNotFound", filePath),
                     "Thông Báo",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -475,7 +469,7 @@ namespace ExcelSupport.Services
 
             if (excelFiles.Count == 0) return;
 
-            // Chạy mở file Excel trên luồng Macro an toàn của Excel-DNA với cơ chế bảo vệ sự kiện tránh re-entrancy crash
+            // Chạy mở file Excel trên luồng Macro an toàn của Excel-DNA
             ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
             {
                 try
@@ -488,40 +482,54 @@ namespace ExcelSupport.Services
                         AddInEvents.Instance.IsBatchProcessing = true;
                     }
 
-                    bool prevScreen = true;
-                    bool prevAlerts = true;
-                    bool prevEvents = true;
-
                     var failedFiles = new List<string>();
 
                     try
                     {
-                        try { prevScreen = app.ScreenUpdating; } catch { }
-                        try { prevAlerts = app.DisplayAlerts; } catch { }
-                        try { prevEvents = app.EnableEvents; } catch { }
-
-                        try { app.ScreenUpdating = false; } catch { }
-                        try { app.DisplayAlerts = false; } catch { }
-                        try { app.EnableEvents = false; } catch { }
-
                         foreach (var filePath in excelFiles)
                         {
                             try
                             {
+                                string targetFileName = Path.GetFileName(filePath);
                                 bool alreadyOpen = false;
-                                foreach (Microsoft.Office.Interop.Excel.Workbook wb in app.Workbooks)
+
+                                try
                                 {
-                                    if (string.Equals(wb.FullName, filePath, StringComparison.OrdinalIgnoreCase))
+                                    foreach (Microsoft.Office.Interop.Excel.Workbook wb in app.Workbooks)
                                     {
-                                        alreadyOpen = true;
-                                        wb.Activate();
-                                        break;
+                                        try
+                                        {
+                                            if (string.Equals(wb.FullName, filePath, StringComparison.OrdinalIgnoreCase) ||
+                                                string.Equals(wb.Name, targetFileName, StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                alreadyOpen = true;
+                                                wb.Activate();
+                                                break;
+                                            }
+                                        }
+                                        catch { }
                                     }
                                 }
+                                catch { }
 
                                 if (!alreadyOpen)
                                 {
-                                    app.Workbooks.Open(filePath, ReadOnly: isReadOnly);
+                                    try
+                                    {
+                                        // Sử dụng tham số chuẩn: tắt update links và bỏ qua prompt ReadOnlyRecommended
+                                        app.Workbooks.Open(
+                                            Filename: filePath,
+                                            UpdateLinks: false,
+                                            ReadOnly: isReadOnly,
+                                            IgnoreReadOnlyRecommended: true,
+                                            AddToMru: true);
+                                    }
+                                    catch (Exception exCom)
+                                    {
+                                        Debug.WriteLine($"[OpenMultipleFilesAsync] COM Open failed for {filePath}: {exCom.Message}, falling back to Process.Start");
+                                        // Fallback: Dùng Shell Execute để Excel tự mở file như khi người dùng double click
+                                        Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
+                                    }
                                 }
                             }
                             catch (Exception ex)
@@ -533,11 +541,6 @@ namespace ExcelSupport.Services
                     }
                     finally
                     {
-                        try { app.EnableEvents = prevEvents; } catch { }
-                        try { app.DisplayAlerts = prevAlerts; } catch { }
-                        try { app.ScreenUpdating = true; } catch { }
-                        try { app.Visible = true; } catch { }
-
                         if (AddInEvents.Instance != null)
                         {
                             AddInEvents.Instance.IsBatchProcessing = false;
@@ -548,7 +551,7 @@ namespace ExcelSupport.Services
                     if (failedFiles.Count > 0)
                     {
                         System.Windows.MessageBox.Show(
-                            string.Format(LocalizationService.Get("SpecLauncher_SomeFilesOpenError", "Không thể mở các file tài liệu sau:\n{0}"), string.Join("\n", failedFiles)),
+                            LocalizationService.Get("SpecLauncher_SomeFilesOpenError", string.Join("\n", failedFiles)),
                             "Thông Báo",
                             System.Windows.MessageBoxButton.OK,
                             System.Windows.MessageBoxImage.Warning);
