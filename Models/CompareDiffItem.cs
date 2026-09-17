@@ -98,58 +98,48 @@ namespace ExcelSupport.Models
 
             // Fallback parsing from CellAddress
             string raw = _cellAddress ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(raw)) return;
-
-            // Pattern: "B12 (A:B10)" -> B is B12, A is B10
-            if (raw.Contains("(A:"))
+            if (!string.IsNullOrWhiteSpace(raw))
             {
-                int p1 = raw.IndexOf("(A:", StringComparison.Ordinal);
-                int p2 = raw.IndexOf(')', p1);
-                if (p1 >= 0 && p2 > p1)
+                // Pattern: "B12 (A:B10)" -> B is B12, A is B10
+                if (raw.Contains("(A:"))
                 {
-                    string partB = raw.Substring(0, p1).Trim();
-                    string partA = raw.Substring(p1 + 3, p2 - (p1 + 3)).Trim();
-                    if (string.IsNullOrEmpty(addrB)) addrB = partB;
-                    if (string.IsNullOrEmpty(addrA)) addrA = partA;
+                    int p1 = raw.IndexOf("(A:", StringComparison.Ordinal);
+                    int p2 = raw.IndexOf(')', p1);
+                    if (p1 >= 0 && p2 > p1)
+                    {
+                        string partB = raw.Substring(0, p1).Trim();
+                        string partA = raw.Substring(p1 + 3, p2 - (p1 + 3)).Trim();
+                        if (string.IsNullOrEmpty(addrB)) addrB = partB;
+                        if (string.IsNullOrEmpty(addrA)) addrA = partA;
+                        return;
+                    }
+                }
+
+                // Pattern: "Dòng 15" or "Row 15"
+                if (raw.StartsWith("Dòng ", StringComparison.OrdinalIgnoreCase) ||
+                    raw.StartsWith("Row ", StringComparison.OrdinalIgnoreCase))
+                {
+                    string rowNumStr = raw.Substring(raw.IndexOf(' ') + 1).Trim();
+                    if (string.IsNullOrEmpty(addrA)) addrA = "A" + rowNumStr;
+                    if (string.IsNullOrEmpty(addrB)) addrB = "A" + rowNumStr;
                     return;
                 }
-            }
 
-            // Pattern: "Dòng 15" or "Row 15"
-            if (raw.StartsWith("Dòng ", StringComparison.OrdinalIgnoreCase) ||
-                raw.StartsWith("Row ", StringComparison.OrdinalIgnoreCase))
-            {
-                string rowNumStr = raw.Substring(raw.IndexOf(' ') + 1).Trim();
-                if (Type == DiffType.Deleted)
-                {
-                    if (string.IsNullOrEmpty(addrA)) addrA = "A" + rowNumStr;
-                }
-                else if (Type == DiffType.Added)
-                {
-                    if (string.IsNullOrEmpty(addrB)) addrB = "A" + rowNumStr;
-                }
-                else
-                {
-                    if (string.IsNullOrEmpty(addrA)) addrA = "A" + rowNumStr;
-                    if (string.IsNullOrEmpty(addrB)) addrB = "A" + rowNumStr;
-                }
-                return;
-            }
-
-            // Clean cell coordinate (e.g. "A1", "C5")
-            string clean = raw.Split(' ')[0];
-            if (Type == DiffType.Deleted)
-            {
-                if (string.IsNullOrEmpty(addrA)) addrA = clean;
-            }
-            else if (Type == DiffType.Added)
-            {
-                if (string.IsNullOrEmpty(addrB)) addrB = clean;
-            }
-            else
-            {
+                // Clean cell coordinate (e.g. "A1", "C5")
+                string clean = raw.Split(' ')[0];
                 if (string.IsNullOrEmpty(addrA)) addrA = clean;
                 if (string.IsNullOrEmpty(addrB)) addrB = clean;
+            }
+
+            // Đảm bảo cả hai bên luôn có tọa độ để cuộn đồng bộ:
+            // Nếu một bên bị trống (do dòng/ô được chèn mới hoặc xóa), gán vị trí đối ứng sang bên kia
+            if (string.IsNullOrEmpty(addrA) && !string.IsNullOrEmpty(addrB))
+            {
+                addrA = addrB;
+            }
+            else if (string.IsNullOrEmpty(addrB) && !string.IsNullOrEmpty(addrA))
+            {
+                addrB = addrA;
             }
         }
 

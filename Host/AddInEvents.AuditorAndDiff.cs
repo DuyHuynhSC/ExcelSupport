@@ -541,6 +541,15 @@ namespace ExcelSupport
                     string cleanA = ResolveCleanCellAddress(cellAddrA);
                     string cleanB = ResolveCleanCellAddress(cellAddrB);
 
+                    // Đảm bảo cả hai cửa sổ luôn có tọa độ để focus và cuộn đồng bộ:
+                    // Nếu một bên bị trống (do dòng/ô thêm mới hoặc xóa), dùng tọa độ của bên kia làm vị trí đối ứng
+                    string targetA = !string.IsNullOrEmpty(cleanA) ? cleanA : cleanB;
+                    string targetB = !string.IsNullOrEmpty(cleanB) ? cleanB : cleanA;
+
+                    // Chỉ tô màu bên thực sự có điểm sai khác (chèn mới ở B thì không tô màu ô đối ứng ở A, và ngược lại)
+                    bool shouldHighlightA = instantHighlight && !string.IsNullOrEmpty(cleanA) && (diffType != DiffType.Added);
+                    bool shouldHighlightB = instantHighlight && !string.IsNullOrEmpty(cleanB) && (diffType != DiffType.Deleted);
+
                     if (sameWorkbook)
                     {
                         dynamic? wb = null;
@@ -551,7 +560,7 @@ namespace ExcelSupport
                             try { winCount = wb.Windows.Count; } catch { }
 
                             // Window 1 -> Sheet A
-                            if (!string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(cleanA))
+                            if (!string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(targetA))
                             {
                                 try
                                 {
@@ -564,13 +573,13 @@ namespace ExcelSupport
                                         if ((int)ws1.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws1.Visible = (int)XlSheetVisibility.xlSheetVisible;
                                         ws1.Activate();
-                                        dynamic rng1 = ws1.Range[cleanA];
+                                        dynamic rng1 = ws1.Range[targetA];
                                         if (rng1 != null)
                                         {
                                             rng1.Select();
                                             ScrollCellWithContext(app, win1 ?? app.ActiveWindow, rng1);
 
-                                            if (instantHighlight)
+                                            if (shouldHighlightA)
                                             {
                                                 lock (_transientHighlightLock)
                                                 {
@@ -578,7 +587,7 @@ namespace ExcelSupport
                                                     {
                                                         WorkbookName = wb1Name,
                                                         SheetName = ws1Name,
-                                                        CellAddress = cleanA,
+                                                        CellAddress = targetA,
                                                         OriginalColor = rng1.Interior.Color,
                                                         OriginalColorIndex = rng1.Interior.ColorIndex
                                                     });
@@ -592,7 +601,7 @@ namespace ExcelSupport
                             }
 
                             // Window 2 -> Sheet B
-                            if (!string.IsNullOrEmpty(ws2Name) && !string.IsNullOrEmpty(cleanB))
+                            if (!string.IsNullOrEmpty(ws2Name) && !string.IsNullOrEmpty(targetB))
                             {
                                 try
                                 {
@@ -605,13 +614,13 @@ namespace ExcelSupport
                                         if ((int)ws2.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws2.Visible = (int)XlSheetVisibility.xlSheetVisible;
                                         ws2.Activate();
-                                        dynamic rng2 = ws2.Range[cleanB];
+                                        dynamic rng2 = ws2.Range[targetB];
                                         if (rng2 != null)
                                         {
                                             rng2.Select();
                                             ScrollCellWithContext(app, win2 ?? app.ActiveWindow, rng2);
 
-                                            if (instantHighlight)
+                                            if (shouldHighlightB)
                                             {
                                                 lock (_transientHighlightLock)
                                                 {
@@ -619,7 +628,7 @@ namespace ExcelSupport
                                                     {
                                                         WorkbookName = wb2Name,
                                                         SheetName = ws2Name,
-                                                        CellAddress = cleanB,
+                                                        CellAddress = targetB,
                                                         OriginalColor = rng2.Interior.Color,
                                                         OriginalColorIndex = rng2.Interior.ColorIndex
                                                     });
@@ -637,7 +646,7 @@ namespace ExcelSupport
                     {
                         // Hai Workbook khác nhau
                         // 1. File A
-                        if (!string.IsNullOrEmpty(wb1Name) && !string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(cleanA))
+                        if (!string.IsNullOrEmpty(wb1Name) && !string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(targetA))
                         {
                             try
                             {
@@ -650,15 +659,18 @@ namespace ExcelSupport
                                         if ((int)ws1.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws1.Visible = (int)XlSheetVisibility.xlSheetVisible;
 
-                                        dynamic rng1 = ws1.Range[cleanA];
+                                        dynamic rng1 = ws1.Range[targetA];
                                         if (rng1 != null)
                                         {
+                                            dynamic? win1 = null;
+                                            try { win1 = wb1.Windows.Count >= 1 ? wb1.Windows[1] : app.ActiveWindow; } catch { }
+                                            if (win1 != null) { try { win1.Activate(); } catch { } }
                                             try { wb1.Activate(); } catch { }
                                             try { ws1.Activate(); } catch { }
                                             rng1.Select();
-                                            ScrollCellWithContext(app, app.ActiveWindow, rng1);
+                                            ScrollCellWithContext(app, win1 ?? app.ActiveWindow, rng1);
 
-                                            if (instantHighlight)
+                                            if (shouldHighlightA)
                                             {
                                                 lock (_transientHighlightLock)
                                                 {
@@ -666,7 +678,7 @@ namespace ExcelSupport
                                                     {
                                                         WorkbookName = wb1Name,
                                                         SheetName = ws1Name,
-                                                        CellAddress = cleanA,
+                                                        CellAddress = targetA,
                                                         OriginalColor = rng1.Interior.Color,
                                                         OriginalColorIndex = rng1.Interior.ColorIndex
                                                     });
@@ -681,7 +693,7 @@ namespace ExcelSupport
                         }
 
                         // 2. File B (Target/Mới)
-                        if (!string.IsNullOrEmpty(wb2Name) && !string.IsNullOrEmpty(ws2Name) && !string.IsNullOrEmpty(cleanB))
+                        if (!string.IsNullOrEmpty(wb2Name) && !string.IsNullOrEmpty(ws2Name) && !string.IsNullOrEmpty(targetB))
                         {
                             try
                             {
@@ -694,15 +706,18 @@ namespace ExcelSupport
                                         if ((int)ws2.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws2.Visible = (int)XlSheetVisibility.xlSheetVisible;
 
-                                        dynamic rng2 = ws2.Range[cleanB];
+                                        dynamic rng2 = ws2.Range[targetB];
                                         if (rng2 != null)
                                         {
+                                            dynamic? win2 = null;
+                                            try { win2 = wb2.Windows.Count >= 1 ? wb2.Windows[1] : app.ActiveWindow; } catch { }
+                                            if (win2 != null) { try { win2.Activate(); } catch { } }
                                             try { wb2.Activate(); } catch { }
                                             try { ws2.Activate(); } catch { }
                                             rng2.Select();
-                                            ScrollCellWithContext(app, app.ActiveWindow, rng2);
+                                            ScrollCellWithContext(app, win2 ?? app.ActiveWindow, rng2);
 
-                                            if (instantHighlight)
+                                            if (shouldHighlightB)
                                             {
                                                 lock (_transientHighlightLock)
                                                 {
@@ -710,7 +725,7 @@ namespace ExcelSupport
                                                     {
                                                         WorkbookName = wb2Name,
                                                         SheetName = ws2Name,
-                                                        CellAddress = cleanB,
+                                                        CellAddress = targetB,
                                                         OriginalColor = rng2.Interior.Color,
                                                         OriginalColorIndex = rng2.Interior.ColorIndex
                                                     });
@@ -1276,7 +1291,7 @@ namespace ExcelSupport
                             SheetNameB = sheet2Name,
                             CellAddress = $"Dòng {row1Index}",
                             CellAddressA = $"A{row1Index}",
-                            CellAddressB = string.Empty,
+                            CellAddressB = $"A{row1Index}",
                             KeyIdentifier = $"Khóa: [{key}]",
                             Type = DiffType.Deleted,
                             OldValue = string.Join(" | ", row1Vals),
@@ -1304,7 +1319,7 @@ namespace ExcelSupport
                             SheetNameA = sheet1Name,
                             SheetNameB = sheet2Name,
                             CellAddress = $"Dòng {row2Index}",
-                            CellAddressA = string.Empty,
+                            CellAddressA = $"A{row2Index}",
                             CellAddressB = $"A{row2Index}",
                             KeyIdentifier = $"Khóa: [{key}]",
                             Type = DiffType.Added,
@@ -1526,6 +1541,27 @@ namespace ExcelSupport
                 return true;
             });
 
+            // Xây dựng ánh xạ dòng đối ứng (anchor counterpart mapping)
+            int? lastR1 = null;
+            int? lastR2 = null;
+            var r2ToR1 = new int?[g2.RowCount];
+            var r1ToR2 = new int?[g1.RowCount];
+
+            foreach (var item in alignment)
+            {
+                if (item.idx1.HasValue) lastR1 = item.idx1.Value;
+                if (item.idx2.HasValue) lastR2 = item.idx2.Value;
+
+                if (item.idx2.HasValue)
+                {
+                    r2ToR1[item.idx2.Value] = item.idx1.HasValue ? item.idx1.Value : lastR1;
+                }
+                if (item.idx1.HasValue)
+                {
+                    r1ToR2[item.idx1.Value] = item.idx2.HasValue ? item.idx2.Value : lastR2;
+                }
+            }
+
             // Group consecutive unaligned (deleted & added) rows to detect in-place row modifications
             int alignIdx = 0;
             while (alignIdx < alignment.Count)
@@ -1602,6 +1638,11 @@ namespace ExcelSupport
                         int r1Actual = g1.StartRow + r1Idx;
                         string rowSummary = FormatRowSummary(rows1[r1Idx], g1.StartCol, out string primaryAddr, r1Actual);
 
+                        int r2Mapped = r1ToR2[r1Idx].HasValue
+                            ? (g2.StartRow + r1ToR2[r1Idx]!.Value)
+                            : (g2.StartRow + Math.Min(r1Idx, Math.Max(0, g2.RowCount - 1)));
+                        string counterpartAddrB = $"A{r2Mapped}";
+
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
@@ -1610,7 +1651,7 @@ namespace ExcelSupport
                             SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
                             CellAddressA = primaryAddr,
-                            CellAddressB = string.Empty,
+                            CellAddressB = counterpartAddrB,
                             KeyIdentifier = $"Dòng {r1Actual} (LCS)",
                             Type = DiffType.Deleted,
                             OldValue = rowSummary,
@@ -1628,6 +1669,11 @@ namespace ExcelSupport
                         int r2Actual = g2.StartRow + r2Idx;
                         string rowSummary = FormatRowSummary(rows2[r2Idx], g2.StartCol, out string primaryAddr, r2Actual);
 
+                        int r1Mapped = r2ToR1[r2Idx].HasValue
+                            ? (g1.StartRow + r2ToR1[r2Idx]!.Value)
+                            : (g1.StartRow + Math.Min(r2Idx, Math.Max(0, g1.RowCount - 1)));
+                        string counterpartAddrA = $"A{r1Mapped}";
+
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
@@ -1635,7 +1681,7 @@ namespace ExcelSupport
                             SheetNameA = sheet1Name,
                             SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
-                            CellAddressA = string.Empty,
+                            CellAddressA = counterpartAddrA,
                             CellAddressB = primaryAddr,
                             KeyIdentifier = $"Dòng {r2Actual} (LCS)",
                             Type = DiffType.Added,
@@ -1692,6 +1738,27 @@ namespace ExcelSupport
                 }
                 return true;
             });
+
+            // Xây dựng ánh xạ cột đối ứng (anchor counterpart mapping)
+            int? lastC1 = null;
+            int? lastC2 = null;
+            var c2ToC1 = new int?[g2.ColCount];
+            var c1ToC2 = new int?[g1.ColCount];
+
+            foreach (var item in alignment)
+            {
+                if (item.idx1.HasValue) lastC1 = item.idx1.Value;
+                if (item.idx2.HasValue) lastC2 = item.idx2.Value;
+
+                if (item.idx2.HasValue)
+                {
+                    c2ToC1[item.idx2.Value] = item.idx1.HasValue ? item.idx1.Value : lastC1;
+                }
+                if (item.idx1.HasValue)
+                {
+                    c1ToC2[item.idx1.Value] = item.idx2.HasValue ? item.idx2.Value : lastC2;
+                }
+            }
 
             int alignIdx = 0;
             while (alignIdx < alignment.Count)
@@ -1768,6 +1835,12 @@ namespace ExcelSupport
                         string colLetter = GetExcelColumnLetter(g1.StartCol + c1Idx);
                         string colSummary = FormatColumnSummary(cols1[c1Idx], g1.StartRow, out string primaryAddr, colLetter);
 
+                        int c2Mapped = c1ToC2[c1Idx].HasValue
+                            ? (g2.StartCol + c1ToC2[c1Idx]!.Value)
+                            : (g2.StartCol + Math.Min(c1Idx, Math.Max(0, g2.ColCount - 1)));
+                        string counterpartColB = GetExcelColumnLetter(c2Mapped);
+                        string counterpartAddrB = $"{counterpartColB}{g2.StartRow}";
+
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
@@ -1776,7 +1849,7 @@ namespace ExcelSupport
                             SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
                             CellAddressA = primaryAddr,
-                            CellAddressB = string.Empty,
+                            CellAddressB = counterpartAddrB,
                             KeyIdentifier = $"Cột {colLetter} (LCS)",
                             Type = DiffType.Deleted,
                             OldValue = colSummary,
@@ -1794,6 +1867,12 @@ namespace ExcelSupport
                         string colLetter = GetExcelColumnLetter(g2.StartCol + c2Idx);
                         string colSummary = FormatColumnSummary(cols2[c2Idx], g2.StartRow, out string primaryAddr, colLetter);
 
+                        int c1Mapped = c2ToC1[c2Idx].HasValue
+                            ? (g1.StartCol + c2ToC1[c2Idx]!.Value)
+                            : (g1.StartCol + Math.Min(c2Idx, Math.Max(0, g1.ColCount - 1)));
+                        string counterpartColA = GetExcelColumnLetter(c1Mapped);
+                        string counterpartAddrA = $"{counterpartColA}{g1.StartRow}";
+
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
@@ -1801,7 +1880,7 @@ namespace ExcelSupport
                             SheetNameA = sheet1Name,
                             SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
-                            CellAddressA = string.Empty,
+                            CellAddressA = counterpartAddrA,
                             CellAddressB = primaryAddr,
                             KeyIdentifier = $"Cột {colLetter} (LCS)",
                             Type = DiffType.Added,
@@ -1857,6 +1936,19 @@ namespace ExcelSupport
                 return true;
             });
 
+            // Xây dựng ánh xạ cột đối ứng (anchor counterpart mapping)
+            int? lastC1 = null;
+            int? lastC2 = null;
+            var c2ToC1 = new int?[g2.ColCount];
+            var c1ToC2 = new int?[g1.ColCount];
+            foreach (var item in colAlignment)
+            {
+                if (item.idx1.HasValue) lastC1 = item.idx1.Value;
+                if (item.idx2.HasValue) lastC2 = item.idx2.Value;
+                if (item.idx2.HasValue) c2ToC1[item.idx2.Value] = item.idx1.HasValue ? item.idx1.Value : lastC1;
+                if (item.idx1.HasValue) c1ToC2[item.idx1.Value] = item.idx2.HasValue ? item.idx2.Value : lastC2;
+            }
+
             // 2. Row LCS Alignment
             var rows1 = new List<string[]>();
             for (int r = 0; r < g1.RowCount; r++)
@@ -1885,6 +1977,19 @@ namespace ExcelSupport
                 }
                 return true;
             });
+
+            // Xây dựng ánh xạ dòng đối ứng (anchor counterpart mapping)
+            int? lastR1 = null;
+            int? lastR2 = null;
+            var r2ToR1 = new int?[g2.RowCount];
+            var r1ToR2 = new int?[g1.RowCount];
+            foreach (var item in rowAlignment)
+            {
+                if (item.idx1.HasValue) lastR1 = item.idx1.Value;
+                if (item.idx2.HasValue) lastR2 = item.idx2.Value;
+                if (item.idx2.HasValue) r2ToR1[item.idx2.Value] = item.idx1.HasValue ? item.idx1.Value : lastR1;
+                if (item.idx1.HasValue) r1ToR2[item.idx1.Value] = item.idx2.HasValue ? item.idx2.Value : lastR2;
+            }
 
             // 3. Compare cells on aligned 2D intersections
             foreach (var (r1, r2) in rowAlignment)
@@ -1938,8 +2043,13 @@ namespace ExcelSupport
                             totalDiffCount++;
                             int r2Actual = g2.StartRow + r2.Value;
                             int c2Actual = g2.StartCol + c2.Value;
-                            string colLetter = GetExcelColumnLetter(c2Actual);
-                            string addr = $"{colLetter}{r2Actual}";
+                            string colLetter2 = GetExcelColumnLetter(c2Actual);
+                            string addr2 = $"{colLetter2}{r2Actual}";
+
+                            // Vị trí đối ứng trên Sheet 1
+                            int r1Mapped = (r2ToR1[r2.Value] ?? Math.Min(r2.Value, Math.Max(0, g1.RowCount - 1))) + g1.StartRow;
+                            int c1Mapped = (c2ToC1[c2.Value] ?? Math.Min(c2.Value, Math.Max(0, g1.ColCount - 1))) + g1.StartCol;
+                            string addr1 = $"{GetExcelColumnLetter(c1Mapped)}{r1Mapped}";
 
                             results.Add(new CompareDiffItem
                             {
@@ -1947,9 +2057,9 @@ namespace ExcelSupport
                                 SheetName = displaySheet,
                                 SheetNameA = sheet1Name,
                                 SheetNameB = sheet2Name,
-                                CellAddress = addr,
-                                CellAddressA = string.Empty,
-                                CellAddressB = addr,
+                                CellAddress = addr2,
+                                CellAddressA = addr1,
+                                CellAddressB = addr2,
                                 KeyIdentifier = $"Dòng {r2Actual} (Thêm)",
                                 Type = DiffType.Added,
                                 OldValue = "(Không có)",
@@ -1968,8 +2078,13 @@ namespace ExcelSupport
                             totalDiffCount++;
                             int r1Actual = g1.StartRow + r1.Value;
                             int c1Actual = g1.StartCol + c1.Value;
-                            string colLetter = GetExcelColumnLetter(c1Actual);
-                            string addr = $"{colLetter}{r1Actual}";
+                            string colLetter1 = GetExcelColumnLetter(c1Actual);
+                            string addr1 = $"{colLetter1}{r1Actual}";
+
+                            // Vị trí đối ứng trên Sheet 2
+                            int r2Mapped = (r1ToR2[r1.Value] ?? Math.Min(r1.Value, Math.Max(0, g2.RowCount - 1))) + g2.StartRow;
+                            int c2Mapped = (c1ToC2[c1.Value] ?? Math.Min(c1.Value, Math.Max(0, g2.ColCount - 1))) + g2.StartCol;
+                            string addr2 = $"{GetExcelColumnLetter(c2Mapped)}{r2Mapped}";
 
                             results.Add(new CompareDiffItem
                             {
@@ -1977,9 +2092,9 @@ namespace ExcelSupport
                                 SheetName = displaySheet,
                                 SheetNameA = sheet1Name,
                                 SheetNameB = sheet2Name,
-                                CellAddress = addr,
-                                CellAddressA = addr,
-                                CellAddressB = string.Empty,
+                                CellAddress = addr1,
+                                CellAddressA = addr1,
+                                CellAddressB = addr2,
                                 KeyIdentifier = $"Dòng {r1Actual} (Xóa)",
                                 Type = DiffType.Deleted,
                                 OldValue = s1,
