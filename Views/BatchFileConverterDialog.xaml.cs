@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using ExcelSupport.Host;
 using ExcelSupport.Models;
 using ExcelSupport.Services;
+using Microsoft.Office.Interop.Excel;
 using ExcelApp = Microsoft.Office.Interop.Excel.Application;
 using WpfMessageBox = System.Windows.MessageBox;
+using Action = System.Action;
 
 namespace ExcelSupport.Views
 {
@@ -55,8 +58,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                _currentInstance.ShowDialog();
-                _currentInstance = null;
+                _currentInstance.Closed += (s, e) => _currentInstance = null;
+                _currentInstance.Show();
             }
             catch (Exception ex)
             {
@@ -89,6 +92,43 @@ namespace ExcelSupport.Views
 
             string myDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             TxtOutputDir.Text = Path.Combine(myDocs, "Excel_Converted");
+
+            // Mặc định nạp file Excel đang mở nếu có
+            LoadActiveWorkbookIfAvailable();
+        }
+
+        private void LoadActiveWorkbookIfAvailable()
+        {
+            try
+            {
+                if (_excelApp != null)
+                {
+                    Workbook? activeWb = null;
+                    try { activeWb = _excelApp.ActiveWorkbook; } catch { }
+
+                    if (activeWb != null)
+                    {
+                        string fullName = string.Empty;
+                        try { fullName = activeWb.FullName; } catch { }
+
+                        if (!string.IsNullOrEmpty(fullName) && File.Exists(fullName))
+                        {
+                            AddFilesToGrid(new[] { fullName });
+
+                            // Tự động đặt thư mục xuất là thư mục chứa file đang mở
+                            string dir = Path.GetDirectoryName(fullName) ?? string.Empty;
+                            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                            {
+                                TxtOutputDir.Text = dir;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"LoadActiveWorkbookIfAvailable error: {ex.Message}");
+            }
         }
 
         private void OnModeChanged(object sender, RoutedEventArgs e)
@@ -133,7 +173,151 @@ namespace ExcelSupport.Views
         private void OnMdSheetFilterModeChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (TxtMdSheetFilter == null || CboMdSheetFilterMode == null) return;
-            TxtMdSheetFilter.IsEnabled = (CboMdSheetFilterMode.SelectedIndex > 0);
+            bool isFilterActive = (CboMdSheetFilterMode.SelectedIndex > 0);
+            TxtMdSheetFilter.IsEnabled = isFilterActive;
+            if (BtnPickSheets != null) BtnPickSheets.IsEnabled = isFilterActive;
+        }
+
+        private List<string> GetCurrentWorkbookSheets()
+        {
+            var sheetNames = new List<string>();
+            if (_excelApp == null) return sheetNames;
+
+            string targetFilePath = string.Empty;
+            if (GridFiles.SelectedItem is BatchFileItem selectedItem && !string.IsNullOrEmpty(selectedItem.FilePath))
+            {
+                targetFilePath = selectedItem.FilePath;
+            }
+            else if (_fileItems.Count > 0)
+            {
+                targetFilePath = _fileItems[0].FilePath;
+            }
+
+            Workbook? matchedWb = null;
+            try
+            {
+                if (!string.IsNullOrEmpty(targetFilePath))
+                {
+                    foreach (Workbook wb in _excelApp.Workbooks)
+                    {
+                        try
+                        {
+                            if (string.Equals(wb.FullName, targetFilePath, StringComparison.OrdinalIgnoreCase))
+                            {
+                                matchedWb = wb;
+                                break;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                if (matchedWb == null)
+                {
+                    try { matchedWb = _excelApp.ActiveWorkbook; } catch { }
+                }
+
+                if (matchedWb != null)
+                {
+                    foreach (_Worksheet ws in matchedWb.Worksheets)
+                    {
+                        try { sheetNames.Add(ws.Name); } catch { }
+                    }
+                    return sheetNames;
+                }
+
+                if (!string.IsNullOrEmpty(targetFilePath) && File.Exists(targetFilePath))
+                {
+                    Workbook? tempWb = null;
+                    try
+                    {
+                        tempWb = _excelApp.Workbooks.Open(targetFilePath, ReadOnly: true, UpdateLinks: 0);
+                        if (tempWb != null)
+                        {
+                            foreach (_Worksheet ws in tempWb.Worksheets)
+                            {
+                                try { sheetNames.Add(ws.Name); } catch { }
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        if (tempWb != null)
+                        {
+                            try { tempWb.Close(SaveChanges: false); } catch { }
+                            Marshal.ReleaseComObject(tempWb);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetCurrentWorkbookSheets error: {ex.Message}");
+            }
+
+            return sheetNames;
+        }
+
+        private void OnPickSheetsClick(object sender, RoutedEventArgs e)
+        {
+            var sheets = GetCurrentWorkbookSheets();
+            if (sheets.Count == 0)
+            {
+                WpfMessageBox.Show(this, LocalizationService.Get("BFC_NoSheetsFound"), LocalizationService.Get("Common_Notice"), MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var currentSelected = new HashSet<string>(
+                TxtMdSheetFilter.Text.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(s => s.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+
+            PanelPickerSheetList.Children.Clear();
+
+            foreach (var sheet in sheets)
+            {
+                var chk = new System.Windows.Controls.CheckBox
+                {
+                    Content = sheet,
+                    IsChecked = currentSelected.Contains(sheet),
+                    Margin = new Thickness(0, 3, 0, 3),
+                    Cursor = System.Windows.Input.Cursors.Hand
+                };
+                PanelPickerSheetList.Children.Add(chk);
+            }
+
+            PopupSheetPicker.IsOpen = true;
+        }
+
+        private void OnSelectAllPickerSheetsClick(object sender, RoutedEventArgs e)
+        {
+            foreach (var child in PanelPickerSheetList.Children)
+            {
+                if (child is System.Windows.Controls.CheckBox chk) chk.IsChecked = true;
+            }
+        }
+
+        private void OnClearAllPickerSheetsClick(object sender, RoutedEventArgs e)
+        {
+            foreach (var child in PanelPickerSheetList.Children)
+            {
+                if (child is System.Windows.Controls.CheckBox chk) chk.IsChecked = false;
+            }
+        }
+
+        private void OnApplyPickerSheetsClick(object sender, RoutedEventArgs e)
+        {
+            var selected = new List<string>();
+            foreach (var child in PanelPickerSheetList.Children)
+            {
+                if (child is System.Windows.Controls.CheckBox chk && chk.IsChecked == true)
+                {
+                    selected.Add(chk.Content?.ToString() ?? string.Empty);
+                }
+            }
+
+            TxtMdSheetFilter.Text = string.Join(", ", selected.Where(s => !string.IsNullOrEmpty(s)));
+            PopupSheetPicker.IsOpen = false;
         }
 
         private void OnNumericPreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
