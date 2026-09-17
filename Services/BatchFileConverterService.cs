@@ -147,34 +147,76 @@ namespace ExcelSupport.Services
             try
             {
                 workbooks = app.Workbooks;
-                int wbCount = workbooks.Count;
+                string fileName = Path.GetFileName(inputPath);
 
-                // 1. Kiểm tra xem file có đang mở sẵn trong Excel không
-                for (int i = 1; i <= wbCount; i++)
+                // 1. Kiểm tra trực tiếp bằng tên file trong collection Workbooks
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    Workbook? openWb = null;
                     try
                     {
-                        openWb = workbooks[i];
-                        if (string.Equals(openWb.FullName, inputPath, StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(openWb.Name, Path.GetFileName(inputPath), StringComparison.OrdinalIgnoreCase))
+                        wb = workbooks[fileName];
+                        if (wb != null)
                         {
-                            wb = openWb;
                             wasAlreadyOpen = true;
-                            break;
                         }
                     }
                     catch { }
-                    finally
-                    {
-                        if (openWb != null && wb != openWb)
-                        {
-                            Marshal.ReleaseComObject(openWb);
-                        }
-                    }
                 }
 
-                // 2. Nếu chưa mở, mở file ở chế độ ReadOnly
+                // 2. Kiểm tra qua ActiveWorkbook
+                if (wb == null)
+                {
+                    try
+                    {
+                        var act = app.ActiveWorkbook;
+                        if (act != null)
+                        {
+                            if (string.Equals(act.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(act.FullName, inputPath, StringComparison.OrdinalIgnoreCase))
+                            {
+                                wb = act;
+                                wasAlreadyOpen = true;
+                            }
+                            else
+                            {
+                                Marshal.ReleaseComObject(act);
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // 3. Duyệt toàn bộ Workbooks collection nếu chưa tìm thấy
+                if (wb == null)
+                {
+                    try
+                    {
+                        foreach (Workbook openWb in workbooks)
+                        {
+                            try
+                            {
+                                if (string.Equals(openWb.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(openWb.FullName, inputPath, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    wb = openWb;
+                                    wasAlreadyOpen = true;
+                                    break;
+                                }
+                            }
+                            catch { }
+                            finally
+                            {
+                                if (openWb != null && wb != openWb)
+                                {
+                                    Marshal.ReleaseComObject(openWb);
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // 4. Nếu thực sự file chưa mở trong Excel, mới mở từ đĩa
                 if (wb == null)
                 {
                     wb = workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
@@ -272,30 +314,67 @@ namespace ExcelSupport.Services
             try
             {
                 workbooks = app.Workbooks;
-                int wbCount = workbooks.Count;
+                string fileName = Path.GetFileName(inputPath);
 
-                for (int i = 1; i <= wbCount; i++)
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    Workbook? openWb = null;
                     try
                     {
-                        openWb = workbooks[i];
-                        if (string.Equals(openWb.FullName, inputPath, StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(openWb.Name, Path.GetFileName(inputPath), StringComparison.OrdinalIgnoreCase))
+                        wb = workbooks[fileName];
+                        if (wb != null) wasAlreadyOpen = true;
+                    }
+                    catch { }
+                }
+
+                if (wb == null)
+                {
+                    try
+                    {
+                        var act = app.ActiveWorkbook;
+                        if (act != null)
                         {
-                            wb = openWb;
-                            wasAlreadyOpen = true;
-                            break;
+                            if (string.Equals(act.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(act.FullName, inputPath, StringComparison.OrdinalIgnoreCase))
+                            {
+                                wb = act;
+                                wasAlreadyOpen = true;
+                            }
+                            else
+                            {
+                                Marshal.ReleaseComObject(act);
+                            }
                         }
                     }
                     catch { }
-                    finally
+                }
+
+                if (wb == null)
+                {
+                    try
                     {
-                        if (openWb != null && wb != openWb)
+                        foreach (Workbook openWb in workbooks)
                         {
-                            Marshal.ReleaseComObject(openWb);
+                            try
+                            {
+                                if (string.Equals(openWb.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(openWb.FullName, inputPath, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    wb = openWb;
+                                    wasAlreadyOpen = true;
+                                    break;
+                                }
+                            }
+                            catch { }
+                            finally
+                            {
+                                if (openWb != null && wb != openWb)
+                                {
+                                    Marshal.ReleaseComObject(openWb);
+                                }
+                            }
                         }
                     }
+                    catch { }
                 }
 
                 if (wb == null)
@@ -429,26 +508,63 @@ namespace ExcelSupport.Services
                     bool srcWasAlreadyOpen = false;
                     try
                     {
-                        int openCount = workbooks.Count;
-                        for (int k = 1; k <= openCount; k++)
+                        string fileName = Path.GetFileName(file);
+                        if (!string.IsNullOrEmpty(fileName))
                         {
-                            Workbook? owb = null;
                             try
                             {
-                                owb = workbooks[k];
-                                if (string.Equals(owb.FullName, file, StringComparison.OrdinalIgnoreCase) ||
-                                    string.Equals(owb.Name, Path.GetFileName(file), StringComparison.OrdinalIgnoreCase))
+                                srcWb = workbooks[fileName];
+                                if (srcWb != null) srcWasAlreadyOpen = true;
+                            }
+                            catch { }
+                        }
+
+                        if (srcWb == null)
+                        {
+                            try
+                            {
+                                var act = app.ActiveWorkbook;
+                                if (act != null)
                                 {
-                                    srcWb = owb;
-                                    srcWasAlreadyOpen = true;
-                                    break;
+                                    if (string.Equals(act.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(act.FullName, file, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        srcWb = act;
+                                        srcWasAlreadyOpen = true;
+                                    }
+                                    else
+                                    {
+                                        Marshal.ReleaseComObject(act);
+                                    }
                                 }
                             }
                             catch { }
-                            finally
+                        }
+
+                        if (srcWb == null)
+                        {
+                            try
                             {
-                                if (owb != null && srcWb != owb) Marshal.ReleaseComObject(owb);
+                                foreach (Workbook owb in workbooks)
+                                {
+                                    try
+                                    {
+                                        if (string.Equals(owb.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                            string.Equals(owb.FullName, file, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            srcWb = owb;
+                                            srcWasAlreadyOpen = true;
+                                            break;
+                                        }
+                                    }
+                                    catch { }
+                                    finally
+                                    {
+                                        if (owb != null && srcWb != owb) Marshal.ReleaseComObject(owb);
+                                    }
+                                }
                             }
+                            catch { }
                         }
 
                         if (srcWb == null)

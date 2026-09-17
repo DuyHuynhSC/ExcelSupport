@@ -207,39 +207,73 @@ namespace ExcelSupport.Views
             try
             {
                 workbooks = _excelApp.Workbooks;
-                int wbCount = workbooks.Count;
+                string fileName = Path.GetFileName(targetFilePath);
 
-                if (!string.IsNullOrEmpty(targetFilePath))
+                // 1. Kiểm tra trực tiếp bằng tên file trong Workbooks collection
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    for (int i = 1; i <= wbCount; i++)
+                    try
                     {
-                        Workbook? wb = null;
-                        try
+                        matchedWb = workbooks[fileName];
+                        if (matchedWb != null) openedTemp = false;
+                    }
+                    catch { }
+                }
+
+                // 2. Kiểm tra qua ActiveWorkbook
+                if (matchedWb == null)
+                {
+                    try
+                    {
+                        var act = _excelApp.ActiveWorkbook;
+                        if (act != null)
                         {
-                            wb = workbooks[i];
-                            if (string.Equals(wb.FullName, targetFilePath, StringComparison.OrdinalIgnoreCase) ||
-                                string.Equals(wb.Name, Path.GetFileName(targetFilePath), StringComparison.OrdinalIgnoreCase))
+                            if (string.Equals(act.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(act.FullName, targetFilePath, StringComparison.OrdinalIgnoreCase))
                             {
-                                matchedWb = wb;
-                                break;
+                                matchedWb = act;
+                                openedTemp = false;
                             }
-                        }
-                        catch { }
-                        finally
-                        {
-                            if (wb != null && matchedWb != wb)
+                            else
                             {
-                                Marshal.ReleaseComObject(wb);
+                                Marshal.ReleaseComObject(act);
                             }
                         }
                     }
+                    catch { }
                 }
 
+                // 3. Duyệt danh sách Workbooks
                 if (matchedWb == null)
                 {
-                    try { matchedWb = _excelApp.ActiveWorkbook; } catch { }
+                    try
+                    {
+                        foreach (Workbook wb in workbooks)
+                        {
+                            try
+                            {
+                                if (string.Equals(wb.Name, fileName, StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(wb.FullName, targetFilePath, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    matchedWb = wb;
+                                    openedTemp = false;
+                                    break;
+                                }
+                            }
+                            catch { }
+                            finally
+                            {
+                                if (wb != null && matchedWb != wb)
+                                {
+                                    Marshal.ReleaseComObject(wb);
+                                }
+                            }
+                        }
+                    }
+                    catch { }
                 }
 
+                // 4. Nếu thực sự chưa mở, mới mở tạm
                 if (matchedWb == null && !string.IsNullOrEmpty(targetFilePath) && File.Exists(targetFilePath))
                 {
                     try
