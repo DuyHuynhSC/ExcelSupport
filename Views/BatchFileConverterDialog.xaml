@@ -557,7 +557,7 @@
                                         <TextBlock Text="{loc:Loc BFC_MdStartRow}" FontWeight="SemiBold" FontSize="11"/>
                                         <TextBlock Text="{loc:Loc BFC_MdStartRowHint}" FontSize="10" Foreground="#64748B"/>
                                     </StackPanel>
-                                    <TextBox x:Name="TxtMdStartRow" Grid.Column="1" Text="3" Height="26" Padding="6,2" FontSize="11.5" HorizontalContentAlignment="Center" VerticalAlignment="Center" PreviewTextInput="OnNumericPreviewTextInput" LostFocus="OnStartRowLostFocus">
+                                    <TextBox x:Name="TxtMdStartRow" Grid.Column="1" Text="3" Height="26" Padding="6,2" FontSize="11.5" HorizontalContentAlignment="Center" VerticalAlignment="Center" PreviewTextInput="OnNumericPreviewTextInput" PreviewKeyDown="OnStartRowPreviewKeyDown" LostFocus="OnStartRowLostFocus">
                                         <TextBox.Style>
                                             <Style TargetType="TextBox">
                                                 <Setter Property="Background" Value="#FFFFFF"/>

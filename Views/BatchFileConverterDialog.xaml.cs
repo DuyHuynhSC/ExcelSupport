@@ -58,10 +58,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
-
-                _currentInstance.Closed += (s, e) => _currentInstance = null;
-                _currentInstance.Show();
+                _currentInstance.ShowDialog();
+                _currentInstance = null;
             }
             catch (Exception ex)
             {
@@ -325,6 +323,14 @@ namespace ExcelSupport.Views
         private void OnNumericPreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
         {
             e.Handled = !int.TryParse(e.Text, out _);
+        }
+
+        private void OnStartRowPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Space)
+            {
+                e.Handled = true;
+            }
         }
 
         private void OnStartRowLostFocus(object sender, RoutedEventArgs e)
