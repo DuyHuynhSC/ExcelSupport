@@ -74,8 +74,7 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
-                _currentInstance.ShowDialog();
-                _currentInstance = null;
+                _currentInstance.Show();
             }
             catch (Exception ex)
             {
@@ -89,6 +88,7 @@ namespace ExcelSupport.Views
             InitializeComponent();
             IsDarkTheme = isDarkTheme;
             DataContext = this;
+            Topmost = true;
 
             _diffView = CollectionViewSource.GetDefaultView(_diffResults);
             _diffView.Filter = FilterDiffItem;
@@ -96,8 +96,21 @@ namespace ExcelSupport.Views
 
             InitKeyColumns();
             LoadWorkbooks(defaultWb1Name);
+            UpdateTopmostUI();
+            UpdatePositionCounter();
 
             _isInitializing = false;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            try
+            {
+                AddInEvents.Instance?.ClearTransientHighlights();
+            }
+            catch { }
+            _currentInstance = null;
         }
 
         private void InitKeyColumns()
@@ -272,6 +285,7 @@ namespace ExcelSupport.Views
             }
 
             UpdateStatsBadges();
+            UpdatePositionCounter();
 
             if (list.Count == 0)
             {
@@ -327,54 +341,233 @@ namespace ExcelSupport.Views
             return false;
         }
 
+        private void OnToggleTopmostClick(object sender, RoutedEventArgs e)
+        {
+            Topmost = !Topmost;
+            UpdateTopmostUI();
+        }
+
+        private void UpdateTopmostUI()
+        {
+            if (BtnToggleTopmost == null) return;
+            if (Topmost)
+            {
+                TxtPinIcon.Text = "📌";
+                TxtPinText.Text = LocalizationService.Get("Comp_UnpinTop", "Bỏ ghim trên cùng");
+                BtnToggleTopmost.ToolTip = LocalizationService.Get("Comp_UnpinTop", "Bỏ ghim trên cùng");
+            }
+            else
+            {
+                TxtPinIcon.Text = "📍";
+                TxtPinText.Text = LocalizationService.Get("Comp_PinTop", "Ghim trên cùng");
+                BtnToggleTopmost.ToolTip = LocalizationService.Get("Comp_PinTop", "Ghim trên cùng");
+            }
+        }
+
+        private void OnViewSideBySideClick(object sender, RoutedEventArgs e)
+        {
+            ExecuteArrange(isVertical: true);
+        }
+
+        private void OnViewStackedClick(object sender, RoutedEventArgs e)
+        {
+            ExecuteArrange(isVertical: false);
+        }
+
+        private void OnSyncScrollChanged(object sender, RoutedEventArgs e)
+        {
+            var addIn = AddInEvents.Instance;
+            if (addIn == null) return;
+            string wb1Name = CboWorkbook1.SelectedItem?.ToString() ?? string.Empty;
+            string wb2Name = CboWorkbook2.SelectedItem?.ToString() ?? string.Empty;
+            bool sync = ChkSyncScroll.IsChecked == true;
+            addIn.ArrangeCompareWindows(wb1Name, wb2Name, isVertical: true, syncScroll: sync);
+        }
+
+        private void ExecuteArrange(bool isVertical)
+        {
+            var addIn = AddInEvents.Instance;
+            if (addIn == null) return;
+
+            string wb1Name = CboWorkbook1.SelectedItem?.ToString() ?? string.Empty;
+            string wb2Name = CboWorkbook2.SelectedItem?.ToString() ?? string.Empty;
+
+            if (string.IsNullOrEmpty(wb1Name) || string.IsNullOrEmpty(wb2Name))
+            {
+                WpfMessageBox.Show(LocalizationService.Get("Comp_SelectBothFilesPrompt", "Vui lòng chọn File A và File B để sắp xếp cửa sổ."),
+                                   LocalizationService.Get("Common_Notice", "Thông Báo"),
+                                   MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            bool syncScroll = ChkSyncScroll.IsChecked == true;
+            addIn.ArrangeCompareWindows(wb1Name, wb2Name, isVertical, syncScroll);
+        }
+
+        private void OnPrevDiffClick(object sender, RoutedEventArgs e)
+        {
+            NavigateRelative(-1);
+        }
+
+        private void OnNextDiffClick(object sender, RoutedEventArgs e)
+        {
+            NavigateRelative(1);
+        }
+
+        private void NavigateRelative(int direction)
+        {
+            if (_diffView == null || _diffResults.Count == 0) return;
+
+            var visibleItems = new List<CompareDiffItem>();
+            foreach (var obj in _diffView)
+            {
+                if (obj is CompareDiffItem item) visibleItems.Add(item);
+            }
+
+            if (visibleItems.Count == 0) return;
+
+            int currentIndex = -1;
+            if (GridDiffResults.SelectedItem is CompareDiffItem curItem)
+            {
+                currentIndex = visibleItems.IndexOf(curItem);
+            }
+
+            int newIndex = currentIndex + direction;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= visibleItems.Count) newIndex = visibleItems.Count - 1;
+
+            var targetItem = visibleItems[newIndex];
+            GridDiffResults.SelectedItem = targetItem;
+            GridDiffResults.ScrollIntoView(targetItem);
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                NavigateToItem(targetItem);
+            }), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private void UpdatePositionCounter()
+        {
+            if (_diffView == null || TxtNavPosition == null) return;
+
+            int total = 0;
+            int currentPos = 0;
+            CompareDiffItem? selected = GridDiffResults.SelectedItem as CompareDiffItem;
+
+            foreach (var obj in _diffView)
+            {
+                if (obj is CompareDiffItem item)
+                {
+                    total++;
+                    if (selected != null && item == selected)
+                    {
+                        currentPos = total;
+                    }
+                }
+            }
+
+            if (total == 0)
+            {
+                TxtNavPosition.Text = "0 / 0";
+            }
+            else
+            {
+                string format = LocalizationService.Get("Comp_DiffPositionFormat", "{0} / {1}");
+                TxtNavPosition.Text = string.Format(format, currentPos > 0 ? currentPos : "-", total);
+            }
+        }
+
+        private void OnWindowPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.F7)
+            {
+                e.Handled = true;
+                NavigateRelative(-1);
+            }
+            else if (e.Key == Key.F8)
+            {
+                e.Handled = true;
+                NavigateRelative(1);
+            }
+        }
+
+        private void OnGridSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdatePositionCounter();
+
+            if (ChkInstantHighlight?.IsChecked == true && GridDiffResults.SelectedItem is CompareDiffItem item)
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    NavigateToItem(item);
+                }), System.Windows.Threading.DispatcherPriority.Background);
+            }
+        }
+
         private void OnDiffFilterChanged(object sender, RoutedEventArgs e)
         {
             _diffView?.Refresh();
+            UpdatePositionCounter();
         }
 
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             _diffView?.Refresh();
+            UpdatePositionCounter();
         }
 
         private void OnClearSearchClick(object sender, RoutedEventArgs e)
         {
             TxtSearch.Text = string.Empty;
+            UpdatePositionCounter();
         }
 
         private void OnRowDoubleClick(object sender, MouseButtonEventArgs e)
         {
+            e.Handled = true;
+            Mouse.Capture(null);
+
             if (GridDiffResults.SelectedItem is CompareDiffItem item)
             {
-                NavigateToItem(item);
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    NavigateToItem(item);
+                }), System.Windows.Threading.DispatcherPriority.Background);
             }
         }
 
         private void OnGoToCellClick(object sender, RoutedEventArgs e)
         {
+            e.Handled = true;
+            Mouse.Capture(null);
+
             if (sender is WpfButton btn && btn.DataContext is CompareDiffItem item)
             {
-                NavigateToItem(item);
+                GridDiffResults.SelectedItem = item;
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    NavigateToItem(item);
+                }), System.Windows.Threading.DispatcherPriority.Background);
             }
         }
 
         private void NavigateToItem(CompareDiffItem item)
         {
             var addIn = AddInEvents.Instance;
-            if (addIn == null) return;
+            if (addIn == null || item == null) return;
 
-            string targetWb = !string.IsNullOrEmpty(item.Workbook2Name) ? item.Workbook2Name : item.Workbook1Name;
-            string targetWs = item.SheetName;
-            string cleanAddr = item.CellAddress.Split(' ')[0];
+            string wb1Name = !string.IsNullOrEmpty(item.Workbook1Name) ? item.Workbook1Name : (CboWorkbook1.SelectedItem?.ToString() ?? string.Empty);
+            string wb2Name = !string.IsNullOrEmpty(item.Workbook2Name) ? item.Workbook2Name : (CboWorkbook2.SelectedItem?.ToString() ?? string.Empty);
+            string wsName = item.SheetName;
 
-            if (!string.IsNullOrEmpty(cleanAddr) && !cleanAddr.StartsWith("Dòng"))
-            {
-                addIn.NavigateToCell(targetWb, targetWs, cleanAddr);
-            }
-            else
-            {
-                addIn.NavigateToCell(targetWb, targetWs, "A1");
-            }
+            item.GetTargetAddresses(out string addrA, out string addrB);
+            bool instantHighlight = ChkInstantHighlight?.IsChecked == true;
+
+            addIn.NavigateAndHighlightDualCells(
+                wb1Name, wsName, addrA,
+                wb2Name, wsName, addrB,
+                item.Type,
+                instantHighlight);
         }
 
         private void OnHighlightClick(object sender, RoutedEventArgs e)

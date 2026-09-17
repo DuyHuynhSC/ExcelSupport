@@ -12,7 +12,8 @@
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Display"
-        UseLayoutRounding="True">
+        UseLayoutRounding="True"
+        PreviewKeyDown="OnWindowPreviewKeyDown">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
@@ -143,9 +144,11 @@
             <RowDefinition Height="Auto"/>
             <!-- 2: Filter & Stats Bar -->
             <RowDefinition Height="Auto"/>
-            <!-- 3: DataGrid Results -->
+            <!-- 3: Layout & Navigation Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 4: DataGrid Results -->
             <RowDefinition Height="*"/>
-            <!-- 4: Footer / Actions -->
+            <!-- 5: Footer / Actions -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -212,6 +215,16 @@
                     <Border x:Name="BadgeDeleted" CornerRadius="10" Padding="10,4" Margin="0,0,0,0" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1">
                         <TextBlock x:Name="TxtCountDeleted" Text="0" FontWeight="SemiBold" FontSize="11" Foreground="#991B1B"/>
                     </Border>
+
+                    <!-- Topmost Pin Toggle Button -->
+                    <Button x:Name="BtnToggleTopmost" Margin="12,0,0,0" Padding="8,4" 
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnToggleTopmostClick" ToolTip="{loc:Loc Comp_PinTop}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtPinIcon" Text="📌" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtPinText" Text="{loc:Loc Comp_PinTop}" FontSize="11" FontWeight="Medium" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -435,8 +448,96 @@
             </Grid>
         </Border>
 
-        <!-- ==================== 3. RESULTS DATAGRID ==================== -->
-        <DataGrid Grid.Row="3" x:Name="GridDiffResults" 
+        <!-- ==================== 3. LAYOUT & NAVIGATION BAR ==================== -->
+        <Border Grid.Row="3" Padding="20,7" BorderThickness="0,0,0,1">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                            <Setter Property="Background" Value="#0F172A"/>
+                            <Setter Property="BorderBrush" Value="#1E293B"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Bố cục hiển thị Excel (Song song / Thẳng đứng / Đồng bộ cuộn / Tô màu) -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{loc:Loc Comp_LayoutViewHeader}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#334155"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#CBD5E1"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Nút Xem Song Song (Trái - Phải) -->
+                    <Button Content="{loc:Loc Comp_ViewSideBySide}" Margin="0,0,6,0" Padding="10,4"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnViewSideBySideClick"
+                            ToolTip="Chia đôi màn hình Excel xếp dọc 50/50 (Trái - Phải)"/>
+
+                    <!-- Nút Xem Thẳng Đứng (Trên - Dưới) -->
+                    <Button Content="{loc:Loc Comp_ViewStacked}" Margin="0,0,10,0" Padding="10,4"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnViewStackedClick"
+                            ToolTip="Chia đôi màn hình Excel xếp ngang 50/50 (Trên - Dưới)"/>
+
+                    <!-- CheckBox Đồng bộ cuộn -->
+                    <CheckBox x:Name="ChkSyncScroll" Content="{loc:Loc Comp_SyncScroll}" Margin="0,0,16,0"
+                              IsChecked="True" VerticalAlignment="Center" Click="OnSyncScrollChanged"/>
+
+                    <!-- CheckBox Tô màu tức thời -->
+                    <CheckBox x:Name="ChkInstantHighlight" Content="{loc:Loc Comp_InstantHighlight}" Margin="0,0,8,0"
+                              IsChecked="True" VerticalAlignment="Center"
+                              ToolTip="Tự động tô màu File A (hồng/đỏ) và File B (vàng/xanh) khi chọn ô, và tự động xóa màu khi chuyển điểm khác"/>
+                </StackPanel>
+
+                <!-- Right: Duyệt nhanh điểm sai khác F7 / F8 -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtNavPosition" Text="0 / 0" FontSize="11.5" FontWeight="SemiBold" 
+                               VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#64748B"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <Button Content="{loc:Loc Comp_BtnPrevDiff}" Margin="0,0,4,0" Padding="8,4"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnPrevDiffClick"
+                            ToolTip="Phím tắt: F7 hoặc Mũi tên Lên"/>
+
+                    <Button Content="{loc:Loc Comp_BtnNextDiff}" Padding="8,4"
+                            Style="{StaticResource DialogActionButtonStyle}"
+                            Click="OnNextDiffClick"
+                            ToolTip="Phím tắt: F8 hoặc Mũi tên Xuống"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== 4. RESULTS DATAGRID ==================== -->
+        <DataGrid Grid.Row="4" x:Name="GridDiffResults" 
                   AutoGenerateColumns="False" 
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
@@ -446,6 +547,7 @@
                   SelectionMode="Single"
                   SelectionUnit="FullRow"
                   MouseDoubleClick="OnRowDoubleClick"
+                  SelectionChanged="OnGridSelectionChanged"
                   BorderThickness="0">
             <DataGrid.Style>
                 <Style TargetType="DataGrid">
@@ -627,8 +729,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- ==================== 4. FOOTER & ACTIONS ==================== -->
-        <Border Grid.Row="4" Padding="20,12" BorderThickness="0,1,0,0">
+        <!-- ==================== 5. FOOTER & ACTIONS ==================== -->
+        <Border Grid.Row="5" Padding="20,12" BorderThickness="0,1,0,0">
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Background" Value="#FFFFFF"/>

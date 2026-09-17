@@ -30,6 +30,8 @@ namespace ExcelSupport.Models
         private int _index;
         private string _sheetName = string.Empty;
         private string _cellAddress = string.Empty;
+        private string? _cellAddressA;
+        private string? _cellAddressB;
         private string _keyIdentifier = string.Empty;
         private DiffType _type = DiffType.Modified;
         private string _oldValue = string.Empty;
@@ -55,6 +57,85 @@ namespace ExcelSupport.Models
         {
             get => _cellAddress;
             set => SetProperty(ref _cellAddress, value);
+        }
+
+        public string? CellAddressA
+        {
+            get => _cellAddressA;
+            set => SetProperty(ref _cellAddressA, value);
+        }
+
+        public string? CellAddressB
+        {
+            get => _cellAddressB;
+            set => SetProperty(ref _cellAddressB, value);
+        }
+
+        public void GetTargetAddresses(out string addrA, out string addrB)
+        {
+            addrA = _cellAddressA ?? string.Empty;
+            addrB = _cellAddressB ?? string.Empty;
+
+            if (!string.IsNullOrEmpty(addrA) && !string.IsNullOrEmpty(addrB))
+            {
+                return;
+            }
+
+            // Fallback parsing from CellAddress
+            string raw = _cellAddress ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(raw)) return;
+
+            // Pattern: "B12 (A:B10)" -> B is B12, A is B10
+            if (raw.Contains("(A:"))
+            {
+                int p1 = raw.IndexOf("(A:", StringComparison.Ordinal);
+                int p2 = raw.IndexOf(')', p1);
+                if (p1 >= 0 && p2 > p1)
+                {
+                    string partB = raw.Substring(0, p1).Trim();
+                    string partA = raw.Substring(p1 + 3, p2 - (p1 + 3)).Trim();
+                    if (string.IsNullOrEmpty(addrB)) addrB = partB;
+                    if (string.IsNullOrEmpty(addrA)) addrA = partA;
+                    return;
+                }
+            }
+
+            // Pattern: "Dòng 15" or "Row 15"
+            if (raw.StartsWith("Dòng ", StringComparison.OrdinalIgnoreCase) ||
+                raw.StartsWith("Row ", StringComparison.OrdinalIgnoreCase))
+            {
+                string rowNumStr = raw.Substring(raw.IndexOf(' ') + 1).Trim();
+                if (Type == DiffType.Deleted)
+                {
+                    if (string.IsNullOrEmpty(addrA)) addrA = "A" + rowNumStr;
+                }
+                else if (Type == DiffType.Added)
+                {
+                    if (string.IsNullOrEmpty(addrB)) addrB = "A" + rowNumStr;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(addrA)) addrA = "A" + rowNumStr;
+                    if (string.IsNullOrEmpty(addrB)) addrB = "A" + rowNumStr;
+                }
+                return;
+            }
+
+            // Clean cell coordinate (e.g. "A1", "C5")
+            string clean = raw.Split(' ')[0];
+            if (Type == DiffType.Deleted)
+            {
+                if (string.IsNullOrEmpty(addrA)) addrA = clean;
+            }
+            else if (Type == DiffType.Added)
+            {
+                if (string.IsNullOrEmpty(addrB)) addrB = clean;
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(addrA)) addrA = clean;
+                if (string.IsNullOrEmpty(addrB)) addrB = clean;
+            }
         }
 
         public string KeyIdentifier
