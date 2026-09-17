@@ -142,6 +142,7 @@ namespace ExcelSupport.Services
 
             Workbooks? workbooks = null;
             Workbook? wb = null;
+            bool wasAlreadyOpen = false;
 
             try
             {
@@ -159,6 +160,7 @@ namespace ExcelSupport.Services
                             string.Equals(openWb.Name, Path.GetFileName(inputPath), StringComparison.OrdinalIgnoreCase))
                         {
                             wb = openWb;
+                            wasAlreadyOpen = true;
                             break;
                         }
                     }
@@ -176,6 +178,7 @@ namespace ExcelSupport.Services
                 if (wb == null)
                 {
                     wb = workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
+                    wasAlreadyOpen = false;
                 }
 
                 if (wb == null) return false;
@@ -221,20 +224,24 @@ namespace ExcelSupport.Services
             {
                 if (wb != null)
                 {
-                    // Đóng dứt điểm file sau khi convert theo đúng yêu cầu:
-                    // "Sau khi convert thì có một instance excel đang chạy và bị treo, bạn hãy tắt file đó đi"
-                    try
+                    // Chỉ đóng workbook nếu file đó do converter tự mở từ ổ đĩa.
+                    // Nếu file vốn đang được người dùng mở sẵn trong Excel (wasAlreadyOpen = true),
+                    // KHÔNG ĐƯỢC đóng, vì sẽ làm mất file của người dùng và để lại cửa sổ Excel xám xịt trống rỗng!
+                    if (!wasAlreadyOpen)
                     {
-                        bool currentScreen = app.ScreenUpdating;
-                        if (!currentScreen) app.ScreenUpdating = true;
+                        try
+                        {
+                            bool currentScreen = app.ScreenUpdating;
+                            if (!currentScreen) app.ScreenUpdating = true;
 
-                        wb.Close(SaveChanges: false);
+                            wb.Close(SaveChanges: false);
 
-                        if (!currentScreen) app.ScreenUpdating = false;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error closing wb ({inputPath}): {ex.Message}");
+                            if (!currentScreen) app.ScreenUpdating = false;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error closing wb ({inputPath}): {ex.Message}");
+                        }
                     }
 
                     Marshal.ReleaseComObject(wb);
@@ -260,11 +267,43 @@ namespace ExcelSupport.Services
             Workbook? wb = null;
             Sheets? sheets = null;
             int splitCount = 0;
+            bool wasAlreadyOpen = false;
 
             try
             {
                 workbooks = app.Workbooks;
-                wb = workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
+                int wbCount = workbooks.Count;
+
+                for (int i = 1; i <= wbCount; i++)
+                {
+                    Workbook? openWb = null;
+                    try
+                    {
+                        openWb = workbooks[i];
+                        if (string.Equals(openWb.FullName, inputPath, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(openWb.Name, Path.GetFileName(inputPath), StringComparison.OrdinalIgnoreCase))
+                        {
+                            wb = openWb;
+                            wasAlreadyOpen = true;
+                            break;
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        if (openWb != null && wb != openWb)
+                        {
+                            Marshal.ReleaseComObject(openWb);
+                        }
+                    }
+                }
+
+                if (wb == null)
+                {
+                    wb = workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
+                    wasAlreadyOpen = false;
+                }
+
                 if (wb == null) return 0;
 
                 string baseName = Path.GetFileNameWithoutExtension(inputPath);
@@ -322,16 +361,19 @@ namespace ExcelSupport.Services
 
                 if (wb != null)
                 {
-                    try
+                    if (!wasAlreadyOpen)
                     {
-                        bool currentScreen = app.ScreenUpdating;
-                        if (!currentScreen) app.ScreenUpdating = true;
+                        try
+                        {
+                            bool currentScreen = app.ScreenUpdating;
+                            if (!currentScreen) app.ScreenUpdating = true;
 
-                        wb.Close(SaveChanges: false);
+                            wb.Close(SaveChanges: false);
 
-                        if (!currentScreen) app.ScreenUpdating = false;
+                            if (!currentScreen) app.ScreenUpdating = false;
+                        }
+                        catch { }
                     }
-                    catch { }
                     Marshal.ReleaseComObject(wb);
                     wb = null;
                 }
@@ -384,9 +426,37 @@ namespace ExcelSupport.Services
 
                     Workbook? srcWb = null;
                     Sheets? srcSheets = null;
+                    bool srcWasAlreadyOpen = false;
                     try
                     {
-                        srcWb = workbooks.Open(file, ReadOnly: true, UpdateLinks: 0);
+                        int openCount = workbooks.Count;
+                        for (int k = 1; k <= openCount; k++)
+                        {
+                            Workbook? owb = null;
+                            try
+                            {
+                                owb = workbooks[k];
+                                if (string.Equals(owb.FullName, file, StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(owb.Name, Path.GetFileName(file), StringComparison.OrdinalIgnoreCase))
+                                {
+                                    srcWb = owb;
+                                    srcWasAlreadyOpen = true;
+                                    break;
+                                }
+                            }
+                            catch { }
+                            finally
+                            {
+                                if (owb != null && srcWb != owb) Marshal.ReleaseComObject(owb);
+                            }
+                        }
+
+                        if (srcWb == null)
+                        {
+                            srcWb = workbooks.Open(file, ReadOnly: true, UpdateLinks: 0);
+                            srcWasAlreadyOpen = false;
+                        }
+
                         if (srcWb == null) continue;
 
                         string srcFileName = Path.GetFileNameWithoutExtension(file);
@@ -450,7 +520,10 @@ namespace ExcelSupport.Services
 
                         if (srcWb != null)
                         {
-                            try { srcWb.Close(SaveChanges: false); } catch { }
+                            if (!srcWasAlreadyOpen)
+                            {
+                                try { srcWb.Close(SaveChanges: false); } catch { }
+                            }
                             Marshal.ReleaseComObject(srcWb);
                             srcWb = null;
                         }
