@@ -17,7 +17,21 @@ namespace ExcelSupport.Models
         XLSB,
         XLSM,
         CSV,
-        PDF
+        PDF,
+        Markdown
+    }
+
+    public enum MarkdownSheetExportMode
+    {
+        SingleFileWithHeadings, // Gộp tất cả Sheet vào 1 file .md duy nhất
+        SeparateFilePerSheet    // Tách mỗi Sheet thành 1 file .md riêng biệt
+    }
+
+    public enum MarkdownSheetFilterMode
+    {
+        All,         // Chuyển đổi tất cả các Sheet
+        IncludeOnly, // Chỉ chuyển đổi các Sheet chỉ định
+        Exclude      // Bỏ qua các Sheet chỉ định
     }
 
     public class BatchFileItem
@@ -38,6 +52,14 @@ namespace ExcelSupport.Models
         public ExcelOutputFormat TargetFormat { get; set; } = ExcelOutputFormat.XLSX;
         public bool OverwriteExisting { get; set; } = true;
         public string MergedFileName { get; set; } = "Gop_Cac_File_Excel.xlsx";
+
+        // Cấu hình nâng cao cho định dạng Markdown (.md)
+        public MarkdownSheetExportMode MarkdownMode { get; set; } = MarkdownSheetExportMode.SingleFileWithHeadings;
+        public MarkdownSheetFilterMode SheetFilterMode { get; set; } = MarkdownSheetFilterMode.All;
+        public string SheetFilterPatterns { get; set; } = string.Empty;
+        public int StartRow { get; set; } = 1;
+        public bool IncludeMarkdownToc { get; set; } = true;
+        public bool ConvertLineBreaksToBr { get; set; } = true;
     }
 
     public class BatchConvertResult

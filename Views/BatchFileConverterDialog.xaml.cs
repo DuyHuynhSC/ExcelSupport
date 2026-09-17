@@ -93,26 +93,52 @@ namespace ExcelSupport.Views
 
         private void OnModeChanged(object sender, RoutedEventArgs e)
         {
-            if (PanelFormatOption == null || PanelMergeFileName == null || TxtModeHelp == null) return;
+            UpdateOptionsVisibility();
+        }
+
+        private void OnTargetFormatChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            UpdateOptionsVisibility();
+        }
+
+        private void UpdateOptionsVisibility()
+        {
+            if (PanelFormatOption == null || PanelMarkdownOptions == null || PanelMergeFileName == null || TxtModeHelp == null) return;
 
             if (RbModeConvert.IsChecked == true)
             {
                 PanelFormatOption.Visibility = Visibility.Visible;
                 PanelMergeFileName.Visibility = Visibility.Collapsed;
-                TxtModeHelp.Text = LocalizationService.Get("BFC_TipConvert");
+
+                bool isMarkdown = (CboTargetFormat.SelectedItem is ExcelOutputFormat fmt && fmt == ExcelOutputFormat.Markdown);
+                PanelMarkdownOptions.Visibility = isMarkdown ? Visibility.Visible : Visibility.Collapsed;
+                TxtModeHelp.Text = isMarkdown ? LocalizationService.Get("BFC_TipMarkdown") : LocalizationService.Get("BFC_TipConvert");
             }
             else if (RbModeSplit.IsChecked == true)
             {
                 PanelFormatOption.Visibility = Visibility.Collapsed;
+                PanelMarkdownOptions.Visibility = Visibility.Collapsed;
                 PanelMergeFileName.Visibility = Visibility.Collapsed;
                 TxtModeHelp.Text = LocalizationService.Get("BFC_TipSplit");
             }
             else if (RbModeMerge.IsChecked == true)
             {
                 PanelFormatOption.Visibility = Visibility.Collapsed;
+                PanelMarkdownOptions.Visibility = Visibility.Collapsed;
                 PanelMergeFileName.Visibility = Visibility.Visible;
                 TxtModeHelp.Text = LocalizationService.Get("BFC_TipMerge");
             }
+        }
+
+        private void OnMdSheetFilterModeChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (TxtMdSheetFilter == null || CboMdSheetFilterMode == null) return;
+            TxtMdSheetFilter.IsEnabled = (CboMdSheetFilterMode.SelectedIndex > 0);
+        }
+
+        private void OnNumericPreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            e.Handled = !int.TryParse(e.Text, out _);
         }
 
         private void OnAddFilesClick(object sender, RoutedEventArgs e)
@@ -229,6 +255,23 @@ namespace ExcelSupport.Views
 
             var targetFormat = (ExcelOutputFormat)(CboTargetFormat.SelectedItem ?? ExcelOutputFormat.PDF);
 
+            var mdMode = (RbMdSeparateFiles.IsChecked == true)
+                ? MarkdownSheetExportMode.SeparateFilePerSheet
+                : MarkdownSheetExportMode.SingleFileWithHeadings;
+
+            var filterMode = CboMdSheetFilterMode.SelectedIndex switch
+            {
+                1 => MarkdownSheetFilterMode.IncludeOnly,
+                2 => MarkdownSheetFilterMode.Exclude,
+                _ => MarkdownSheetFilterMode.All
+            };
+
+            int startRow = 1;
+            if (int.TryParse(TxtMdStartRow.Text.Trim(), out int r) && r >= 1)
+            {
+                startRow = r;
+            }
+
             var options = new BatchConvertOptions
             {
                 Mode = mode,
@@ -236,7 +279,13 @@ namespace ExcelSupport.Views
                 OutputDirectory = outDir,
                 TargetFormat = targetFormat,
                 OverwriteExisting = (ChkOverwrite.IsChecked == true),
-                MergedFileName = !string.IsNullOrWhiteSpace(TxtMergedFileName.Text) ? TxtMergedFileName.Text.Trim() : "Gop_Cac_File_Excel.xlsx"
+                MergedFileName = !string.IsNullOrWhiteSpace(TxtMergedFileName.Text) ? TxtMergedFileName.Text.Trim() : "Gop_Cac_File_Excel.xlsx",
+                MarkdownMode = mdMode,
+                SheetFilterMode = filterMode,
+                SheetFilterPatterns = TxtMdSheetFilter.Text.Trim(),
+                StartRow = startRow,
+                IncludeMarkdownToc = (ChkMdToc.IsChecked == true),
+                ConvertLineBreaksToBr = (ChkMdLineBreaks.IsChecked == true)
             };
 
             ProgressBarConvert.Visibility = Visibility.Visible;
