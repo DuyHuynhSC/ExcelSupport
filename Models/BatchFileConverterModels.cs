@@ -57,7 +57,7 @@ namespace ExcelSupport.Models
         public MarkdownSheetExportMode MarkdownMode { get; set; } = MarkdownSheetExportMode.SingleFileWithHeadings;
         public MarkdownSheetFilterMode SheetFilterMode { get; set; } = MarkdownSheetFilterMode.All;
         public string SheetFilterPatterns { get; set; } = string.Empty;
-        public int StartRow { get; set; } = 1;
+        public int StartRow { get; set; } = 3;
         public bool IncludeMarkdownToc { get; set; } = true;
         public bool ConvertLineBreaksToBr { get; set; } = true;
     }

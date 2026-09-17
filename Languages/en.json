@@ -578,7 +578,7 @@
   "BFC_PickSheetsTitle": "Worksheet List in File:",
   "BFC_NoSheetsFound": "No Sheets found. Please check selected file.",
   "BFC_MdStartRow": "Data start row (Table Header):",
-  "BFC_MdStartRowHint": "(Skip rows above this row, default: 1)",
+  "BFC_MdStartRowHint": "(Skip rows above this row, default: 3)",
   "BFC_MdToc": "Generate Table of Contents (TOC) with anchor links",
   "BFC_MdLineBreaks": "Convert cell line breaks to <br> (prevents table breakage)",
   "FiltCopy_WindowTitle": "Copy & Paste Visible Filtered Cells — ExcelSupport",

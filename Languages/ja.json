@@ -578,7 +578,7 @@
   "BFC_PickSheetsTitle": "ファイル内のシート一覧:",
   "BFC_NoSheetsFound": "シートが見つかりませんでした。選択したファイルを確認してください。",
   "BFC_MdStartRow": "データ開始行 (ヘッダー行):",
-  "BFC_MdStartRowHint": "(この行より上の行をスキップ、初期値: 1)",
+  "BFC_MdStartRowHint": "(この行より上の行をスキップ、初期値: 3)",
   "BFC_MdToc": "ファイル先頭にアンカーリンク付き目次を生成",
   "BFC_MdLineBreaks": "セル内改行を <br> に変換 (テーブル崩れ防止)",
   "FiltCopy_WindowTitle": "フィルター表示セルのコピー＆貼り付け — ExcelSupport",

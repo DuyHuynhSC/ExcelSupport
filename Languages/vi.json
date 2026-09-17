@@ -578,7 +578,7 @@
   "BFC_PickSheetsTitle": "Danh Sách Sheet Trong File:",
   "BFC_NoSheetsFound": "Không tìm thấy Sheet nào. Vui lòng kiểm tra file đã chọn.",
   "BFC_MdStartRow": "Dòng bắt đầu chuyển đổi (Header):",
-  "BFC_MdStartRowHint": "(Bỏ qua các dòng phía trên dòng này, mặc định: 1)",
+  "BFC_MdStartRowHint": "(Bỏ qua các dòng phía trên dòng này, mặc định: 3)",
   "BFC_MdToc": "Tạo Mục lục liên kết neo (TOC) ở đầu file",
   "BFC_MdLineBreaks": "Chuyển đổi xuống dòng trong ô thành <br> (chống vỡ bảng)",
   "FiltCopy_WindowTitle": "Sao Chép & Dán Vùng Lọc (Copy Visible Cells Only) — ExcelSupport",

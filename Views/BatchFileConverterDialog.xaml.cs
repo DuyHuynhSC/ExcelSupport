@@ -58,6 +58,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
+                System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
+
                 _currentInstance.Closed += (s, e) => _currentInstance = null;
                 _currentInstance.Show();
             }
@@ -325,6 +327,14 @@ namespace ExcelSupport.Views
             e.Handled = !int.TryParse(e.Text, out _);
         }
 
+        private void OnStartRowLostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TxtMdStartRow.Text) || !int.TryParse(TxtMdStartRow.Text.Trim(), out int val) || val < 1)
+            {
+                TxtMdStartRow.Text = "3";
+            }
+        }
+
         private void OnAddFilesClick(object sender, RoutedEventArgs e)
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
@@ -450,7 +460,7 @@ namespace ExcelSupport.Views
                 _ => MarkdownSheetFilterMode.All
             };
 
-            int startRow = 1;
+            int startRow = 3;
             if (int.TryParse(TxtMdStartRow.Text.Trim(), out int r) && r >= 1)
             {
                 startRow = r;
