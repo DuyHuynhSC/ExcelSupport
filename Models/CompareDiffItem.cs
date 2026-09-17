@@ -47,10 +47,25 @@ namespace ExcelSupport.Models
             set => SetProperty(ref _index, value);
         }
 
+        private string? _sheetNameA;
+        private string? _sheetNameB;
+
         public string SheetName
         {
             get => _sheetName;
             set => SetProperty(ref _sheetName, value);
+        }
+
+        public string SheetNameA
+        {
+            get => !string.IsNullOrEmpty(_sheetNameA) ? _sheetNameA! : _sheetName;
+            set => SetProperty(ref _sheetNameA, value);
+        }
+
+        public string SheetNameB
+        {
+            get => !string.IsNullOrEmpty(_sheetNameB) ? _sheetNameB! : _sheetName;
+            set => SetProperty(ref _sheetNameB, value);
         }
 
         public string CellAddress

@@ -423,6 +423,82 @@ namespace ExcelSupport
             }
         }
 
+        private static string ResolveCleanCellAddress(string? rawAddr)
+        {
+            if (string.IsNullOrWhiteSpace(rawAddr)) return string.Empty;
+
+            string trimmed = rawAddr!.Trim();
+            // Nếu là dạng "Dòng 15" hoặc "Row 15"
+            if (trimmed.StartsWith("Dòng ", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith("Row ", StringComparison.OrdinalIgnoreCase))
+            {
+                string[] parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2 && int.TryParse(parts[1], out int rowNum))
+                {
+                    return "A" + rowNum;
+                }
+            }
+
+            string firstToken = trimmed.Split(' ')[0];
+            int parenIdx = firstToken.IndexOf('(');
+            if (parenIdx > 0)
+            {
+                firstToken = firstToken.Substring(0, parenIdx);
+            }
+
+            return firstToken.Trim();
+        }
+
+        private static void ScrollCellWithContext(dynamic? app, dynamic? win, dynamic? rng)
+        {
+            if (win == null || rng == null) return;
+            try
+            {
+                int targetRow = (int)rng!.Row;
+                int targetCol = (int)rng!.Column;
+
+                bool needScroll = true;
+
+                // Kiểm tra xem ô đã nằm trong vùng hiển thị thoải mái chưa
+                try
+                {
+                    dynamic? visRange = win!.VisibleRange;
+                    if (visRange != null)
+                    {
+                        int visRowStart = (int)visRange.Row;
+                        int visColStart = (int)visRange.Column;
+                        int visRowCount = (int)visRange.Rows.Count;
+                        int visColCount = (int)visRange.Columns.Count;
+
+                        int visRowEnd = visRowStart + visRowCount - 1;
+                        int visColEnd = visColStart + visColCount - 1;
+
+                        // Nếu ô nằm trong khung nhìn thoải mái (cách mép ít nhất 2 ô), không cần cuộn để tránh giật hình
+                        if (targetRow >= visRowStart + 2 && targetRow <= Math.Max(visRowStart + 2, visRowEnd - 2) &&
+                            targetCol >= visColStart + 2 && targetCol <= Math.Max(visColStart + 2, visColEnd - 2))
+                        {
+                            needScroll = false;
+                        }
+                    }
+                }
+                catch { }
+
+                if (needScroll)
+                {
+                    // Giữ lề hiển thị: chừa khoảng 4 dòng bên trên và 3 cột bên trái để người dùng thấy rõ ngữ cảnh (tiêu đề, cột A/B, dòng trên)
+                    int newScrollRow = Math.Max(1, targetRow - 4);
+                    int newScrollCol = Math.Max(1, targetCol - 3);
+
+                    try { win!.ScrollRow = newScrollRow; } catch { }
+                    try { win!.ScrollColumn = newScrollCol; } catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ScrollCellWithContext error: {ex.Message}");
+            }
+        }
+
         public bool NavigateAndHighlightDualCells(
             string wb1Name, 
             string ws1Name, 
@@ -441,14 +517,29 @@ namespace ExcelSupport
 
             ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>
             {
+                bool wasSyncScrolling = false;
                 try
                 {
                     dynamic app = _excelApp;
+
+                    // Tạm thời tắt SyncScrollingSideBySide để việc định vị 2 cửa sổ không bị kéo lệch tọa độ của nhau
+                    try
+                    {
+                        wasSyncScrolling = (bool)app.SyncScrollingSideBySide;
+                        if (wasSyncScrolling)
+                        {
+                            app.SyncScrollingSideBySide = false;
+                        }
+                    }
+                    catch { }
 
                     // 1. Dọn sạch các ô đã tô màu tạm thời trước đó
                     ClearTransientHighlights();
 
                     bool sameWorkbook = string.Equals(wb1Name, wb2Name, StringComparison.OrdinalIgnoreCase);
+
+                    string cleanA = ResolveCleanCellAddress(cellAddrA);
+                    string cleanB = ResolveCleanCellAddress(cellAddrB);
 
                     if (sameWorkbook)
                     {
@@ -460,40 +551,39 @@ namespace ExcelSupport
                             try { winCount = wb.Windows.Count; } catch { }
 
                             // Window 1 -> Sheet A
-                            if (!string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(cellAddrA))
+                            if (!string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(cleanA))
                             {
                                 try
                                 {
-                                    if (winCount >= 1) wb.Windows[1].Activate();
+                                    dynamic win1 = winCount >= 1 ? wb.Windows[1] : app.ActiveWindow;
+                                    if (win1 != null) { try { win1.Activate(); } catch { } }
+
                                     dynamic ws1 = wb.Sheets[ws1Name];
                                     if (ws1 != null)
                                     {
                                         if ((int)ws1.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws1.Visible = (int)XlSheetVisibility.xlSheetVisible;
                                         ws1.Activate();
-                                        string cleanA = cellAddrA!.Split(' ')[0];
-                                        if (!string.IsNullOrEmpty(cleanA) && !cleanA.StartsWith("Dòng") && !cleanA.StartsWith("Row"))
+                                        dynamic rng1 = ws1.Range[cleanA];
+                                        if (rng1 != null)
                                         {
-                                            dynamic rng1 = ws1.Range[cleanA];
-                                            if (rng1 != null)
+                                            rng1.Select();
+                                            ScrollCellWithContext(app, win1 ?? app.ActiveWindow, rng1);
+
+                                            if (instantHighlight)
                                             {
-                                                rng1.Select();
-                                                try { app.ActiveWindow.ScrollRow = rng1.Row; app.ActiveWindow.ScrollColumn = rng1.Column; } catch { }
-                                                if (instantHighlight)
+                                                lock (_transientHighlightLock)
                                                 {
-                                                    lock (_transientHighlightLock)
+                                                    _transientHighlights.Add(new TransientHighlightRecord
                                                     {
-                                                        _transientHighlights.Add(new TransientHighlightRecord
-                                                        {
-                                                            WorkbookName = wb1Name,
-                                                            SheetName = ws1Name,
-                                                            CellAddress = cleanA,
-                                                            OriginalColor = rng1.Interior.Color,
-                                                            OriginalColorIndex = rng1.Interior.ColorIndex
-                                                        });
-                                                    }
-                                                    rng1.Interior.Color = 0xCCD2FF; // Light Red/Pink
+                                                        WorkbookName = wb1Name,
+                                                        SheetName = ws1Name,
+                                                        CellAddress = cleanA,
+                                                        OriginalColor = rng1.Interior.Color,
+                                                        OriginalColorIndex = rng1.Interior.ColorIndex
+                                                    });
                                                 }
+                                                rng1.Interior.Color = 0xCCD2FF; // Light Red/Pink
                                             }
                                         }
                                     }
@@ -502,40 +592,39 @@ namespace ExcelSupport
                             }
 
                             // Window 2 -> Sheet B
-                            if (!string.IsNullOrEmpty(ws2Name) && !string.IsNullOrEmpty(cellAddrB))
+                            if (!string.IsNullOrEmpty(ws2Name) && !string.IsNullOrEmpty(cleanB))
                             {
                                 try
                                 {
-                                    if (winCount >= 2) wb.Windows[2].Activate();
+                                    dynamic win2 = winCount >= 2 ? wb.Windows[2] : app.ActiveWindow;
+                                    if (win2 != null) { try { win2.Activate(); } catch { } }
+
                                     dynamic ws2 = wb.Sheets[ws2Name];
                                     if (ws2 != null)
                                     {
                                         if ((int)ws2.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws2.Visible = (int)XlSheetVisibility.xlSheetVisible;
                                         ws2.Activate();
-                                        string cleanB = cellAddrB!.Split(' ')[0];
-                                        if (!string.IsNullOrEmpty(cleanB) && !cleanB.StartsWith("Dòng") && !cleanB.StartsWith("Row"))
+                                        dynamic rng2 = ws2.Range[cleanB];
+                                        if (rng2 != null)
                                         {
-                                            dynamic rng2 = ws2.Range[cleanB];
-                                            if (rng2 != null)
+                                            rng2.Select();
+                                            ScrollCellWithContext(app, win2 ?? app.ActiveWindow, rng2);
+
+                                            if (instantHighlight)
                                             {
-                                                rng2.Select();
-                                                try { app.ActiveWindow.ScrollRow = rng2.Row; app.ActiveWindow.ScrollColumn = rng2.Column; } catch { }
-                                                if (instantHighlight)
+                                                lock (_transientHighlightLock)
                                                 {
-                                                    lock (_transientHighlightLock)
+                                                    _transientHighlights.Add(new TransientHighlightRecord
                                                     {
-                                                        _transientHighlights.Add(new TransientHighlightRecord
-                                                        {
-                                                            WorkbookName = wb2Name,
-                                                            SheetName = ws2Name,
-                                                            CellAddress = cleanB,
-                                                            OriginalColor = rng2.Interior.Color,
-                                                            OriginalColorIndex = rng2.Interior.ColorIndex
-                                                        });
-                                                    }
-                                                    rng2.Interior.Color = (diffType == DiffType.Added ? 0xC8E6C9 : 0x82E0FF);
+                                                        WorkbookName = wb2Name,
+                                                        SheetName = ws2Name,
+                                                        CellAddress = cleanB,
+                                                        OriginalColor = rng2.Interior.Color,
+                                                        OriginalColorIndex = rng2.Interior.ColorIndex
+                                                    });
                                                 }
+                                                rng2.Interior.Color = (diffType == DiffType.Added ? 0xC8E6C9 : 0x82E0FF);
                                             }
                                         }
                                     }
@@ -548,7 +637,7 @@ namespace ExcelSupport
                     {
                         // Hai Workbook khác nhau
                         // 1. File A
-                        if (!string.IsNullOrEmpty(wb1Name) && !string.IsNullOrEmpty(cellAddrA))
+                        if (!string.IsNullOrEmpty(wb1Name) && !string.IsNullOrEmpty(ws1Name) && !string.IsNullOrEmpty(cleanA))
                         {
                             try
                             {
@@ -561,32 +650,28 @@ namespace ExcelSupport
                                         if ((int)ws1.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws1.Visible = (int)XlSheetVisibility.xlSheetVisible;
 
-                                        string cleanA = cellAddrA!.Split(' ')[0];
-                                        if (!string.IsNullOrEmpty(cleanA) && !cleanA.StartsWith("Dòng") && !cleanA.StartsWith("Row"))
+                                        dynamic rng1 = ws1.Range[cleanA];
+                                        if (rng1 != null)
                                         {
-                                            dynamic rng1 = ws1.Range[cleanA];
-                                            if (rng1 != null)
-                                            {
-                                                wb1.Activate();
-                                                ws1.Activate();
-                                                rng1.Select();
-                                                try { app.ActiveWindow.ScrollRow = rng1.Row; app.ActiveWindow.ScrollColumn = rng1.Column; } catch { }
+                                            try { wb1.Activate(); } catch { }
+                                            try { ws1.Activate(); } catch { }
+                                            rng1.Select();
+                                            ScrollCellWithContext(app, app.ActiveWindow, rng1);
 
-                                                if (instantHighlight)
+                                            if (instantHighlight)
+                                            {
+                                                lock (_transientHighlightLock)
                                                 {
-                                                    lock (_transientHighlightLock)
+                                                    _transientHighlights.Add(new TransientHighlightRecord
                                                     {
-                                                        _transientHighlights.Add(new TransientHighlightRecord
-                                                        {
-                                                            WorkbookName = wb1Name,
-                                                            SheetName = ws1Name,
-                                                            CellAddress = cleanA,
-                                                            OriginalColor = rng1.Interior.Color,
-                                                            OriginalColorIndex = rng1.Interior.ColorIndex
-                                                        });
-                                                    }
-                                                    rng1.Interior.Color = 0xCCD2FF; // BGR: Light Red/Pink
+                                                        WorkbookName = wb1Name,
+                                                        SheetName = ws1Name,
+                                                        CellAddress = cleanA,
+                                                        OriginalColor = rng1.Interior.Color,
+                                                        OriginalColorIndex = rng1.Interior.ColorIndex
+                                                    });
                                                 }
+                                                rng1.Interior.Color = 0xCCD2FF; // BGR: Light Red/Pink
                                             }
                                         }
                                     }
@@ -596,7 +681,7 @@ namespace ExcelSupport
                         }
 
                         // 2. File B (Target/Mới)
-                        if (!string.IsNullOrEmpty(wb2Name) && !string.IsNullOrEmpty(cellAddrB))
+                        if (!string.IsNullOrEmpty(wb2Name) && !string.IsNullOrEmpty(ws2Name) && !string.IsNullOrEmpty(cleanB))
                         {
                             try
                             {
@@ -609,32 +694,28 @@ namespace ExcelSupport
                                         if ((int)ws2.Visible != (int)XlSheetVisibility.xlSheetVisible)
                                             ws2.Visible = (int)XlSheetVisibility.xlSheetVisible;
 
-                                        string cleanB = cellAddrB!.Split(' ')[0];
-                                        if (!string.IsNullOrEmpty(cleanB) && !cleanB.StartsWith("Dòng") && !cleanB.StartsWith("Row"))
+                                        dynamic rng2 = ws2.Range[cleanB];
+                                        if (rng2 != null)
                                         {
-                                            dynamic rng2 = ws2.Range[cleanB];
-                                            if (rng2 != null)
-                                            {
-                                                wb2.Activate();
-                                                ws2.Activate();
-                                                rng2.Select();
-                                                try { app.ActiveWindow.ScrollRow = rng2.Row; app.ActiveWindow.ScrollColumn = rng2.Column; } catch { }
+                                            try { wb2.Activate(); } catch { }
+                                            try { ws2.Activate(); } catch { }
+                                            rng2.Select();
+                                            ScrollCellWithContext(app, app.ActiveWindow, rng2);
 
-                                                if (instantHighlight)
+                                            if (instantHighlight)
+                                            {
+                                                lock (_transientHighlightLock)
                                                 {
-                                                    lock (_transientHighlightLock)
+                                                    _transientHighlights.Add(new TransientHighlightRecord
                                                     {
-                                                        _transientHighlights.Add(new TransientHighlightRecord
-                                                        {
-                                                            WorkbookName = wb2Name,
-                                                            SheetName = ws2Name,
-                                                            CellAddress = cleanB,
-                                                            OriginalColor = rng2.Interior.Color,
-                                                            OriginalColorIndex = rng2.Interior.ColorIndex
-                                                        });
-                                                    }
-                                                    rng2.Interior.Color = (diffType == DiffType.Added ? 0xC8E6C9 : 0x82E0FF);
+                                                        WorkbookName = wb2Name,
+                                                        SheetName = ws2Name,
+                                                        CellAddress = cleanB,
+                                                        OriginalColor = rng2.Interior.Color,
+                                                        OriginalColorIndex = rng2.Interior.ColorIndex
+                                                    });
                                                 }
+                                                rng2.Interior.Color = (diffType == DiffType.Added ? 0xC8E6C9 : 0x82E0FF);
                                             }
                                         }
                                     }
@@ -647,6 +728,18 @@ namespace ExcelSupport
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"NavigateAndHighlightDualCells error: {ex.Message}");
+                }
+                finally
+                {
+                    if (wasSyncScrolling)
+                    {
+                        try
+                        {
+                            dynamic app = _excelApp;
+                            app.SyncScrollingSideBySide = true;
+                        }
+                        catch { }
+                    }
                 }
             });
 
@@ -984,27 +1077,28 @@ namespace ExcelSupport
 
                 foreach (var pair in sheetPairs)
                 {
-                    progressCallback?.Invoke($"Đang so sánh Sheet [{pair.sName1}]...");
+                    string pairTitle = pair.sName1 == pair.sName2 ? pair.sName1 : $"{pair.sName1} ⇋ {pair.sName2}";
+                    progressCallback?.Invoke($"Đang so sánh Sheet [{pairTitle}]...");
                     dynamic ws1 = pair.ws1;
                     dynamic ws2 = pair.ws2;
 
                     switch (options.Mode)
                     {
                         case CompareMode.CellByCell:
-                            CompareSheetCellByCell(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            CompareSheetCellByCell(ws1, ws2, pair.sName1, pair.sName2, wb1Name, wb2Name, options, results, ref totalDiffCount);
                             break;
                         case CompareMode.LcsRows:
-                            CompareSheetByRowLcs(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            CompareSheetByRowLcs(ws1, ws2, pair.sName1, pair.sName2, wb1Name, wb2Name, options, results, ref totalDiffCount);
                             break;
                         case CompareMode.LcsColumns:
-                            CompareSheetByColumnLcs(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            CompareSheetByColumnLcs(ws1, ws2, pair.sName1, pair.sName2, wb1Name, wb2Name, options, results, ref totalDiffCount);
                             break;
                         case CompareMode.Lcs2D:
-                            CompareSheetBy2DLcs(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            CompareSheetBy2DLcs(ws1, ws2, pair.sName1, pair.sName2, wb1Name, wb2Name, options, results, ref totalDiffCount);
                             break;
                         case CompareMode.KeyColumn:
                         default:
-                            CompareSheetByKeyColumn(ws1, ws2, pair.sName1, wb1Name, wb2Name, options, results, ref totalDiffCount);
+                            CompareSheetByKeyColumn(ws1, ws2, pair.sName1, pair.sName2, wb1Name, wb2Name, options, results, ref totalDiffCount);
                             break;
                     }
                 }
@@ -1021,13 +1115,14 @@ namespace ExcelSupport
 
         private void CompareSheetCellByCell(
             dynamic ws1, dynamic ws2, 
-            string sheetName, string wb1Name, string wb2Name, 
+            string sheet1Name, string sheet2Name, string wb1Name, string wb2Name, 
             CompareOptions options, 
             List<CompareDiffItem> results, 
             ref int totalDiffCount)
         {
             try
             {
+                string displaySheet = sheet1Name == sheet2Name ? sheet1Name : $"{sheet1Name} ⇋ {sheet2Name}";
                 dynamic u1 = ws1.UsedRange;
                 dynamic u2 = ws2.UsedRange;
 
@@ -1082,7 +1177,9 @@ namespace ExcelSupport
                             results.Add(new CompareDiffItem
                             {
                                 Index = totalDiffCount,
-                                SheetName = sheetName,
+                                SheetName = displaySheet,
+                                SheetNameA = sheet1Name,
+                                SheetNameB = sheet2Name,
                                 CellAddress = addr,
                                 CellAddressA = addr,
                                 CellAddressB = addr,
@@ -1105,13 +1202,14 @@ namespace ExcelSupport
 
         private void CompareSheetByKeyColumn(
             dynamic ws1, dynamic ws2, 
-            string sheetName, string wb1Name, string wb2Name, 
+            string sheet1Name, string sheet2Name, string wb1Name, string wb2Name, 
             CompareOptions options, 
             List<CompareDiffItem> results, 
             ref int totalDiffCount)
         {
             try
             {
+                string displaySheet = sheet1Name == sheet2Name ? sheet1Name : $"{sheet1Name} ⇋ {sheet2Name}";
                 dynamic u1 = ws1.UsedRange;
                 dynamic u2 = ws2.UsedRange;
 
@@ -1150,7 +1248,9 @@ namespace ExcelSupport
                                 results.Add(new CompareDiffItem
                                 {
                                     Index = totalDiffCount,
-                                    SheetName = sheetName,
+                                    SheetName = displaySheet,
+                                    SheetNameA = sheet1Name,
+                                    SheetNameB = sheet2Name,
                                     CellAddress = addr,
                                     CellAddressA = $"{colLetter}{row1Index}",
                                     CellAddressB = $"{colLetter}{row2Index}",
@@ -1171,7 +1271,9 @@ namespace ExcelSupport
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
-                            SheetName = sheetName,
+                            SheetName = displaySheet,
+                            SheetNameA = sheet1Name,
+                            SheetNameB = sheet2Name,
                             CellAddress = $"Dòng {row1Index}",
                             CellAddressA = $"A{row1Index}",
                             CellAddressB = string.Empty,
@@ -1198,7 +1300,9 @@ namespace ExcelSupport
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
-                            SheetName = sheetName,
+                            SheetName = displaySheet,
+                            SheetNameA = sheet1Name,
+                            SheetNameB = sheet2Name,
                             CellAddress = $"Dòng {row2Index}",
                             CellAddressA = string.Empty,
                             CellAddressB = $"A{row2Index}",
@@ -1380,11 +1484,12 @@ namespace ExcelSupport
 
         private void CompareSheetByRowLcs(
             dynamic ws1, dynamic ws2, 
-            string sheetName, string wb1Name, string wb2Name, 
+            string sheet1Name, string sheet2Name, string wb1Name, string wb2Name, 
             CompareOptions options, 
             List<CompareDiffItem> results, 
             ref int totalDiffCount)
         {
+            string displaySheet = sheet1Name == sheet2Name ? sheet1Name : $"{sheet1Name} ⇋ {sheet2Name}";
             var g1 = ExtractGridData(ws1, options);
             var g2 = ExtractGridData(ws2, options);
 
@@ -1472,7 +1577,9 @@ namespace ExcelSupport
                                 results.Add(new CompareDiffItem
                                 {
                                     Index = totalDiffCount,
-                                    SheetName = sheetName,
+                                    SheetName = displaySheet,
+                                    SheetNameA = sheet1Name,
+                                    SheetNameB = sheet2Name,
                                     CellAddress = addr,
                                     CellAddressA = $"{colLetter1}{r1Actual}",
                                     CellAddressB = $"{colLetter2}{r2Actual}",
@@ -1498,7 +1605,9 @@ namespace ExcelSupport
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
-                            SheetName = sheetName,
+                            SheetName = displaySheet,
+                            SheetNameA = sheet1Name,
+                            SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
                             CellAddressA = primaryAddr,
                             CellAddressB = string.Empty,
@@ -1522,7 +1631,9 @@ namespace ExcelSupport
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
-                            SheetName = sheetName,
+                            SheetName = displaySheet,
+                            SheetNameA = sheet1Name,
+                            SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
                             CellAddressA = string.Empty,
                             CellAddressB = primaryAddr,
@@ -1540,11 +1651,12 @@ namespace ExcelSupport
 
         private void CompareSheetByColumnLcs(
             dynamic ws1, dynamic ws2, 
-            string sheetName, string wb1Name, string wb2Name, 
+            string sheet1Name, string sheet2Name, string wb1Name, string wb2Name, 
             CompareOptions options, 
             List<CompareDiffItem> results, 
             ref int totalDiffCount)
         {
+            string displaySheet = sheet1Name == sheet2Name ? sheet1Name : $"{sheet1Name} ⇋ {sheet2Name}";
             var g1 = ExtractGridData(ws1, options);
             var g2 = ExtractGridData(ws2, options);
 
@@ -1631,7 +1743,9 @@ namespace ExcelSupport
                                 results.Add(new CompareDiffItem
                                 {
                                     Index = totalDiffCount,
-                                    SheetName = sheetName,
+                                    SheetName = displaySheet,
+                                    SheetNameA = sheet1Name,
+                                    SheetNameB = sheet2Name,
                                     CellAddress = addr,
                                     CellAddressA = $"{colLetter1}{rowNum1}",
                                     CellAddressB = $"{colLetter2}{rowNum2}",
@@ -1657,7 +1771,9 @@ namespace ExcelSupport
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
-                            SheetName = sheetName,
+                            SheetName = displaySheet,
+                            SheetNameA = sheet1Name,
+                            SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
                             CellAddressA = primaryAddr,
                             CellAddressB = string.Empty,
@@ -1681,7 +1797,9 @@ namespace ExcelSupport
                         results.Add(new CompareDiffItem
                         {
                             Index = totalDiffCount,
-                            SheetName = sheetName,
+                            SheetName = displaySheet,
+                            SheetNameA = sheet1Name,
+                            SheetNameB = sheet2Name,
                             CellAddress = primaryAddr,
                             CellAddressA = string.Empty,
                             CellAddressB = primaryAddr,
@@ -1699,11 +1817,12 @@ namespace ExcelSupport
 
         private void CompareSheetBy2DLcs(
             dynamic ws1, dynamic ws2, 
-            string sheetName, string wb1Name, string wb2Name, 
+            string sheet1Name, string sheet2Name, string wb1Name, string wb2Name, 
             CompareOptions options, 
             List<CompareDiffItem> results, 
             ref int totalDiffCount)
         {
+            string displaySheet = sheet1Name == sheet2Name ? sheet1Name : $"{sheet1Name} ⇋ {sheet2Name}";
             var g1 = ExtractGridData(ws1, options);
             var g2 = ExtractGridData(ws2, options);
 
@@ -1795,7 +1914,9 @@ namespace ExcelSupport
                             results.Add(new CompareDiffItem
                             {
                                 Index = totalDiffCount,
-                                SheetName = sheetName,
+                                SheetName = displaySheet,
+                                SheetNameA = sheet1Name,
+                                SheetNameB = sheet2Name,
                                 CellAddress = addr2,
                                 CellAddressA = addr1,
                                 CellAddressB = addr2,
@@ -1823,7 +1944,9 @@ namespace ExcelSupport
                             results.Add(new CompareDiffItem
                             {
                                 Index = totalDiffCount,
-                                SheetName = sheetName,
+                                SheetName = displaySheet,
+                                SheetNameA = sheet1Name,
+                                SheetNameB = sheet2Name,
                                 CellAddress = addr,
                                 CellAddressA = string.Empty,
                                 CellAddressB = addr,
@@ -1851,7 +1974,9 @@ namespace ExcelSupport
                             results.Add(new CompareDiffItem
                             {
                                 Index = totalDiffCount,
-                                SheetName = sheetName,
+                                SheetName = displaySheet,
+                                SheetNameA = sheet1Name,
+                                SheetNameB = sheet2Name,
                                 CellAddress = addr,
                                 CellAddressA = addr,
                                 CellAddressB = string.Empty,
@@ -1977,10 +2102,19 @@ namespace ExcelSupport
 
                 foreach (var diff in diffs)
                 {
-                    if (!string.Equals(diff.SheetName, wsName, StringComparison.OrdinalIgnoreCase)) continue;
+                    bool matchSheet = string.Equals(diff.SheetName, wsName, StringComparison.OrdinalIgnoreCase) ||
+                                      string.Equals(diff.SheetNameA, wsName, StringComparison.OrdinalIgnoreCase) ||
+                                      string.Equals(diff.SheetNameB, wsName, StringComparison.OrdinalIgnoreCase);
+                    if (!matchSheet) continue;
 
-                    string cleanAddr = diff.CellAddress.Split(' ')[0];
-                    if (string.IsNullOrEmpty(cleanAddr) || cleanAddr.StartsWith("Dòng")) continue;
+                    string? addrCandidate = string.Equals(diff.SheetNameB, wsName, StringComparison.OrdinalIgnoreCase) 
+                        ? diff.CellAddressB 
+                        : diff.CellAddressA;
+
+                    if (string.IsNullOrEmpty(addrCandidate)) addrCandidate = diff.CellAddress;
+
+                    string cleanAddr = ResolveCleanCellAddress(addrCandidate);
+                    if (string.IsNullOrEmpty(cleanAddr)) continue;
 
                     try
                     {

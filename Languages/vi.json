@@ -259,6 +259,8 @@
   "Comp_BtnNextDiff": "⏭ Tiếp (F8)",
   "Comp_DiffPositionFormat": "Điểm {0} / {1}",
   "Comp_SelectBothFilesPrompt": "Vui lòng chọn đầy đủ File A và File B để sắp xếp cửa sổ.",
+  "Comp_NoDiffToHighlight": "Không có kết quả sai khác nào để tô màu.",
+  "Comp_NoDiffToReport": "Không có kết quả sai khác nào để tạo báo cáo.",
   "VN_WindowTitle": "Kiểm Tra & Định Vị Tiếng Việt Trong Workbooks — ExcelSupport",
   "VN_Title": "KIỂM TRA TIẾNG VIỆT TRONG WORKBOOK",
   "VN_SubTitle": "Quét và phát hiện các ô tính, tên Sheet, Shapes chứa tiếng Việt có dấu trong toàn bộ file Excel.",

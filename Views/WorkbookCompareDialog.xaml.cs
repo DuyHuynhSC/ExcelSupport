@@ -402,6 +402,22 @@ namespace ExcelSupport.Views
 
             bool syncScroll = ChkSyncScroll.IsChecked == true;
             addIn.ArrangeCompareWindows(wb1Name, wb2Name, isVertical, syncScroll);
+
+            // Sau khi xếp cửa sổ, tự động định vị và focus vào sai khác đang chọn (hoặc mục đầu tiên)
+            var currentItem = GridDiffResults.SelectedItem as CompareDiffItem;
+            if (currentItem == null && _diffResults.Count > 0)
+            {
+                currentItem = _diffResults[0];
+                GridDiffResults.SelectedItem = currentItem;
+            }
+
+            if (currentItem != null)
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    NavigateToItem(currentItem);
+                }), System.Windows.Threading.DispatcherPriority.Background);
+            }
         }
 
         private void OnPrevDiffClick(object sender, RoutedEventArgs e)
@@ -558,14 +574,15 @@ namespace ExcelSupport.Views
 
             string wb1Name = !string.IsNullOrEmpty(item.Workbook1Name) ? item.Workbook1Name : (CboWorkbook1.SelectedItem?.ToString() ?? string.Empty);
             string wb2Name = !string.IsNullOrEmpty(item.Workbook2Name) ? item.Workbook2Name : (CboWorkbook2.SelectedItem?.ToString() ?? string.Empty);
-            string wsName = item.SheetName;
+            string ws1Name = !string.IsNullOrEmpty(item.SheetNameA) ? item.SheetNameA : item.SheetName;
+            string ws2Name = !string.IsNullOrEmpty(item.SheetNameB) ? item.SheetNameB : item.SheetName;
 
             item.GetTargetAddresses(out string addrA, out string addrB);
             bool instantHighlight = ChkInstantHighlight?.IsChecked == true;
 
             addIn.NavigateAndHighlightDualCells(
-                wb1Name, wsName, addrA,
-                wb2Name, wsName, addrB,
+                wb1Name, ws1Name, addrA,
+                wb2Name, ws2Name, addrB,
                 item.Type,
                 instantHighlight);
         }
@@ -574,7 +591,9 @@ namespace ExcelSupport.Views
         {
             if (_diffResults.Count == 0)
             {
-                WpfMessageBox.Show("Không có kết quả sai khác nào để tô màu.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                WpfMessageBox.Show(LocalizationService.Get("Comp_NoDiffToHighlight", "Không có kết quả sai khác nào để tô màu."),
+                                   LocalizationService.Get("Common_Notice", "Thông Báo"),
+                                   MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -582,7 +601,7 @@ namespace ExcelSupport.Views
             if (addIn == null) return;
 
             string wb2Name = CboWorkbook2.SelectedItem?.ToString() ?? string.Empty;
-            string sheetName = _diffResults[0].SheetName;
+            string sheetName = !string.IsNullOrEmpty(_diffResults[0].SheetNameB) ? _diffResults[0].SheetNameB : _diffResults[0].SheetName;
 
             var list = new List<CompareDiffItem>(_diffResults);
             addIn.HighlightDiffInWorksheet(list, wb2Name, sheetName);
@@ -592,7 +611,9 @@ namespace ExcelSupport.Views
         {
             if (_diffResults.Count == 0)
             {
-                WpfMessageBox.Show("Không có kết quả sai khác nào để tạo báo cáo.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                WpfMessageBox.Show(LocalizationService.Get("Comp_NoDiffToReport", "Không có kết quả sai khác nào để tạo báo cáo."),
+                                   LocalizationService.Get("Common_Notice", "Thông Báo"),
+                                   MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
