@@ -108,19 +108,26 @@ namespace ExcelSupport.Views
 
                     if (activeWb != null)
                     {
-                        string fullName = string.Empty;
-                        try { fullName = activeWb.FullName; } catch { }
-
-                        if (!string.IsNullOrEmpty(fullName) && File.Exists(fullName))
+                        try
                         {
-                            AddFilesToGrid(new[] { fullName });
+                            string fullName = string.Empty;
+                            try { fullName = activeWb.FullName; } catch { }
 
-                            // Tự động đặt thư mục xuất là thư mục chứa file đang mở
-                            string dir = Path.GetDirectoryName(fullName) ?? string.Empty;
-                            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                            if (!string.IsNullOrEmpty(fullName) && File.Exists(fullName))
                             {
-                                TxtOutputDir.Text = dir;
+                                AddFilesToGrid(new[] { fullName });
+
+                                // Tự động đặt thư mục xuất là thư mục chứa file đang mở
+                                string dir = Path.GetDirectoryName(fullName) ?? string.Empty;
+                                if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                                {
+                                    TxtOutputDir.Text = dir;
+                                }
                             }
+                        }
+                        finally
+                        {
+                            Marshal.ReleaseComObject(activeWb);
                         }
                     }
                 }
@@ -193,22 +200,38 @@ namespace ExcelSupport.Views
                 targetFilePath = _fileItems[0].FilePath;
             }
 
+            Workbooks? workbooks = null;
             Workbook? matchedWb = null;
+            bool openedTemp = false;
+
             try
             {
+                workbooks = _excelApp.Workbooks;
+                int wbCount = workbooks.Count;
+
                 if (!string.IsNullOrEmpty(targetFilePath))
                 {
-                    foreach (Workbook wb in _excelApp.Workbooks)
+                    for (int i = 1; i <= wbCount; i++)
                     {
+                        Workbook? wb = null;
                         try
                         {
-                            if (string.Equals(wb.FullName, targetFilePath, StringComparison.OrdinalIgnoreCase))
+                            wb = workbooks[i];
+                            if (string.Equals(wb.FullName, targetFilePath, StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(wb.Name, Path.GetFileName(targetFilePath), StringComparison.OrdinalIgnoreCase))
                             {
                                 matchedWb = wb;
                                 break;
                             }
                         }
                         catch { }
+                        finally
+                        {
+                            if (wb != null && matchedWb != wb)
+                            {
+                                Marshal.ReleaseComObject(wb);
+                            }
+                        }
                     }
                 }
 
@@ -217,42 +240,74 @@ namespace ExcelSupport.Views
                     try { matchedWb = _excelApp.ActiveWorkbook; } catch { }
                 }
 
-                if (matchedWb != null)
+                if (matchedWb == null && !string.IsNullOrEmpty(targetFilePath) && File.Exists(targetFilePath))
                 {
-                    foreach (_Worksheet ws in matchedWb.Worksheets)
-                    {
-                        try { sheetNames.Add(ws.Name); } catch { }
-                    }
-                    return sheetNames;
-                }
-
-                if (!string.IsNullOrEmpty(targetFilePath) && File.Exists(targetFilePath))
-                {
-                    Workbook? tempWb = null;
                     try
                     {
-                        tempWb = _excelApp.Workbooks.Open(targetFilePath, ReadOnly: true, UpdateLinks: 0);
-                        if (tempWb != null)
+                        matchedWb = workbooks.Open(targetFilePath, ReadOnly: true, UpdateLinks: 0);
+                        openedTemp = (matchedWb != null);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error opening temp wb in picker: {ex.Message}");
+                    }
+                }
+
+                if (matchedWb != null)
+                {
+                    Sheets? sheets = null;
+                    try
+                    {
+                        sheets = matchedWb.Worksheets;
+                        int sCount = sheets.Count;
+                        for (int s = 1; s <= sCount; s++)
                         {
-                            foreach (_Worksheet ws in tempWb.Worksheets)
+                            _Worksheet? ws = null;
+                            try
                             {
-                                try { sheetNames.Add(ws.Name); } catch { }
+                                ws = (_Worksheet)sheets[s];
+                                sheetNames.Add(ws.Name);
+                            }
+                            catch { }
+                            finally
+                            {
+                                if (ws != null) Marshal.ReleaseComObject(ws);
                             }
                         }
                     }
                     finally
                     {
-                        if (tempWb != null)
-                        {
-                            try { tempWb.Close(SaveChanges: false); } catch { }
-                            Marshal.ReleaseComObject(tempWb);
-                        }
+                        if (sheets != null) Marshal.ReleaseComObject(sheets);
                     }
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"GetCurrentWorkbookSheets error: {ex.Message}");
+            }
+            finally
+            {
+                if (matchedWb != null)
+                {
+                    if (openedTemp)
+                    {
+                        try { matchedWb.Close(SaveChanges: false); } catch { }
+                    }
+                    Marshal.ReleaseComObject(matchedWb);
+                    matchedWb = null;
+                }
+
+                if (workbooks != null)
+                {
+                    Marshal.ReleaseComObject(workbooks);
+                    workbooks = null;
+                }
+
+                if (openedTemp)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
             }
 
             return sheetNames;

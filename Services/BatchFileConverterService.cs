@@ -52,7 +52,8 @@ namespace ExcelSupport.Services
             try
             {
                 app.DisplayAlerts = false;
-                app.ScreenUpdating = false;
+                // KHÔNG tắt ScreenUpdating cố định ở cấp độ batch vì việc đóng mở SDI window
+                // khi ScreenUpdating = false sẽ làm đóng băng giao diện và gây treo tiến trình EXCEL.EXE.
 
                 switch (options.Mode)
                 {
@@ -125,6 +126,11 @@ namespace ExcelSupport.Services
                     app.ScreenUpdating = prevScreen;
                 }
                 catch { }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
 
             return result;
@@ -134,38 +140,77 @@ namespace ExcelSupport.Services
         {
             if (!File.Exists(inputPath)) return false;
 
+            Workbooks? workbooks = null;
             Workbook? wb = null;
+
             try
             {
-                wb = app.Workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
+                workbooks = app.Workbooks;
+                int wbCount = workbooks.Count;
+
+                // 1. Kiểm tra xem file có đang mở sẵn trong Excel không
+                for (int i = 1; i <= wbCount; i++)
+                {
+                    Workbook? openWb = null;
+                    try
+                    {
+                        openWb = workbooks[i];
+                        if (string.Equals(openWb.FullName, inputPath, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(openWb.Name, Path.GetFileName(inputPath), StringComparison.OrdinalIgnoreCase))
+                        {
+                            wb = openWb;
+                            break;
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        if (openWb != null && wb != openWb)
+                        {
+                            Marshal.ReleaseComObject(openWb);
+                        }
+                    }
+                }
+
+                // 2. Nếu chưa mở, mở file ở chế độ ReadOnly
+                if (wb == null)
+                {
+                    wb = workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
+                }
+
                 if (wb == null) return false;
 
+                bool success = false;
                 if (options.TargetFormat == ExcelOutputFormat.Markdown)
                 {
-                    return ConvertWorkbookToMarkdown(app, wb, inputPath, options.OutputDirectory, options);
-                }
-
-                string baseName = Path.GetFileNameWithoutExtension(inputPath);
-                string ext = GetExtensionForFormat(options.TargetFormat);
-                string outPath = Path.Combine(options.OutputDirectory, baseName + ext);
-
-                if (File.Exists(outPath))
-                {
-                    if (!options.OverwriteExisting) return true;
-                    try { File.Delete(outPath); } catch { }
-                }
-
-                if (options.TargetFormat == ExcelOutputFormat.PDF)
-                {
-                    wb.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outPath);
+                    success = ConvertWorkbookToMarkdown(app, wb, inputPath, options.OutputDirectory, options);
                 }
                 else
                 {
-                    XlFileFormat xlFormat = GetXlFileFormat(options.TargetFormat);
-                    wb.SaveAs(outPath, xlFormat);
+                    string baseName = Path.GetFileNameWithoutExtension(inputPath);
+                    string ext = GetExtensionForFormat(options.TargetFormat);
+                    string outPath = Path.Combine(options.OutputDirectory, baseName + ext);
+
+                    if (File.Exists(outPath))
+                    {
+                        if (!options.OverwriteExisting) return true;
+                        try { File.Delete(outPath); } catch { }
+                    }
+
+                    if (options.TargetFormat == ExcelOutputFormat.PDF)
+                    {
+                        wb.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, outPath);
+                    }
+                    else
+                    {
+                        XlFileFormat xlFormat = GetXlFileFormat(options.TargetFormat);
+                        wb.SaveAs(outPath, xlFormat);
+                    }
+
+                    success = true;
                 }
 
-                return true;
+                return success;
             }
             catch (Exception ex)
             {
@@ -176,9 +221,34 @@ namespace ExcelSupport.Services
             {
                 if (wb != null)
                 {
-                    try { wb.Close(SaveChanges: false); } catch { }
+                    // Đóng dứt điểm file sau khi convert theo đúng yêu cầu:
+                    // "Sau khi convert thì có một instance excel đang chạy và bị treo, bạn hãy tắt file đó đi"
+                    try
+                    {
+                        bool currentScreen = app.ScreenUpdating;
+                        if (!currentScreen) app.ScreenUpdating = true;
+
+                        wb.Close(SaveChanges: false);
+
+                        if (!currentScreen) app.ScreenUpdating = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error closing wb ({inputPath}): {ex.Message}");
+                    }
+
                     Marshal.ReleaseComObject(wb);
+                    wb = null;
                 }
+
+                if (workbooks != null)
+                {
+                    Marshal.ReleaseComObject(workbooks);
+                    workbooks = null;
+                }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
         }
 
@@ -186,21 +256,28 @@ namespace ExcelSupport.Services
         {
             if (!File.Exists(inputPath)) return 0;
 
+            Workbooks? workbooks = null;
             Workbook? wb = null;
+            Sheets? sheets = null;
             int splitCount = 0;
 
             try
             {
-                wb = app.Workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
+                workbooks = app.Workbooks;
+                wb = workbooks.Open(inputPath, ReadOnly: true, UpdateLinks: 0);
                 if (wb == null) return 0;
 
                 string baseName = Path.GetFileNameWithoutExtension(inputPath);
+                sheets = wb.Worksheets;
+                int count = sheets.Count;
 
-                foreach (_Worksheet ws in wb.Worksheets)
+                for (int i = 1; i <= count; i++)
                 {
+                    _Worksheet? ws = null;
                     Workbook? newWb = null;
                     try
                     {
+                        ws = (_Worksheet)sheets[i];
                         string safeSheetName = SanitizeFileName(ws.Name);
                         string outPath = Path.Combine(outputDir, $"{baseName}_{safeSheetName}.xlsx");
 
@@ -227,7 +304,7 @@ namespace ExcelSupport.Services
                     finally
                     {
                         if (newWb != null) Marshal.ReleaseComObject(newWb);
-                        Marshal.ReleaseComObject(ws);
+                        if (ws != null) Marshal.ReleaseComObject(ws);
                     }
                 }
             }
@@ -237,11 +314,36 @@ namespace ExcelSupport.Services
             }
             finally
             {
+                if (sheets != null)
+                {
+                    Marshal.ReleaseComObject(sheets);
+                    sheets = null;
+                }
+
                 if (wb != null)
                 {
-                    try { wb.Close(SaveChanges: false); } catch { }
+                    try
+                    {
+                        bool currentScreen = app.ScreenUpdating;
+                        if (!currentScreen) app.ScreenUpdating = true;
+
+                        wb.Close(SaveChanges: false);
+
+                        if (!currentScreen) app.ScreenUpdating = false;
+                    }
+                    catch { }
                     Marshal.ReleaseComObject(wb);
+                    wb = null;
                 }
+
+                if (workbooks != null)
+                {
+                    Marshal.ReleaseComObject(workbooks);
+                    workbooks = null;
+                }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
 
             return splitCount;
@@ -251,7 +353,9 @@ namespace ExcelSupport.Services
         {
             if (inputFiles == null || inputFiles.Count == 0) return false;
 
+            Workbooks? workbooks = null;
             Workbook? masterWb = null;
+            Sheets? masterSheets = null;
             try
             {
                 if (File.Exists(outMergedPath))
@@ -260,11 +364,17 @@ namespace ExcelSupport.Services
                     try { File.Delete(outMergedPath); } catch { }
                 }
 
-                masterWb = app.Workbooks.Add();
+                workbooks = app.Workbooks;
+                masterWb = workbooks.Add();
                 if (masterWb == null) return false;
 
+                masterSheets = masterWb.Worksheets;
                 var initialSheets = new List<_Worksheet>();
-                foreach (_Worksheet s in masterWb.Worksheets) initialSheets.Add(s);
+                int initCount = masterSheets.Count;
+                for (int i = 1; i <= initCount; i++)
+                {
+                    initialSheets.Add((_Worksheet)masterSheets[i]);
+                }
 
                 var usedSheetNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -273,18 +383,25 @@ namespace ExcelSupport.Services
                     if (!File.Exists(file)) continue;
 
                     Workbook? srcWb = null;
+                    Sheets? srcSheets = null;
                     try
                     {
-                        srcWb = app.Workbooks.Open(file, ReadOnly: true, UpdateLinks: 0);
+                        srcWb = workbooks.Open(file, ReadOnly: true, UpdateLinks: 0);
                         if (srcWb == null) continue;
 
                         string srcFileName = Path.GetFileNameWithoutExtension(file);
+                        srcSheets = srcWb.Worksheets;
+                        int srcCount = srcSheets.Count;
 
-                        foreach (_Worksheet srcWs in srcWb.Worksheets)
+                        for (int i = 1; i <= srcCount; i++)
                         {
+                            _Worksheet? srcWs = null;
+                            _Worksheet? lastSheet = null;
+                            _Worksheet? newCopiedSheet = null;
                             try
                             {
-                                string candidateName = (srcWb.Worksheets.Count == 1)
+                                srcWs = (_Worksheet)srcSheets[i];
+                                string candidateName = (srcCount == 1)
                                     ? srcFileName
                                     : $"{srcFileName}_{srcWs.Name}";
 
@@ -302,13 +419,10 @@ namespace ExcelSupport.Services
                                 usedSheetNames.Add(uniqueName);
 
                                 // Copy vào sau sheet cuối của masterWb
-                                _Worksheet lastSheet = (_Worksheet)masterWb.Worksheets[masterWb.Worksheets.Count];
+                                lastSheet = (_Worksheet)masterSheets[masterSheets.Count];
                                 srcWs.Copy(After: lastSheet);
-                                _Worksheet newCopiedSheet = (_Worksheet)masterWb.Worksheets[masterWb.Worksheets.Count];
+                                newCopiedSheet = (_Worksheet)masterSheets[masterSheets.Count];
                                 newCopiedSheet.Name = uniqueName;
-
-                                Marshal.ReleaseComObject(lastSheet);
-                                Marshal.ReleaseComObject(newCopiedSheet);
                             }
                             catch (Exception ex)
                             {
@@ -316,7 +430,9 @@ namespace ExcelSupport.Services
                             }
                             finally
                             {
-                                Marshal.ReleaseComObject(srcWs);
+                                if (lastSheet != null) Marshal.ReleaseComObject(lastSheet);
+                                if (newCopiedSheet != null) Marshal.ReleaseComObject(newCopiedSheet);
+                                if (srcWs != null) Marshal.ReleaseComObject(srcWs);
                             }
                         }
                     }
@@ -326,10 +442,17 @@ namespace ExcelSupport.Services
                     }
                     finally
                     {
+                        if (srcSheets != null)
+                        {
+                            Marshal.ReleaseComObject(srcSheets);
+                            srcSheets = null;
+                        }
+
                         if (srcWb != null)
                         {
                             try { srcWb.Close(SaveChanges: false); } catch { }
                             Marshal.ReleaseComObject(srcWb);
+                            srcWb = null;
                         }
                     }
                 }
@@ -340,6 +463,7 @@ namespace ExcelSupport.Services
                     try { initSheet.Delete(); } catch { }
                     Marshal.ReleaseComObject(initSheet);
                 }
+                initialSheets.Clear();
 
                 masterWb.SaveAs(outMergedPath, XlFileFormat.xlOpenXMLWorkbook);
                 return true;
@@ -351,11 +475,36 @@ namespace ExcelSupport.Services
             }
             finally
             {
+                if (masterSheets != null)
+                {
+                    Marshal.ReleaseComObject(masterSheets);
+                    masterSheets = null;
+                }
+
                 if (masterWb != null)
                 {
-                    try { masterWb.Close(SaveChanges: false); } catch { }
+                    try
+                    {
+                        bool currentScreen = app.ScreenUpdating;
+                        if (!currentScreen) app.ScreenUpdating = true;
+
+                        masterWb.Close(SaveChanges: false);
+
+                        if (!currentScreen) app.ScreenUpdating = false;
+                    }
+                    catch { }
                     Marshal.ReleaseComObject(masterWb);
+                    masterWb = null;
                 }
+
+                if (workbooks != null)
+                {
+                    Marshal.ReleaseComObject(workbooks);
+                    workbooks = null;
+                }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
         }
 
@@ -406,18 +555,28 @@ namespace ExcelSupport.Services
         {
             string baseName = Path.GetFileNameWithoutExtension(inputPath);
             var eligibleSheets = new List<_Worksheet>();
+            Sheets? sheets = null;
 
             try
             {
-                foreach (_Worksheet ws in wb.Worksheets)
+                sheets = wb.Worksheets;
+                int sheetCount = sheets.Count;
+
+                for (int i = 1; i <= sheetCount; i++)
                 {
-                    if (ShouldProcessSheet(ws.Name, options.SheetFilterMode, options.SheetFilterPatterns))
+                    _Worksheet? ws = null;
+                    try
                     {
-                        eligibleSheets.Add(ws);
+                        ws = (_Worksheet)sheets[i];
+                        if (ShouldProcessSheet(ws.Name, options.SheetFilterMode, options.SheetFilterPatterns))
+                        {
+                            eligibleSheets.Add(ws);
+                            ws = null; // Giữ lại để giải phóng sau trong finally
+                        }
                     }
-                    else
+                    finally
                     {
-                        Marshal.ReleaseComObject(ws);
+                        if (ws != null) Marshal.ReleaseComObject(ws);
                     }
                 }
 
@@ -538,22 +697,36 @@ namespace ExcelSupport.Services
                 {
                     Marshal.ReleaseComObject(ws);
                 }
+                eligibleSheets.Clear();
+
+                if (sheets != null)
+                {
+                    Marshal.ReleaseComObject(sheets);
+                    sheets = null;
+                }
             }
         }
 
         private static string ConvertWorksheetToMarkdownTable(_Worksheet ws, int startRow, bool convertLineBreaksToBr)
         {
             Range? usedRange = null;
+            Range? rowsRange = null;
+            Range? colsRange = null;
+            Range? cellTopLeft = null;
+            Range? cellBottomRight = null;
             Range? targetRange = null;
             try
             {
                 usedRange = ws.UsedRange;
                 if (usedRange == null) return string.Empty;
 
+                rowsRange = usedRange.Rows;
+                colsRange = usedRange.Columns;
+
                 int usedStartRow = usedRange.Row;
                 int usedStartCol = usedRange.Column;
-                int usedRowCount = usedRange.Rows.Count;
-                int usedColCount = usedRange.Columns.Count;
+                int usedRowCount = rowsRange.Count;
+                int usedColCount = colsRange.Count;
 
                 if (usedRowCount == 0 || usedColCount == 0) return string.Empty;
 
@@ -570,10 +743,9 @@ namespace ExcelSupport.Services
 
                 if (rowsToExtract <= 0 || colsToExtract <= 0) return string.Empty;
 
-                targetRange = ws.Range[
-                    ws.Cells[effectiveStartRow, usedStartCol],
-                    ws.Cells[effectiveStartRow + rowsToExtract - 1, usedStartCol + colsToExtract - 1]
-                ];
+                cellTopLeft = (Range)ws.Cells[effectiveStartRow, usedStartCol];
+                cellBottomRight = (Range)ws.Cells[effectiveStartRow + rowsToExtract - 1, usedStartCol + colsToExtract - 1];
+                targetRange = ws.Range[cellTopLeft, cellBottomRight];
 
                 object[,] matrix;
                 if (rowsToExtract == 1 && colsToExtract == 1)
@@ -689,7 +861,11 @@ namespace ExcelSupport.Services
             }
             finally
             {
+                if (cellTopLeft != null) Marshal.ReleaseComObject(cellTopLeft);
+                if (cellBottomRight != null) Marshal.ReleaseComObject(cellBottomRight);
                 if (targetRange != null) Marshal.ReleaseComObject(targetRange);
+                if (rowsRange != null) Marshal.ReleaseComObject(rowsRange);
+                if (colsRange != null) Marshal.ReleaseComObject(colsRange);
                 if (usedRange != null) Marshal.ReleaseComObject(usedRange);
             }
         }
