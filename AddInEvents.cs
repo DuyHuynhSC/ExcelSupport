@@ -36,81 +36,88 @@ namespace ExcelSupport
         {
             Instance = this;
 
-            // Khởi tạo WPF Application runtime với ShutdownMode = OnExplicitShutdown
-            // Đảm bảo không bao giờ đóng tiến trình Excel khi một hộp thoại WPF đóng lại
-            if (WpfApplication.Current == null)
-            {
-                try
-                {
-                    new WpfApplication
-                    {
-                        ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown
-                    };
-                }
-                catch { }
-            }
-            else
-            {
-                try
-                {
-                    WpfApplication.Current.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
-                }
-                catch { }
-            }
-
-            _excelApp = (ExcelApp)ExcelDnaUtil.Application;
-            MainViewModel = new TaskPaneViewModel();
-
-            MainViewModel.RequestActivateWorkbook += OnRequestActivateWorkbook;
-            MainViewModel.RequestActivateWorksheet += OnRequestActivateWorksheet;
-            MainViewModel.RequestCloseWorkbook += OnRequestCloseWorkbook;
-            MainViewModel.RequestSetSheetTabColor += OnRequestSetSheetTabColor;
-            MainViewModel.RequestSetSheetVisibility += OnRequestSetSheetVisibility;
-            MainViewModel.RequestUnhideAllSheets += OnRequestUnhideAllSheets;
-
-            HookExcelEvents();
-
-            // 1. Dọn dẹp bất kỳ hook OnKey COM nào có thể đang ghi đè sai
             try
             {
-                string[] allKeys = {
-                    "^+Q", "^+q", "^+H", "^+h", "^+%H", "^+%h", "^+M", "^+m",
-                    "^+W", "^+w", "{F3}", "^+T", "^+t", "^%T", "^%t",
-                    "^+P", "^+p", "^+D", "^+d", "^+B", "^+b", "^+J", "^+j"
-                };
-                foreach (var k in allKeys)
+                // Khởi tạo WPF Application runtime với ShutdownMode = OnExplicitShutdown
+                // Đảm bảo không bao giờ đóng tiến trình Excel khi một hộp thoại WPF đóng lại
+                if (WpfApplication.Current == null)
                 {
-                    try { _excelApp?.OnKey(k); } catch { }
+                    try
+                    {
+                        new WpfApplication
+                        {
+                            ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown
+                        };
+                    }
+                    catch { }
                 }
+                else
+                {
+                    try
+                    {
+                        WpfApplication.Current.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
+                    }
+                    catch { }
+                }
+
+                _excelApp = (ExcelApp)ExcelDnaUtil.Application;
+                MainViewModel = new TaskPaneViewModel();
+
+                MainViewModel.RequestActivateWorkbook += OnRequestActivateWorkbook;
+                MainViewModel.RequestActivateWorksheet += OnRequestActivateWorksheet;
+                MainViewModel.RequestCloseWorkbook += OnRequestCloseWorkbook;
+                MainViewModel.RequestSetSheetTabColor += OnRequestSetSheetTabColor;
+                MainViewModel.RequestSetSheetVisibility += OnRequestSetSheetVisibility;
+                MainViewModel.RequestUnhideAllSheets += OnRequestUnhideAllSheets;
+
+                HookExcelEvents();
+
+                // 1. Dọn dẹp bất kỳ hook OnKey COM nào có thể đang ghi đè sai
+                try
+                {
+                    string[] allKeys = {
+                        "^+Q", "^+q", "^+H", "^+h", "^+%H", "^+%h", "^+M", "^+m",
+                        "^+W", "^+w", "{F3}", "^+T", "^+t", "^%T", "^%t",
+                        "^+P", "^+p", "^+D", "^+d", "^+B", "^+b", "^+J", "^+j"
+                    };
+                    foreach (var k in allKeys)
+                    {
+                        try { _excelApp?.OnKey(k); } catch { }
+                    }
+                }
+                catch { }
+
+                // 2. Đăng ký phím tắt qua C-API xlcOnKey của Excel-DNA để gọi trực tiếp XLL macro
+                RegisterKey("^+Q", "OracleQuickQueryCommand");
+                RegisterKey("^+q", "OracleQuickQueryCommand");
+                RegisterKey("^+H", "ApplyDesignHighlightSelectionCommand");
+                RegisterKey("^+h", "ApplyDesignHighlightSelectionCommand");
+                RegisterKey("^+%H", "ClearDesignHighlightSelectionCommand");
+                RegisterKey("^+%h", "ClearDesignHighlightSelectionCommand");
+                RegisterKey("^+M", "ExportMarkdownTableCommand");
+                RegisterKey("^+m", "ExportMarkdownTableCommand");
+                RegisterKey("^+W", "ToggleTaskPaneCommand");
+                RegisterKey("^+w", "ToggleTaskPaneCommand");
+                RegisterKey("{F3}", "OpenAiTranslateDialogCommand");
+                RegisterKey("^+T", "AiQuickTranslateCommand");
+                RegisterKey("^+t", "AiQuickTranslateCommand");
+                RegisterKey("^%T", "AiQuickTranslateAltCommand");
+                RegisterKey("^%t", "AiQuickTranslateAltCommand");
+                RegisterKey("^+P", "QuickCommandPaletteCommand");
+                RegisterKey("^+p", "QuickCommandPaletteCommand");
+                RegisterKey("^+D", "OpenDetailedDesignCommand");
+                RegisterKey("^+d", "OpenDetailedDesignCommand");
+                RegisterKey("^+B", "OpenBasicDesignCommand");
+                RegisterKey("^+b", "OpenBasicDesignCommand");
+                RegisterKey("^+J", "OpenTestSpecCommand");
+                RegisterKey("^+j", "OpenTestSpecCommand");
+
+                QueueRefresh();
             }
-            catch { }
-
-            // 2. Đăng ký phím tắt qua C-API xlcOnKey của Excel-DNA để gọi trực tiếp XLL macro
-            RegisterKey("^+Q", "OracleQuickQueryCommand");
-            RegisterKey("^+q", "OracleQuickQueryCommand");
-            RegisterKey("^+H", "ApplyDesignHighlightSelectionCommand");
-            RegisterKey("^+h", "ApplyDesignHighlightSelectionCommand");
-            RegisterKey("^+%H", "ClearDesignHighlightSelectionCommand");
-            RegisterKey("^+%h", "ClearDesignHighlightSelectionCommand");
-            RegisterKey("^+M", "ExportMarkdownTableCommand");
-            RegisterKey("^+m", "ExportMarkdownTableCommand");
-            RegisterKey("^+W", "ToggleTaskPaneCommand");
-            RegisterKey("^+w", "ToggleTaskPaneCommand");
-            RegisterKey("{F3}", "OpenAiTranslateDialogCommand");
-            RegisterKey("^+T", "AiQuickTranslateCommand");
-            RegisterKey("^+t", "AiQuickTranslateCommand");
-            RegisterKey("^%T", "AiQuickTranslateAltCommand");
-            RegisterKey("^%t", "AiQuickTranslateAltCommand");
-            RegisterKey("^+P", "QuickCommandPaletteCommand");
-            RegisterKey("^+p", "QuickCommandPaletteCommand");
-            RegisterKey("^+D", "OpenDetailedDesignCommand");
-            RegisterKey("^+d", "OpenDetailedDesignCommand");
-            RegisterKey("^+B", "OpenBasicDesignCommand");
-            RegisterKey("^+b", "OpenBasicDesignCommand");
-            RegisterKey("^+J", "OpenTestSpecCommand");
-            RegisterKey("^+j", "OpenTestSpecCommand");
-
-            QueueRefresh();
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AddInEvents.AutoOpen] Error: {ex}");
+            }
         }
 
         public void AutoClose()
