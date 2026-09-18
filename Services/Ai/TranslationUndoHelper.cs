@@ -17,16 +17,6 @@ namespace ExcelSupport.Services
             public object? NewValue { get; set; }
         }
 
-        public class UndoRecord
-        {
-            public string SheetName { get; set; } = string.Empty;
-            public string? WorkbookName { get; set; }
-            public List<CellBackupItem> Cells { get; set; } = new List<CellBackupItem>();
-        }
-
-        private static readonly Stack<UndoRecord> _undoStack = new Stack<UndoRecord>();
-        private static readonly Stack<UndoRecord> _redoStack = new Stack<UndoRecord>();
-
         public const string UndoMacroName = "ExcelSupport_UndoTranslation";
         public const string RedoMacroName = "ExcelSupport_RedoTranslation";
 

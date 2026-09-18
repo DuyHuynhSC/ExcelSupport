@@ -123,7 +123,7 @@ graph TD
 #### 4.2. Excel Range to SQL INSERT / MERGE Script Generator — [Ưu tiên P1]
 * Chọn vùng bảng tính $\rightarrow$ Sinh script `.sql` chứa các câu lệnh `INSERT INTO ...` hoặc `MERGE INTO ... (Upsert)` chuẩn cú pháp theo từng loại database.
 
-#### 4.3. Multi-User Connection Profiles (Quản Lý Nhiều User Trong 1 Connection Profile) — [Ưu tiên P0]
+#### 4.3. Multi-User Connection Profiles (Quản Lý Nhiều User Trong 1 Connection Profile) — [Ưu tiên P0  - ✅ Đã hoàn thành]
 * **Vấn đề giải quyết:** Hiện tại, mỗi Connection Profile chỉ lưu được duy nhất 1 User/Password. Trong thực tế dự án, một cơ sở dữ liệu (Host/DB) thường có nhiều User với quyền hạn khác nhau (User Admin/Schema Owner để xem cấu trúc DDL, User Read-Only / Select để tra cứu an toàn, User Nghiệp vụ / Test...). Việc phải tạo nhiều Profile trùng Host/Port/Service chỉ để đổi User gây rườm rà và khó quản lý.
 * **Mô tả hoạt động & Luồng người dùng:**
   - **Quản lý danh sách User trong Connection Profile Details:**

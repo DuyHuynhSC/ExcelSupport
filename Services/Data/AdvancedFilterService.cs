@@ -210,18 +210,7 @@ namespace ExcelSupport.Services
             return list;
         }
 
-        public static string GetColumnLetter(int col)
-        {
-            int dividend = col;
-            string colName = string.Empty;
-            while (dividend > 0)
-            {
-                int modulo = (dividend - 1) % 26;
-                colName = Convert.ToChar(65 + modulo) + colName;
-                dividend = (dividend - modulo) / 26;
-            }
-            return colName;
-        }
+        public static string GetColumnLetter(int col) => ExcelSupport.Helpers.ExcelUtils.ConvertColIndexToLetter(col);
 
         #endregion
 

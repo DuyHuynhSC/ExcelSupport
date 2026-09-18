@@ -699,10 +699,7 @@
                                                   Background="#FFFFFF"
                                                   BorderBrush="#CBD5E1"
                                                   BorderThickness="1"
-                                                  SelectionMode="Single"
-                                                  GotFocus="DgSettingUsers_GotFocus"
-                                                  PreviewMouseDown="DgSettingUsers_PreviewMouseDown"
-                                                  SelectionChanged="DgSettingUsers_SelectionChanged">
+                                                  SelectionMode="Single">
                                             <DataGrid.RowStyle>
                                                 <Style TargetType="DataGridRow">
                                                     <Style.Triggers>

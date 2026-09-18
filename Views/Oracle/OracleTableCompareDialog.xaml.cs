@@ -28,7 +28,6 @@ namespace ExcelSupport.Views
         private readonly ObservableCollection<OracleTableColumnInfo> _tableColumns = new ObservableCollection<OracleTableColumnInfo>();
         private readonly ObservableCollection<OracleConnectionProfile> _profiles = new ObservableCollection<OracleConnectionProfile>();
         private readonly ObservableCollection<OracleUserCredential> _settingUsers = new ObservableCollection<OracleUserCredential>();
-        private OracleUserCredential? _focusedUser;
         private OracleCompareResult? _lastResult;
         private List<OracleRowDiffItem> _allDiffItems = new List<OracleRowDiffItem>();
         private bool _isComparing = false;
@@ -205,22 +204,7 @@ namespace ExcelSupport.Views
             lstProfiles.ItemsSource = null;
             lstProfiles.ItemsSource = _profiles;
 
-            if (!string.IsNullOrEmpty(targetId))
-            {
-                var matched = _profiles.FirstOrDefault(p => p.Id == targetId);
-                if (matched != null)
-                {
-                    lstProfiles.SelectedItem = matched;
-                }
-                else if (_profiles.Count > 0)
-                {
-                    lstProfiles.SelectedIndex = 0;
-                }
-            }
-            else if (_profiles.Count > 0)
-            {
-                lstProfiles.SelectedIndex = 0;
-            }
+            lstProfiles.SelectedItem = _profiles.FirstOrDefault(p => p.Id == targetId) ?? _profiles.FirstOrDefault();
         }
 
         private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -238,10 +222,6 @@ namespace ExcelSupport.Views
         private void BtnManageProfiles_Click(object sender, RoutedEventArgs e)
         {
             mainTabControl.SelectedIndex = 1; // Switch to Tab Settings
-            if (pnlFooterControls != null)
-            {
-                pnlFooterControls.Visibility = Visibility.Collapsed;
-            }
         }
 
         private void CboProfileA_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -297,58 +277,7 @@ namespace ExcelSupport.Views
 
                 var defUser = _settingUsers.FirstOrDefault(u => u.IsDefault) ?? _settingUsers.FirstOrDefault();
                 dgSettingUsers.SelectedItem = defUser;
-                _focusedUser = defUser;
             }
-        }
-
-        private void DgSettingUsers_GotFocus(object sender, RoutedEventArgs e)
-        {
-            if (e.OriginalSource is DependencyObject dep)
-            {
-                var row = FindVisualParent<DataGridRow>(dep);
-                if (row?.Item is OracleUserCredential cred)
-                {
-                    dgSettingUsers.SelectedItem = cred;
-                    _focusedUser = cred;
-                }
-                else if (e.OriginalSource is FrameworkElement fe && fe.DataContext is OracleUserCredential cred2)
-                {
-                    dgSettingUsers.SelectedItem = cred2;
-                    _focusedUser = cred2;
-                }
-            }
-        }
-
-        private void DgSettingUsers_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (e.OriginalSource is DependencyObject dep)
-            {
-                var row = FindVisualParent<DataGridRow>(dep);
-                if (row?.Item is OracleUserCredential cred)
-                {
-                    dgSettingUsers.SelectedItem = cred;
-                    _focusedUser = cred;
-                }
-            }
-        }
-
-        private void DgSettingUsers_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (dgSettingUsers.SelectedItem is OracleUserCredential cred)
-            {
-                _focusedUser = cred;
-            }
-        }
-
-        private static T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
-        {
-            var current = child;
-            while (current != null)
-            {
-                if (current is T parent) return parent;
-                current = VisualTreeHelper.GetParent(current);
-            }
-            return null;
         }
 
         private void BtnUserAdd_Click(object sender, RoutedEventArgs e)
@@ -362,7 +291,6 @@ namespace ExcelSupport.Views
             };
             _settingUsers.Add(newUser);
             dgSettingUsers.SelectedItem = newUser;
-            _focusedUser = newUser;
             txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserAdded") ?? "Đã thêm tài khoản '{0}' vào danh sách.", newUser.Username);
         }
 
@@ -370,7 +298,6 @@ namespace ExcelSupport.Views
         {
             if (sender is WpfRadioButton rb && rb.DataContext is OracleUserCredential selected)
             {
-                _focusedUser = selected;
                 dgSettingUsers.SelectedItem = selected;
                 foreach (var u in _settingUsers)
                 {
@@ -398,10 +325,6 @@ namespace ExcelSupport.Views
                 if (!_settingUsers.Any(u => u.IsDefault) && _settingUsers.Count > 0)
                 {
                     _settingUsers[0].IsDefault = true;
-                }
-                if (_focusedUser == item)
-                {
-                    _focusedUser = _settingUsers.FirstOrDefault(u => u.IsDefault) ?? _settingUsers.FirstOrDefault();
                 }
                 txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserDeleted") ?? "Đã xóa User '{0}'.", item.Username);
             }
@@ -486,9 +409,8 @@ namespace ExcelSupport.Views
                 p.Username = def?.Username ?? "";
                 p.Password = def?.Password ?? "";
 
-                string savedId = p.Id;
                 OracleConnectionManager.AddOrUpdateProfile(p);
-                RefreshProfilesList(savedId);
+                RefreshProfilesList(p.Id);
 
                 txtSettingStatus.Text = "✅ Đã lưu cấu hình thành công!";
                 txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
@@ -502,8 +424,7 @@ namespace ExcelSupport.Views
             int.TryParse(txtSettingPort.Text, out int port);
             if (port <= 0) port = 1521;
 
-            var activeUser = _focusedUser 
-                             ?? dgSettingUsers.SelectedItem as OracleUserCredential 
+            var activeUser = (dgSettingUsers.SelectedItem as OracleUserCredential) 
                              ?? _settingUsers.FirstOrDefault(u => u.IsDefault) 
                              ?? _settingUsers.FirstOrDefault();
 

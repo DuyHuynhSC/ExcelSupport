@@ -577,19 +577,22 @@ namespace ExcelSupport.Services
                 // Kiểm tra tên sheet trùng lặp
                 while (true)
                 {
-                    bool exists = false;
-                    foreach (_Worksheet s in wb.Worksheets)
+                    try
                     {
-                        if (string.Equals(s.Name, sheetName, StringComparison.OrdinalIgnoreCase))
+                        var existing = wb.Worksheets[sheetName];
+                        if (existing != null)
                         {
-                            exists = true;
-                            Marshal.ReleaseComObject(s);
-                            break;
+                            Marshal.ReleaseComObject(existing);
+                            sheetName = $"{baseName}_{suffix++}";
+                            continue;
                         }
-                        Marshal.ReleaseComObject(s);
                     }
-                    if (!exists) break;
-                    sheetName = $"{baseName}_{suffix++}";
+                    catch
+                    {
+                        // Sheet không tồn tại, tên khả dụng
+                        break;
+                    }
+                    break;
                 }
 
                 reportSheet = wb.Worksheets.Add() as _Worksheet;

@@ -193,18 +193,7 @@ namespace ExcelSupport.Views
             }
         }
 
-        private static string GetColumnLetter(int colIndex)
-        {
-            int div = colIndex;
-            string colLetter = string.Empty;
-            while (div > 0)
-            {
-                int mod = (div - 1) % 26;
-                colLetter = (char)(65 + mod) + colLetter;
-                div = (div - mod) / 26;
-            }
-            return colLetter;
-        }
+        private static string GetColumnLetter(int colIndex) => ExcelSupport.Helpers.ExcelUtils.ConvertColIndexToLetter(colIndex);
 
         #region TAB 1: XÓA DÒNG / CỘT TRỐNG
 

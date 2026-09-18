@@ -21,26 +21,10 @@ namespace ExcelSupport.Services
 
             try
             {
-                foreach (Workbook w in app.Workbooks)
-                {
-                    if (string.Equals(w.Name, wbName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        wb = w;
-                        break;
-                    }
-                }
-
+                wb = TryGetWorkbook(app, wbName);
                 if (wb == null) return list;
 
-                foreach (_Worksheet s in wb.Worksheets)
-                {
-                    if (string.Equals(s.Name, sheetName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        ws = s;
-                        break;
-                    }
-                }
-
+                ws = TryGetWorksheet(wb, sheetName);
                 if (ws == null) return list;
 
                 usedRange = ws.UsedRange;
@@ -116,31 +100,15 @@ namespace ExcelSupport.Services
                 app.Calculation = XlCalculation.xlCalculationManual;
 
                 // Tìm Workbook & Sheet 1
-                foreach (Workbook w in app.Workbooks)
-                {
-                    if (string.Equals(w.Name, options.Table1WorkbookName, StringComparison.OrdinalIgnoreCase)) { wb1 = w; break; }
-                }
-                if (wb1 == null) wb1 = app.ActiveWorkbook;
+                wb1 = TryGetWorkbook(app, options.Table1WorkbookName) ?? app.ActiveWorkbook;
                 if (wb1 == null) { result.Success = false; result.Message = "Không tìm thấy file của Bảng 1."; return result; }
 
-                foreach (_Worksheet s in wb1.Worksheets)
-                {
-                    if (string.Equals(s.Name, options.Table1SheetName, StringComparison.OrdinalIgnoreCase)) { ws1 = s; break; }
-                }
-                if (ws1 == null) ws1 = wb1.ActiveSheet as _Worksheet;
+                ws1 = TryGetWorksheet(wb1, options.Table1SheetName) ?? wb1.ActiveSheet as _Worksheet;
                 if (ws1 == null) { result.Success = false; result.Message = "Không tìm thấy Sheet của Bảng 1."; return result; }
 
                 // Tìm Workbook & Sheet 2
-                foreach (Workbook w in app.Workbooks)
-                {
-                    if (string.Equals(w.Name, options.Table2WorkbookName, StringComparison.OrdinalIgnoreCase)) { wb2 = w; break; }
-                }
-                if (wb2 == null) wb2 = wb1;
-
-                foreach (_Worksheet s in wb2.Worksheets)
-                {
-                    if (string.Equals(s.Name, options.Table2SheetName, StringComparison.OrdinalIgnoreCase)) { ws2 = s; break; }
-                }
+                wb2 = TryGetWorkbook(app, options.Table2WorkbookName) ?? wb1;
+                ws2 = TryGetWorksheet(wb2, options.Table2SheetName);
                 if (ws2 == null) { result.Success = false; result.Message = "Không tìm thấy Sheet của Bảng 2."; return result; }
 
                 // Đọc dữ liệu Bảng 1
@@ -435,16 +403,18 @@ namespace ExcelSupport.Services
                 .Replace('Đ', 'D');
         }
 
-        private static string ConvertColIndexToLetter(int colIndex)
+        private static Workbook? TryGetWorkbook(ExcelApp app, string? name)
         {
-            string colLetter = string.Empty;
-            while (colIndex > 0)
-            {
-                int modulo = (colIndex - 1) % 26;
-                colLetter = Convert.ToChar('A' + modulo) + colLetter;
-                colIndex = (colIndex - modulo) / 26;
-            }
-            return colLetter;
+            if (string.IsNullOrEmpty(name)) return null;
+            try { return app.Workbooks[name]; } catch { return null; }
         }
+
+        private static _Worksheet? TryGetWorksheet(Workbook? wb, string? name)
+        {
+            if (wb == null || string.IsNullOrEmpty(name)) return null;
+            try { return wb.Worksheets[name] as _Worksheet; } catch { return null; }
+        }
+
+        private static string ConvertColIndexToLetter(int colIndex) => ExcelSupport.Helpers.ExcelUtils.ConvertColIndexToLetter(colIndex);
     }
 }

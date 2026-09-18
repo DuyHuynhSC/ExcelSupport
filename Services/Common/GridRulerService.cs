@@ -387,17 +387,7 @@ namespace ExcelSupport.Services
             }
         }
 
-        private static string GetColumnLetter(int colIndex)
-        {
-            string colLetter = string.Empty;
-            while (colIndex > 0)
-            {
-                int modulo = (colIndex - 1) % 26;
-                colLetter = Convert.ToChar('A' + modulo) + colLetter;
-                colIndex = (colIndex - modulo) / 26;
-            }
-            return colLetter;
-        }
+        private static string GetColumnLetter(int colIndex) => ExcelSupport.Helpers.ExcelUtils.ConvertColIndexToLetter(colIndex);
 
         private static Shape? GetOrCreateShape(_Worksheet ws, string shapeName, double left, double top, double width, double height, int oleColor)
         {
