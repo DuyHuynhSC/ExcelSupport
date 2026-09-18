@@ -43,6 +43,10 @@ namespace ExcelSupport.Services
                     var list = JsonConvert.DeserializeObject<List<OracleConnectionProfile>>(json);
                     if (list != null && list.Count > 0)
                     {
+                        foreach (var p in list)
+                        {
+                            p.EnsureDefaultUsers();
+                        }
                         return list;
                     }
                 }
@@ -53,29 +57,29 @@ namespace ExcelSupport.Services
             }
 
             // Default sample profiles if none exist
-            var defaults = new List<OracleConnectionProfile>
+            var p1 = new OracleConnectionProfile
             {
-                new OracleConnectionProfile
-                {
-                    Name = "Localhost ORCL (Default)",
-                    Host = "localhost",
-                    Port = 1521,
-                    ServiceNameOrSid = "ORCL",
-                    ServiceType = OracleServiceNameType.ServiceName,
-                    Username = "SYSTEM",
-                    Password = ""
-                },
-                new OracleConnectionProfile
-                {
-                    Name = "Dev / UAT Environment",
-                    Host = "192.168.1.100",
-                    Port = 1521,
-                    ServiceNameOrSid = "DEVDB",
-                    ServiceType = OracleServiceNameType.ServiceName,
-                    Username = "APP_USER",
-                    Password = ""
-                }
+                Name = "Localhost ORCL (Default)",
+                Host = "localhost",
+                Port = 1521,
+                ServiceNameOrSid = "ORCL",
+                ServiceType = OracleServiceNameType.ServiceName,
+                IsDefault = true
             };
+            p1.EnsureDefaultUsers();
+
+            var p2 = new OracleConnectionProfile
+            {
+                Name = "Dev / UAT Environment",
+                Host = "192.168.1.100",
+                Port = 1521,
+                ServiceNameOrSid = "DEVDB",
+                ServiceType = OracleServiceNameType.ServiceName,
+                IsDefault = false
+            };
+            p2.EnsureDefaultUsers();
+
+            var defaults = new List<OracleConnectionProfile> { p1, p2 };
 
             Save(defaults);
             return defaults;

@@ -25,6 +25,7 @@ namespace ExcelSupport.Views
     {
         private readonly ObservableCollection<OracleTableColumnInfo> _tableColumns = new ObservableCollection<OracleTableColumnInfo>();
         private readonly ObservableCollection<OracleConnectionProfile> _profiles = new ObservableCollection<OracleConnectionProfile>();
+        private readonly ObservableCollection<OracleUserCredential> _settingUsers = new ObservableCollection<OracleUserCredential>();
         private OracleCompareResult? _lastResult;
         private List<OracleRowDiffItem> _allDiffItems = new List<OracleRowDiffItem>();
         private bool _isComparing = false;
@@ -248,12 +249,121 @@ namespace ExcelSupport.Views
                 txtSettingService.Text = p.ServiceNameOrSid;
                 rbSettingService.IsChecked = p.ServiceType == OracleServiceNameType.ServiceName;
                 rbSettingSid.IsChecked = p.ServiceType == OracleServiceNameType.SID;
-                txtSettingUser.Text = p.Username;
-                txtSettingPass.Password = p.Password;
                 txtSettingDefaultSchema.Text = p.DefaultSchema;
                 txtSettingDefaultTable.Text = p.DefaultTable;
                 txtSettingDefaultWhere.Text = p.DefaultWhereClause;
                 txtSettingStatus.Text = string.Empty;
+
+                p.EnsureDefaultUsers();
+                _settingUsers.Clear();
+                foreach (var u in p.Users)
+                {
+                    _settingUsers.Add(u);
+                }
+                dgSettingUsers.ItemsSource = null;
+                dgSettingUsers.ItemsSource = _settingUsers;
+
+                var defUser = _settingUsers.FirstOrDefault(u => u.IsDefault) ?? _settingUsers.FirstOrDefault();
+                dgSettingUsers.SelectedItem = defUser;
+            }
+        }
+
+        private void DgSettingUsers_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (dgSettingUsers.SelectedItem is OracleUserCredential u)
+            {
+                txtUserItemName.Text = u.Username;
+                txtUserItemPass.Password = u.Password;
+                txtUserItemRole.Text = u.RoleOrDescription;
+            }
+            else
+            {
+                txtUserItemName.Text = string.Empty;
+                txtUserItemPass.Password = string.Empty;
+                txtUserItemRole.Text = string.Empty;
+            }
+        }
+
+        private void BtnUserAdd_Click(object sender, RoutedEventArgs e)
+        {
+            dgSettingUsers.SelectedItem = null;
+            txtUserItemName.Text = string.Empty;
+            txtUserItemPass.Password = string.Empty;
+            txtUserItemRole.Text = string.Empty;
+            txtUserItemName.Focus();
+        }
+
+        private void BtnUserSaveItem_Click(object sender, RoutedEventArgs e)
+        {
+            string username = txtUserItemName.Text.Trim();
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                WpfMessageBox.Show(this, "Tên tài khoản User không được để trống.", "Thiếu thông tin", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                txtUserItemName.Focus();
+                return;
+            }
+
+            if (dgSettingUsers.SelectedItem is OracleUserCredential selected)
+            {
+                selected.Username = username;
+                selected.Password = txtUserItemPass.Password;
+                selected.RoleOrDescription = txtUserItemRole.Text.Trim();
+                dgSettingUsers.Items.Refresh();
+                txtSettingStatus.Text = $"Đã cập nhật User '{username}'.";
+            }
+            else
+            {
+                var newUser = new OracleUserCredential
+                {
+                    Username = username,
+                    Password = txtUserItemPass.Password,
+                    RoleOrDescription = txtUserItemRole.Text.Trim(),
+                    IsDefault = _settingUsers.Count == 0
+                };
+                _settingUsers.Add(newUser);
+                dgSettingUsers.SelectedItem = newUser;
+                txtSettingStatus.Text = $"Đã thêm User '{username}' vào danh sách.";
+            }
+        }
+
+        private void BtnUserSetDefault_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgSettingUsers.SelectedItem is OracleUserCredential selected)
+            {
+                foreach (var u in _settingUsers)
+                {
+                    u.IsDefault = (u == selected);
+                }
+                dgSettingUsers.Items.Refresh();
+                txtSettingStatus.Text = $"Đã đặt User '{selected.Username}' làm mặc định.";
+            }
+            else
+            {
+                WpfMessageBox.Show(this, "Vui lòng chọn một User trong danh sách để đặt làm mặc định.", "Chưa chọn User", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+            }
+        }
+
+        private void BtnUserDelete_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgSettingUsers.SelectedItem is OracleUserCredential selected)
+            {
+                if (_settingUsers.Count <= 1)
+                {
+                    WpfMessageBox.Show(this, "Mỗi cấu hình kết nối phải có ít nhất 1 tài khoản User.", "Không thể xóa", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    return;
+                }
+
+                _settingUsers.Remove(selected);
+                if (!_settingUsers.Any(u => u.IsDefault) && _settingUsers.Count > 0)
+                {
+                    _settingUsers[0].IsDefault = true;
+                }
+                dgSettingUsers.SelectedItem = _settingUsers.FirstOrDefault();
+                txtSettingStatus.Text = $"Đã xóa User '{selected.Username}'.";
+            }
+            else
+            {
+                WpfMessageBox.Show(this, "Vui lòng chọn một User trong danh sách để xóa.", "Chưa chọn User", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
             }
         }
 
@@ -265,10 +375,9 @@ namespace ExcelSupport.Views
                 Host = "localhost",
                 Port = 1521,
                 ServiceNameOrSid = "ORCL",
-                ServiceType = OracleServiceNameType.ServiceName,
-                Username = "",
-                Password = ""
+                ServiceType = OracleServiceNameType.ServiceName
             };
+            newProfile.EnsureDefaultUsers();
 
             OracleConnectionManager.AddOrUpdateProfile(newProfile);
             RefreshProfilesList();
@@ -330,8 +439,16 @@ namespace ExcelSupport.Views
                 p.Port = port;
                 p.ServiceNameOrSid = txtSettingService.Text.Trim();
                 p.ServiceType = (rbSettingSid.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName;
-                p.Username = txtSettingUser.Text.Trim();
-                p.Password = txtSettingPass.Password;
+                
+                p.Users = _settingUsers.ToList();
+                if (!p.Users.Any(u => u.IsDefault) && p.Users.Count > 0)
+                {
+                    p.Users[0].IsDefault = true;
+                }
+                var def = p.GetEffectiveUser();
+                p.Username = def?.Username ?? "";
+                p.Password = def?.Password ?? "";
+
                 p.DefaultSchema = txtSettingDefaultSchema.Text.Trim();
                 p.DefaultTable = txtSettingDefaultTable.Text.Trim();
                 p.DefaultWhereClause = txtSettingDefaultWhere.Text.Trim();
@@ -353,14 +470,18 @@ namespace ExcelSupport.Views
             int.TryParse(txtSettingPort.Text, out int port);
             if (port <= 0) port = 1521;
 
+            var activeUser = dgSettingUsers.SelectedItem as OracleUserCredential 
+                             ?? _settingUsers.FirstOrDefault(u => u.IsDefault) 
+                             ?? _settingUsers.FirstOrDefault();
+
             var config = new OracleConnectionConfig
             {
                 Host = txtSettingHost.Text.Trim(),
                 Port = port,
                 ServiceNameOrSid = txtSettingService.Text.Trim(),
                 ServiceType = (rbSettingSid.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName,
-                Username = txtSettingUser.Text.Trim(),
-                Password = txtSettingPass.Password
+                Username = activeUser?.Username ?? "",
+                Password = activeUser?.Password ?? ""
             };
 
             var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
@@ -368,7 +489,7 @@ namespace ExcelSupport.Views
 
             if (success)
             {
-                txtSettingStatus.Text = $"🟢 Kết nối thành công! Phiên bản: {version}";
+                txtSettingStatus.Text = $"🟢 Kết nối thành công! Phiên bản: {version} (User: {config.Username})";
                 txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
             }
             else

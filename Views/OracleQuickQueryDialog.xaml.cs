@@ -22,6 +22,7 @@ namespace ExcelSupport.Views
     public partial class OracleQuickQueryDialog : Window
     {
         private readonly ObservableCollection<OracleConnectionProfile> _profiles = new ObservableCollection<OracleConnectionProfile>();
+        private readonly ObservableCollection<OracleUserCredential> _users = new ObservableCollection<OracleUserCredential>();
         public static readonly DependencyProperty IsDarkThemeProperty =
             DependencyProperty.Register(nameof(IsDarkTheme), typeof(bool), typeof(OracleQuickQueryDialog),
                 new PropertyMetadata(false));
@@ -92,6 +93,7 @@ namespace ExcelSupport.Views
             _profiles.Clear();
             foreach (var p in list)
             {
+                p.EnsureDefaultUsers();
                 _profiles.Add(p);
             }
 
@@ -107,6 +109,8 @@ namespace ExcelSupport.Views
             {
                 cboProfile.SelectedIndex = 0;
             }
+
+            UpdateUserDropdown();
         }
 
         private void LoadQueryHistory()
@@ -184,9 +188,73 @@ namespace ExcelSupport.Views
             }
         }
 
+        private void UpdateUserDropdown()
+        {
+            _users.Clear();
+            if (cboProfile.SelectedItem is OracleConnectionProfile p)
+            {
+                p.EnsureDefaultUsers();
+                foreach (var u in p.Users)
+                {
+                    _users.Add(u);
+                }
+                cboUser.ItemsSource = null;
+                cboUser.ItemsSource = _users;
+
+                var selected = p.GetEffectiveUser();
+                cboUser.SelectedItem = selected ?? _users.FirstOrDefault();
+            }
+            else
+            {
+                cboUser.ItemsSource = null;
+            }
+        }
+
         private void CboProfile_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Update profile
+            UpdateUserDropdown();
+        }
+
+        private void CboUser_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cboProfile.SelectedItem is OracleConnectionProfile p && cboUser.SelectedItem is OracleUserCredential u)
+            {
+                p.SelectedUserId = u.Id;
+            }
+        }
+
+        private void BtnInspectStructure_Click(object sender, RoutedEventArgs e)
+        {
+            var profile = cboProfile.SelectedItem as OracleConnectionProfile;
+            if (profile == null)
+            {
+                WpfMessageBox.Show(this, "Vui lòng chọn một cấu hình kết nối Oracle trước.", "Thông báo", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            var user = cboUser.SelectedItem as OracleUserCredential;
+            var config = profile.GetEffectiveConfig(user?.Id);
+
+            string initialTable = "";
+            if (!string.IsNullOrWhiteSpace(txtSqlQuery.SelectedText))
+            {
+                initialTable = txtSqlQuery.SelectedText.Trim().Trim(';', '"', '\'');
+            }
+            else
+            {
+                string extracted = OracleQuickQueryService.ExtractTableName(txtSqlQuery.Text);
+                if (!string.Equals(extracted, "QUERY_RESULT", StringComparison.OrdinalIgnoreCase))
+                {
+                    initialTable = extracted;
+                }
+            }
+
+            OracleTableStructureDialog.ShowDialog(this, config, initialTable, (generatedSql) =>
+            {
+                txtSqlQuery.Text = generatedSql;
+                txtSqlQuery.Focus();
+                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+            }, IsDarkTheme);
         }
 
         private void BtnPickLocation_Click(object sender, RoutedEventArgs e)
@@ -263,7 +331,8 @@ namespace ExcelSupport.Views
 
             try
             {
-                var config = profile.ToConnectionConfig();
+                var user = cboUser.SelectedItem as OracleUserCredential;
+                var config = profile.GetEffectiveConfig(user?.Id);
                 var dt = await OracleQuickQueryService.ExecuteQueryAsync(config, sql, maxRows);
                 sw.Stop();
 
@@ -427,7 +496,12 @@ namespace ExcelSupport.Views
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            if (e.Key == Key.T && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                BtnInspectStructure_Click(btnInspectStructure, new RoutedEventArgs());
+            }
+            else if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
                 e.Handled = true;
                 BtnExecute_Click(btnExecute, new RoutedEventArgs());

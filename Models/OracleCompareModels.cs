@@ -33,6 +33,74 @@ namespace ExcelSupport.Models
         MissingInB  // Only in A
     }
 
+    public class OracleUserCredential : INotifyPropertyChanged
+    {
+        private string _id = Guid.NewGuid().ToString();
+        private string _username = "";
+        private string _password = "";
+        private string _roleOrDescription = "";
+        private bool _isDefault = false;
+
+        public string Id
+        {
+            get => _id;
+            set { _id = value; OnPropertyChanged(nameof(Id)); }
+        }
+
+        public string Username
+        {
+            get => _username;
+            set { _username = value; OnPropertyChanged(nameof(Username)); OnPropertyChanged(nameof(DisplayText)); }
+        }
+
+        public string Password
+        {
+            get => _password;
+            set { _password = value; OnPropertyChanged(nameof(Password)); }
+        }
+
+        public string RoleOrDescription
+        {
+            get => _roleOrDescription;
+            set { _roleOrDescription = value; OnPropertyChanged(nameof(RoleOrDescription)); OnPropertyChanged(nameof(DisplayText)); }
+        }
+
+        public bool IsDefault
+        {
+            get => _isDefault;
+            set { _isDefault = value; OnPropertyChanged(nameof(IsDefault)); OnPropertyChanged(nameof(DefaultBadge)); }
+        }
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string DefaultBadge => IsDefault ? "⭐ (Mặc định)" : "";
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string DisplayText
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(RoleOrDescription))
+                    return Username;
+                return $"{Username} ({RoleOrDescription})";
+            }
+        }
+
+        public OracleUserCredential Clone()
+        {
+            return new OracleUserCredential
+            {
+                Id = Guid.NewGuid().ToString(),
+                Username = this.Username,
+                Password = this.Password,
+                RoleOrDescription = this.RoleOrDescription,
+                IsDefault = false
+            };
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     public class OracleConnectionProfile : INotifyPropertyChanged
     {
         private string _id = Guid.NewGuid().ToString();
@@ -47,6 +115,8 @@ namespace ExcelSupport.Models
         private string _defaultTable = "";
         private string _defaultWhereClause = "";
         private bool _isDefault = false;
+        private List<OracleUserCredential> _users = new List<OracleUserCredential>();
+        private string? _selectedUserId;
 
         public string Id
         {
@@ -93,16 +163,60 @@ namespace ExcelSupport.Models
             set { _serviceType = value; OnPropertyChanged(nameof(ServiceType)); }
         }
 
+        public List<OracleUserCredential> Users
+        {
+            get => _users;
+            set
+            {
+                _users = value ?? new List<OracleUserCredential>();
+                OnPropertyChanged(nameof(Users));
+                OnPropertyChanged(nameof(DisplaySummary));
+            }
+        }
+
+        public string? SelectedUserId
+        {
+            get => _selectedUserId;
+            set { _selectedUserId = value; OnPropertyChanged(nameof(SelectedUserId)); OnPropertyChanged(nameof(DisplaySummary)); }
+        }
+
         public string Username
         {
-            get => _username;
-            set { _username = value; OnPropertyChanged(nameof(Username)); }
+            get
+            {
+                var user = GetEffectiveUser();
+                return user != null ? user.Username : _username;
+            }
+            set
+            {
+                _username = value;
+                var defUser = Users.FirstOrDefault(u => u.IsDefault) ?? Users.FirstOrDefault();
+                if (defUser != null)
+                {
+                    defUser.Username = value;
+                }
+                OnPropertyChanged(nameof(Username));
+                OnPropertyChanged(nameof(DisplaySummary));
+            }
         }
 
         public string Password
         {
-            get => _password;
-            set { _password = value; OnPropertyChanged(nameof(Password)); }
+            get
+            {
+                var user = GetEffectiveUser();
+                return user != null ? user.Password : _password;
+            }
+            set
+            {
+                _password = value;
+                var defUser = Users.FirstOrDefault(u => u.IsDefault) ?? Users.FirstOrDefault();
+                if (defUser != null)
+                {
+                    defUser.Password = value;
+                }
+                OnPropertyChanged(nameof(Password));
+            }
         }
 
         public string DefaultSchema
@@ -124,24 +238,98 @@ namespace ExcelSupport.Models
         }
 
         [Newtonsoft.Json.JsonIgnore]
-        public string DisplaySummary => $"{Username}@{Host}:{Port}/{(ServiceType == OracleServiceNameType.SID ? "SID:" : "")}{ServiceNameOrSid}";
-
-        public OracleConnectionConfig ToConnectionConfig()
+        public string DisplaySummary
         {
+            get
+            {
+                string effectiveUser = GetEffectiveUser()?.Username ?? Username;
+                return $"{effectiveUser}@{Host}:{Port}/{(ServiceType == OracleServiceNameType.SID ? "SID:" : "")}{ServiceNameOrSid}";
+            }
+        }
+
+        public OracleUserCredential? GetEffectiveUser(string? userId = null)
+        {
+            if (Users == null || Users.Count == 0)
+                return null;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var match = Users.FirstOrDefault(u => u.Id == userId);
+                if (match != null) return match;
+            }
+
+            if (!string.IsNullOrEmpty(SelectedUserId))
+            {
+                var match = Users.FirstOrDefault(u => u.Id == SelectedUserId);
+                if (match != null) return match;
+            }
+
+            return Users.FirstOrDefault(u => u.IsDefault) ?? Users.FirstOrDefault();
+        }
+
+        public void EnsureDefaultUsers()
+        {
+            if (Users == null)
+            {
+                Users = new List<OracleUserCredential>();
+            }
+
+            if (Users.Count == 0)
+            {
+                if (!string.IsNullOrWhiteSpace(_username))
+                {
+                    Users.Add(new OracleUserCredential
+                    {
+                        Username = _username,
+                        Password = _password ?? "",
+                        RoleOrDescription = "Default User",
+                        IsDefault = true
+                    });
+                }
+                else
+                {
+                    Users.Add(new OracleUserCredential
+                    {
+                        Username = "XXX_USR1",
+                        Password = "",
+                        RoleOrDescription = "Admin / Primary User",
+                        IsDefault = true
+                    });
+                    Users.Add(new OracleUserCredential
+                    {
+                        Username = "XXX_USR9",
+                        Password = "",
+                        RoleOrDescription = "Read-Only / Secondary User",
+                        IsDefault = false
+                    });
+                }
+            }
+
+            if (!Users.Any(u => u.IsDefault))
+            {
+                Users[0].IsDefault = true;
+            }
+        }
+
+        public OracleConnectionConfig ToConnectionConfig() => GetEffectiveConfig();
+
+        public OracleConnectionConfig GetEffectiveConfig(string? userId = null)
+        {
+            var user = GetEffectiveUser(userId);
             return new OracleConnectionConfig
             {
                 Host = this.Host,
                 Port = this.Port,
                 ServiceNameOrSid = this.ServiceNameOrSid,
                 ServiceType = this.ServiceType,
-                Username = this.Username,
-                Password = this.Password
+                Username = user?.Username ?? this._username,
+                Password = user?.Password ?? this._password
             };
         }
 
         public OracleConnectionProfile Clone()
         {
-            return new OracleConnectionProfile
+            var cloned = new OracleConnectionProfile
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = $"{this.Name} (Copy)",
@@ -149,13 +337,28 @@ namespace ExcelSupport.Models
                 Port = this.Port,
                 ServiceNameOrSid = this.ServiceNameOrSid,
                 ServiceType = this.ServiceType,
-                Username = this.Username,
-                Password = this.Password,
+                _username = this._username,
+                _password = this._password,
                 DefaultSchema = this.DefaultSchema,
                 DefaultTable = this.DefaultTable,
                 DefaultWhereClause = this.DefaultWhereClause,
-                IsDefault = false
+                IsDefault = false,
+                SelectedUserId = this.SelectedUserId
             };
+
+            foreach (var u in this.Users)
+            {
+                cloned.Users.Add(new OracleUserCredential
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Username = u.Username,
+                    Password = u.Password,
+                    RoleOrDescription = u.RoleOrDescription,
+                    IsDefault = u.IsDefault
+                });
+            }
+
+            return cloned;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -438,6 +641,86 @@ namespace ExcelSupport.Models
         public int MaxRows { get; set; } = 0;
         public string? TargetAddress { get; set; }
         public List<string> SelectedKeyColumns { get; set; } = new List<string>();
+    }
+
+    public class OracleTableColumnMetadata
+    {
+        public int ColumnId { get; set; }
+        public string ColumnName { get; set; } = "";
+        public string DataType { get; set; } = "";
+        public int? DataLength { get; set; }
+        public int? DataPrecision { get; set; }
+        public int? DataScale { get; set; }
+        public bool IsNullable { get; set; }
+        public bool IsPrimaryKey { get; set; }
+        public int PrimaryKeyPosition { get; set; }
+        public string? DataDefault { get; set; }
+        public string? Comments { get; set; }
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string DisplayDataType
+        {
+            get
+            {
+                if (string.Equals(DataType, "NUMBER", StringComparison.OrdinalIgnoreCase) && DataPrecision.HasValue)
+                {
+                    return (DataScale.HasValue && DataScale.Value > 0)
+                        ? $"{DataType}({DataPrecision},{DataScale})"
+                        : $"{DataType}({DataPrecision})";
+                }
+                if ((DataType.Contains("CHAR") || DataType.Contains("RAW")) && DataLength.HasValue && DataLength.Value > 0)
+                {
+                    return $"{DataType}({DataLength})";
+                }
+                return DataType;
+            }
+        }
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string PkBadge => IsPrimaryKey ? "⭐ PK" : "";
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string NullableText => IsNullable ? "YES" : "NO (NOT NULL)";
+    }
+
+    public class OracleTableIndexMetadata
+    {
+        public string IndexName { get; set; } = "";
+        public string TableName { get; set; } = "";
+        public string TableOwner { get; set; } = "";
+        public bool IsPrimaryKey { get; set; }
+        public bool IsUnique { get; set; }
+        public string Status { get; set; } = "VALID";
+        public string IndexType { get; set; } = "NORMAL";
+        public string ColumnsDisplay { get; set; } = "";
+        public List<string> ColumnNames { get; set; } = new List<string>();
+
+        [Newtonsoft.Json.JsonIgnore]
+        public string IndexCategory => IsPrimaryKey 
+            ? "Index Chính (Primary Key) ⭐" 
+            : (IsUnique ? "Index Phụ (Unique)" : "Index Phụ (Secondary Index)");
+    }
+
+    public class OracleTableStructureResult
+    {
+        public string Owner { get; set; } = "";
+        public string TableName { get; set; } = "";
+        public List<OracleTableColumnMetadata> Columns { get; set; } = new List<OracleTableColumnMetadata>();
+        public List<OracleTableIndexMetadata> Indexes { get; set; } = new List<OracleTableIndexMetadata>();
+
+        public string FullTableName => string.IsNullOrWhiteSpace(Owner) ? TableName : $"{Owner}.{TableName}";
+
+        public string GenerateSelectQuery()
+        {
+            string targetTable = FullTableName;
+            if (Columns == null || Columns.Count == 0)
+            {
+                return $"SELECT * FROM {targetTable}";
+            }
+
+            var colList = string.Join(",\n    ", Columns.Select(c => c.ColumnName));
+            return $"SELECT \n    {colList}\nFROM {targetTable}";
+        }
     }
 }
 

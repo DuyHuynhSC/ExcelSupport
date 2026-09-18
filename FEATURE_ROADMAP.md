@@ -123,6 +123,33 @@ graph TD
 #### 4.2. Excel Range to SQL INSERT / MERGE Script Generator — [Ưu tiên P1]
 * Chọn vùng bảng tính $\rightarrow$ Sinh script `.sql` chứa các câu lệnh `INSERT INTO ...` hoặc `MERGE INTO ... (Upsert)` chuẩn cú pháp theo từng loại database.
 
+#### 4.3. Multi-User Connection Profiles (Quản Lý Nhiều User Trong 1 Connection Profile) — [Ưu tiên P0]
+* **Vấn đề giải quyết:** Hiện tại, mỗi Connection Profile chỉ lưu được duy nhất 1 User/Password. Trong thực tế dự án, một cơ sở dữ liệu (Host/DB) thường có nhiều User với quyền hạn khác nhau (User Admin/Schema Owner để xem cấu trúc DDL, User Read-Only / Select để tra cứu an toàn, User Nghiệp vụ / Test...). Việc phải tạo nhiều Profile trùng Host/Port/Service chỉ để đổi User gây rườm rà và khó quản lý.
+* **Mô tả hoạt động & Luồng người dùng:**
+  - **Quản lý danh sách User trong Connection Profile Details:**
+    - Trong hộp thoại cấu hình Profile, hỗ trợ danh sách nhiều tài khoản User (`List<OracleUserCredential>`).
+    - Mỗi User gồm: Tên User (`Username`), Mật khẩu (`Password`), Vai trò / Ghi chú (`Role/Description` như *Schema Owner, Read-Only, App Test...*), Đánh dấu mặc định (`IsDefault`).
+    - Cho phép **thêm tay nhiều User**, sửa, xóa, và chọn User mặc định.
+    - **Mặc định khi tạo mới 1 Profile:** Tự động tạo sẵn **2 User** (ví dụ: `SYSTEM` / `Admin` và `APP_USER` / `Read-Only`).
+    - Tương thích ngược: Các profile cũ sẽ tự động được migrate tài khoản hiện có thành User 1 và bổ sung thêm User 2.
+  - **Lựa chọn User linh hoạt khi truy vấn dữ liệu:**
+    - Tại màn hình **Quick SQL Query** và **Oracle Table Compare**: Bên cạnh ComboBox chọn Profile, bổ sung ComboBox **`Chọn User`**.
+    - Khi đổi Profile $\rightarrow$ ComboBox User tự động nạp danh sách User tương ứng và chọn User mặc định.
+    - Người dùng có thể chuyển đổi nhanh giữa các User chỉ với 1 click để thực thi câu lệnh SQL với quyền tương ứng.
+
+#### 4.4. Quick SQL Query: Table Structure & Index Inspector (Truy Xuất Cấu Trúc Bảng, Cột & Index Chính/Phụ) — [Ưu tiên P0]
+* **Vấn đề giải quyết:** Khi viết câu lệnh SQL hoặc kiểm tra dữ liệu trong Excel, Dev/BSE thường phải mở công cụ ngoài (như PL/SQL Developer, DBeaver, Toad) chỉ để tra cứu xem bảng có những cột nào, kiểu dữ liệu gì, cột nào là Khóa chính (PK), có các Index phụ nào để tối ưu câu query `WHERE`.
+* **Mô tả hoạt động & Luồng người dùng:**
+  - **Kích hoạt nhanh từ Quick SQL Query:**
+    - Nút bấm **`🔍 Cấu Trúc Bảng (Table Structure)`** hoặc phím tắt `Ctrl + T` ngay trên thanh công cụ SQL Editor.
+    - Tự động nhận diện Tên Bảng từ mệnh đề `FROM [TABLE_NAME]` trong câu lệnh SQL hiện tại, hoặc cho phép nhập/chọn bảng từ danh sách.
+  - **Truy xuất & Hiển thị thông tin siêu dữ liệu chi tiết:**
+    - **Danh Sách Cột (Columns):** Tên cột, Kiểu dữ liệu chuẩn hóa (`VARCHAR2(50)`, `NUMBER(10,2)`, `DATE`...), Trạng thái Nullable, Đánh dấu Khóa chính (**PK ⭐**), Giá trị mặc định (`Data Default`), và Chú thích cột (`Comments`).
+    - **Index Chính & Index Phụ (Indexes & Keys):** Tên Index, Phân loại rõ ràng (**Index Chính / PK** vs **Index Phụ / Secondary Index**), Tính duy nhất (`UNIQUE` / `NONUNIQUE`), Danh sách các cột tham gia Index theo thứ tự (`Col1 ASC, Col2 DESC`), Trạng thái index (`VALID`).
+  - **Tác vụ hỗ trợ tăng năng suất 1-Click:**
+    - **`📋 Chèn SELECT vào Editor`:** Tự động sinh cú pháp `SELECT col1, col2, ... FROM table_name` chứa đầy đủ tên cột đưa vào ô soạn thảo SQL, tránh phải gõ tay từng tên cột.
+    - **`📊 Xuất ra Sheet Excel`:** Xuất bảng đặc tả cấu trúc bảng (Table Spec) ra một Sheet Excel mới với định dạng bảng kẻ viền đẹp mắt, phục vụ lưu tài liệu hoặc đối soát.
+
 ---
 
 ### 🌟 5. Next-Gen AI Copilot (Document & Data Intelligence)
@@ -148,6 +175,7 @@ graph TD
 | 4 | **Japanese Design Quick Formatter (Chuẩn hóa format TKCT Nhật)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 1 (Đã hoàn thành ✅)** |
 | 5 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
 | 6 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |
-| 7 | **Excel to SQL INSERT/MERGE Script** | Dev, DBA | ⭐⭐⭐⭐ | Thấp | **Phase 2** |
-| 8 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |
-| 9 | **Multi-Database Support (Postgres/MySQL)** | Backend Dev | ⭐⭐⭐⭐ | Trung bình | **Phase 3** |
+| 8 | **Multi-User Connection Profiles (Nhiều User trong 1 Profile)** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2 (Ưu tiên P0)** |
+| 9 | **Quick SQL: Table Structure & Index Inspector** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2 (Ưu tiên P0)** |
+| 10 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |
+| 11 | **Multi-Database Support (Postgres/MySQL)** | Backend Dev | ⭐⭐⭐⭐ | Trung bình | **Phase 3** |

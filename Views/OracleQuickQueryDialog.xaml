@@ -488,22 +488,46 @@
                     <ColumnDefinition Width="260"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Connection Selector -->
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="{loc:Loc Oracle_SavedProfile}" FontSize="11.5" FontWeight="SemiBold" Margin="0,0,0,4">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="#475569"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                        <Setter Property="Foreground" Value="#CBD5E1"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <ComboBox x:Name="cboProfile" Height="30" FontSize="12" DisplayMemberPath="Name" SelectionChanged="CboProfile_SelectionChanged"/>
-                </StackPanel>
+                <!-- Connection & User Selector -->
+                <Grid Grid.Column="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.4*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{loc:Loc Oracle_SavedProfile}" FontSize="11.5" FontWeight="SemiBold" Margin="0,0,0,4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#475569"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ComboBox x:Name="cboProfile" Height="30" FontSize="12" DisplayMemberPath="Name" SelectionChanged="CboProfile_SelectionChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{loc:Loc Oracle_UserAccount}" FontSize="11.5" FontWeight="SemiBold" Margin="0,0,0,4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#475569"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ComboBox x:Name="cboUser" Height="30" FontSize="12" DisplayMemberPath="DisplayText" SelectionChanged="CboUser_SelectionChanged" ToolTip="{loc:Loc Oracle_UserAccountTip}"/>
+                    </StackPanel>
+                </Grid>
 
                 <!-- Target Location -->
                 <StackPanel Grid.Column="2">
@@ -565,8 +589,15 @@
                         <TextBlock Text=" (vd: SELECT * FROM ADDMTA WHERE ROWNUM &lt;= 50)" FontSize="11" Foreground="#94A3B8" Margin="6,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Query History Selector -->
+                    <!-- Table Structure Inspector & Query History Selector -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="btnInspectStructure" Style="{StaticResource SecondaryActionBtn}" Padding="8,3" Margin="0,0,10,0" Height="26" Click="BtnInspectStructure_Click" ToolTip="{loc:Loc Oracle_BtnTableStructureTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔍" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="{loc:Loc Oracle_BtnTableStructure}" FontSize="11"/>
+                            </StackPanel>
+                        </Button>
+
                         <TextBlock Text="🕒" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
                         <TextBlock Text="{loc:Loc Oracle_QueryHistoryLabel}" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center">
                             <TextBlock.Style>
@@ -580,7 +611,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <ComboBox x:Name="cboQueryHistory" Width="260" Height="26" FontSize="11" SelectionChanged="CboQueryHistory_SelectionChanged" ToolTip="{loc:Loc Oracle_QueryHistoryTip}"/>
+                        <ComboBox x:Name="cboQueryHistory" Width="240" Height="26" FontSize="11" SelectionChanged="CboQueryHistory_SelectionChanged" ToolTip="{loc:Loc Oracle_QueryHistoryTip}"/>
                         <Button x:Name="btnClearHistory" Style="{StaticResource SecondaryActionBtn}" Padding="6,2" Margin="3,0,0,0" Height="26" Click="BtnClearHistory_Click" ToolTip="{loc:Loc Oracle_ClearHistoryTip}">
                             <TextBlock Text="🗑️" FontSize="10"/>
                         </Button>
