@@ -527,6 +527,132 @@ namespace ExcelSupport.Services
                     Keywords = new List<string> { "project profile", "du an", "cau hinh du an", "profile setting", "spec folder", "thu muc thiet ke" },
                     Action = () => ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
                 },
+
+                // ==================== JAPANESE PRESET FORMATTER ====================
+                new PaletteCommandItem
+                {
+                    Id = "jp_format_default",
+                    TitleKey = "btnApplyDefaultJapanesePreset",
+                    DescriptionKey = "btnApplyDefaultJapanesePreset_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "🎨",
+                    Keywords = new List<string> { "format nhat", "japanese format", "chuan hoa thiet ke", "dinh dang tkct", "preset nhat", "style tkct", "japanese style", "meiryo" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        var preset = JapanesePresetFormatManager.GetActivePreset();
+                        var result = JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "jp_format_header",
+                    TitleKey = "btnApplyPresetTableHeader",
+                    DescriptionKey = "btnApplyPresetTableHeader_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "📑",
+                    Keywords = new List<string> { "header tkct", "table header", "tieu de bang", "navy header", "dinh dang header", "cot tkct" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        var preset = JapanesePresetFormatManager.GetPresetById("builtin_table_header");
+                        var result = JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "jp_format_must",
+                    TitleKey = "btnApplyPresetMust",
+                    DescriptionKey = "btnApplyPresetMust_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "🔴",
+                    Keywords = new List<string> { "must", "bat buoc", "required", "truong bat buoc", "not null", "peach red" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        var preset = JapanesePresetFormatManager.GetPresetById("builtin_required_must");
+                        var result = JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "jp_format_code",
+                    TitleKey = "btnApplyPresetCode",
+                    DescriptionKey = "btnApplyPresetCode_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "💻",
+                    Keywords = new List<string> { "code", "physical name", "ten vat ly", "consolas", "ma chuong trinh", "table id", "field id" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        var preset = JapanesePresetFormatManager.GetPresetById("builtin_code_physical");
+                        var result = JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "jp_format_note",
+                    TitleKey = "btnApplyPresetNote",
+                    DescriptionKey = "btnApplyPresetNote_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "💡",
+                    Keywords = new List<string> { "note", "ghi chu", "canh bao", "warning", "luu y", "amber", "yellow" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        var preset = JapanesePresetFormatManager.GetPresetById("builtin_note_warning");
+                        var result = JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "jp_format_standard",
+                    TitleKey = "btnApplyPresetStandard",
+                    DescriptionKey = "btnApplyPresetStandard_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "📄",
+                    Keywords = new List<string> { "standard data", "du lieu chuan", "dong noi dung", "meiryo 9.5", "clear format to standard" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        var preset = JapanesePresetFormatManager.GetPresetById("builtin_standard_data");
+                        var result = JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+                        if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                        {
+                            System.Windows.MessageBox.Show(result.Message, LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        }
+                    }
+                },
+                new PaletteCommandItem
+                {
+                    Id = "jp_format_manager",
+                    TitleKey = "btnOpenJapanesePresetManager",
+                    DescriptionKey = "btnOpenJapanesePresetManager_SuperTip",
+                    CategoryKey = "grpJapanTools",
+                    IconEmoji = "⚙️",
+                    Keywords = new List<string> { "quan ly preset", "japanese preset manager", "cai dat dinh dang nhat", "format config", "presets dialog", "live preview" },
+                    Action = () => JapanesePresetManagerDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
+                },
                 new PaletteCommandItem
                 {
                     Id = "japanese_convert",

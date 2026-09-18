@@ -338,6 +338,80 @@
             </menu>
           </splitButton>
 
+          <splitButton id='splitJapanesePresetFormat' size='large' getVisible='GetControlVisible'>
+            <button id='btnApplyDefaultJapanesePreset'
+                    image='jp_preset_styler_icon'
+                    getLabel='GetRibbonLabel'
+                    getScreentip='GetRibbonScreentip'
+                    getSupertip='GetRibbonSupertip'
+                    onAction='OnApplyDefaultJapanesePreset' />
+            <menu id='mnuJapanesePresetFormat'>
+              <button id='btnApplyPresetTableHeader'
+                      image='jp_icon_header'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_table_header'
+                      onAction='OnApplyPresetByTag' />
+              <button id='btnApplyPresetSubHeader'
+                      image='jp_icon_subheader'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_sub_header'
+                      onAction='OnApplyPresetByTag' />
+              <button id='btnApplyPresetMust'
+                      image='jp_icon_must'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_required_must'
+                      onAction='OnApplyPresetByTag' />
+              <button id='btnApplyPresetCode'
+                      image='jp_icon_code'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_code_physical'
+                      onAction='OnApplyPresetByTag' />
+              <button id='btnApplyPresetNote'
+                      image='jp_icon_note'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_note_warning'
+                      onAction='OnApplyPresetByTag' />
+              <button id='btnApplyPresetStandard'
+                      image='jp_icon_standard'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_standard_data'
+                      onAction='OnApplyPresetByTag' />
+              <button id='btnApplyPresetDate'
+                      image='jp_icon_date'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_date_standard'
+                      onAction='OnApplyPresetByTag' />
+              <button id='btnApplyPresetNumber'
+                      image='jp_icon_number'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      tag='builtin_number_currency'
+                      onAction='OnApplyPresetByTag' />
+              <menuSeparator id='sepJapanesePresetManager' />
+              <button id='btnOpenJapanesePresetManager'
+                      image='project_settings_icon'
+                      getLabel='GetRibbonLabel'
+                      getScreentip='GetRibbonScreentip'
+                      getSupertip='GetRibbonSupertip'
+                      onAction='OnOpenJapanesePresetManager' />
+            </menu>
+          </splitButton>
+
           <button id='btnJapaneseConvert'
                   size='large'
                   image='zenkaku_icon'

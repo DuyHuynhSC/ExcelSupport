@@ -81,6 +81,22 @@ graph TD
   - **Tích hợp Ribbon & Command Palette:**
     - Nút quản lý trên Ribbon nhóm `grpJapanTools` và tích hợp lệnh vào Command Palette (`Ctrl + Shift + P`).
 
+#### 2.5. Japanese Design Quick Formatter / Preset Styler (Chuẩn Hóa Format Tài Liệu Thiết Kế Nhật Bản) — [Ưu tiên P1 - ✅ Đã hoàn thành]
+* **Vấn đề giải quyết:** Khi viết, biên dịch hoặc chỉnh sửa tài liệu Thiết kế chi tiết (TKCT - 詳細設計書), Thiết kế cơ bản (TKCB - 基本設計書) hay Test Spec cho khách hàng Nhật Bản, việc chuẩn hóa hiển thị các vùng ô/khối text theo đúng quy chuẩn dự án (Font chuẩn tiếng Nhật, cỡ chữ, màu chữ, màu nền header, viền ô, in đậm, in nghiêng, căn lề) thường phải thực hiện thủ công bằng tay rất tốn công và dễ lệch chuẩn giữa các thành viên.
+* **Mô tả hoạt động & Tính năng chính:**
+  - **Quản lý Preset Định Dạng Sẵn (Formatting Presets):**
+    - Cho phép người dùng thiết lập và lưu sẵn các mẫu format (Preset) chuẩn phong cách tài liệu Nhật:
+      - **Font & Size:** Lựa chọn các font tiếng Nhật thông dụng như `Meiryo UI`, `Yu Gothic UI`, `MS Gothic`, `MS Mincho`, font code `Consolas`, tùy chỉnh Size (9pt, 10pt, 11pt...).
+      - **Màu sắc & Nền (Color & Fill):** Cấu hình màu chữ (Font Color), màu nền (Cell Fill / Background) theo mã màu HEX/RGB tùy chọn hoặc bảng màu chuẩn (tiêu đề xanh navy/xanh xám, warning vàng cam, note xám nhạt...).
+      - **Kiểu chữ & Căn lề (Typography & Alignment):** In đậm (Bold), in nghiêng (Italic), gạch chân (Underline), căn lề ngang (Left/Center/Right), căn lề dọc (Top/Middle/Bottom), Wrap Text (tự ngắt dòng).
+      - **Đường viền (Borders):** Thiết lập kẻ viền ô mỏng (Thin Border), viền ngoài đậm, hoặc viền chấm gạch theo chuẩn spec.
+    - Cung cấp sẵn một số template phổ biến (ví dụ: *Header bảng TKCT*, *Item bắt buộc [Must]*, *Mã chương trình/Physical Name*, *Khối ghi chú/Note*, *Ô nội dung chuẩn*).
+    - Lưu cấu hình preset vào JSON (`%APPDATA%\ExcelSupport\format_presets.json`), hỗ trợ Export/Import chia sẻ trong team.
+  - **Quy trình Áp dụng Nhanh 1-Click (1-Click Fast Apply):**
+    - Người dùng quét chọn một hoặc nhiều vùng ô (Selection / Multi-range) chứa text cần định dạng.
+    - Nhấn nút format nhanh trên Ribbon (hoặc chọn Preset từ Dropdown trên Ribbon / kích hoạt từ Command Palette `Ctrl + Shift + P`).
+    - Add-in áp dụng tức thì toàn bộ thuộc tính định dạng vào vùng đang chọn, tự động tối ưu hóa hiển thị chuẩn đẹp chỉ trong 1 thao tác.
+
 ---
 
 ### 🧹 3. Sức Khỏe File & Tối Ưu Bảng Tính (Workbook Optimizer & Hygiene)
@@ -128,8 +144,9 @@ graph TD
 | 1 | **Quick Command Palette (`Ctrl + Shift + P`)** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
 | 2 | **Project Document & Quick Spec Launcher** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
 | 3 | **Spec to Code / DDL Generator** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1** |
-| 4 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
-| 5 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |
-| 6 | **Excel to SQL INSERT/MERGE Script** | Dev, DBA | ⭐⭐⭐⭐ | Thấp | **Phase 2** |
-| 7 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |
-| 8 | **Multi-Database Support (Postgres/MySQL)** | Backend Dev | ⭐⭐⭐⭐ | Trung bình | **Phase 3** |
+| 4 | **Japanese Design Quick Formatter (Chuẩn hóa format TKCT Nhật)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 1 (Đã hoàn thành ✅)** |
+| 5 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
+| 6 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |
+| 7 | **Excel to SQL INSERT/MERGE Script** | Dev, DBA | ⭐⭐⭐⭐ | Thấp | **Phase 2** |
+| 8 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |
+| 9 | **Multi-Database Support (Postgres/MySQL)** | Backend Dev | ⭐⭐⭐⭐ | Trung bình | **Phase 3** |

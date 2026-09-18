@@ -41,6 +41,42 @@ namespace ExcelSupport.Ribbon
 
         public override object? LoadImage(string imageId)
         {
+            if (imageId == "jp_preset_styler_icon")
+            {
+                return CreateJapanesePresetStylerBitmap();
+            }
+            if (imageId == "jp_icon_header")
+            {
+                return CreateJpTableHeaderBitmap();
+            }
+            if (imageId == "jp_icon_subheader")
+            {
+                return CreateJpSubHeaderBitmap();
+            }
+            if (imageId == "jp_icon_must")
+            {
+                return CreateJpMustBitmap();
+            }
+            if (imageId == "jp_icon_code")
+            {
+                return CreateJpCodeBitmap();
+            }
+            if (imageId == "jp_icon_note")
+            {
+                return CreateJpNoteBitmap();
+            }
+            if (imageId == "jp_icon_standard")
+            {
+                return CreateJpStandardBitmap();
+            }
+            if (imageId == "jp_icon_date")
+            {
+                return CreateJpDateBitmap();
+            }
+            if (imageId == "jp_icon_number")
+            {
+                return CreateJpNumberBitmap();
+            }
             if (imageId == "spec_launcher_icon")
             {
                 return CreateSpecLauncherBitmap();
@@ -1028,6 +1064,50 @@ namespace ExcelSupport.Ribbon
         public void OnProjectProfileSettings(IRibbonControl control)
         {
             Views.ProjectProfileSettingsDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnApplyDefaultJapanesePreset(IRibbonControl control)
+        {
+            try
+            {
+                var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                var preset = Services.JapanesePresetFormatManager.GetActivePreset();
+                var result = Services.JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+
+                if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                {
+                    System.Windows.MessageBox.Show(result.Message, Services.LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, Services.LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+
+        public void OnApplyPresetByTag(IRibbonControl control)
+        {
+            try
+            {
+                var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                string tag = control.Tag ?? string.Empty;
+                var preset = Services.JapanesePresetFormatManager.GetPresetById(tag) ?? Services.JapanesePresetFormatManager.GetActivePreset();
+                var result = Services.JapanesePresetFormatService.ApplyPresetToSelection(app, preset);
+
+                if (!result.Success && !string.IsNullOrEmpty(result.Message))
+                {
+                    System.Windows.MessageBox.Show(result.Message, Services.LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, Services.LocalizationService.Get("Common_Notice", "Thông Báo"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+
+        public void OnOpenJapanesePresetManager(IRibbonControl control)
+        {
+            Views.JapanesePresetManagerDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnJapaneseConvert(IRibbonControl control)
@@ -2729,6 +2809,322 @@ namespace ExcelSupport.Ribbon
                 using (var holeBrush = new SolidBrush(Color.FromArgb(71, 85, 105)))
                 {
                     g.FillEllipse(holeBrush, 6, 5, 4, 4);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJapanesePresetStylerBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Table outer card: 26x24
+                using (var cardBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                using (var cardPen = new Pen(Color.FromArgb(148, 163, 184), 1.2f))
+                {
+                    FillRoundedRectangle(g, cardBrush, new Rectangle(2, 3, 26, 25), 3);
+                    DrawRoundedRectangle(g, cardPen, new Rectangle(2, 3, 26, 25), 3);
+                }
+
+                // Table Header row (Japanese Navy #1B365D)
+                using (var headerBrush = new LinearGradientBrush(new Rectangle(3, 4, 24, 7),
+                    Color.FromArgb(27, 54, 93), Color.FromArgb(43, 76, 126), 90f))
+                {
+                    g.FillRectangle(headerBrush, 3, 4, 24, 7);
+                }
+
+                // Sub-header / Row 1 (Ice Blue #D9E1F2)
+                using (var row1Brush = new SolidBrush(Color.FromArgb(217, 225, 242)))
+                {
+                    g.FillRectangle(row1Brush, 3, 11, 24, 5);
+                }
+
+                // Grid lines (subtle border lines)
+                using (var gridPen = new Pen(Color.FromArgb(203, 213, 225), 1.0f))
+                {
+                    // Horizontal dividers
+                    g.DrawLine(gridPen, 3, 16, 27, 16);
+                    g.DrawLine(gridPen, 3, 21, 27, 21);
+
+                    // Vertical column dividers
+                    g.DrawLine(gridPen, 11, 4, 11, 27);
+                    g.DrawLine(gridPen, 19, 4, 19, 27);
+                }
+
+                // Japanese Design Badge / Red Seal at bottom-right corner: 13x13
+                using (var sealBrush = new LinearGradientBrush(new Rectangle(17, 17, 13, 13),
+                    Color.FromArgb(225, 29, 72), Color.FromArgb(190, 18, 60), 45f))
+                using (var sealPen = new Pen(Color.White, 1.2f))
+                {
+                    g.FillEllipse(sealBrush, 17, 17, 13, 13);
+                    g.DrawEllipse(sealPen, 17, 17, 13, 13);
+                }
+
+                // Format "A" or Star glyph on the red badge
+                using (var textBrush = new SolidBrush(Color.White))
+                using (var font = new System.Drawing.Font("Arial", 6.5f, FontStyle.Bold))
+                {
+                    g.DrawString("A", font, textBrush, 19f, 17.5f);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpTableHeaderBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Outer border/card
+                using (var bgBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                using (var pen = new Pen(Color.FromArgb(148, 163, 184), 1f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 1, 14, 14), 2);
+                    DrawRoundedRectangle(g, pen, new Rectangle(1, 1, 14, 14), 2);
+                }
+
+                // Table Header row: Navy #1B365D
+                using (var headerBrush = new SolidBrush(Color.FromArgb(27, 54, 93)))
+                {
+                    g.FillRectangle(headerBrush, 2, 2, 12, 5);
+                }
+
+                // Header white line
+                using (var whitePen = new Pen(Color.White, 1f))
+                {
+                    g.DrawLine(whitePen, 4, 4, 12, 4);
+                }
+
+                // Data row lines
+                using (var gridPen = new Pen(Color.FromArgb(203, 213, 225), 1f))
+                {
+                    g.DrawLine(gridPen, 2, 10, 14, 10);
+                    g.DrawLine(gridPen, 7, 7, 7, 14);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpSubHeaderBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Outer border/card
+                using (var bgBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                using (var pen = new Pen(Color.FromArgb(148, 163, 184), 1f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 1, 14, 14), 2);
+                    DrawRoundedRectangle(g, pen, new Rectangle(1, 1, 14, 14), 2);
+                }
+
+                // Top mini bar: Navy #1B365D
+                using (var navyBrush = new SolidBrush(Color.FromArgb(27, 54, 93)))
+                {
+                    g.FillRectangle(navyBrush, 2, 2, 12, 3);
+                }
+
+                // Sub-header row: Ice Blue #D9E1F2
+                using (var iceBrush = new SolidBrush(Color.FromArgb(217, 225, 242)))
+                {
+                    g.FillRectangle(iceBrush, 2, 5, 12, 4);
+                }
+
+                // Grid lines
+                using (var gridPen = new Pen(Color.FromArgb(148, 163, 184), 1f))
+                {
+                    g.DrawLine(gridPen, 2, 9, 14, 9);
+                    g.DrawLine(gridPen, 7, 5, 7, 14);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpMustBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Soft peach/red cell: #FFC7CE
+                using (var bgBrush = new SolidBrush(Color.FromArgb(255, 199, 206)))
+                using (var borderPen = new Pen(Color.FromArgb(239, 68, 68), 1.2f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 1, 14, 14), 2);
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(1, 1, 14, 14), 2);
+                }
+
+                // Red exclamation mark / MUST badge: #9C0006
+                using (var textBrush = new SolidBrush(Color.FromArgb(156, 0, 6)))
+                using (var font = new System.Drawing.Font("Arial", 8.5f, FontStyle.Bold))
+                {
+                    g.DrawString("!", font, textBrush, 4f, 1f);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpCodeBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Light gray tag: #F1F5F9
+                using (var bgBrush = new SolidBrush(Color.FromArgb(241, 245, 249)))
+                using (var borderPen = new Pen(Color.FromArgb(148, 163, 184), 1.2f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 1, 14, 14), 2);
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(1, 1, 14, 14), 2);
+                }
+
+                // Monospace code symbol: </ > or ID
+                using (var textBrush = new SolidBrush(Color.FromArgb(37, 99, 235)))
+                using (var font = new System.Drawing.Font("Consolas", 6f, FontStyle.Bold))
+                {
+                    g.DrawString("</>", font, textBrush, 0.5f, 3f);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpNoteBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Note yellow card: #FEF3C7
+                using (var bgBrush = new SolidBrush(Color.FromArgb(254, 243, 199)))
+                using (var borderPen = new Pen(Color.FromArgb(245, 158, 11), 1.2f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 1, 14, 14), 2);
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(1, 1, 14, 14), 2);
+                }
+
+                // Note text lines in Amber #78350F
+                using (var pen = new Pen(Color.FromArgb(120, 53, 15), 1.2f))
+                {
+                    g.DrawLine(pen, 4, 5, 12, 5);
+                    g.DrawLine(pen, 4, 8, 12, 8);
+                    g.DrawLine(pen, 4, 11, 9, 11);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpStandardBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // White card
+                using (var bgBrush = new SolidBrush(Color.FromArgb(255, 255, 255)))
+                using (var pen = new Pen(Color.FromArgb(148, 163, 184), 1.2f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 1, 14, 14), 2);
+                    DrawRoundedRectangle(g, pen, new Rectangle(1, 1, 14, 14), 2);
+                }
+
+                // 2x2 grid lines
+                using (var gridPen = new Pen(Color.FromArgb(203, 213, 225), 1f))
+                {
+                    g.DrawLine(gridPen, 2, 8, 14, 8);
+                    g.DrawLine(gridPen, 8, 2, 8, 14);
+                }
+
+                // Small data marks in slate
+                using (var textBrush = new SolidBrush(Color.FromArgb(100, 116, 139)))
+                {
+                    g.FillRectangle(textBrush, 4, 4, 3, 2);
+                    g.FillRectangle(textBrush, 10, 4, 3, 2);
+                    g.FillRectangle(textBrush, 4, 10, 3, 2);
+                    g.FillRectangle(textBrush, 10, 10, 3, 2);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpDateBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Calendar body (White)
+                using (var bgBrush = new SolidBrush(Color.White))
+                using (var pen = new Pen(Color.FromArgb(148, 163, 184), 1f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 2, 14, 13), 2);
+                    DrawRoundedRectangle(g, pen, new Rectangle(1, 2, 14, 13), 2);
+                }
+
+                // Calendar top header (Red #DC2626)
+                using (var headerBrush = new SolidBrush(Color.FromArgb(220, 38, 38)))
+                {
+                    g.FillRectangle(headerBrush, 2, 3, 12, 4);
+                }
+
+                // Calendar binder rings
+                using (var ringBrush = new SolidBrush(Color.FromArgb(71, 85, 105)))
+                {
+                    g.FillRectangle(ringBrush, 4, 1, 2, 3);
+                    g.FillRectangle(ringBrush, 10, 1, 2, 3);
+                }
+
+                // Date number in body
+                using (var textBrush = new SolidBrush(Color.FromArgb(30, 41, 59)))
+                using (var font = new System.Drawing.Font("Arial", 5f, FontStyle.Bold))
+                {
+                    g.DrawString("17", font, textBrush, 3.5f, 7.5f);
+                }
+            }
+            return bmp;
+        }
+
+        private static Bitmap CreateJpNumberBitmap()
+        {
+            var bmp = new Bitmap(16, 16);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                // Card background (Greenish)
+                using (var bgBrush = new SolidBrush(Color.FromArgb(240, 253, 244)))
+                using (var borderPen = new Pen(Color.FromArgb(34, 197, 94), 1.2f))
+                {
+                    FillRoundedRectangle(g, bgBrush, new Rectangle(1, 1, 14, 14), 2);
+                    DrawRoundedRectangle(g, borderPen, new Rectangle(1, 1, 14, 14), 2);
+                }
+
+                // "123" symbol in Green #15803D
+                using (var textBrush = new SolidBrush(Color.FromArgb(21, 128, 61)))
+                using (var font = new System.Drawing.Font("Arial", 6f, FontStyle.Bold))
+                {
+                    g.DrawString("123", font, textBrush, 0.5f, 3.5f);
                 }
             }
             return bmp;

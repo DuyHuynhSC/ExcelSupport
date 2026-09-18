@@ -1,0 +1,551 @@
+<Window x:Class="ExcelSupport.Views.JapanesePresetManagerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        Title="{loc:Loc JpPreset_WindowTitle}"
+        Width="1000" Height="700"
+        MinWidth="940" MinHeight="580"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <!-- Primary Action Button -->
+        <Style x:Key="JpPrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#107C41"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#0A552A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#063C1C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Action Button -->
+        <Style x:Key="JpSecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                <Setter Property="BorderBrush" Value="#475569"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Apply Fast Button (Accent Blue) -->
+        <Style x:Key="JpApplyBtn" TargetType="Button" BasedOn="{StaticResource JpPrimaryBtn}">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1E40AF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Compact Secondary Button for Left Panel -->
+        <Style x:Key="JpCompactSecondaryBtn" TargetType="Button" BasedOn="{StaticResource JpSecondaryBtn}">
+            <Setter Property="Padding" Value="4,5"/>
+            <Setter Property="FontSize" Value="11.5"/>
+        </Style>
+
+        <!-- Danger Button -->
+        <Style x:Key="JpDangerBtn" TargetType="Button">
+            <Setter Property="Background" Value="#EF4444"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="4,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#DC2626"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Margin="0,0,0,12" Padding="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="🇯🇵" FontSize="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{loc:Loc JpPreset_HeaderTitle}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="{loc:Loc JpPreset_HeaderSubtitle}"
+                           FontSize="12" Foreground="#64748B" Margin="28,2,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Body: Two Columns (Left: Presets List, Right: Preset Editor & Live Preview) -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="345"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel: Presets List -->
+            <Border Grid.Column="0" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                    BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="{loc:Loc JpPreset_PresetListTitle}" FontWeight="Bold" FontSize="13" Margin="4,0,0,8"/>
+
+                    <!-- Presets ListBox -->
+                    <ListBox x:Name="lstPresets" Grid.Row="1" 
+                             BorderThickness="0" 
+                             SelectionChanged="OnPresetSelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Mini Swatch -->
+                                    <Border Grid.Column="0" Width="18" Height="18" CornerRadius="3" BorderThickness="1" BorderBrush="#94A3B8" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#FFFFFF"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasFill}" Value="True">
+                                                        <Setter Property="Background" Value="{Binding FillColorHex}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                    </Border>
+
+                                    <!-- Name & Font summary -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock FontSize="10" Foreground="#64748B" TextTrimming="CharacterEllipsis">
+                                            <Run Text="{Binding FontName}"/>
+                                            <Run Text=","/>
+                                            <Run Text="{Binding FontSize, Mode=OneWay}"/>
+                                            <Run Text="pt"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Default Badge -->
+                                    <Border Grid.Column="2" x:Name="bdDefault" 
+                                            Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" 
+                                            CornerRadius="4" Padding="4,1" VerticalAlignment="Center" Margin="4,0,0,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="DEFAULT" FontWeight="Bold" FontSize="9" Foreground="#15803D"/>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Management Buttons Row 1: Add, Clone, Delete -->
+                    <Grid Grid.Row="2" Margin="0,8,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" Content="{loc:Loc JpPreset_BtnAdd}" Style="{StaticResource JpCompactSecondaryBtn}" Margin="0,0,2,0" Click="OnAddPresetClick"/>
+                        <Button Grid.Column="1" Content="{loc:Loc JpPreset_BtnClone}" Style="{StaticResource JpCompactSecondaryBtn}" Margin="2,0,2,0" Click="OnClonePresetClick"/>
+                        <Button Grid.Column="2" Content="{loc:Loc JpPreset_BtnDelete}" Style="{StaticResource JpDangerBtn}" Margin="2,0,0,0" Click="OnDeletePresetClick"/>
+                    </Grid>
+
+                    <!-- Management Buttons Row 2: Import JSON, Export JSON (2 equal columns) -->
+                    <Grid Grid.Row="3" Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" Content="{loc:Loc JpPreset_BtnImport}" Style="{StaticResource JpCompactSecondaryBtn}" Margin="0,0,2,0" Click="OnImportClick"/>
+                        <Button Grid.Column="1" Content="{loc:Loc JpPreset_BtnExport}" Style="{StaticResource JpCompactSecondaryBtn}" Margin="2,0,0,0" Click="OnExportClick"/>
+                    </Grid>
+
+                    <!-- Management Buttons Row 3: Reset Defaults (Full width span) -->
+                    <Button Grid.Row="4" Content="{loc:Loc JpPreset_BtnReset}" Style="{StaticResource JpCompactSecondaryBtn}" Margin="0,0,0,0" Click="OnResetDefaultsClick"/>
+                </Grid>
+            </Border>
+
+            <!-- Right Panel: Preset Configuration & Live Preview Form -->
+            <Border x:Name="borderRightPanel" Grid.Column="2" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                    BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="14">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Default Status Banner & Set Default Button -->
+                        <Border x:Name="borderDefaultBanner" CornerRadius="6" Padding="10,8" Margin="0,0,0,10" 
+                                Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
+                                    <TextBlock x:Name="iconDefaultStatus" Text="⚪" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{loc:Loc JpPreset_StatusLabel}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="lblDefaultStatus" Text="{loc:Loc JpPreset_StatusDefault}" FontWeight="Bold" FontSize="12" Foreground="#15803D" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <Button x:Name="btnSetDefault" Grid.Column="1" 
+                                        Content="{loc:Loc JpPreset_BtnSetDefault}" 
+                                        Style="{StaticResource JpSecondaryBtn}"
+                                        Click="OnSetDefaultClick"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Live Preview Box -->
+                        <TextBlock Text="{loc:Loc JpPreset_LivePreviewTitle}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                        <Border CornerRadius="6" BorderBrush="#CBD5E1" BorderThickness="1" Background="#F8FAFC" Padding="12" Margin="0,0,0,12">
+                            <Border x:Name="pvwCellBorder" MinHeight="42" MaxHeight="80" 
+                                    Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1"
+                                    HorizontalAlignment="Stretch" VerticalAlignment="Center" Padding="8,6">
+                                <TextBlock x:Name="pvwCellText" 
+                                           Text="{loc:Loc JpPreset_LivePreviewSampleText}" 
+                                           FontFamily="Meiryo UI" FontSize="10" FontWeight="Normal" 
+                                           Foreground="#0F172A" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            </Border>
+                        </Border>
+
+                        <!-- Preset Name & Description -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="2*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{loc:Loc JpPreset_FieldPresetName}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                                <TextBox x:Name="txtName" Height="28" FontSize="12" VerticalContentAlignment="Center" TextChanged="OnLivePreviewFieldChanged"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{loc:Loc JpPreset_FieldDescription}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                                <TextBox x:Name="txtDescription" Height="28" FontSize="12" VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Group 1: Font & Typography -->
+                        <Border CornerRadius="6" BorderBrush="#E2E8F0" BorderThickness="1" Background="#F8FAFC" Padding="10" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc JpPreset_GroupFont}" FontWeight="Bold" FontSize="12" Margin="0,0,0,8" Foreground="#0284C7"/>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Font Family -->
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{loc:Loc JpPreset_FontFamily}" FontSize="11" Foreground="#64748B" Margin="0,0,0,3"/>
+                                        <ComboBox x:Name="cboFontFamily" Height="28" FontSize="12" SelectionChanged="OnLivePreviewFieldChanged">
+                                            <ComboBoxItem Content="Meiryo UI"/>
+                                            <ComboBoxItem Content="Yu Gothic UI"/>
+                                            <ComboBoxItem Content="MS Gothic"/>
+                                            <ComboBoxItem Content="MS Mincho"/>
+                                            <ComboBoxItem Content="Consolas"/>
+                                            <ComboBoxItem Content="Segoe UI"/>
+                                            <ComboBoxItem Content="Arial"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <!-- Font Size -->
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="{loc:Loc JpPreset_FontSize}" FontSize="11" Foreground="#64748B" Margin="0,0,0,3"/>
+                                        <ComboBox x:Name="cboFontSize" Height="28" FontSize="12" IsEditable="True" SelectionChanged="OnLivePreviewFieldChanged" LostFocus="OnLivePreviewFieldChanged">
+                                            <ComboBoxItem Content="8"/>
+                                            <ComboBoxItem Content="9"/>
+                                            <ComboBoxItem Content="9.5"/>
+                                            <ComboBoxItem Content="10"/>
+                                            <ComboBoxItem Content="10.5"/>
+                                            <ComboBoxItem Content="11"/>
+                                            <ComboBoxItem Content="12"/>
+                                            <ComboBoxItem Content="14"/>
+                                            <ComboBoxItem Content="16"/>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <!-- Styles: Bold, Italic, Underline -->
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                                        <CheckBox x:Name="chkBold" Content="{loc:Loc JpPreset_Bold}" FontWeight="Bold" Margin="4,0,8,0" Click="OnLivePreviewFieldChanged"/>
+                                        <CheckBox x:Name="chkItalic" Content="{loc:Loc JpPreset_Italic}" FontStyle="Italic" Margin="0,0,8,0" Click="OnLivePreviewFieldChanged"/>
+                                        <CheckBox x:Name="chkUnderline" Content="{loc:Loc JpPreset_Underline}" Click="OnLivePreviewFieldChanged"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Font Color Picker & Quick Swatches -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{loc:Loc JpPreset_FontColor}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBox x:Name="txtFontColor" Grid.Column="1" Height="26" FontSize="11" VerticalContentAlignment="Center" TextChanged="OnLivePreviewFieldChanged"/>
+
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{loc:Loc JpPreset_QuickColor}" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <Button Width="18" Height="18" Background="#0F172A" Margin="2,0" ToolTip="Dark (#0F172A)" Click="OnQuickFontColorClick"/>
+                                        <Button Width="18" Height="18" Background="#FFFFFF" BorderBrush="#94A3B8" BorderThickness="1" Margin="2,0" ToolTip="White (#FFFFFF)" Click="OnQuickFontColorClick"/>
+                                        <Button Width="18" Height="18" Background="#1E293B" Margin="2,0" ToolTip="Slate (#1E293B)" Click="OnQuickFontColorClick"/>
+                                        <Button Width="18" Height="18" Background="#9C0006" Margin="2,0" ToolTip="Dark Red (#9C0006)" Click="OnQuickFontColorClick"/>
+                                        <Button Width="18" Height="18" Background="#78350F" Margin="2,0" ToolTip="Amber Brown (#78350F)" Click="OnQuickFontColorClick"/>
+                                        <Button Width="18" Height="18" Background="#14532D" Margin="2,0" ToolTip="Dark Green (#14532D)" Click="OnQuickFontColorClick"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Group 2: Fill / Background -->
+                        <Border CornerRadius="6" BorderBrush="#E2E8F0" BorderThickness="1" Background="#F8FAFC" Padding="10" Margin="0,0,0,10">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Loc JpPreset_GroupFill}" FontWeight="Bold" FontSize="12" Foreground="#0284C7"/>
+                                    <CheckBox x:Name="chkHasFill" Grid.Column="1" Content="{loc:Loc JpPreset_EnableFill}" Click="OnLivePreviewFieldChanged"/>
+                                </Grid>
+
+                                <Grid x:Name="panelFillOptions">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{loc:Loc JpPreset_FillColor}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBox x:Name="txtFillColor" Grid.Column="1" Height="26" FontSize="11" VerticalContentAlignment="Center" TextChanged="OnLivePreviewFieldChanged"/>
+
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{loc:Loc JpPreset_QuickColor}" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <Button Width="18" Height="18" Background="#1B365D" Margin="2,0" ToolTip="Navy Blue (#1B365D)" Click="OnQuickFillColorClick"/>
+                                        <Button Width="18" Height="18" Background="#2B4C7E" Margin="2,0" ToolTip="Slate Blue (#2B4C7E)" Click="OnQuickFillColorClick"/>
+                                        <Button Width="18" Height="18" Background="#D9E1F2" Margin="2,0" ToolTip="Ice Blue (#D9E1F2)" Click="OnQuickFillColorClick"/>
+                                        <Button Width="18" Height="18" Background="#FFC7CE" Margin="2,0" ToolTip="Must Peach (#FFC7CE)" Click="OnQuickFillColorClick"/>
+                                        <Button Width="18" Height="18" Background="#FEF3C7" Margin="2,0" ToolTip="Warning Yellow (#FEF3C7)" Click="OnQuickFillColorClick"/>
+                                        <Button Width="18" Height="18" Background="#F1F5F9" Margin="2,0" ToolTip="Light Gray (#F1F5F9)" Click="OnQuickFillColorClick"/>
+                                        <Button Width="18" Height="18" Background="#E2EFDA" Margin="2,0" ToolTip="Light Green (#E2EFDA)" Click="OnQuickFillColorClick"/>
+                                        <Button Width="18" Height="18" Background="#FFFFFF" BorderBrush="#94A3B8" BorderThickness="1" Margin="2,0" ToolTip="White (#FFFFFF)" Click="OnQuickFillColorClick"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Group 3: Alignment, Borders & Format -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Alignment Block -->
+                            <Border Grid.Column="0" CornerRadius="6" BorderBrush="#E2E8F0" BorderThickness="1" Background="#F8FAFC" Padding="10">
+                                <StackPanel>
+                                    <TextBlock Text="{loc:Loc JpPreset_GroupAlign}" FontWeight="Bold" FontSize="12" Margin="0,0,0,8" Foreground="#0284C7"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{loc:Loc JpPreset_HorizontalAlign}" FontSize="11" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox x:Name="cboHAlign" Height="26" FontSize="11" SelectionChanged="OnLivePreviewFieldChanged">
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_AlignLeft}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_AlignCenter}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_AlignRight}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_AlignGeneral}"/>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="{loc:Loc JpPreset_VerticalAlign}" FontSize="11" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox x:Name="cboVAlign" Height="26" FontSize="11" SelectionChanged="OnLivePreviewFieldChanged">
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_AlignTop}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_AlignMiddle}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_AlignBottom}"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <CheckBox x:Name="chkWrapText" Content="{loc:Loc JpPreset_WrapText}" Margin="0,2,0,0" Click="OnLivePreviewFieldChanged"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Borders & Format Block -->
+                            <Border Grid.Column="2" CornerRadius="6" BorderBrush="#E2E8F0" BorderThickness="1" Background="#F8FAFC" Padding="10">
+                                <StackPanel>
+                                    <TextBlock Text="{loc:Loc JpPreset_GroupBorders}" FontWeight="Bold" FontSize="12" Margin="0,0,0,8" Foreground="#0284C7"/>
+
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="6"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{loc:Loc JpPreset_BorderStyle}" FontSize="11" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox x:Name="cboBorderStyle" Height="26" FontSize="11" SelectionChanged="OnLivePreviewFieldChanged">
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_BorderThin}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_BorderOutlineMedium}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_BorderBottomDouble}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_BorderDotted}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_BorderNone}"/>
+                                                <ComboBoxItem Content="{loc:Loc JpPreset_BorderKeepCurrent}"/>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="{loc:Loc JpPreset_BorderColor}" FontSize="11" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox x:Name="txtBorderColor" Height="26" FontSize="11" VerticalContentAlignment="Center" TextChanged="OnLivePreviewFieldChanged"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Number format -->
+                                    <StackPanel Margin="0,6,0,0">
+                                        <CheckBox x:Name="chkApplyNumberFormat" Content="{loc:Loc JpPreset_NumberFormat}" VerticalAlignment="Center" Margin="0,0,0,4" Click="OnLivePreviewFieldChanged"/>
+                                        <TextBox x:Name="txtNumberFormat" Height="26" FontSize="11" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Footer Actions Bar -->
+        <Border Grid.Row="2" Padding="0,8,0,0" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left action: Apply directly to selection in Excel -->
+                <Button Grid.Column="0" Content="{loc:Loc JpPreset_BtnApplySelection}" Style="{StaticResource JpApplyBtn}" Click="OnApplySelectionClick"/>
+
+                <!-- Right actions: Save changes & Close -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="{loc:Loc JpPreset_BtnSavePreset}" Style="{StaticResource JpPrimaryBtn}" Margin="0,0,8,0" Click="OnSavePresetClick"/>
+                    <Button Content="{loc:Loc JpPreset_BtnClose}" Style="{StaticResource JpSecondaryBtn}" Click="OnCloseClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
