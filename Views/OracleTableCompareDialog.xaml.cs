@@ -18,6 +18,8 @@ using WpfMessageBoxResult = System.Windows.MessageBoxResult;
 using MediaColor = System.Windows.Media.Color;
 using WpfBinding = System.Windows.Data.Binding;
 using WpfClipboard = System.Windows.Clipboard;
+using WpfRadioButton = System.Windows.Controls.RadioButton;
+using WpfButton = System.Windows.Controls.Button;
 
 namespace ExcelSupport.Views
 {
@@ -268,102 +270,52 @@ namespace ExcelSupport.Views
             }
         }
 
-        private void DgSettingUsers_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (dgSettingUsers.SelectedItem is OracleUserCredential u)
-            {
-                txtUserItemName.Text = u.Username;
-                txtUserItemPass.Password = u.Password;
-                txtUserItemRole.Text = u.RoleOrDescription;
-            }
-            else
-            {
-                txtUserItemName.Text = string.Empty;
-                txtUserItemPass.Password = string.Empty;
-                txtUserItemRole.Text = string.Empty;
-            }
-        }
-
         private void BtnUserAdd_Click(object sender, RoutedEventArgs e)
         {
-            dgSettingUsers.SelectedItem = null;
-            txtUserItemName.Text = string.Empty;
-            txtUserItemPass.Password = string.Empty;
-            txtUserItemRole.Text = string.Empty;
-            txtUserItemName.Focus();
+            var newUser = new OracleUserCredential
+            {
+                Username = $"USER_{_settingUsers.Count + 1}",
+                Password = "",
+                RoleOrDescription = "",
+                IsDefault = _settingUsers.Count == 0
+            };
+            _settingUsers.Add(newUser);
+            dgSettingUsers.SelectedItem = newUser;
+            txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserAdded") ?? "Đã thêm tài khoản '{0}' vào danh sách.", newUser.Username);
         }
 
-        private void BtnUserSaveItem_Click(object sender, RoutedEventArgs e)
+        private void RbUserDefault_Click(object sender, RoutedEventArgs e)
         {
-            string username = txtUserItemName.Text.Trim();
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                WpfMessageBox.Show(this, "Tên tài khoản User không được để trống.", "Thiếu thông tin", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                txtUserItemName.Focus();
-                return;
-            }
-
-            if (dgSettingUsers.SelectedItem is OracleUserCredential selected)
-            {
-                selected.Username = username;
-                selected.Password = txtUserItemPass.Password;
-                selected.RoleOrDescription = txtUserItemRole.Text.Trim();
-                dgSettingUsers.Items.Refresh();
-                txtSettingStatus.Text = $"Đã cập nhật User '{username}'.";
-            }
-            else
-            {
-                var newUser = new OracleUserCredential
-                {
-                    Username = username,
-                    Password = txtUserItemPass.Password,
-                    RoleOrDescription = txtUserItemRole.Text.Trim(),
-                    IsDefault = _settingUsers.Count == 0
-                };
-                _settingUsers.Add(newUser);
-                dgSettingUsers.SelectedItem = newUser;
-                txtSettingStatus.Text = $"Đã thêm User '{username}' vào danh sách.";
-            }
-        }
-
-        private void BtnUserSetDefault_Click(object sender, RoutedEventArgs e)
-        {
-            if (dgSettingUsers.SelectedItem is OracleUserCredential selected)
+            if (sender is WpfRadioButton rb && rb.DataContext is OracleUserCredential selected)
             {
                 foreach (var u in _settingUsers)
                 {
                     u.IsDefault = (u == selected);
                 }
-                dgSettingUsers.Items.Refresh();
-                txtSettingStatus.Text = $"Đã đặt User '{selected.Username}' làm mặc định.";
-            }
-            else
-            {
-                WpfMessageBox.Show(this, "Vui lòng chọn một User trong danh sách để đặt làm mặc định.", "Chưa chọn User", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserDefaultSet") ?? "Đã đặt User '{0}' làm mặc định.", selected.Username);
             }
         }
 
-        private void BtnUserDelete_Click(object sender, RoutedEventArgs e)
+        private void BtnRowDeleteUser_Click(object sender, RoutedEventArgs e)
         {
-            if (dgSettingUsers.SelectedItem is OracleUserCredential selected)
+            if (sender is WpfButton btn && btn.DataContext is OracleUserCredential item)
             {
                 if (_settingUsers.Count <= 1)
                 {
-                    WpfMessageBox.Show(this, "Mỗi cấu hình kết nối phải có ít nhất 1 tài khoản User.", "Không thể xóa", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    WpfMessageBox.Show(this, 
+                        LocalizationService.Get("Oracle_MsgMinUserRequired") ?? "Mỗi cấu hình kết nối phải có ít nhất 1 tài khoản User.", 
+                        LocalizationService.Get("Common_Warning") ?? "Cảnh báo", 
+                        WpfMessageBoxButton.OK, 
+                        WpfMessageBoxImage.Warning);
                     return;
                 }
 
-                _settingUsers.Remove(selected);
+                _settingUsers.Remove(item);
                 if (!_settingUsers.Any(u => u.IsDefault) && _settingUsers.Count > 0)
                 {
                     _settingUsers[0].IsDefault = true;
                 }
-                dgSettingUsers.SelectedItem = _settingUsers.FirstOrDefault();
-                txtSettingStatus.Text = $"Đã xóa User '{selected.Username}'.";
-            }
-            else
-            {
-                WpfMessageBox.Show(this, "Vui lòng chọn một User trong danh sách để xóa.", "Chưa chọn User", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserDeleted") ?? "Đã xóa User '{0}'.", item.Username);
             }
         }
 

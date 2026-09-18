@@ -659,7 +659,7 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Multi-User Credentials List -->
+                                <!-- Multi-User Credentials List (Unified Editable DataGrid) -->
                                 <Border Margin="0,0,0,12" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12,10">
                                     <Border.Style>
                                         <Style TargetType="Border">
@@ -672,7 +672,7 @@
                                         </Style>
                                     </Border.Style>
                                     <StackPanel>
-                                        <Grid Margin="0,0,0,6">
+                                        <Grid Margin="0,0,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -680,66 +680,100 @@
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="👥" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{loc:Loc Oracle_UserListHeader}" FontSize="11.5" FontWeight="Bold" Foreground="#334155" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{loc:Loc Oracle_UserListHint}" FontSize="10" Foreground="#64748B" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <WrapPanel Grid.Column="1" Orientation="Horizontal">
-                                                <Button x:Name="btnUserAdd" Content="{loc:Loc Oracle_BtnAddUser}" Style="{StaticResource DialogPrimaryButtonStyle}" Padding="8,3" FontSize="11" Margin="0,0,4,0" Click="BtnUserAdd_Click"/>
-                                                <Button x:Name="btnUserSetDefault" Content="{loc:Loc Oracle_BtnSetDefaultUser}" Style="{StaticResource DialogSecondaryButtonStyle}" Padding="8,3" FontSize="11" Margin="0,0,4,0" Click="BtnUserSetDefault_Click"/>
-                                                <Button x:Name="btnUserDelete" Content="{loc:Loc Oracle_BtnDeleteUser}" Style="{StaticResource DialogSecondaryButtonStyle}" Padding="8,3" FontSize="11" Click="BtnUserDelete_Click"/>
-                                            </WrapPanel>
+                                            <Button Grid.Column="1" x:Name="btnUserAdd" Content="{loc:Loc Oracle_BtnAddUser}" Style="{StaticResource DialogPrimaryButtonStyle}" Padding="10,4" FontSize="11" Click="BtnUserAdd_Click"/>
                                         </Grid>
 
-                                        <!-- Users DataGrid -->
-                                        <DataGrid x:Name="dgSettingUsers" Height="105" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single" SelectionChanged="DgSettingUsers_SelectionChanged" Margin="0,0,0,8">
+                                        <!-- Unified Editable Users DataGrid -->
+                                        <DataGrid x:Name="dgSettingUsers" 
+                                                  Height="135" 
+                                                  AutoGenerateColumns="False" 
+                                                  CanUserAddRows="False" 
+                                                  CanUserDeleteRows="False" 
+                                                  IsReadOnly="False" 
+                                                  HeadersVisibility="Column" 
+                                                  GridLinesVisibility="Horizontal"
+                                                  HorizontalGridLinesBrush="#E2E8F0"
+                                                  RowHeight="30"
+                                                  Background="#FFFFFF"
+                                                  BorderBrush="#CBD5E1"
+                                                  BorderThickness="1"
+                                                  SelectionMode="Single">
+                                            <DataGrid.ColumnHeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                                    <Setter Property="Foreground" Value="#475569"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="Padding" Value="6,4"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                                </Style>
+                                            </DataGrid.ColumnHeaderStyle>
                                             <DataGrid.Columns>
-                                                <DataGridTextColumn Header="{loc:Loc Oracle_ColDefaultUser}" Binding="{Binding DefaultBadge}" Width="95">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="FontWeight" Value="Bold"/>
-                                                            <Setter Property="Foreground" Value="#D97706"/>
-                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                <DataGridTextColumn Header="{loc:Loc Oracle_User}" Binding="{Binding Username}" Width="130">
-                                                    <DataGridTextColumn.ElementStyle>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                        </Style>
-                                                    </DataGridTextColumn.ElementStyle>
-                                                </DataGridTextColumn>
-                                                <DataGridTextColumn Header="{loc:Loc Oracle_UserRole}" Binding="{Binding RoleOrDescription}" Width="*"/>
+                                                <!-- Default Selector Radio Column -->
+                                                <DataGridTemplateColumn Header="{loc:Loc Oracle_ColDefaultUser}" Width="75">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <RadioButton IsChecked="{Binding IsDefault, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                         GroupName="ProfileUserDefaultGroup" 
+                                                                         HorizontalAlignment="Center" 
+                                                                         VerticalAlignment="Center"
+                                                                         Click="RbUserDefault_Click"
+                                                                         ToolTip="{loc:Loc Oracle_BtnSetDefaultUser}"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- Username -->
+                                                <DataGridTemplateColumn Header="{loc:Loc Oracle_User}" Width="135">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBox Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                     Style="{StaticResource FormInputStyle}" 
+                                                                     Height="24" Padding="4,1" Margin="2,1"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- Password -->
+                                                <DataGridTemplateColumn Header="{loc:Loc Oracle_Password}" Width="135">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBox Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                     Style="{StaticResource FormInputStyle}" 
+                                                                     Height="24" Padding="4,1" Margin="2,1"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- Role / Description -->
+                                                <DataGridTemplateColumn Header="{loc:Loc Oracle_UserRole}" Width="*">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBox Text="{Binding RoleOrDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                     Style="{StaticResource FormInputStyle}" 
+                                                                     Height="24" Padding="4,1" Margin="2,1"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- Delete Row Action -->
+                                                <DataGridTemplateColumn Width="42">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button Content="🗑️" 
+                                                                    Style="{StaticResource DialogSecondaryButtonStyle}" 
+                                                                    Padding="0" Width="26" Height="22" 
+                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                    ToolTip="{loc:Loc Oracle_BtnDeleteUser}"
+                                                                    Click="BtnRowDeleteUser_Click"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
                                             </DataGrid.Columns>
                                         </DataGrid>
-
-                                        <!-- User Edit / Input Fields -->
-                                        <Grid Margin="0,2,0,0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="1.2*"/>
-                                                <ColumnDefinition Width="8"/>
-                                                <ColumnDefinition Width="1.2*"/>
-                                                <ColumnDefinition Width="8"/>
-                                                <ColumnDefinition Width="1.6*"/>
-                                                <ColumnDefinition Width="8"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="{loc:Loc Oracle_User}" FontSize="10.5" Foreground="#64748B" Margin="0,0,0,2"/>
-                                                <TextBox x:Name="txtUserItemName" Style="{StaticResource FormInputStyle}" Height="26"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="2">
-                                                <TextBlock Text="{loc:Loc Oracle_Password}" FontSize="10.5" Foreground="#64748B" Margin="0,0,0,2"/>
-                                                <PasswordBox x:Name="txtUserItemPass" Style="{StaticResource FormPasswordStyle}" Height="26"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="4">
-                                                <TextBlock Text="{loc:Loc Oracle_UserRole}" FontSize="10.5" Foreground="#64748B" Margin="0,0,0,2"/>
-                                                <TextBox x:Name="txtUserItemRole" Style="{StaticResource FormInputStyle}" Height="26"/>
-                                            </StackPanel>
-
-                                            <Button Grid.Column="6" x:Name="btnUserSaveItem" Content="{loc:Loc Oracle_BtnSaveUserItem}" Style="{StaticResource DialogSecondaryButtonStyle}" VerticalAlignment="Bottom" Height="26" Padding="10,3" Click="BtnUserSaveItem_Click"/>
-                                        </Grid>
                                     </StackPanel>
                                 </Border>
 
