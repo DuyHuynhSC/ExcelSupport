@@ -21,70 +21,122 @@
         <Style x:Key="FloatingActionBtnStyle" TargetType="Button">
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <!-- Default Light Theme Text: Deep Slate Black for Maximum Contrast -->
+            <Setter Property="Foreground" Value="#0F172A"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Padding" Value="7,4"/>
             <Setter Property="Margin" Value="1,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#334155"/>
-                                <Setter Property="Foreground" Value="#38BDF8"/>
+                                <!-- Light Mode Hover -->
+                                <Setter TargetName="bd" Property="Background" Value="#E0F2FE"/>
+                                <Setter Property="Foreground" Value="#0284C7"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1E293B"/>
+                                <Setter TargetName="bd" Property="Background" Value="#BAE6FD"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <!-- Dark Theme Trigger -->
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- Accent Spec Doc Button Style -->
+        <!-- Spec Doc Base Style -->
         <Style x:Key="SpecDocBtnStyle" TargetType="Button" BasedOn="{StaticResource FloatingActionBtnStyle}">
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="11.5"/>
             <Setter Property="Padding" Value="6,3"/>
+        </Style>
+
+        <!-- TKCT Label Style (High Contrast) -->
+        <Style x:Key="TkctTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#0284C7"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#38BDF8"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- TKCB Label Style (High Contrast) -->
+        <Style x:Key="TkcbTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#6D28D9"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#C084FC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- UT Label Style (High Contrast) -->
+        <Style x:Key="UtTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#15803D"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#4ADE80"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <!-- Vertical Separator Style -->
         <Style x:Key="FloatingSeparator" TargetType="Rectangle">
             <Setter Property="Width" Value="1"/>
-            <Setter Property="Height" Value="18"/>
-            <Setter Property="Margin" Value="3,0"/>
-            <Setter Property="Fill" Value="#334155"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="Fill" Value="#CBD5E1"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Fill" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
     <!-- Outer Container Border with Shadow & Drag Grip -->
-    <Border x:Name="OuterBorder" Margin="8" CornerRadius="18" BorderThickness="1.2" Padding="6,3"
+    <Border x:Name="OuterBorder" Margin="8" CornerRadius="18" BorderThickness="1.5" Padding="6,3"
             MouseEnter="OnMouseEnter" MouseLeave="OnMouseLeave">
         <Border.Style>
             <Style TargetType="Border">
-                <!-- Dark Theme (Default) -->
-                <Setter Property="Background" Value="#0F172A"/>
-                <Setter Property="BorderBrush" Value="#38BDF8"/>
+                <!-- Light Theme (Crisp White Card with Sky Border & Soft Shadow) -->
+                <Setter Property="Background" Value="#FFFFFF"/>
+                <Setter Property="BorderBrush" Value="#0284C7"/>
                 <Setter Property="Effect">
                     <Setter.Value>
-                        <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Color="#000000" Opacity="0.45"/>
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="3" Direction="270" Color="#0F172A" Opacity="0.22"/>
                     </Setter.Value>
                 </Setter>
                 <Style.Triggers>
-                    <!-- Light Theme Trigger -->
-                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
-                        <Setter Property="Background" Value="#FFFFFF"/>
-                        <Setter Property="BorderBrush" Value="#94A3B8"/>
+                    <!-- Dark Theme Trigger -->
+                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                        <Setter Property="Background" Value="#0F172A"/>
+                        <Setter Property="BorderBrush" Value="#38BDF8"/>
                         <Setter Property="Effect">
                             <Setter.Value>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Color="#000000" Opacity="0.22"/>
+                                <DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.55"/>
                             </Setter.Value>
                         </Setter>
                     </DataTrigger>
@@ -98,7 +150,7 @@
                 <!-- 0. Drag Grip -->
                 <Border Background="Transparent" Cursor="SizeAll" Padding="2,0,4,0" VerticalAlignment="Center"
                         MouseLeftButtonDown="OnDragGripMouseDown">
-                    <TextBlock Text="⋮⋮" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+                    <TextBlock Text="⋮⋮" FontSize="13" Foreground="#94A3B8" VerticalAlignment="Center"/>
                 </Border>
 
                 <!-- 1. Copy Visible Only -->
@@ -106,7 +158,7 @@
                         ToolTip="{loc:Loc QuickActionBar_CopyVisible_Tip}"
                         Click="OnCopyVisibleClick">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="📋" FontSize="13" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                        <TextBlock Text="📋" FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBlock Text="{loc:Loc QuickActionBar_CopyVisible}" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -123,8 +175,8 @@
                         </ContextMenu>
                     </Button.ContextMenu>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🔤" FontSize="13" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                        <TextBlock Text="{loc:Loc QuickActionBar_Zenkaku}" FontSize="11.5" VerticalAlignment="Center"/>
+                        <TextBlock Text="🔤" FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="{loc:Loc QuickActionBar_Zenkaku}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -133,8 +185,8 @@
                         ToolTip="{loc:Loc QuickActionBar_AiTranslate_Tip}"
                         Click="OnAiTranslateClick">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🌐" FontSize="13" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                        <TextBlock Text="{loc:Loc QuickActionBar_AiTranslate}" FontSize="11.5" VerticalAlignment="Center"/>
+                        <TextBlock Text="🌐" FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="{loc:Loc QuickActionBar_AiTranslate}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -143,8 +195,8 @@
                         ToolTip="{loc:Loc QuickActionBar_ExportMarkdown_Tip}"
                         Click="OnExportMarkdownClick">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="📑" FontSize="13" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                        <TextBlock Text="{loc:Loc QuickActionBar_ExportMarkdown}" FontSize="11.5" VerticalAlignment="Center"/>
+                        <TextBlock Text="📑" FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="{loc:Loc QuickActionBar_ExportMarkdown}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -153,8 +205,8 @@
                         ToolTip="{loc:Loc QuickActionBar_TrimSpaces_Tip}"
                         Click="OnTrimSpacesClick">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="✂️" FontSize="13" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                        <TextBlock Text="{loc:Loc QuickActionBar_TrimSpaces}" FontSize="11.5" VerticalAlignment="Center"/>
+                        <TextBlock Text="✂️" FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="{loc:Loc QuickActionBar_TrimSpaces}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -167,8 +219,8 @@
                         ToolTip="{loc:Loc QuickActionBar_DocTkct_Tip}"
                         Click="OnDocTkctClick">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="📐" FontSize="11" Margin="0,0,2,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="TKCT" Foreground="#38BDF8" VerticalAlignment="Center"/>
+                        <TextBlock Text="📐" FontSize="11" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="TKCT" Style="{StaticResource TkctTextStyle}"/>
                     </StackPanel>
                 </Button>
 
@@ -177,8 +229,8 @@
                         ToolTip="{loc:Loc QuickActionBar_DocTkcb_Tip}"
                         Click="OnDocTkcbClick">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="📘" FontSize="11" Margin="0,0,2,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="TKCB" Foreground="#A78BFA" VerticalAlignment="Center"/>
+                        <TextBlock Text="📘" FontSize="11" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="TKCB" Style="{StaticResource TkcbTextStyle}"/>
                     </StackPanel>
                 </Button>
 
@@ -187,8 +239,8 @@
                         ToolTip="{loc:Loc QuickActionBar_DocUt_Tip}"
                         Click="OnDocUtClick">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🧪" FontSize="11" Margin="0,0,2,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="UT" Foreground="#4ADE80" VerticalAlignment="Center"/>
+                        <TextBlock Text="🧪" FontSize="11" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="UT" Style="{StaticResource UtTextStyle}"/>
                     </StackPanel>
                 </Button>
 
@@ -197,16 +249,16 @@
 
                 <!-- 7. Dismiss / Close Button -->
                 <Button Style="{StaticResource FloatingActionBtnStyle}"
-                        Padding="4,2"
-                        Margin="2,0,0,0"
+                        Padding="5,2"
+                        Margin="1,0,0,0"
                         ToolTip="{loc:Loc QuickActionBar_Close_Tip}"
                         Click="OnDismissClick">
-                    <TextBlock Text="✕" FontSize="12" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                    <TextBlock Text="✕" FontSize="12" FontWeight="Bold" Foreground="#64748B" VerticalAlignment="Center"/>
                 </Button>
             </StackPanel>
 
             <!-- Feedback Toast Notification Bar (Overlay when action executes) -->
-            <Border x:Name="ToastFeedbackBorder" Background="#047857" CornerRadius="12" Padding="12,4"
+            <Border x:Name="ToastFeedbackBorder" Background="#047857" CornerRadius="12" Padding="14,4"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtToastIcon" Text="✓" FontWeight="Bold" FontSize="12" Foreground="#FFFFFF" Margin="0,0,6,0"/>
