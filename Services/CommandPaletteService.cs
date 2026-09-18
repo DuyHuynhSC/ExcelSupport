@@ -67,6 +67,22 @@ namespace ExcelSupport.Services
                     Keywords = new List<string> { "refresh", "lam moi", "quet lai", "reload", "cap nhat danh sach" },
                     Action = () => AddInEvents.Instance?.RefreshWorkbookTreePublic()
                 },
+                new PaletteCommandItem
+                {
+                    Id = "toggle_quick_action_bar",
+                    TitleKey = "btnToggleQuickActionBar",
+                    DescriptionKey = "btnToggleQuickActionBar_SuperTip",
+                    CategoryKey = "grpNavExplorer",
+                    IconEmoji = "🪄",
+                    Keywords = new List<string> { "quick action bar", "floating bar", "thanh tac vu noi", "con tro", "cursor", "mini toolbar", "quick action", "selection bar" },
+                    Action = () =>
+                    {
+                        QuickActionBarService.ToggleEnabled();
+                        var app = AddInEvents.Instance?.ExcelAppInstance;
+                        string stateMsg = AppSettings.IsQuickActionBarEnabled ? "BẬT" : "TẮT";
+                        try { if (app != null) app.StatusBar = $"✨ ExcelSupport: Đã {stateMsg} Thanh tác vụ nổi (Mini Floating Bar)!"; } catch { }
+                    }
+                },
 
                 // ==================== 2. THAO TÁC NHANH (grpQuickTools) ====================
                 new PaletteCommandItem

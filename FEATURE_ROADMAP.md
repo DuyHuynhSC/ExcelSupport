@@ -29,8 +29,9 @@ graph TD
   - Hỗ trợ hiển thị phím tắt đi kèm của từng chức năng, điều hướng bằng phím mũi tên `Up/Down` và bấm `Enter` để kích hoạt ngay.
   - Lưu lại **Lịch sử các lệnh dùng gần đây (Recent Commands)** lên đầu danh sách.
 
-#### 1.2. Mini Floating Quick-Action Bar (Thanh tác vụ nổi theo con trỏ) — [P2]
-* Khi quét chọn một vùng ô (Selection), xuất hiện thanh công cụ nhỏ gọn nổi nhẹ: *Copy Visible Only*, *Zenkaku/Hankaku*, *AI Quick Translate*, *Export Markdown*, *Trim Spaces*.
+#### 1.2. Mini Floating Quick-Action Bar (Thanh tác vụ nổi theo con trỏ) — [Ưu tiên P2 - ✅ Đã hoàn thành]
+* Khi quét chọn một vùng ô (Selection), xuất hiện thanh công cụ nhỏ gọn nổi nhẹ bên cạnh con trỏ: *Copy Visible Only*, *Zenkaku/Hankaku*, *AI Quick Translate*, *Export Markdown*, *Trim Spaces*, cùng các nút mở nhanh tài liệu dự án *TKCT*, *TKCB*, *UT*.
+* Hỗ trợ Non-Activating Window (`WS_EX_NOACTIVATE`) bảo toàn 100% focus Excel, Dark/Light Theme, Toggle trên Ribbon và Command Palette (`Ctrl + Shift + P`).
 
 ---
 

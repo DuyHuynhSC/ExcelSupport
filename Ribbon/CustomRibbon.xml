@@ -30,6 +30,16 @@
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnRefreshTree' />
+
+          <toggleButton id='btnToggleQuickActionBar'
+                        size='large'
+                        imageMso='SelectionPane'
+                        getVisible='GetControlVisible'
+                        getLabel='GetRibbonLabel'
+                        getScreentip='GetRibbonScreentip'
+                        getSupertip='GetRibbonSupertip'
+                        getPressed='GetQuickActionBarPressed'
+                        onAction='OnToggleQuickActionBar' />
         </group>
 
         <!-- Group 2: Thao Tác Nhanh -->

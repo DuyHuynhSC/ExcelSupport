@@ -888,6 +888,21 @@ namespace ExcelSupport.Ribbon
             AddInEvents.Instance?.RefreshWorkbookTreePublic();
         }
 
+        public bool GetQuickActionBarPressed(IRibbonControl control)
+        {
+            return Host.AppSettings.IsQuickActionBarEnabled;
+        }
+
+        public void OnToggleQuickActionBar(IRibbonControl control, bool pressed)
+        {
+            Host.AppSettings.IsQuickActionBarEnabled = pressed;
+            if (!pressed)
+            {
+                Services.QuickActionBarService.HideBar();
+            }
+            InvalidateControl("btnToggleQuickActionBar");
+        }
+
         public void OnCreateTOC(IRibbonControl control)
         {
             ExcelDna.Integration.ExcelAsyncUtil.QueueAsMacro(() =>

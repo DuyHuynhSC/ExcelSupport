@@ -27,6 +27,7 @@
 21. [Sao Lưu & Khôi Phục Dữ Liệu Tức Thì (Sheet Snapshot & Instant Undo)](#21-sao-lưu--khôi-phục-dữ-liệu-tức-thì-sheet-snapshot--instant-undo)
 22. [Bộ Tiện Ích Chuyên Sâu IT / Khách Hàng Nhật Bản (Japan & IT Tools)](#22-bộ-tiện-ích-chuyên-sâu-it--khách-hàng-nhật-bản-japan--it-tools)
 23. [Bảng Lệnh Nhanh — Quick Command Palette (Ctrl + Shift + P)](#23-bảng-lệnh-nhanh--quick-command-palette-ctrl--shift--p)
+24. [Thanh Tác Vụ Nổi Theo Con Trỏ (Mini Floating Quick-Action Bar)](#24-thanh-tác-vụ-nổi-theo-con-trỏ-mini-floating-quick-action-bar)
 
 ---
 
@@ -488,4 +489,34 @@ Nhóm công cụ đặc thù trên thanh Ribbon (`Tiện Ích Nhật & IT` / `Ja
 
 ---
 
+## 24. Thanh Tác Vụ Nổi Theo Con Trỏ (Mini Floating Quick-Action Bar)
+
+### 24.1 Tổng Quan
+**Mini Floating Quick-Action Bar** là thanh công cụ mini nổi tự động bám theo vị trí con trỏ chuột mỗi khi bạn quét chọn một khối ô (từ 2 ô trở lên) trên bảng tính Excel. Thanh công cụ này cung cấp tức thì các hành động thường dùng nhất mà không làm phân tâm hay đòi hỏi di chuyển chuột lên thanh Ribbon:
+
+* **Tự động xuất hiện:** Khi quét chọn vùng ô (`Selection`), thanh bar tự động xuất hiện sau 250ms ngay bên cạnh con trỏ chuột.
+* **Bảo toàn Focus (Non-Activating Window):** Áp dụng công nghệ Win32 `WS_EX_NOACTIVATE`, bảo đảm 100% khi nhấp vào các nút tác vụ trên thanh nổi, vùng chọn và con trỏ chuột của bạn trong bảng tính Excel **không bao giờ bị mất focus hay mất chọn**.
+* **Tự động ẩn thông minh:** Tự động ẩn khi bạn click chọn 1 ô đơn lẻ, chuyển sheet, chuyển workbook hoặc sau khi thực hiện xong một thao tác.
+* **Bật/Tắt Linh Hoạt:** Bạn có thể bật hoặc tắt tính năng này thông qua nút **`Thanh Tác Vụ Nổi`** tại nhóm **Điều Hướng** trên thanh Ribbon hoặc từ **Command Palette (`Ctrl + Shift + P`)**.
+
+### 24.2 Các Tác Vụ Hỗ Trợ
+1. **📋 Chỉ Ô Thấy (Copy Visible Only):**
+   - Sao chép chỉ các ô hiển thị trong vùng chọn, tự động loại trừ các dòng/cột đang bị ẩn hoặc lọc bởi AutoFilter.
+2. **🔤 Toàn/Bán Giác (Zenkaku / Hankaku):**
+   - **Click chuột trái:** Chuyển đổi nhanh vùng chọn sang ký tự **Bán giác (Hankaku)** (chữ số, chữ cái, Katakana, dấu câu, khoảng trắng).
+   - **Click chuột phải:** Mở menu lựa chọn chuyển đổi sang **Bán giác (Hankaku)** hoặc **Toàn giác (Zenkaku)** theo nhu cầu.
+3. **🌐 Dịch AI (AI Quick Translate):**
+   - Kích hoạt cửa sổ dịch nhanh AI cho văn bản trong vùng ô đang chọn (phím tắt tương đương: `F3` hoặc `Ctrl + Shift + T`).
+4. **📑 Markdown (Export Markdown Table):**
+   - Xuất nhanh ma trận ô tính thành bảng chuẩn Markdown (`| Cột 1 | Cột 2 |`) và lưu vào Clipboard để dán ngay vào tài liệu, PR, Jira, hoặc Teams/Slack (phím tắt tương đương: `Ctrl + Shift + M`).
+5. **✂️ Cắt Khoảng Trắng (Trim Spaces):**
+   - Tự động cắt tỉa toàn bộ khoảng trắng dư thừa ở đầu, cuối và chuẩn hóa các khoảng trắng liên tiếp bên trong chuỗi văn bản cho tất cả các ô trong vùng chọn.
+6. **📐 TKCT / 📘 TKCB / 🧪 UT (Mở Nhanh Tài Liệu Dự Án):**
+   - Mở tức thì tài liệu Thiết Kế Chi Tiết (**TKCT**), Thiết Kế Cơ Bản (**TKCB**) hoặc Chỉ Thị Test (**UT**) tương ứng với ID màn hình/chương trình/bảng đang chọn trong ô thông qua cấu hình Project Profile.
+7. **✕ Đóng (Dismiss):**
+   - Đóng nhanh thanh tác vụ nổi khi không có nhu cầu sử dụng cho vùng chọn hiện tại.
+
+---
+
 *Tài liệu được cập nhật liên tục cùng các phiên bản phát hành mới của **ExcelSupport Add-In**.*
+

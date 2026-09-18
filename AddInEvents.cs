@@ -158,6 +158,8 @@ namespace ExcelSupport
                 _selectionDebounceTimer = null;
             }
 
+            Services.QuickActionBarService.CloseBar();
+
             TaskPaneRegistry.DetachTaskPane();
 
             if (_excelApp != null)
@@ -280,15 +282,23 @@ namespace ExcelSupport
         {
             QueueActiveSelectionSync();
             Services.GridRulerService.OnSheetActivate(Sh as _Worksheet);
+            Services.QuickActionBarService.HideBar();
         }
-        private void ExcelApp_SheetDeactivate(object Sh) { }
+        private void ExcelApp_SheetDeactivate(object Sh)
+        {
+            Services.QuickActionBarService.HideBar();
+        }
         private void ExcelApp_SheetChange(object Sh, Range Target) { }
         private void ExcelApp_SheetSelectionChange(object Sh, Range Target)
         {
             Services.GridRulerService.OnSheetSelectionChange(Sh as _Worksheet, Target);
+            Services.QuickActionBarService.OnSheetSelectionChange(Sh as _Worksheet, Target);
         }
         private void ExcelApp_WorkbookActivate(Workbook Wb) => QueueActiveSelectionSync();
-        private void ExcelApp_WorkbookDeactivate(Workbook Wb) { }
+        private void ExcelApp_WorkbookDeactivate(Workbook Wb)
+        {
+            Services.QuickActionBarService.HideBar();
+        }
         private void ExcelApp_WindowActivate(Workbook Wb, Window Wn) => QueueActiveSelectionSync();
 
         private System.Threading.Timer? _refreshDebounceTimer;

@@ -78,5 +78,43 @@ namespace ExcelSupport.Host
                 catch { }
             }
         }
+
+        private const string QuickActionBarKey = "IsQuickActionBarEnabled";
+
+        /// <summary>
+        /// Bật/tắt thanh tác vụ nổi nhanh theo con trỏ (Mini Floating Quick-Action Bar)
+        /// Mặc định: true (Bật)
+        /// </summary>
+        public static bool IsQuickActionBarEnabled
+        {
+            get
+            {
+                try
+                {
+                    using (var key = Registry.CurrentUser.OpenSubKey(RegKeyPath))
+                    {
+                        if (key != null)
+                        {
+                            var val = key.GetValue(QuickActionBarKey);
+                            if (val is int intVal) return intVal == 1;
+                            if (val is string strVal && bool.TryParse(strVal, out bool b)) return b;
+                        }
+                    }
+                }
+                catch { }
+                return true; // Mặc định bật
+            }
+            set
+            {
+                try
+                {
+                    using (var key = Registry.CurrentUser.CreateSubKey(RegKeyPath))
+                    {
+                        key?.SetValue(QuickActionBarKey, value ? 1 : 0, RegistryValueKind.DWord);
+                    }
+                }
+                catch { }
+            }
+        }
     }
 }
