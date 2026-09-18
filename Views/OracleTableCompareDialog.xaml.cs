@@ -181,8 +181,12 @@ namespace ExcelSupport.Views
 
         #region Profile Management
 
-        private void RefreshProfilesList()
+        private void RefreshProfilesList(string? selectProfileId = null)
         {
+            string? targetId = selectProfileId ?? (lstProfiles.SelectedItem as OracleConnectionProfile)?.Id;
+            string? targetIdA = (cboProfileA.SelectedItem as OracleConnectionProfile)?.Id;
+            string? targetIdB = (cboProfileB.SelectedItem as OracleConnectionProfile)?.Id;
+
             var list = OracleConnectionManager.GetProfiles();
             _profiles.Clear();
             foreach (var p in list)
@@ -192,24 +196,52 @@ namespace ExcelSupport.Views
 
             cboProfileA.ItemsSource = null;
             cboProfileA.ItemsSource = _profiles;
+            cboProfileA.SelectedItem = _profiles.FirstOrDefault(p => p.Id == targetIdA) ?? _profiles.FirstOrDefault();
 
             cboProfileB.ItemsSource = null;
             cboProfileB.ItemsSource = _profiles;
+            cboProfileB.SelectedItem = _profiles.FirstOrDefault(p => p.Id == targetIdB) ?? (_profiles.Count > 1 ? _profiles[1] : _profiles.FirstOrDefault());
 
             lstProfiles.ItemsSource = null;
             lstProfiles.ItemsSource = _profiles;
 
-            if (_profiles.Count > 0)
+            if (!string.IsNullOrEmpty(targetId))
             {
-                if (cboProfileA.SelectedIndex < 0) cboProfileA.SelectedIndex = 0;
-                if (cboProfileB.SelectedIndex < 0) cboProfileB.SelectedIndex = _profiles.Count > 1 ? 1 : 0;
-                if (lstProfiles.SelectedIndex < 0) lstProfiles.SelectedIndex = 0;
+                var matched = _profiles.FirstOrDefault(p => p.Id == targetId);
+                if (matched != null)
+                {
+                    lstProfiles.SelectedItem = matched;
+                }
+                else if (_profiles.Count > 0)
+                {
+                    lstProfiles.SelectedIndex = 0;
+                }
+            }
+            else if (_profiles.Count > 0)
+            {
+                lstProfiles.SelectedIndex = 0;
+            }
+        }
+
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.Source != mainTabControl) return;
+
+            if (pnlFooterControls != null)
+            {
+                pnlFooterControls.Visibility = (mainTabControl.SelectedIndex == 0)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
             }
         }
 
         private void BtnManageProfiles_Click(object sender, RoutedEventArgs e)
         {
             mainTabControl.SelectedIndex = 1; // Switch to Tab Settings
+            if (pnlFooterControls != null)
+            {
+                pnlFooterControls.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void CboProfileA_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -388,8 +420,7 @@ namespace ExcelSupport.Views
             newProfile.EnsureDefaultUsers();
 
             OracleConnectionManager.AddOrUpdateProfile(newProfile);
-            RefreshProfilesList();
-            lstProfiles.SelectedItem = _profiles.FirstOrDefault(p => p.Id == newProfile.Id);
+            RefreshProfilesList(newProfile.Id);
         }
 
         private void BtnSetDefaultProfile_Click(object sender, RoutedEventArgs e)
@@ -397,8 +428,7 @@ namespace ExcelSupport.Views
             if (lstProfiles.SelectedItem is OracleConnectionProfile p)
             {
                 OracleConnectionManager.SetDefaultProfile(p.Id);
-                RefreshProfilesList();
-                lstProfiles.SelectedItem = _profiles.FirstOrDefault(x => x.Id == p.Id);
+                RefreshProfilesList(p.Id);
                 txtSettingStatus.Text = $"Đã đặt '{p.Name}' làm kết nối mặc định.";
             }
             else
@@ -414,8 +444,7 @@ namespace ExcelSupport.Views
             {
                 var clone = p.Clone();
                 OracleConnectionManager.AddOrUpdateProfile(clone);
-                RefreshProfilesList();
-                lstProfiles.SelectedItem = _profiles.FirstOrDefault(x => x.Id == clone.Id);
+                RefreshProfilesList(clone.Id);
             }
         }
 
@@ -457,8 +486,9 @@ namespace ExcelSupport.Views
                 p.Username = def?.Username ?? "";
                 p.Password = def?.Password ?? "";
 
+                string savedId = p.Id;
                 OracleConnectionManager.AddOrUpdateProfile(p);
-                RefreshProfilesList();
+                RefreshProfilesList(savedId);
 
                 txtSettingStatus.Text = "✅ Đã lưu cấu hình thành công!";
                 txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));

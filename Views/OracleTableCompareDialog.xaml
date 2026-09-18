@@ -226,7 +226,7 @@
         </Border>
 
         <!-- 2. MAIN BODY (TAB CONTROL) -->
-        <TabControl Grid.Row="1" x:Name="mainTabControl" Background="Transparent" BorderThickness="0" Margin="16,6,16,6">
+        <TabControl Grid.Row="1" x:Name="mainTabControl" Background="Transparent" BorderThickness="0" Margin="16,6,16,6" SelectionChanged="MainTabControl_SelectionChanged">
             
             <!-- TAB 1: SO SÁNH DỮ LIỆU -->
             <TabItem Header="{loc:Loc Oracle_TabCompare}" Style="{StaticResource ModernTabItemStyle}">
@@ -795,12 +795,15 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="8"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
                                     <Button Grid.Column="0" x:Name="btnSettingSave" Content="{loc:Loc Oracle_BtnSaveProfile}" Style="{StaticResource DialogSuccessButtonStyle}" Padding="16,7" Click="BtnSettingSave_Click"/>
                                     <Button Grid.Column="2" x:Name="btnSettingTest" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource DialogSecondaryButtonStyle}" Padding="14,7" Click="BtnSettingTest_Click"/>
-                                    <TextBlock Grid.Column="3" x:Name="txtSettingStatus" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11" Foreground="#16A34A" TextWrapping="Wrap"/>
+                                    <Button Grid.Column="4" x:Name="btnSettingClose" Content="{loc:Loc Common_Close}" Style="{StaticResource DialogSecondaryButtonStyle}" Padding="14,7" Click="BtnClose_Click"/>
+                                    <TextBlock Grid.Column="5" x:Name="txtSettingStatus" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11" Foreground="#16A34A" TextWrapping="Wrap"/>
                                 </Grid>
                             </StackPanel>
                         </ScrollViewer>
@@ -821,8 +824,8 @@
             </Grid>
         </Border>
 
-        <!-- 4. FOOTER CONTROLS & EXPORT ACTIONS -->
-        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="16,10">
+        <!-- 4. FOOTER CONTROLS & EXPORT ACTIONS (Visible only on Compare Tab) -->
+        <Border x:Name="pnlFooterControls" Grid.Row="3" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="16,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
