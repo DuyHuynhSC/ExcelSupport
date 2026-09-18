@@ -995,6 +995,7 @@
   "Oracle_MsgUserDefaultSet": "Đã đặt User '{0}' làm mặc định.",
   "Oracle_MsgUserDeleted": "Đã xóa User '{0}'.",
   "Oracle_MsgMinUserRequired": "Mỗi cấu hình kết nối phải có ít nhất 1 tài khoản User.",
+  "Oracle_MsgTestingConnUser": "⏳ Đang kiểm tra kết nối với User '{0}'...",
   "Oracle_BtnTableStructure": "Cấu Trúc Bảng",
   "Oracle_BtnTableStructureTip": "Tra cứu cấu trúc bảng, danh sách cột và index (Phím tắt: Ctrl + T)",
   "Oracle_TableStructureTitle": "Tra Cứu Cấu Trúc Bảng & Index — Oracle Database",

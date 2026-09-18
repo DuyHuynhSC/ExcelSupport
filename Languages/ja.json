@@ -995,6 +995,7 @@
   "Oracle_MsgUserDefaultSet": "ユーザー「{0}」をデフォルトに設定しました。",
   "Oracle_MsgUserDeleted": "ユーザー「{0}」を削除しました。",
   "Oracle_MsgMinUserRequired": "各接続プロファイルには少なくとも1つのユーザーアカウントが必要です。",
+  "Oracle_MsgTestingConnUser": "⏳ ユーザー「{0}」で接続テスト中...",
   "Oracle_BtnTableStructure": "テーブル定義",
   "Oracle_BtnTableStructureTip": "テーブル定義、カラム一覧、インデックスを確認 (ショートカット: Ctrl + T)",
   "Oracle_TableStructureTitle": "Oracle テーブル定義・インデックス確認",

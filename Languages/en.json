@@ -995,6 +995,7 @@
   "Oracle_MsgUserDefaultSet": "Set user '{0}' as default.",
   "Oracle_MsgUserDeleted": "Deleted user '{0}'.",
   "Oracle_MsgMinUserRequired": "Each connection profile must have at least one user account.",
+  "Oracle_MsgTestingConnUser": "⏳ Testing connection with User '{0}'...",
   "Oracle_BtnTableStructure": "Table Structure",
   "Oracle_BtnTableStructureTip": "Inspect table structure, columns and indexes (Shortcut: Ctrl + T)",
   "Oracle_TableStructureTitle": "Oracle Table Structure & Index Inspector",

@@ -687,7 +687,7 @@
 
                                         <!-- Unified Editable Users DataGrid -->
                                         <DataGrid x:Name="dgSettingUsers" 
-                                                  Height="135" 
+                                                  Height="170" 
                                                   AutoGenerateColumns="False" 
                                                   CanUserAddRows="False" 
                                                   CanUserDeleteRows="False" 
@@ -699,7 +699,19 @@
                                                   Background="#FFFFFF"
                                                   BorderBrush="#CBD5E1"
                                                   BorderThickness="1"
-                                                  SelectionMode="Single">
+                                                  SelectionMode="Single"
+                                                  GotFocus="DgSettingUsers_GotFocus"
+                                                  PreviewMouseDown="DgSettingUsers_PreviewMouseDown"
+                                                  SelectionChanged="DgSettingUsers_SelectionChanged">
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                            <Setter Property="IsSelected" Value="True"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
                                             <DataGrid.ColumnHeaderStyle>
                                                 <Style TargetType="DataGridColumnHeader">
                                                     <Setter Property="Background" Value="#F1F5F9"/>
@@ -776,29 +788,6 @@
                                         </DataGrid>
                                     </StackPanel>
                                 </Border>
-
-                                <!-- Default Schema & Table (Optional) -->
-                                <Grid Margin="0,0,0,10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Loc Oracle_DefaultSchema}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
-                                        <TextBox x:Name="txtSettingDefaultSchema" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="{loc:Loc Oracle_DefaultTable}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
-                                        <TextBox x:Name="txtSettingDefaultTable" Style="{StaticResource FormInputStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Default Where Clause (Optional) -->
-                                <StackPanel Margin="0,0,0,16">
-                                    <TextBlock Text="{loc:Loc Oracle_WhereClause}" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,3"/>
-                                    <TextBox x:Name="txtSettingDefaultWhere" Style="{StaticResource FormInputStyle}" ToolTip="{loc:Loc Oracle_WhereClauseTip}"/>
-                                </StackPanel>
 
                                 <!-- Bottom Action Buttons for Profile -->
                                 <Grid>
