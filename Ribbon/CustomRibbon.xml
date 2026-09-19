@@ -1,7 +1,7 @@
 <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='OnRibbonLoaded' loadImage='LoadImage'>
   <ribbon>
     <tabs>
-      <tab id='tabWorkbookNav' getLabel='GetRibbonLabel' insertAfterMso='TabHelp'>
+      <tab id='tabWorkbookNav' getLabel='GetRibbonLabel'>
         
         <!-- Group 1: Bảng điều khiển chính -->
         <group id='grpNavExplorer' getLabel='GetRibbonLabel'>
