@@ -1,5 +1,5 @@
 {
-  "tabWorkbookNav": "Excel Support",
+  "tabWorkbookNav": "FJS Tools",
   "grpNavExplorer": "ナビゲーション",
   "grpQuickTools": "クイックツール",
   "grpAuditTools": "監査 & 検査",
@@ -1018,7 +1018,7 @@
   "Oracle_IdxType": "インデックス種別",
   "Oracle_IdxStatus": "ステータス",
   "Oracle_BtnInsertSelect": "SELECT文をエディタに挿入",
-  "Oracle_BtnExportExcel": "Excelシートに出力",
+  "Oracle_BtnExportStructureExcel": "Excelシートに出力",
   "Oracle_StatusLoadingStructure": "Oracle Data Dictionaryからテーブル定義を取得中...",
   "Oracle_StatusStructureLoaded": "テーブル '{0}' の定義を取得しました ({1} 列、{2} インデックス)。",
   "Oracle_ErrEmptyTable": "確認するテーブル名を入力してください。",

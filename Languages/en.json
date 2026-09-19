@@ -1,5 +1,5 @@
 {
-  "tabWorkbookNav": "Excel Support",
+  "tabWorkbookNav": "FJS Tools",
   "grpNavExplorer": "Navigation",
   "grpQuickTools": "Quick Tools",
   "grpAuditTools": "Audit & Check",
@@ -1018,7 +1018,7 @@
   "Oracle_IdxType": "Index Type",
   "Oracle_IdxStatus": "Status",
   "Oracle_BtnInsertSelect": "Insert SELECT to Editor",
-  "Oracle_BtnExportExcel": "Export to Excel Sheet",
+  "Oracle_BtnExportStructureExcel": "Export to Excel Sheet",
   "Oracle_StatusLoadingStructure": "Loading table structure from Oracle Data Dictionary...",
   "Oracle_StatusStructureLoaded": "Loaded table structure for '{0}' ({1} columns, {2} indexes).",
   "Oracle_ErrEmptyTable": "Please enter the table name to inspect.",

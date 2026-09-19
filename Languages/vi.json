@@ -1,5 +1,5 @@
 {
-  "tabWorkbookNav": "Excel Support",
+  "tabWorkbookNav": "FJS Tools",
   "grpNavExplorer": "Điều Hướng",
   "grpQuickTools": "Tiện Ích Nhanh",
   "grpAuditTools": "Kiểm Tra & Đối Soát",
@@ -1018,7 +1018,7 @@
   "Oracle_IdxType": "Kiểu Index",
   "Oracle_IdxStatus": "Trạng Thái",
   "Oracle_BtnInsertSelect": "Chèn SELECT vào Editor",
-  "Oracle_BtnExportExcel": "Xuất Ra Sheet Excel",
+  "Oracle_BtnExportStructureExcel": "Xuất Ra Sheet Excel",
   "Oracle_StatusLoadingStructure": "Đang tải cấu trúc bảng từ Oracle Data Dictionary...",
   "Oracle_StatusStructureLoaded": "Đã tải thành công cấu trúc bảng '{0}' ({1} cột, {2} index).",
   "Oracle_ErrEmptyTable": "Vui lòng nhập tên bảng cần tra cứu.",
