@@ -5,7 +5,7 @@ using ExcelSupport.Services;
 
 namespace ExcelSupport.Models
 {
-    public class ExternalSourceItem : INotifyPropertyChanged
+    public class ExternalSourceItem : ObservableModel
     {
         private string _sourcePath = string.Empty;
         private string _fileName = string.Empty;
@@ -62,15 +62,9 @@ namespace ExcelSupport.Models
             }
             set { _statusDisplay = value; OnPropertyChanged(); }
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 
-    public class BrokenFormulaCellItem : INotifyPropertyChanged
+    public class BrokenFormulaCellItem : ObservableModel
     {
         private string _sheetName = string.Empty;
         private string _cellAddress = string.Empty;
@@ -126,15 +120,9 @@ namespace ExcelSupport.Models
 
         public int Row { get; set; }
         public int Column { get; set; }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 
-    public class ExternalNamedRangeItem : INotifyPropertyChanged
+    public class ExternalNamedRangeItem : ObservableModel
     {
         private string _name = string.Empty;
         private string _scope = string.Empty;
@@ -170,12 +158,6 @@ namespace ExcelSupport.Models
         {
             get => _isSelected;
             set { _isSelected = value; OnPropertyChanged(); }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

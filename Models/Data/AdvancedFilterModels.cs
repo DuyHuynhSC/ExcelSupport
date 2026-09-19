@@ -86,7 +86,7 @@ namespace ExcelSupport.Models
         public override string ToString() => DisplayName;
     }
 
-    public class FilterRule : INotifyPropertyChanged
+    public class FilterRule : ObservableModel
     {
         private int _columnIndex = 1;
         private string _columnName = string.Empty;
@@ -147,15 +147,9 @@ namespace ExcelSupport.Models
                                   Operator != FilterOperator.Today &&
                                   Operator != FilterOperator.ThisMonth &&
                                   Operator != FilterOperator.ThisYear;
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 
-    public class FilterRuleGroup : INotifyPropertyChanged
+    public class FilterRuleGroup : ObservableModel
     {
         private string _groupTitle = "Nhóm Điều Kiện";
         private LogicalOperator _innerOperator = LogicalOperator.And;
@@ -178,12 +172,6 @@ namespace ExcelSupport.Models
             get => _rules;
             set { _rules = value; OnPropertyChanged(); }
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 
     public class AdvancedFilterCriteria
@@ -192,7 +180,7 @@ namespace ExcelSupport.Models
         public LogicalOperator OuterOperator { get; set; } = LogicalOperator.Or;
     }
 
-    public class BatchListFilterCriteria : INotifyPropertyChanged
+    public class BatchListFilterCriteria : ObservableModel
     {
         private int _targetColumnIndex = 1;
         private string _targetColumnName = string.Empty;
@@ -242,12 +230,6 @@ namespace ExcelSupport.Models
         {
             get => _excludeList;
             set { _excludeList = value; OnPropertyChanged(); }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 

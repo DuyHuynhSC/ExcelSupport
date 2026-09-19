@@ -10,7 +10,7 @@ namespace ExcelSupport.Models
         FuzzyMatch  // So khớp mờ (tương đồng theo tỷ lệ %)
     }
 
-    public class ColumnSelectionItem : INotifyPropertyChanged
+    public class ColumnSelectionItem : ObservableModel
     {
         private int _columnIndex;
         private string _columnLetter = string.Empty;
@@ -43,16 +43,6 @@ namespace ExcelSupport.Models
         {
             get => _isSelected;
             set => SetProperty(ref _isSelected, value);
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            return true;
         }
     }
 

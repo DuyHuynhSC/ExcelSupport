@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace ExcelSupport.Models
 {
-    public class AiConnectionProfile : INotifyPropertyChanged
+    public class AiConnectionProfile : ObservableModel
     {
         private string _id = Guid.NewGuid().ToString();
         private string _name = "OpenAI / Local AI";
@@ -113,13 +113,6 @@ namespace ExcelSupport.Models
                 MaxTokens = MaxTokens,
                 IsDefault = false
             };
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

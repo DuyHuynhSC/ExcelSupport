@@ -33,7 +33,7 @@ namespace ExcelSupport.Models
         MissingInB  // Only in A
     }
 
-    public class OracleUserCredential : INotifyPropertyChanged
+    public class OracleUserCredential : ObservableModel
     {
         private string _id = Guid.NewGuid().ToString();
         private string _username = "";
@@ -96,12 +96,9 @@ namespace ExcelSupport.Models
                 IsDefault = false
             };
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public class OracleConnectionProfile : INotifyPropertyChanged
+    public class OracleConnectionProfile : ObservableModel
     {
         private string _id = Guid.NewGuid().ToString();
         private string _name = "Oracle Connection";
@@ -360,9 +357,6 @@ namespace ExcelSupport.Models
 
             return cloned;
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     public class OracleQuickQueryOptions
@@ -397,7 +391,7 @@ namespace ExcelSupport.Models
         }
     }
 
-    public class OracleConnectionConfig : INotifyPropertyChanged
+    public class OracleConnectionConfig : ObservableModel
     {
         private string _host = "localhost";
         private int _port = 1521;
@@ -479,12 +473,9 @@ namespace ExcelSupport.Models
 
             return $"Data Source={dataSource};User Id={Username.Trim()};Password={Password};Connection Timeout=15;Pooling=true;Min Pool Size=1;Max Pool Size=10;";
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public class OracleTableColumnInfo : INotifyPropertyChanged
+    public class OracleTableColumnInfo : ObservableModel
     {
         private bool _isSelectedKey;
         private bool _isSelectedCompare = true;
@@ -498,35 +489,18 @@ namespace ExcelSupport.Models
         public bool IsSelectedKey
         {
             get => _isSelectedKey;
-            set
-            {
-                if (_isSelectedKey != value)
-                {
-                    _isSelectedKey = value;
-                    OnPropertyChanged(nameof(IsSelectedKey));
-                }
-            }
+            set => SetProperty(ref _isSelectedKey, value);
         }
 
         public bool IsSelectedCompare
         {
             get => _isSelectedCompare;
-            set
-            {
-                if (_isSelectedCompare != value)
-                {
-                    _isSelectedCompare = value;
-                    OnPropertyChanged(nameof(IsSelectedCompare));
-                }
-            }
+            set => SetProperty(ref _isSelectedCompare, value);
         }
 
         public string DisplayText => IsPrimaryKey
             ? $"🔑 {ColumnName} ({DataType})"
             : $"{ColumnName} ({DataType})";
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     public enum OracleReportLayout

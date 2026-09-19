@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace ExcelSupport.Models
 {
-    public class GlossaryItem : INotifyPropertyChanged
+    public class GlossaryItem : ObservableModel
     {
         private string _japanese = string.Empty;
         private string _vietnamese = string.Empty;
@@ -13,47 +13,19 @@ namespace ExcelSupport.Models
         public string Japanese
         {
             get => _japanese;
-            set
-            {
-                if (_japanese != value)
-                {
-                    _japanese = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _japanese, value);
         }
 
         public string Vietnamese
         {
             get => _vietnamese;
-            set
-            {
-                if (_vietnamese != value)
-                {
-                    _vietnamese = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _vietnamese, value);
         }
 
         public string Note
         {
             get => _note;
-            set
-            {
-                if (_note != value)
-                {
-                    _note = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            set => SetProperty(ref _note, value);
         }
 
         public GlossaryItem Clone()

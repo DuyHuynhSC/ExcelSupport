@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace ExcelSupport.Models
 {
-    public class DuplicateGroupItem : INotifyPropertyChanged
+    public class DuplicateGroupItem : ObservableModel
     {
         private int _groupId;
         private int _rowIndex;
@@ -90,21 +90,6 @@ namespace ExcelSupport.Models
         {
             get => _rawRowValues;
             set => SetProperty(ref _rawRowValues, value);
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            return true;
-        }
-
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
