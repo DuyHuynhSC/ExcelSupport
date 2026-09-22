@@ -51,9 +51,11 @@ namespace ExcelSupport.Services
                 new() { ControlId = "btnCompareWorkbooks", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnCompareWorkbooks", IconEmoji = "⚖️" },
                 new() { ControlId = "btnCheckVietnamese", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnCheckVietnamese", IconEmoji = "🇻🇳" },
                 new() { ControlId = "btnExternalLinks", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnExternalLinks", IconEmoji = "🔗" },
-                new() { ControlId = "btnOracleTableCompare", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnOracleTableCompare", IconEmoji = "🗄️" },
-                new() { ControlId = "btnOracleQuickQuery", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnOracleQuickQuery", IconEmoji = "⚡" },
-                new() { ControlId = "btnSqlScriptGenerator", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnSqlScriptGenerator", IconEmoji = "🗄️" },
+
+                // Group: Cơ Sở Dữ Liệu & SQL (grpDatabaseTools)
+                new() { ControlId = "btnOracleTableCompare", GroupId = "grpDatabaseTools", GroupNameKey = "grpDatabaseTools", NameKey = "btnOracleTableCompare", IconEmoji = "🗄️" },
+                new() { ControlId = "btnOracleQuickQuery", GroupId = "grpDatabaseTools", GroupNameKey = "grpDatabaseTools", NameKey = "btnOracleQuickQuery", IconEmoji = "⚡" },
+                new() { ControlId = "btnSqlScriptGenerator", GroupId = "grpDatabaseTools", GroupNameKey = "grpDatabaseTools", NameKey = "btnSqlScriptGenerator", IconEmoji = "📜" },
 
                 // Group 2: Thao Tác Nhanh (grpQuickTools)
                 new() { ControlId = "btnCreateTOC", GroupId = "grpQuickTools", GroupNameKey = "grpQuickTools", NameKey = "btnCreateTOC", IconEmoji = "📑" },

@@ -27,7 +27,6 @@ namespace ExcelSupport.Views
     {
         private readonly ObservableCollection<OracleTableColumnInfo> _tableColumns = new ObservableCollection<OracleTableColumnInfo>();
         private readonly ObservableCollection<OracleConnectionProfile> _profiles = new ObservableCollection<OracleConnectionProfile>();
-        private readonly ObservableCollection<OracleUserCredential> _settingUsers = new ObservableCollection<OracleUserCredential>();
         private OracleCompareResult? _lastResult;
         private List<OracleRowDiffItem> _allDiffItems = new List<OracleRowDiffItem>();
         private bool _isComparing = false;
@@ -46,6 +45,9 @@ namespace ExcelSupport.Views
 
             // Load saved connection profiles
             RefreshProfilesList();
+
+            // Refresh profiles list whenever window is activated (e.g. returning from Settings)
+            Activated += (s, e) => RefreshProfilesList();
 
             // Default target address from active cell
             InitActiveLocation();
@@ -182,8 +184,7 @@ namespace ExcelSupport.Views
 
         private void RefreshProfilesList(string? selectProfileId = null)
         {
-            string? targetId = selectProfileId ?? (lstProfiles.SelectedItem as OracleConnectionProfile)?.Id;
-            string? targetIdA = (cboProfileA.SelectedItem as OracleConnectionProfile)?.Id;
+            string? targetIdA = selectProfileId ?? (cboProfileA.SelectedItem as OracleConnectionProfile)?.Id;
             string? targetIdB = (cboProfileB.SelectedItem as OracleConnectionProfile)?.Id;
 
             var list = OracleConnectionManager.GetProfiles();
@@ -200,28 +201,12 @@ namespace ExcelSupport.Views
             cboProfileB.ItemsSource = null;
             cboProfileB.ItemsSource = _profiles;
             cboProfileB.SelectedItem = _profiles.FirstOrDefault(p => p.Id == targetIdB) ?? (_profiles.Count > 1 ? _profiles[1] : _profiles.FirstOrDefault());
-
-            lstProfiles.ItemsSource = null;
-            lstProfiles.ItemsSource = _profiles;
-
-            lstProfiles.SelectedItem = _profiles.FirstOrDefault(p => p.Id == targetId) ?? _profiles.FirstOrDefault();
-        }
-
-        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (e.Source != mainTabControl) return;
-
-            if (pnlFooterControls != null)
-            {
-                pnlFooterControls.Visibility = (mainTabControl.SelectedIndex == 0)
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
-            }
         }
 
         private void BtnManageProfiles_Click(object sender, RoutedEventArgs e)
         {
-            mainTabControl.SelectedIndex = 1; // Switch to Tab Settings
+            RibbonCustomizeDialog.ShowWindow(2, this);
+            RefreshProfilesList();
         }
 
         private void CboProfileA_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -251,211 +236,6 @@ namespace ExcelSupport.Views
                 {
                     txtWhereB.Text = p.DefaultWhereClause;
                 }
-            }
-        }
-
-        private void LstProfiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
-            {
-                txtSettingProfileName.Text = p.Name;
-                txtSettingHost.Text = p.Host;
-                txtSettingPort.Text = p.Port.ToString();
-                txtSettingService.Text = p.ServiceNameOrSid;
-                rbSettingService.IsChecked = p.ServiceType == OracleServiceNameType.ServiceName;
-                rbSettingSid.IsChecked = p.ServiceType == OracleServiceNameType.SID;
-                txtSettingStatus.Text = string.Empty;
-
-                p.EnsureDefaultUsers();
-                _settingUsers.Clear();
-                foreach (var u in p.Users)
-                {
-                    _settingUsers.Add(u);
-                }
-                dgSettingUsers.ItemsSource = null;
-                dgSettingUsers.ItemsSource = _settingUsers;
-
-                var defUser = _settingUsers.FirstOrDefault(u => u.IsDefault) ?? _settingUsers.FirstOrDefault();
-                dgSettingUsers.SelectedItem = defUser;
-            }
-        }
-
-        private void BtnUserAdd_Click(object sender, RoutedEventArgs e)
-        {
-            var newUser = new OracleUserCredential
-            {
-                Username = $"USER_{_settingUsers.Count + 1}",
-                Password = "",
-                RoleOrDescription = "",
-                IsDefault = _settingUsers.Count == 0
-            };
-            _settingUsers.Add(newUser);
-            dgSettingUsers.SelectedItem = newUser;
-            txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserAdded") ?? "Đã thêm tài khoản '{0}' vào danh sách.", newUser.Username);
-        }
-
-        private void RbUserDefault_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is WpfRadioButton rb && rb.DataContext is OracleUserCredential selected)
-            {
-                dgSettingUsers.SelectedItem = selected;
-                foreach (var u in _settingUsers)
-                {
-                    u.IsDefault = (u == selected);
-                }
-                txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserDefaultSet") ?? "Đã đặt User '{0}' làm mặc định.", selected.Username);
-            }
-        }
-
-        private void BtnRowDeleteUser_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is WpfButton btn && btn.DataContext is OracleUserCredential item)
-            {
-                if (_settingUsers.Count <= 1)
-                {
-                    WpfMessageBox.Show(this, 
-                        LocalizationService.Get("Oracle_MsgMinUserRequired") ?? "Mỗi cấu hình kết nối phải có ít nhất 1 tài khoản User.", 
-                        LocalizationService.Get("Common_Warning") ?? "Cảnh báo", 
-                        WpfMessageBoxButton.OK, 
-                        WpfMessageBoxImage.Warning);
-                    return;
-                }
-
-                _settingUsers.Remove(item);
-                if (!_settingUsers.Any(u => u.IsDefault) && _settingUsers.Count > 0)
-                {
-                    _settingUsers[0].IsDefault = true;
-                }
-                txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserDeleted") ?? "Đã xóa User '{0}'.", item.Username);
-            }
-        }
-
-        private void BtnNewProfile_Click(object sender, RoutedEventArgs e)
-        {
-            var newProfile = new OracleConnectionProfile
-            {
-                Name = $"Connection {_profiles.Count + 1}",
-                Host = "localhost",
-                Port = 1521,
-                ServiceNameOrSid = "ORCL",
-                ServiceType = OracleServiceNameType.ServiceName
-            };
-            newProfile.EnsureDefaultUsers();
-
-            OracleConnectionManager.AddOrUpdateProfile(newProfile);
-            RefreshProfilesList(newProfile.Id);
-        }
-
-        private void BtnSetDefaultProfile_Click(object sender, RoutedEventArgs e)
-        {
-            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
-            {
-                OracleConnectionManager.SetDefaultProfile(p.Id);
-                RefreshProfilesList(p.Id);
-                txtSettingStatus.Text = $"Đã đặt '{p.Name}' làm kết nối mặc định.";
-            }
-            else
-            {
-                WpfMessageBox.Show("Vui lòng chọn một cấu hình kết nối trong danh sách để đặt làm mặc định.",
-                                   "Chưa chọn kết nối", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
-            }
-        }
-
-        private void BtnCloneProfile_Click(object sender, RoutedEventArgs e)
-        {
-            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
-            {
-                var clone = p.Clone();
-                OracleConnectionManager.AddOrUpdateProfile(clone);
-                RefreshProfilesList(clone.Id);
-            }
-        }
-
-        private void BtnDeleteProfile_Click(object sender, RoutedEventArgs e)
-        {
-            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
-            {
-                var confirm = WpfMessageBox.Show(
-                    $"Bạn có chắc chắn muốn xóa cấu hình kết nối '{p.Name}' không?",
-                    "Xác nhận xóa", WpfMessageBoxButton.YesNo, WpfMessageBoxImage.Question);
-
-                if (confirm == WpfMessageBoxResult.Yes)
-                {
-                    OracleConnectionManager.DeleteProfile(p.Id);
-                    RefreshProfilesList();
-                }
-            }
-        }
-
-        private void BtnSettingSave_Click(object sender, RoutedEventArgs e)
-        {
-            if (lstProfiles.SelectedItem is OracleConnectionProfile p)
-            {
-                int.TryParse(txtSettingPort.Text, out int port);
-                if (port <= 0) port = 1521;
-
-                p.Name = string.IsNullOrWhiteSpace(txtSettingProfileName.Text) ? "Connection" : txtSettingProfileName.Text.Trim();
-                p.Host = txtSettingHost.Text.Trim();
-                p.Port = port;
-                p.ServiceNameOrSid = txtSettingService.Text.Trim();
-                p.ServiceType = (rbSettingSid.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName;
-                
-                p.Users = _settingUsers.ToList();
-                if (!p.Users.Any(u => u.IsDefault) && p.Users.Count > 0)
-                {
-                    p.Users[0].IsDefault = true;
-                }
-                var def = p.GetEffectiveUser();
-                p.Username = def?.Username ?? "";
-                p.Password = def?.Password ?? "";
-
-                OracleConnectionManager.AddOrUpdateProfile(p);
-                RefreshProfilesList(p.Id);
-
-                txtSettingStatus.Text = "✅ Đã lưu cấu hình thành công!";
-                txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
-            }
-        }
-
-        private async void BtnSettingTest_Click(object sender, RoutedEventArgs e)
-        {
-            btnSettingTest.IsEnabled = false;
-
-            int.TryParse(txtSettingPort.Text, out int port);
-            if (port <= 0) port = 1521;
-
-            var activeUser = (dgSettingUsers.SelectedItem as OracleUserCredential) 
-                             ?? _settingUsers.FirstOrDefault(u => u.IsDefault) 
-                             ?? _settingUsers.FirstOrDefault();
-
-            string testUsername = activeUser?.Username?.Trim() ?? "";
-            string testPassword = activeUser?.Password ?? "";
-
-            txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestingConnUser") ?? "⏳ Đang kiểm tra kết nối với User '{0}'...", testUsername);
-            txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(217, 119, 6));
-
-            var config = new OracleConnectionConfig
-            {
-                Host = txtSettingHost.Text.Trim(),
-                Port = port,
-                ServiceNameOrSid = txtSettingService.Text.Trim(),
-                ServiceType = (rbSettingSid.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName,
-                Username = testUsername,
-                Password = testPassword
-            };
-
-            var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
-            btnSettingTest.IsEnabled = true;
-
-            if (success)
-            {
-                txtSettingStatus.Text = $"🟢 Kết nối thành công (User: {config.Username})! Phiên bản: {version}";
-                txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
-            }
-            else
-            {
-                txtSettingStatus.Text = $"🔴 [User: {config.Username}] {msg}";
-                txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
             }
         }
 
@@ -681,9 +461,6 @@ namespace ExcelSupport.Views
         private async void BtnStartCompare_Click(object sender, RoutedEventArgs e)
         {
             if (_isComparing) return;
-
-            // Switch to Compare tab if on settings tab
-            mainTabControl.SelectedIndex = 0;
 
             if (_activeConfigA == null)
             {

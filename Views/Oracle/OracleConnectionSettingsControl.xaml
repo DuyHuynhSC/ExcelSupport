@@ -1,0 +1,567 @@
+<UserControl x:Class="ExcelSupport.Views.OracleConnectionSettingsControl"
+             x:Name="RootConnectionSettingsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+             mc:Ignorable="d"
+             FontFamily="Segoe UI" FontSize="12">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
+        <!-- Form Input Style -->
+        <Style x:Key="SettingInputStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#2563EB"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="False">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="Foreground" Value="#1E293B"/>
+                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                    <Setter Property="CaretBrush" Value="#1E293B"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                    <Setter Property="CaretBrush" Value="#38BDF8"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style x:Key="SettingPrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#1E40AF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SettingSecondaryBtn" TargetType="Button">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="False">
+                    <Setter Property="Background" Value="#F1F5F9"/>
+                    <Setter Property="Foreground" Value="#334155"/>
+                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Success Action Button Style -->
+        <Style x:Key="SettingSuccessBtn" TargetType="Button">
+            <Setter Property="Background" Value="#16A34A"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#15803D"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#166534"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="4,4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="310"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ==================== LEFT: SAVED PROFILES LIST ==================== -->
+        <Border Grid.Column="0" BorderThickness="1" CornerRadius="8" Padding="12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Header -->
+                    <RowDefinition Height="*"/>    <!-- Profiles ListBox -->
+                    <RowDefinition Height="Auto"/> <!-- Action Buttons -->
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="{loc:Loc Oracle_ProfilesListHeader}" FontWeight="Bold" FontSize="13" Margin="0,0,0,8">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#1E293B"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <ListBox Grid.Row="1" x:Name="lstProfiles" SelectionChanged="LstProfiles_SelectionChanged" BorderThickness="1">
+                    <ListBox.Style>
+                        <Style TargetType="ListBox">
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                    <Setter Property="Background" Value="#0F172A"/>
+                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.Style>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="8,6" CornerRadius="4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Vertical">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding DisplaySummary}" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#64748B"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                            <Setter Property="Foreground" Value="#94A3B8"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="4" Padding="5,2" VerticalAlignment="Center" Margin="6,0,0,0" Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisConverter}}">
+                                        <TextBlock Text="⭐ Mặc định" FontSize="10" FontWeight="Bold" Foreground="#B45309"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Profile Action Buttons -->
+                <WrapPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button x:Name="btnSetDefaultProfile" Content="{loc:Loc Oracle_BtnSetDefault}" Style="{StaticResource SettingSecondaryBtn}" Margin="0,0,5,4" Click="BtnSetDefaultProfile_Click" ToolTip="{loc:Loc Oracle_BtnSetDefaultTip}"/>
+                    <Button x:Name="btnNewProfile" Content="{loc:Loc Oracle_BtnAddProfile}" Style="{StaticResource SettingPrimaryBtn}" Margin="0,0,5,4" Click="BtnNewProfile_Click"/>
+                    <Button x:Name="btnCloneProfile" Content="{loc:Loc Oracle_BtnCloneProfile}" Style="{StaticResource SettingSecondaryBtn}" Margin="0,0,5,4" Click="BtnCloneProfile_Click"/>
+                    <Button x:Name="btnDeleteProfile" Content="{loc:Loc Oracle_BtnDeleteProfile}" Style="{StaticResource SettingSecondaryBtn}" Margin="0,0,0,4" Click="BtnDeleteProfile_Click"/>
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <!-- ==================== RIGHT: PROFILE DETAIL EDITOR ==================== -->
+        <Border Grid.Column="2" BorderThickness="1" CornerRadius="8" Padding="16">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FFFFFF"/>
+                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                            <Setter Property="Background" Value="#1E293B"/>
+                            <Setter Property="BorderBrush" Value="#334155"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="{loc:Loc Oracle_ProfileDetailHeader}" FontWeight="Bold" FontSize="14" Margin="0,0,0,12">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#1E293B"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                        <Setter Property="Foreground" Value="#F8FAFC"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Profile Name -->
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="{loc:Loc Oracle_ProfileName}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#475569"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox x:Name="txtSettingProfileName" Style="{StaticResource SettingInputStyle}"/>
+                    </StackPanel>
+
+                    <!-- Host & Port -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{loc:Loc Oracle_Host}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#475569"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                <Setter Property="Foreground" Value="#CBD5E1"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox x:Name="txtSettingHost" Style="{StaticResource SettingInputStyle}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{loc:Loc Oracle_Port}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#475569"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                <Setter Property="Foreground" Value="#CBD5E1"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox x:Name="txtSettingPort" Text="1521" Style="{StaticResource SettingInputStyle}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Service Name / SID -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{loc:Loc Oracle_ServiceName}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#475569"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                <Setter Property="Foreground" Value="#CBD5E1"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox x:Name="txtSettingService" Style="{StaticResource SettingInputStyle}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="12,0,0,5">
+                            <StackPanel.Resources>
+                                <Style TargetType="RadioButton">
+                                    <Setter Property="Foreground" Value="#334155"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Resources>
+                            <RadioButton x:Name="rbSettingService" Content="Service" IsChecked="True" FontSize="11" Margin="0,0,8,0"/>
+                            <RadioButton x:Name="rbSettingSid" Content="SID" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Multi-User Credentials List (Unified Editable DataGrid) -->
+                    <Border Margin="0,0,0,12" BorderThickness="1" CornerRadius="6" Padding="12,10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F8FAFC"/>
+                                <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                        <Setter Property="Background" Value="#0F172A"/>
+                                        <Setter Property="BorderBrush" Value="#334155"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="👥" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{loc:Loc Oracle_UserListHeader}" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#334155"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                        <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{loc:Loc Oracle_UserListHint}" FontSize="10" Margin="8,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#64748B"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                                <Button Grid.Column="1" x:Name="btnUserAdd" Content="{loc:Loc Oracle_BtnAddUser}" Style="{StaticResource SettingPrimaryBtn}" Padding="10,4" FontSize="11" Click="BtnUserAdd_Click"/>
+                            </Grid>
+
+                            <!-- Unified Editable Users DataGrid -->
+                            <DataGrid x:Name="dgSettingUsers" 
+                                      Height="170" 
+                                      AutoGenerateColumns="False" 
+                                      CanUserAddRows="False" 
+                                      CanUserDeleteRows="False" 
+                                      IsReadOnly="False" 
+                                      HeadersVisibility="Column" 
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#E2E8F0"
+                                      RowHeight="30"
+                                      BorderThickness="1"
+                                      SelectionMode="Single">
+                                <DataGrid.Style>
+                                    <Style TargetType="DataGrid">
+                                        <Setter Property="Background" Value="#FFFFFF"/>
+                                        <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                <Setter Property="Background" Value="#1E293B"/>
+                                                <Setter Property="BorderBrush" Value="#475569"/>
+                                                <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.Style>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Style.Triggers>
+                                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                <Setter Property="IsSelected" Value="True"/>
+                                            </Trigger>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                <Setter Property="Background" Value="#1E293B"/>
+                                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#F1F5F9"/>
+                                        <Setter Property="Foreground" Value="#475569"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontSize" Value="11"/>
+                                        <Setter Property="Padding" Value="6,4"/>
+                                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootConnectionSettingsControl}" Value="True">
+                                                <Setter Property="Background" Value="#0F172A"/>
+                                                <Setter Property="Foreground" Value="#CBD5E1"/>
+                                                <Setter Property="BorderBrush" Value="#334155"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.Columns>
+                                    <!-- Default Selector Radio Column -->
+                                    <DataGridTemplateColumn Header="{loc:Loc Oracle_ColDefaultUser}" Width="75">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <RadioButton IsChecked="{Binding IsDefault, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                             GroupName="ProfileUserDefaultGroup" 
+                                                             HorizontalAlignment="Center" 
+                                                             VerticalAlignment="Center"
+                                                             Click="RbUserDefault_Click"
+                                                             ToolTip="{loc:Loc Oracle_BtnSetDefaultUser}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Username -->
+                                    <DataGridTemplateColumn Header="{loc:Loc Oracle_User}" Width="135">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource SettingInputStyle}" 
+                                                         Height="24" Padding="4,1" Margin="2,1"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Password -->
+                                    <DataGridTemplateColumn Header="{loc:Loc Oracle_Password}" Width="135">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource SettingInputStyle}" 
+                                                         Height="24" Padding="4,1" Margin="2,1"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Role / Description -->
+                                    <DataGridTemplateColumn Header="{loc:Loc Oracle_UserRole}" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding RoleOrDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource SettingInputStyle}" 
+                                                         Height="24" Padding="4,1" Margin="2,1"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Delete Row Action -->
+                                    <DataGridTemplateColumn Width="42">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="🗑️" 
+                                                        Style="{StaticResource SettingSecondaryBtn}" 
+                                                        Padding="0" Width="26" Height="22" 
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        ToolTip="{loc:Loc Oracle_BtnDeleteUser}"
+                                                        Click="BtnRowDeleteUser_Click"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Bottom Action Buttons for Profile -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" x:Name="btnSettingSave" Content="{loc:Loc Oracle_BtnSaveProfile}" Style="{StaticResource SettingSuccessBtn}" Padding="16,7" Click="BtnSettingSave_Click"/>
+                        <Button Grid.Column="2" x:Name="btnSettingTest" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource SettingSecondaryBtn}" Padding="14,7" Click="BtnSettingTest_Click"/>
+                        <TextBlock Grid.Column="3" x:Name="txtSettingStatus" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11" Foreground="#16A34A" TextWrapping="Wrap"/>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

@@ -7,8 +7,8 @@
         xmlns:views="clr-namespace:ExcelSupport.Views"
         mc:Ignorable="d"
         Title="{loc:Loc Settings_Title}"
-        Height="620" Width="800"
-        MinHeight="500" MinWidth="680"
+        Height="680" Width="900"
+        MinHeight="550" MinWidth="800"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
@@ -421,6 +421,13 @@
             <TabItem Header="{loc:Loc Settings_TabAi}" Style="{StaticResource ModernTabItemStyle}">
                 <Grid Margin="6,4">
                     <views:AiSettingsControl x:Name="aiSettingsControl"/>
+                </Grid>
+            </TabItem>
+
+            <!-- ========== TAB 3: QUẢN LÝ KẾT NỐI (CONNECTION SETTINGS) ========== -->
+            <TabItem Header="{loc:Loc Settings_TabConnection}" Style="{StaticResource ModernTabItemStyle}">
+                <Grid Margin="6,4">
+                    <views:OracleConnectionSettingsControl x:Name="connectionSettingsControl"/>
                 </Grid>
             </TabItem>
         </TabControl>

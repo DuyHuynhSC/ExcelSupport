@@ -41,6 +41,10 @@ namespace ExcelSupport.Views
                 {
                     vm.IsDarkTheme = isDark;
                 }
+                if (dlg.connectionSettingsControl != null)
+                {
+                    dlg.connectionSettingsControl.IsDarkTheme = isDark;
+                }
             }
         }
 
@@ -56,6 +60,7 @@ namespace ExcelSupport.Views
             var aiVm = AddInEvents.MainViewModel?.AiSettings ?? new AiSettingsViewModel();
             aiVm.ReloadProfiles();
             aiSettingsControl.DataContext = aiVm;
+            connectionSettingsControl.ReloadProfiles();
             InitThemeSelection();
             BuildGroupSections();
 
@@ -93,11 +98,16 @@ namespace ExcelSupport.Views
                 {
                     vm.IsDarkTheme = isDark;
                 }
+
+                if (connectionSettingsControl != null)
+                {
+                    connectionSettingsControl.IsDarkTheme = isDark;
+                }
             }
             catch { }
         }
 
-        public static void ShowWindow(int initialTabIndex = 0)
+        public static void ShowWindow(int initialTabIndex = 0, Window? owner = null)
         {
             try
             {
@@ -115,11 +125,18 @@ namespace ExcelSupport.Views
 
                 try
                 {
-                    var addIn = AddInEvents.Instance;
-                    if (addIn?.ExcelAppInstance != null)
+                    if (owner != null)
                     {
-                        var helper = new System.Windows.Interop.WindowInteropHelper(_currentInstance);
-                        helper.Owner = new IntPtr(addIn.ExcelAppInstance.Hwnd);
+                        _currentInstance.Owner = owner;
+                    }
+                    else
+                    {
+                        var addIn = AddInEvents.Instance;
+                        if (addIn?.ExcelAppInstance != null)
+                        {
+                            var helper = new System.Windows.Interop.WindowInteropHelper(_currentInstance);
+                            helper.Owner = new IntPtr(addIn.ExcelAppInstance.Hwnd);
+                        }
                     }
                 }
                 catch { }
@@ -149,11 +166,12 @@ namespace ExcelSupport.Views
                 { "grpNavExplorer", 0 },
                 { "grpDataTools", 1 },
                 { "grpAuditTools", 2 },
-                { "grpJapanTools", 3 },
-                { "grpViewTools", 4 },
-                { "grpQuickTools", 5 },
-                { "grpFileTools", 6 },
-                { "grpAiTools", 7 }
+                { "grpDatabaseTools", 3 },
+                { "grpJapanTools", 4 },
+                { "grpViewTools", 5 },
+                { "grpQuickTools", 6 },
+                { "grpFileTools", 7 },
+                { "grpAiTools", 8 }
             };
 
             grouped = grouped.OrderBy(g => groupOrder.TryGetValue(g.Key, out int order) ? order : 99).ToList();
@@ -188,6 +206,7 @@ namespace ExcelSupport.Views
                 var groupIcon = group.Key == "grpNavExplorer" ? "🧭" :
                                 group.Key == "grpDataTools" ? "📊" :
                                 group.Key == "grpAuditTools" ? "🔍" :
+                                group.Key == "grpDatabaseTools" ? "🗄️" :
                                 group.Key == "grpJapanTools" ? "🇯🇵" :
                                 group.Key == "grpViewTools" ? "📐" :
                                 group.Key == "grpQuickTools" ? "⚡" :

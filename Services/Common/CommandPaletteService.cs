@@ -216,7 +216,7 @@ namespace ExcelSupport.Services
                     Id = "oracle_table_compare",
                     TitleKey = "btnOracleTableCompare",
                     DescriptionKey = "btnOracleTableCompare_SuperTip",
-                    CategoryKey = "grpAuditTools",
+                    CategoryKey = "grpDatabaseTools",
                     IconEmoji = "🗄️",
                     Keywords = new List<string> { "oracle compare", "so sanh oracle", "database diff", "so sanh bang", "schema compare", "oracle" },
                     Action = () => OracleTableCompareDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
@@ -226,7 +226,7 @@ namespace ExcelSupport.Services
                     Id = "oracle_quick_query",
                     TitleKey = "btnOracleQuickQuery",
                     DescriptionKey = "btnOracleQuickQuery_SuperTip",
-                    CategoryKey = "grpAuditTools",
+                    CategoryKey = "grpDatabaseTools",
                     IconEmoji = "⚡",
                     ShortcutText = "Ctrl + Shift + Q",
                     Keywords = new List<string> { "oracle query", "truy van oracle", "sql", "select", "database query", "oracle" },
@@ -237,7 +237,7 @@ namespace ExcelSupport.Services
                     Id = "sql_script_generator",
                     TitleKey = "btnSqlScriptGenerator",
                     DescriptionKey = "btnSqlScriptGenerator_SuperTip",
-                    CategoryKey = "grpAuditTools",
+                    CategoryKey = "grpDatabaseTools",
                     IconEmoji = "🗄️",
                     ShortcutText = "Ctrl + Shift + K",
                     Keywords = new List<string> { "sql", "range to sql", "insert", "merge", "upsert", "script", "database", "sinh sql", "xuat sql", "tao insert", "table", "cau lenh sql" },
@@ -849,6 +849,16 @@ namespace ExcelSupport.Services
                     IconEmoji = "🤖",
                     Keywords = new List<string> { "ai settings", "api key", "cau hinh ai", "openai", "gemini", "claude", "deepseek" },
                     Action = () => RibbonCustomizeDialog.ShowWindow(1)
+                },
+                new PaletteCommandItem
+                {
+                    Id = "connection_settings",
+                    TitleKey = "Settings_TabConnection",
+                    DescriptionKey = "Oracle_ProfilesListHeader",
+                    CategoryKey = "grpSettings",
+                    IconEmoji = "🔌",
+                    Keywords = new List<string> { "connection", "oracle", "database", "ket noi", "cau hinh ket noi", "profile", "connection settings" },
+                    Action = () => RibbonCustomizeDialog.ShowWindow(2)
                 },
                 new PaletteCommandItem
                 {

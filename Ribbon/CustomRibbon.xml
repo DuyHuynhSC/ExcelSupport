@@ -127,7 +127,10 @@
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnExternalLinksManager' />
+        </group>
 
+        <!-- Group: Cơ Sở Dữ Liệu & SQL -->
+        <group id='grpDatabaseTools' getLabel='GetRibbonLabel'>
           <button id='btnOracleTableCompare'
                   size='large'
                   image='oracle_compare_icon'
