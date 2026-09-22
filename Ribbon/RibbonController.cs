@@ -125,6 +125,10 @@ namespace ExcelSupport.Ribbon
             {
                 return CreateOracleQuickQueryBitmap();
             }
+            if (imageId == "sql_script_icon")
+            {
+                return CreateSqlScriptBitmap();
+            }
             if (imageId == "doctor_formula_icon")
             {
                 return CreateDoctorFormulaBitmap();
@@ -606,6 +610,63 @@ namespace ExcelSupport.Ribbon
             return bmp;
         }
 
+        private Bitmap CreateSqlScriptBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // 1. Database Cylinder (Nền sau bên trái, màu xanh Indigo #3B82F6 / #1D4ED8)
+                using (var brushDb = new LinearGradientBrush(new Rectangle(3, 4, 18, 24),
+                    Color.FromArgb(59, 130, 246), Color.FromArgb(29, 78, 216), 45f))
+                {
+                    FillRoundedRectangle(g, brushDb, new Rectangle(3, 4, 18, 24), 3);
+                }
+                using (var penDb = new Pen(Color.FromArgb(30, 64, 175), 1f))
+                {
+                    DrawRoundedRectangle(g, penDb, new Rectangle(3, 4, 18, 24), 3);
+                }
+                // Các vạch đĩa Database
+                using (var diskPen = new Pen(Color.FromArgb(191, 219, 254), 1.2f))
+                {
+                    g.DrawLine(diskPen, 6, 10, 18, 10);
+                    g.DrawLine(diskPen, 6, 16, 18, 16);
+                    g.DrawLine(diskPen, 6, 22, 18, 22);
+                }
+
+                // 2. Trang giấy Script SQL (Bên phải đè nhẹ lên Database, màu trắng/xám nhẹ)
+                using (var scriptBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                {
+                    FillRoundedRectangle(g, scriptBrush, new Rectangle(14, 10, 15, 19), 2);
+                }
+                using (var scriptBorderPen = new Pen(Color.FromArgb(71, 85, 105), 1f))
+                {
+                    DrawRoundedRectangle(g, scriptBorderPen, new Rectangle(14, 10, 15, 19), 2);
+                }
+
+                // Các dòng text code trên script (vàng cam & xanh lá)
+                using (var codePen1 = new Pen(Color.FromArgb(245, 158, 11), 1.5f)) // Keyword INSERT/MERGE (Amber)
+                {
+                    g.DrawLine(codePen1, 16, 14, 25, 14);
+                }
+                using (var codePen2 = new Pen(Color.FromArgb(16, 185, 129), 1.2f)) // Values (Emerald)
+                {
+                    g.DrawLine(codePen2, 16, 18, 26, 18);
+                    g.DrawLine(codePen2, 16, 22, 23, 22);
+                }
+
+                // Dấu chấm xanh dương nhỏ ở góc
+                using (var dotBrush = new SolidBrush(Color.FromArgb(37, 99, 235)))
+                {
+                    g.FillEllipse(dotBrush, 22, 24, 4, 4);
+                }
+            }
+            return bmp;
+        }
+
         private Bitmap CreateDoctorFormulaBitmap()
         {
             var bmp = new Bitmap(32, 32);
@@ -978,6 +1039,12 @@ namespace ExcelSupport.Ribbon
         public void OnOracleQuickQuery(IRibbonControl control)
         {
             Views.OracleQuickQueryDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnSqlScriptGenerator(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Views.SqlScriptGeneratorDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnAdvancedFilter(IRibbonControl control)

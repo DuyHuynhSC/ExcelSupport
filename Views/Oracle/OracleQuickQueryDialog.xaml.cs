@@ -51,7 +51,7 @@ namespace ExcelSupport.Views
             RestoreLastQuery();
         }
 
-        public static void ShowWindow(bool? isDarkTheme = null)
+        public static void ShowWindow(bool? isDarkTheme = null, string? initialSql = null)
         {
             try
             {
@@ -60,11 +60,19 @@ namespace ExcelSupport.Views
                 if (_currentInstance != null && _currentInstance.IsLoaded)
                 {
                     _currentInstance.IsDarkTheme = isDark;
+                    if (!string.IsNullOrWhiteSpace(initialSql))
+                    {
+                        _currentInstance.txtSqlQuery.Text = initialSql;
+                    }
                     _currentInstance.Activate();
                     return;
                 }
 
                 _currentInstance = new OracleQuickQueryDialog(isDark);
+                if (!string.IsNullOrWhiteSpace(initialSql))
+                {
+                    _currentInstance.txtSqlQuery.Text = initialSql;
+                }
 
                 try
                 {

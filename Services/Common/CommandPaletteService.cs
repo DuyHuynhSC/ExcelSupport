@@ -232,6 +232,21 @@ namespace ExcelSupport.Services
                     Keywords = new List<string> { "oracle query", "truy van oracle", "sql", "select", "database query", "oracle" },
                     Action = () => OracleQuickQueryDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
                 },
+                new PaletteCommandItem
+                {
+                    Id = "sql_script_generator",
+                    TitleKey = "btnSqlScriptGenerator",
+                    DescriptionKey = "btnSqlScriptGenerator_SuperTip",
+                    CategoryKey = "grpAuditTools",
+                    IconEmoji = "🗄️",
+                    ShortcutText = "Ctrl + Shift + K",
+                    Keywords = new List<string> { "sql", "range to sql", "insert", "merge", "upsert", "script", "database", "sinh sql", "xuat sql", "tao insert", "table", "cau lenh sql" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        SqlScriptGeneratorDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                    }
+                },
 
                 // ==================== 4. XỬ LÝ DỮ LIỆU (grpDataTools) ====================
                 new PaletteCommandItem

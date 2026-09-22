@@ -53,6 +53,7 @@ namespace ExcelSupport.Services
                 new() { ControlId = "btnExternalLinks", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnExternalLinks", IconEmoji = "🔗" },
                 new() { ControlId = "btnOracleTableCompare", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnOracleTableCompare", IconEmoji = "🗄️" },
                 new() { ControlId = "btnOracleQuickQuery", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnOracleQuickQuery", IconEmoji = "⚡" },
+                new() { ControlId = "btnSqlScriptGenerator", GroupId = "grpAuditTools", GroupNameKey = "grpAuditTools", NameKey = "btnSqlScriptGenerator", IconEmoji = "🗄️" },
 
                 // Group 2: Thao Tác Nhanh (grpQuickTools)
                 new() { ControlId = "btnCreateTOC", GroupId = "grpQuickTools", GroupNameKey = "grpQuickTools", NameKey = "btnCreateTOC", IconEmoji = "📑" },

@@ -120,8 +120,19 @@ graph TD
 #### 4.1. Hỗ Trợ Đa Database (PostgreSQL, MySQL, SQL Server, SQLite) — [P2]
 * Mở rộng `OracleQuickQueryDialog` và `OracleTableCompareDialog` thành bộ công cụ Universal DB Query & Schema Compare đa hệ quản trị CSDL.
 
-#### 4.2. Excel Range to SQL INSERT / MERGE Script Generator — [Ưu tiên P1]
-* Chọn vùng bảng tính $\rightarrow$ Sinh script `.sql` chứa các câu lệnh `INSERT INTO ...` hoặc `MERGE INTO ... (Upsert)` chuẩn cú pháp theo từng loại database.
+#### 4.2. Excel Range to SQL INSERT / MERGE Script Generator — [Ưu tiên P1 - ✅ Đã hoàn thành]
+* **Vấn đề giải quyết:** Khi cần chuẩn bị dữ liệu thử nghiệm (Master data, test data) từ file Excel để nạp vào Database, Dev/DBA thường phải viết tay các câu lệnh `INSERT`, ghép chuỗi nối công thức `=CONCATENATE("INSERT INTO...")` thủ công rất dễ sai sót về định dạng ngày tháng, chuỗi ký tự unicode, hoặc phải dùng công cụ bên thứ ba.
+* **Mô tả hoạt động:**
+  - Chọn vùng bảng tính $\rightarrow$ Mở hộp thoại (Phím tắt `Ctrl + Shift + K`, nút trên Ribbon `grpAuditTools`, Command Palette `Ctrl + Shift + P`, hoặc Floating Action Bar).
+  - Tự động nhận diện tên bảng từ tên Sheet, tự động đọc dòng tiêu đề và phân tích kiểu dữ liệu (Text, Number, Date/Timestamp, Boolean, Raw).
+  - Hỗ trợ đa hệ quản trị cơ sở dữ liệu: **Oracle**, **SQL Server**, **PostgreSQL**, **MySQL**, **SQLite**, **Generic ANSI SQL**.
+  - Đa dạng loại câu lệnh:
+    - **Single-row INSERT**: Từng câu lệnh `INSERT INTO table (...) VALUES (...);` độc lập.
+    - **Batch Multi-row INSERT**: Cú pháp nạp nhanh theo cụm batch (`VALUES (...), (...)` hoặc `INSERT ALL` cho Oracle).
+    - **MERGE / Upsert**: So khớp theo khóa chính (PK) tự động cập nhật hoặc thêm mới (`MERGE INTO` cho Oracle/SQL Server, `ON CONFLICT` cho Postgres/SQLite, `ON DUPLICATE KEY UPDATE` cho MySQL).
+    - **UPDATE**: Cập nhật giá trị các cột dữ liệu theo điều kiện `WHERE` khóa chính.
+  - Tùy chọn an toàn: Gói khối Transaction (`BEGIN/COMMIT`), xử lý ô rỗng thành `NULL`, tiền tố `N'...'` cho chuỗi Unicode, kích hoạt `SET IDENTITY_INSERT` cho SQL Server.
+  - Thao tác nhanh: Sao chép vào Clipboard (1-click), Lưu file `.sql`, hoặc chuyển tiếp thẳng sang **Quick SQL Query** để thực thi ngay trên Oracle.
 
 #### 4.3. Multi-User Connection Profiles (Quản Lý Nhiều User Trong 1 Connection Profile) — [Ưu tiên P0  - ✅ Đã hoàn thành]
 * **Vấn đề giải quyết:** Hiện tại, mỗi Connection Profile chỉ lưu được duy nhất 1 User/Password. Trong thực tế dự án, một cơ sở dữ liệu (Host/DB) thường có nhiều User với quyền hạn khác nhau (User Admin/Schema Owner để xem cấu trúc DDL, User Read-Only / Select để tra cứu an toàn, User Nghiệp vụ / Test...). Việc phải tạo nhiều Profile trùng Host/Port/Service chỉ để đổi User gây rườm rà và khó quản lý.
@@ -175,6 +186,7 @@ graph TD
 | 4 | **Japanese Design Quick Formatter (Chuẩn hóa format TKCT Nhật)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 1 (Đã hoàn thành ✅)** |
 | 5 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
 | 6 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |
+| 7 | **Excel Range to SQL INSERT / MERGE Script Generator** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2 (Đã hoàn thành ✅)** |
 | 8 | **Multi-User Connection Profiles (Nhiều User trong 1 Profile)** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2 (Ưu tiên P0)** |
 | 9 | **Quick SQL: Table Structure & Index Inspector** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2 (Ưu tiên P0) (Đã hoàn thành ✅)** |
 | 10 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |

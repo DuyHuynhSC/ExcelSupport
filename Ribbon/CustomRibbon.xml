@@ -145,6 +145,15 @@
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnOracleQuickQuery' />
+
+          <button id='btnSqlScriptGenerator'
+                  size='large'
+                  image='sql_script_icon'
+                  getVisible='GetControlVisible'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnSqlScriptGenerator' />
         </group>
 
         <!-- Group 4: Xử Lý Dữ Liệu -->
