@@ -142,6 +142,25 @@ namespace ExcelSupport.Views
             {
                 TxtSelectionInfo.Text = LocalizationService.Get("AiTranslate_NoSelection");
             }
+            else
+            {
+                var detected = AiTranslationService.DetectDirection(_translationItems.Select(i => i.OriginalText));
+                SetDirectionInComboBox(detected);
+            }
+        }
+
+        private void SetDirectionInComboBox(TranslationDirection dir)
+        {
+            if (CboDirection == null) return;
+            string targetTag = dir.ToString();
+            foreach (var item in CboDirection.Items)
+            {
+                if (item is ComboBoxItem cboItem && cboItem.Tag is string tag && string.Equals(tag, targetTag, StringComparison.OrdinalIgnoreCase))
+                {
+                    CboDirection.SelectedItem = cboItem;
+                    break;
+                }
+            }
         }
 
         private void OnRescanSelectionClick(object sender, RoutedEventArgs e)

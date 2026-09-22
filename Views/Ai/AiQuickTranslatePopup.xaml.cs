@@ -26,6 +26,7 @@ namespace ExcelSupport.Views
         private static AiQuickTranslatePopup? _currentInstance;
 
         private bool _isDarkTheme;
+        private List<CellTextItem> _originalItems = new List<CellTextItem>();
         private List<CellTextItem> _targetItems = new List<CellTextItem>();
         private CancellationTokenSource? _cts;
         private TranslationDirection _currentDirection = TranslationDirection.JapaneseToVietnamese;
@@ -50,7 +51,8 @@ namespace ExcelSupport.Views
         {
             InitializeComponent();
             IsDarkTheme = isDarkTheme;
-            _targetItems = items ?? new List<CellTextItem>();
+            _originalItems = (items ?? new List<CellTextItem>()).Select(x => x.Clone()).ToList();
+            _targetItems = _originalItems.Select(x => x.Clone()).ToList();
             DataContext = this;
 
             Loaded += OnLoaded;
@@ -131,18 +133,35 @@ namespace ExcelSupport.Views
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            if (_targetItems.Count > 0)
+            if (_originalItems.Count > 0)
             {
-                if (_targetItems.Count == 1)
+                if (_originalItems.Count == 1)
                 {
-                    TxtCellBadge.Text = _targetItems[0].Address;
-                    TxtOriginalText.Text = _targetItems[0].OriginalText;
+                    TxtCellBadge.Text = _originalItems[0].Address;
+                    TxtOriginalText.Text = _originalItems[0].OriginalText;
                 }
                 else
                 {
-                    TxtCellBadge.Text = $"{_targetItems[0].Address}.. (+{_targetItems.Count - 1})";
-                    TxtOriginalText.Text = string.Join("\n", _targetItems.Select(i => $"• [{i.Address}]: {i.OriginalText}"));
+                    TxtCellBadge.Text = $"{_originalItems[0].Address}.. (+{_originalItems.Count - 1})";
+                    TxtOriginalText.Text = string.Join("\n", _originalItems.Select(i => $"• [{i.Address}]: {i.OriginalText}"));
                 }
+
+                // Detect direction based on original text
+                var detected = AiTranslationService.DetectDirection(_originalItems.Select(i => i.OriginalText));
+                if (detected == TranslationDirection.VietnameseToJapanese)
+                {
+                    _currentDirection = TranslationDirection.VietnameseToJapanese;
+                    if (RbViJa != null) RbViJa.IsChecked = true;
+                }
+                else
+                {
+                    _currentDirection = TranslationDirection.JapaneseToVietnamese;
+                    if (RbJaVi != null) RbJaVi.IsChecked = true;
+                }
+            }
+            else
+            {
+                if (RbJaVi != null) RbJaVi.IsChecked = true;
             }
 
             StartTranslation();
@@ -150,7 +169,7 @@ namespace ExcelSupport.Views
 
         private async void StartTranslation()
         {
-            if (_targetItems.Count == 0) return;
+            if (_originalItems.Count == 0) return;
 
             _cts?.Cancel();
             _cts = new CancellationTokenSource();
@@ -165,8 +184,10 @@ namespace ExcelSupport.Views
                 var config = AiConfigManager.Current;
                 var tone = TranslationTone.ITSoftware;
 
+                var itemsToTranslate = _originalItems.Select(x => x.Clone()).ToList();
+
                 var translatedItems = await AiTranslationService.TranslateBatchAsync(
-                    _targetItems,
+                    itemsToTranslate,
                     _currentDirection,
                     tone,
                     enableGlossary: true,
@@ -289,6 +310,10 @@ namespace ExcelSupport.Views
             else if (RbEnVi?.IsChecked == true)
             {
                 _currentDirection = TranslationDirection.EnglishToVietnamese;
+            }
+            else if (RbAuto?.IsChecked == true)
+            {
+                _currentDirection = TranslationDirection.AutoDetect;
             }
 
             if (IsLoaded)
