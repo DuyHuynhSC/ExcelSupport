@@ -222,6 +222,26 @@ namespace ExcelSupport.Services
                     var cfg = JsonConvert.DeserializeObject<JapanesePresetConfig>(json);
                     if (cfg != null && cfg.Presets != null && cfg.Presets.Count > 0)
                     {
+                        // Tự động dọn dẹp các đuôi (Copy) bị lặp lại do lỗi trước đây
+                        bool modified = false;
+                        foreach (var p in cfg.Presets)
+                        {
+                            if (!string.IsNullOrEmpty(p.Name))
+                            {
+                                string cleaned = System.Text.RegularExpressions.Regex.Replace(p.Name, @"(\s*\([Cc]opy\))+$", "").Trim();
+                                if (!string.IsNullOrEmpty(cleaned) && cleaned != p.Name)
+                                {
+                                    p.Name = cleaned;
+                                    modified = true;
+                                }
+                            }
+                        }
+
+                        if (modified)
+                        {
+                            SaveConfig(cfg);
+                        }
+
                         return cfg;
                     }
                 }

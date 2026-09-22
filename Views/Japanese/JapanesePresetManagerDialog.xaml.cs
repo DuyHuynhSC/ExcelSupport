@@ -486,7 +486,7 @@ namespace ExcelSupport.Views
             if (_selectedPreset == null) return;
 
             SaveFormToPreset(_selectedPreset);
-            var clone = _selectedPreset.Clone();
+            var clone = _selectedPreset.Duplicate();
             _presets.Add(clone);
             RefreshPresetsList();
             lstPresets.SelectedItem = clone;
