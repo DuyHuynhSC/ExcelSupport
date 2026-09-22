@@ -37,6 +37,10 @@ namespace ExcelSupport.Views
         {
             if (d is RibbonCustomizeDialog dlg && e.NewValue is bool isDark)
             {
+                if (dlg.aiSettingsControl != null)
+                {
+                    dlg.aiSettingsControl.IsDarkTheme = isDark;
+                }
                 if (dlg.aiSettingsControl?.DataContext is ViewModelBase vm)
                 {
                     vm.IsDarkTheme = isDark;
@@ -92,6 +96,11 @@ namespace ExcelSupport.Views
                 else
                 {
                     rbLightTheme.IsChecked = true;
+                }
+
+                if (aiSettingsControl != null)
+                {
+                    aiSettingsControl.IsDarkTheme = isDark;
                 }
 
                 if (aiSettingsControl?.DataContext is ViewModelBase vm)

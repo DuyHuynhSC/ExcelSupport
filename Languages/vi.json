@@ -764,6 +764,7 @@
   "AiSet_BtnCloneProfile": "📋 Nhân bản",
   "AiSet_BtnDeleteProfile": "🗑️ Xóa",
   "AiSet_BtnSetDefault": "⭐ Đặt mặc định",
+  "AiSet_BadgeDefault": "⭐ Mặc định",
   "AiSet_BtnSetDefaultTip": "Đặt cấu hình này làm kết nối AI chính thức cho toàn bộ Add-in",
   "AiSet_QuickPresets": "⚡ Nạp nhanh mẫu cấu hình:",
   "AiSet_BaseUrlLabel": "API Base URL (Endpoint)",

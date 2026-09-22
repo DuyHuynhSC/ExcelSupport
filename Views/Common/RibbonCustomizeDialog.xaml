@@ -420,7 +420,8 @@
             <!-- ========== TAB 2: CẤU HÌNH AI NỘI BỘ ========== -->
             <TabItem Header="{loc:Loc Settings_TabAi}" Style="{StaticResource ModernTabItemStyle}">
                 <Grid Margin="6,4">
-                    <views:AiSettingsControl x:Name="aiSettingsControl"/>
+                    <views:AiSettingsControl x:Name="aiSettingsControl"
+                                             IsDarkTheme="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </Grid>
             </TabItem>
 

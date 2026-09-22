@@ -764,6 +764,7 @@
   "AiSet_BtnCloneProfile": "📋 Clone",
   "AiSet_BtnDeleteProfile": "🗑️ Delete",
   "AiSet_BtnSetDefault": "⭐ Set as Default",
+  "AiSet_BadgeDefault": "⭐ Default",
   "AiSet_BtnSetDefaultTip": "Set this profile as active default for the entire Add-in",
   "AiSet_QuickPresets": "⚡ Quick Presets:",
   "AiSet_BaseUrlLabel": "API Base URL (Endpoint)",

@@ -764,6 +764,7 @@
   "AiSet_BtnCloneProfile": "📋 複製",
   "AiSet_BtnDeleteProfile": "🗑️ 削除",
   "AiSet_BtnSetDefault": "⭐ デフォルトに設定",
+  "AiSet_BadgeDefault": "⭐ デフォルト",
   "AiSet_BtnSetDefaultTip": "このプロファイルをアドイン全体のメインAI接続に設定します",
   "AiSet_QuickPresets": "⚡ クイックプリセット:",
   "AiSet_BaseUrlLabel": "API Base URL (エンドポイント)",
