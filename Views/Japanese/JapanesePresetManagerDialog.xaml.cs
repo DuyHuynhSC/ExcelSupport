@@ -97,8 +97,56 @@ namespace ExcelSupport.Views
             }
         }
 
+        private static List<string>? _cachedSystemFonts;
+
+        private static List<string> GetSystemFontNames()
+        {
+            if (_cachedSystemFonts != null) return _cachedSystemFonts;
+
+            var fonts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                foreach (var font in System.Windows.Media.Fonts.SystemFontFamilies)
+                {
+                    string name = font.Source;
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        fonts.Add(name);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[JapanesePresetManagerDialog] Error getting system fonts: {ex.Message}");
+            }
+
+            // Đảm bảo Tahoma và các font chuẩn thông dụng luôn có mặt
+            var standardFonts = new[]
+            {
+                "Tahoma",
+                "Meiryo UI",
+                "Yu Gothic UI",
+                "MS Gothic",
+                "MS Mincho",
+                "Segoe UI",
+                "Arial",
+                "Calibri",
+                "Consolas",
+                "Times New Roman"
+            };
+
+            foreach (var sf in standardFonts)
+            {
+                fonts.Add(sf);
+            }
+
+            _cachedSystemFonts = fonts.OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
+            return _cachedSystemFonts;
+        }
+
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            cboFontFamily.ItemsSource = GetSystemFontNames();
             LoadData();
         }
 
@@ -174,7 +222,7 @@ namespace ExcelSupport.Views
                 txtDescription.Text = _selectedPreset.Description;
 
                 // Font Family
-                SelectComboBoxByContent(cboFontFamily, _selectedPreset.FontName);
+                SetSelectedFontName(_selectedPreset.FontName);
 
                 // Font Size
                 cboFontSize.Text = _selectedPreset.FontSize.ToString("0.#");
@@ -212,17 +260,38 @@ namespace ExcelSupport.Views
             UpdateLivePreview();
         }
 
-        private void SelectComboBoxByContent(WpfComboBox cbo, string value)
+        private void SetSelectedFontName(string? fontName)
         {
-            foreach (ComboBoxItem item in cbo.Items)
+            if (string.IsNullOrWhiteSpace(fontName)) fontName = "Tahoma";
+
+            string? matched = null;
+            if (cboFontFamily.ItemsSource is IEnumerable<string> list)
             {
-                if (string.Equals(item.Content?.ToString(), value, StringComparison.OrdinalIgnoreCase))
-                {
-                    cbo.SelectedItem = item;
-                    return;
-                }
+                matched = list.FirstOrDefault(f => string.Equals(f, fontName, StringComparison.OrdinalIgnoreCase));
             }
-            if (cbo.Items.Count > 0) cbo.SelectedIndex = 0;
+
+            if (matched != null)
+            {
+                cboFontFamily.SelectedItem = matched;
+            }
+            else
+            {
+                cboFontFamily.Text = fontName!;
+            }
+        }
+
+        private string GetSelectedFontName()
+        {
+            string? name = cboFontFamily.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = (cboFontFamily.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = cboFontFamily.Text?.Trim();
+            }
+            return string.IsNullOrWhiteSpace(name) ? "Tahoma" : name!;
         }
 
         private void OnLivePreviewFieldChanged(object sender, RoutedEventArgs e)
@@ -238,7 +307,7 @@ namespace ExcelSupport.Views
             try
             {
                 // Font Family
-                string fontName = (cboFontFamily.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Meiryo UI";
+                string fontName = GetSelectedFontName();
                 pvwCellText.FontFamily = new WpfFontFamily(fontName);
 
                 // Font Size (preview scale down slightly if too large to fit box)
@@ -396,7 +465,7 @@ namespace ExcelSupport.Views
                 Name = LocalizationService.Get("JpPreset_NewPresetDefaultName", "Mẫu Mới (Custom Preset)"),
                 Description = LocalizationService.Get("JpPreset_NewPresetDefaultDesc", "Mẫu định dạng do người dùng thiết lập"),
                 IsBuiltIn = false,
-                FontName = "Meiryo UI",
+                FontName = "Tahoma",
                 FontSize = 10.0,
                 FontColorHex = "#0F172A",
                 HasFill = true,
@@ -629,7 +698,7 @@ namespace ExcelSupport.Views
             preset.Name = string.IsNullOrWhiteSpace(txtName.Text) ? "Custom Preset" : txtName.Text.Trim();
             preset.Description = txtDescription.Text?.Trim() ?? string.Empty;
 
-            preset.FontName = (cboFontFamily.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Meiryo UI";
+            preset.FontName = GetSelectedFontName();
 
             if (double.TryParse(cboFontSize.Text, out double size) && size > 0)
             {

@@ -343,15 +343,11 @@
                                     <!-- Font Family -->
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="{loc:Loc JpPreset_FontFamily}" FontSize="11" Foreground="#64748B" Margin="0,0,0,3"/>
-                                        <ComboBox x:Name="cboFontFamily" Height="28" FontSize="12" SelectionChanged="OnLivePreviewFieldChanged">
-                                            <ComboBoxItem Content="Meiryo UI"/>
-                                            <ComboBoxItem Content="Yu Gothic UI"/>
-                                            <ComboBoxItem Content="MS Gothic"/>
-                                            <ComboBoxItem Content="MS Mincho"/>
-                                            <ComboBoxItem Content="Consolas"/>
-                                            <ComboBoxItem Content="Segoe UI"/>
-                                            <ComboBoxItem Content="Arial"/>
-                                        </ComboBox>
+                                        <ComboBox x:Name="cboFontFamily" Height="28" FontSize="12" 
+                                                  IsEditable="True"
+                                                  IsTextSearchEnabled="True"
+                                                  SelectionChanged="OnLivePreviewFieldChanged"
+                                                  LostFocus="OnLivePreviewFieldChanged"/>
                                     </StackPanel>
 
                                     <!-- Font Size -->

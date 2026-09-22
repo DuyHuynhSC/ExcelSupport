@@ -137,7 +137,7 @@ graph TD
     - Khi đổi Profile $\rightarrow$ ComboBox User tự động nạp danh sách User tương ứng và chọn User mặc định.
     - Người dùng có thể chuyển đổi nhanh giữa các User chỉ với 1 click để thực thi câu lệnh SQL với quyền tương ứng.
 
-#### 4.4. Quick SQL Query: Table Structure & Index Inspector (Truy Xuất Cấu Trúc Bảng, Cột & Index Chính/Phụ) — [Ưu tiên P0]
+#### 4.4. Quick SQL Query: Table Structure & Index Inspector (Truy Xuất Cấu Trúc Bảng, Cột & Index Chính/Phụ) — [Ưu tiên P0 - (Đã hoàn thành ✅)]
 * **Vấn đề giải quyết:** Khi viết câu lệnh SQL hoặc kiểm tra dữ liệu trong Excel, Dev/BSE thường phải mở công cụ ngoài (như PL/SQL Developer, DBeaver, Toad) chỉ để tra cứu xem bảng có những cột nào, kiểu dữ liệu gì, cột nào là Khóa chính (PK), có các Index phụ nào để tối ưu câu query `WHERE`.
 * **Mô tả hoạt động & Luồng người dùng:**
   - **Kích hoạt nhanh từ Quick SQL Query:**
@@ -176,6 +176,6 @@ graph TD
 | 5 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
 | 6 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |
 | 8 | **Multi-User Connection Profiles (Nhiều User trong 1 Profile)** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2 (Ưu tiên P0)** |
-| 9 | **Quick SQL: Table Structure & Index Inspector** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2 (Ưu tiên P0)** |
+| 9 | **Quick SQL: Table Structure & Index Inspector** | Dev, DBA, BSE | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2 (Ưu tiên P0) (Đã hoàn thành ✅)** |
 | 10 | **AI Smart Data Insights & Flash Fill** | PM, Analyst, Lead | ⭐⭐⭐⭐ | TB - Cao | **Phase 3** |
 | 11 | **Multi-Database Support (Postgres/MySQL)** | Backend Dev | ⭐⭐⭐⭐ | Trung bình | **Phase 3** |

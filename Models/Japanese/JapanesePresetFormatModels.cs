@@ -84,7 +84,7 @@ namespace ExcelSupport.Models
         public bool IsBuiltIn { get; set; }
 
         // ==================== Font & Typography ====================
-        public string FontName { get; set; } = "Meiryo UI";
+        public string FontName { get; set; } = "Tahoma";
         public double FontSize { get; set; } = 10.0;
         public string FontColorHex { get; set; } = "#0F172A";
         public bool IsBold { get; set; }
