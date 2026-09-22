@@ -1575,5 +1575,11 @@
   "SqlGen_ErrEmptyScript": "Không có nội dung script để thao tác!",
   "SqlGen_CopiedToClipboard": "Đã sao chép toàn bộ script SQL vào Clipboard!",
   "SqlGen_SaveFileDialogTitle": "Lưu Script SQL Ra File",
-  "SqlGen_FileSavedSuccess": "Đã lưu file thành công tại: {0}"
+  "SqlGen_FileSavedSuccess": "Đã lưu file thành công tại: {0}",
+  "ColorPicker_ThemeColors": "Màu chủ đề (Theme Colors)",
+  "ColorPicker_StandardColors": "Màu tiêu chuẩn (Standard Colors)",
+  "ColorPicker_NoColor": "Không màu (No Color / Trong suốt)",
+  "ColorPicker_CustomHex": "Mã Hex:",
+  "ColorPicker_Apply": "Chọn",
+  "JpPreset_QuickBorderColor": "Chọn nhanh:"
 }

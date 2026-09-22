@@ -1575,5 +1575,11 @@
   "SqlGen_ErrEmptyScript": "操作対象のスクリプトが存在しません！",
   "SqlGen_CopiedToClipboard": "SQLスクリプトをクリップボードにコピーしました！",
   "SqlGen_SaveFileDialogTitle": "SQLスクリプトファイルの保存",
-  "SqlGen_FileSavedSuccess": "ファイルを保存しました: {0}"
+  "SqlGen_FileSavedSuccess": "ファイルを保存しました: {0}",
+  "ColorPicker_ThemeColors": "テーマの色 (Theme Colors)",
+  "ColorPicker_StandardColors": "標準の色 (Standard Colors)",
+  "ColorPicker_NoColor": "なし (No Color / 透明)",
+  "ColorPicker_CustomHex": "HEXコード:",
+  "ColorPicker_Apply": "適用",
+  "JpPreset_QuickBorderColor": "クイック選択:"
 }

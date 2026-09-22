@@ -1575,5 +1575,11 @@
   "SqlGen_ErrEmptyScript": "No script content to process!",
   "SqlGen_CopiedToClipboard": "Successfully copied SQL script to Clipboard!",
   "SqlGen_SaveFileDialogTitle": "Save SQL Script File",
-  "SqlGen_FileSavedSuccess": "Successfully saved file to: {0}"
+  "SqlGen_FileSavedSuccess": "Successfully saved file to: {0}",
+  "ColorPicker_ThemeColors": "Theme Colors",
+  "ColorPicker_StandardColors": "Standard Colors",
+  "ColorPicker_NoColor": "No Color (Transparent)",
+  "ColorPicker_CustomHex": "Hex code:",
+  "ColorPicker_Apply": "Apply",
+  "JpPreset_QuickBorderColor": "Quick pick:"
 }
