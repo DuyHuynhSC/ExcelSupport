@@ -110,14 +110,42 @@ namespace ExcelSupport.Services
                 var app = AddInEvents.Instance?.ExcelAppInstance;
                 if (app == null) return;
 
-                // 1. Xác định tọa độ vật lý (Physical Screen Pixels)
-                int physicalX = -1;
-                int physicalY = -1;
+                // 1. Lấy DPI scale của hệ thống / màn hình (DIP = PhysicalPixels / dpiScale)
+                double dpiScaleX = 1.0;
+                double dpiScaleY = 1.0;
 
-                bool hasRangeCoords = false;
+                if (_barWindow != null && _barWindow.IsLoaded)
+                {
+                    try
+                    {
+                        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(_barWindow);
+                        dpiScaleX = dpi.DpiScaleX;
+                        dpiScaleY = dpi.DpiScaleY;
+                    }
+                    catch { }
+                }
+
+                if (dpiScaleX <= 0.1 || dpiScaleY <= 0.1)
+                {
+                    try
+                    {
+                        using (var g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
+                        {
+                            dpiScaleX = g.DpiX / 96.0;
+                            dpiScaleY = g.DpiY / 96.0;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (dpiScaleX <= 0.1) dpiScaleX = 1.0;
+                if (dpiScaleY <= 0.1) dpiScaleY = 1.0;
+
+                // 2. Xác định tọa độ (Physical Screen Pixels) của vùng chọn Excel
                 int selLeftPx = -1;
                 int selRightPx = -1;
                 int selBottomPx = -1;
+                bool hasRangeCoords = false;
 
                 Range? rng = targetRange;
                 if (rng == null)
@@ -141,102 +169,108 @@ namespace ExcelSupport.Services
                             selRightPx = win.PointsToScreenPixelsX((int)Math.Round(rLeft + rWidth));
                             selBottomPx = win.PointsToScreenPixelsY((int)Math.Round(rTop + rHeight));
 
-                            // Đặt thanh bar ở ngay bên dưới góc trái vùng chọn
-                            physicalX = selLeftPx;
-                            physicalY = selBottomPx + 10;
-                            hasRangeCoords = true;
+                            hasRangeCoords = (selLeftPx >= 0 && selBottomPx >= 0);
                         }
                     }
                     catch { }
                 }
 
-                // Lấy tọa độ con trỏ chuột
+                // 3. Tọa độ con trỏ chuột (Physical Pixels)
+                int physicalX = -1;
+                int physicalY = -1;
+
                 if (GetCursorPos(out Win32Point mousePt))
                 {
                     if (hasRangeCoords)
                     {
-                        // Nếu con trỏ chuột nằm gần vùng chọn (trong vòng bán kính 250px)
-                        // -> Ưu tiên hiển thị ngay cạnh con trỏ chuột người dùng vừa kéo!
+                        // Kiểm tra con trỏ chuột có nằm gần vùng chọn không (khoảng cách 300 physical px)
+                        int marginX = (int)(250 * dpiScaleX);
+                        int marginY = (int)(250 * dpiScaleY);
                         bool isMouseNearSelection =
-                            mousePt.X >= (selLeftPx - 100) && mousePt.X <= (selRightPx + 250) &&
-                            mousePt.Y >= (selBottomPx - 250) && mousePt.Y <= (selBottomPx + 250);
+                            mousePt.X >= (selLeftPx - marginX) && mousePt.X <= (selRightPx + marginX) &&
+                            mousePt.Y >= (selBottomPx - marginY) && mousePt.Y <= (selBottomPx + marginY);
 
                         if (isMouseNearSelection)
                         {
-                            physicalX = mousePt.X + 12;
-                            physicalY = mousePt.Y + 16;
+                            // Ưu tiên hiển thị ngay góc dưới con trỏ chuột
+                            physicalX = mousePt.X + (int)(12 * dpiScaleX);
+                            physicalY = mousePt.Y + (int)(16 * dpiScaleY);
+                        }
+                        else
+                        {
+                            // Người dùng chọn bằng phím hoặc chuột ở xa -> hiển thị ngay dưới vùng chọn
+                            physicalX = selLeftPx;
+                            physicalY = selBottomPx + (int)(10 * dpiScaleY);
                         }
                     }
                     else
                     {
-                        physicalX = mousePt.X + 12;
-                        physicalY = mousePt.Y + 16;
+                        physicalX = mousePt.X + (int)(12 * dpiScaleX);
+                        physicalY = mousePt.Y + (int)(16 * dpiScaleY);
                     }
+                }
+                else if (hasRangeCoords)
+                {
+                    physicalX = selLeftPx;
+                    physicalY = selBottomPx + (int)(10 * dpiScaleY);
                 }
 
                 if (physicalX < 0 || physicalY < 0) return;
 
-                // 2. Lấy thông tin màn hình chứa vị trí hiển thị
+                // 4. Lấy thông tin màn hình chứa vị trí hiển thị (tất cả tính bằng Physical Pixels)
                 var screen = Screen.FromPoint(new System.Drawing.Point(physicalX, physicalY));
-                var workArea = screen.WorkingArea; // Toàn bộ workArea tính theo Physical Pixels
+                var workArea = screen.WorkingArea;
 
-                // 3. Tính toán DPI Scale của hệ thống (96 DPI = 1.0)
-                double dpiScaleX = 1.0;
-                double dpiScaleY = 1.0;
-
-                if (_barWindow != null && _barWindow.IsLoaded)
-                {
-                    try
-                    {
-                        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(_barWindow);
-                        dpiScaleX = dpi.DpiScaleX;
-                        dpiScaleY = dpi.DpiScaleY;
-                    }
-                    catch { }
-                }
-                else
-                {
-                    try
-                    {
-                        using (var g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
-                        {
-                            dpiScaleX = g.DpiX / 96.0;
-                            dpiScaleY = g.DpiY / 96.0;
-                        }
-                    }
-                    catch { }
-                }
-
-                if (dpiScaleX <= 0) dpiScaleX = 1.0;
-                if (dpiScaleY <= 0) dpiScaleY = 1.0;
-
-                // Kích thước thanh nổi quy đổi sang Physical Pixels để căn lề
                 const double barWidthDip = 475;
                 const double barHeightDip = 48;
                 double barWidthPx = barWidthDip * dpiScaleX;
                 double barHeightPx = barHeightDip * dpiScaleY;
 
-                // Chống tràn màn hình bên phải
-                if (physicalX + barWidthPx > workArea.Right - 10)
+                // Chống tràn viền phải màn hình
+                if (physicalX + barWidthPx > workArea.Right - (10 * dpiScaleX))
                 {
-                    physicalX = (int)(workArea.Right - barWidthPx - 10);
+                    physicalX = (int)(workArea.Right - barWidthPx - (10 * dpiScaleX));
                 }
-                if (physicalX < workArea.Left + 10)
+                if (physicalX < workArea.Left + (10 * dpiScaleX))
                 {
-                    physicalX = workArea.Left + 10;
-                }
-
-                // Chống tràn màn hình bên dưới: Nếu chạm đáy màn hình thì cho nổi lên phía trên
-                if (physicalY + barHeightPx > workArea.Bottom - 10)
-                {
-                    physicalY = (int)(physicalY - barHeightPx - 36);
-                }
-                if (physicalY < workArea.Top + 10)
-                {
-                    physicalY = workArea.Top + 10;
+                    physicalX = (int)(workArea.Left + (10 * dpiScaleX));
                 }
 
-                // 4. QUY ĐỔI SANG WPF DIPs ĐỂ GÁN WINDOW.LEFT / WINDOW.TOP
+                // Chống tràn đáy màn hình: Nếu không đủ chỗ bên dưới, đẩy thanh nổi lên trên vùng chọn / chuột
+                if (physicalY + barHeightPx > workArea.Bottom - (10 * dpiScaleY))
+                {
+                    if (hasRangeCoords)
+                    {
+                        // Đẩy lên trên đầu vùng chọn
+                        try
+                        {
+                            var win = app.ActiveWindow;
+                            if (win != null && rng != null)
+                            {
+                                int selTopPx = win.PointsToScreenPixelsY((int)Math.Round((double)rng.Top));
+                                physicalY = selTopPx - (int)barHeightPx - (int)(10 * dpiScaleY);
+                            }
+                            else
+                            {
+                                physicalY = physicalY - (int)barHeightPx - (int)(36 * dpiScaleY);
+                            }
+                        }
+                        catch
+                        {
+                            physicalY = physicalY - (int)barHeightPx - (int)(36 * dpiScaleY);
+                        }
+                    }
+                    else
+                    {
+                        physicalY = physicalY - (int)barHeightPx - (int)(36 * dpiScaleY);
+                    }
+                }
+                if (physicalY < workArea.Top + (10 * dpiScaleY))
+                {
+                    physicalY = (int)(workArea.Top + (10 * dpiScaleY));
+                }
+
+                // 5. QUY ĐỔI SANG WPF DIPs (Device-Independent Pixels: wpf = physical / dpiScale)
                 double wpfLeft = physicalX / dpiScaleX;
                 double wpfTop = physicalY / dpiScaleY;
 
