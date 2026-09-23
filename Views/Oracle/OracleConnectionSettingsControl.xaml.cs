@@ -308,5 +308,127 @@ namespace ExcelSupport.Views
                 txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
             }
         }
+
+        private async void BtnSettingTestAll_Click(object sender, RoutedEventArgs e)
+        {
+            var parentWindow = Window.GetWindow(this);
+            if (_settingUsers.Count == 0)
+            {
+                WpfMessageBox.Show(parentWindow,
+                    LocalizationService.Get("Oracle_MsgNoUsersToTest") ?? "Chưa có tài khoản User nào trong cấu hình để kiểm tra.",
+                    LocalizationService.Get("Common_Warning") ?? "Cảnh báo",
+                    WpfMessageBoxButton.OK,
+                    WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            int.TryParse(txtSettingPort.Text, out int port);
+            if (port <= 0) port = 1521;
+
+            string host = txtSettingHost.Text.Trim();
+            string service = txtSettingService.Text.Trim();
+            var serviceType = (rbSettingSid.IsChecked == true) ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName;
+            string profileName = string.IsNullOrWhiteSpace(txtSettingProfileName.Text) ? "Profile" : txtSettingProfileName.Text.Trim();
+
+            btnSettingTest.IsEnabled = false;
+            btnSettingTestAll.IsEnabled = false;
+            btnSettingSave.IsEnabled = false;
+
+            txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestingAllConn") ?? "⏳ Đang kiểm tra kết nối cho toàn bộ {0} tài khoản User...", _settingUsers.Count);
+            txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(217, 119, 6));
+
+            try
+            {
+                var usersCopy = _settingUsers.ToList();
+                var tasks = usersCopy.Select(async u =>
+                {
+                    var config = new OracleConnectionConfig
+                    {
+                        Host = host,
+                        Port = port,
+                        ServiceNameOrSid = service,
+                        ServiceType = serviceType,
+                        Username = u.Username?.Trim() ?? "",
+                        Password = u.Password ?? ""
+                    };
+                    var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
+                    return (User: u, Success: success, Message: msg, Version: version);
+                });
+
+                var results = await System.Threading.Tasks.Task.WhenAll(tasks);
+                var failed = results.Where(r => !r.Success).ToList();
+                var passed = results.Where(r => r.Success).ToList();
+
+                if (failed.Count == 0)
+                {
+                    txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestAllSuccess") ?? "✅ Tất cả {0}/{1} User kết nối thành công!", passed.Count, results.Length);
+                    txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine(string.Format(LocalizationService.Get("Oracle_MsgAllConnSuccessHeader") ?? "Tất cả {0} tài khoản User đều kết nối thành công tới Database!", results.Length));
+                    sb.AppendLine($"Host: {host}:{port} ({service})");
+                    sb.AppendLine();
+                    foreach (var r in results)
+                    {
+                        string roleDesc = string.IsNullOrWhiteSpace(r.User.RoleOrDescription) ? "" : $" - {r.User.RoleOrDescription}";
+                        string defBadge = r.User.IsDefault ? " ⭐" : "";
+                        sb.AppendLine($"✅ [{r.User.Username}{defBadge}]{roleDesc}: {r.Version}");
+                    }
+
+                    WpfMessageBox.Show(parentWindow,
+                        sb.ToString(),
+                        LocalizationService.Get("Oracle_TitleTestAllResults") ?? "Kết Quả Kiểm Tra Kết Nối",
+                        WpfMessageBoxButton.OK,
+                        WpfMessageBoxImage.Information);
+                }
+                else
+                {
+                    txtSettingStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestAllFailed") ?? "❌ Có {0}/{1} kết nối thất bại! Xem chi tiết trong thông báo.", failed.Count, results.Length);
+                    txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
+
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine(string.Format(LocalizationService.Get("Oracle_MsgTestAllFailedHeader") ?? "Phát hiện {0}/{1} tài khoản kết nối THẤT BẠI trong cấu hình '{2}':", failed.Count, results.Length, profileName));
+                    sb.AppendLine($"Host: {host}:{port} ({service})");
+                    sb.AppendLine();
+                    sb.AppendLine("=== CÁC TÀI KHOẢN BỊ LỖI ===");
+                    foreach (var r in failed)
+                    {
+                        string roleDesc = string.IsNullOrWhiteSpace(r.User.RoleOrDescription) ? "" : $" ({r.User.RoleOrDescription})";
+                        string defBadge = r.User.IsDefault ? " ⭐" : "";
+                        sb.AppendLine($"❌ [{r.User.Username}{defBadge}]{roleDesc}:");
+                        sb.AppendLine($"   ➥ {r.Message}");
+                        sb.AppendLine();
+                    }
+
+                    if (passed.Count > 0)
+                    {
+                        sb.AppendLine("=== CÁC TÀI KHOẢN THÀNH CÔNG ===");
+                        foreach (var r in passed)
+                        {
+                            string roleDesc = string.IsNullOrWhiteSpace(r.User.RoleOrDescription) ? "" : $" ({r.User.RoleOrDescription})";
+                            string defBadge = r.User.IsDefault ? " ⭐" : "";
+                            sb.AppendLine($"✅ [{r.User.Username}{defBadge}]{roleDesc}: {r.Version}");
+                        }
+                    }
+
+                    WpfMessageBox.Show(parentWindow,
+                        sb.ToString(),
+                        LocalizationService.Get("Oracle_TitleTestAllResults") ?? "Kết Quả Kiểm Tra Kết Nối",
+                        WpfMessageBoxButton.OK,
+                        WpfMessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                txtSettingStatus.Text = $"❌ Lỗi kiểm tra: {ex.Message}";
+                txtSettingStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
+            }
+            finally
+            {
+                btnSettingTest.IsEnabled = true;
+                btnSettingTestAll.IsEnabled = true;
+                btnSettingSave.IsEnabled = true;
+            }
+        }
     }
 }

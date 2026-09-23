@@ -549,16 +549,17 @@
 
                     <!-- Bottom Action Buttons for Profile -->
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                        <Button Grid.Column="0" x:Name="btnSettingSave" Content="{loc:Loc Oracle_BtnSaveProfile}" Style="{StaticResource SettingSuccessBtn}" Padding="16,7" Click="BtnSettingSave_Click"/>
-                        <Button Grid.Column="2" x:Name="btnSettingTest" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource SettingSecondaryBtn}" Padding="14,7" Click="BtnSettingTest_Click"/>
-                        <TextBlock Grid.Column="3" x:Name="txtSettingStatus" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11" Foreground="#16A34A" TextWrapping="Wrap"/>
+                        <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button x:Name="btnSettingSave" Content="{loc:Loc Oracle_BtnSaveProfile}" Style="{StaticResource SettingSuccessBtn}" Padding="16,7" Margin="0,0,8,4" Click="BtnSettingSave_Click"/>
+                            <Button x:Name="btnSettingTest" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource SettingSecondaryBtn}" Padding="14,7" Margin="0,0,8,4" Click="BtnSettingTest_Click"/>
+                            <Button x:Name="btnSettingTestAll" Content="{loc:Loc Oracle_BtnTestAllConn}" Style="{StaticResource SettingSecondaryBtn}" Padding="14,7" Margin="0,0,0,4" Click="BtnSettingTestAll_Click"/>
+                        </WrapPanel>
+                        <TextBlock Grid.Row="1" x:Name="txtSettingStatus" VerticalAlignment="Center" Margin="2,0,0,0" FontSize="11" Foreground="#16A34A" TextWrapping="Wrap"/>
                     </Grid>
                 </StackPanel>
             </ScrollViewer>
