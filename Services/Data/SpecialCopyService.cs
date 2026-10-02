@@ -65,39 +65,9 @@ namespace ExcelSupport.Services
                     return result;
                 }
 
-                // Trích xuất ma trận giá trị theo dòng và cột (kế thừa logic Copy Filtered Cells)
-                var rowDictValues = new SortedDictionary<int, SortedDictionary<int, object?>>();
-                int totalCells = 0;
-
-                foreach (Range area in targetRange.Areas)
-                {
-                    int rowCount = area.Rows.Count;
-                    int colCount = area.Columns.Count;
-                    int baseRow = area.Row;
-                    int baseCol = area.Column;
-
-                    object? rawValues = area.Value2;
-                    object?[,]? valArray = rawValues as object[,];
-
-                    for (int r = 1; r <= rowCount; r++)
-                    {
-                        int actualRow = baseRow + r - 1;
-                        if (!rowDictValues.ContainsKey(actualRow))
-                        {
-                            rowDictValues[actualRow] = new SortedDictionary<int, object?>();
-                        }
-
-                        for (int c = 1; c <= colCount; c++)
-                        {
-                            int actualCol = baseCol + c - 1;
-                            object? val = (valArray != null) ? valArray[r, c] : rawValues;
-                            rowDictValues[actualRow][actualCol] = val;
-                            totalCells++;
-                        }
-                    }
-                }
-
-                if (rowDictValues.Count == 0)
+                // Trích xuất ma trận giá trị theo dòng và cột qua ClipboardBridge
+                var (gridValues, _, totalCells) = ExcelSupport.Helpers.ClipboardBridge.ExtractRangeAreas(targetRange, includeFormulas: false);
+                if (gridValues.Count == 0 || totalCells == 0)
                 {
                     result.Success = false;
                     result.Message = LocalizationService.Get("FCP_MsgNoVisibleCells");
@@ -111,11 +81,10 @@ namespace ExcelSupport.Services
                 {
                     // Nối tất cả các ô (toàn bộ các dòng và các cột) thành 1 chuỗi / 1 dòng duy nhất
                     var allCellStrings = new List<string>();
-                    foreach (var rowKvp in rowDictValues)
+                    foreach (var rowList in gridValues)
                     {
-                        foreach (var colVal in rowKvp.Value)
+                        foreach (var val in rowList)
                         {
-                            object? val = colVal.Value;
                             if (options.SkipBlanks && IsBlank(val)) continue;
                             allCellStrings.Add(FormatCellString(val, delimiter, options));
                         }
@@ -125,29 +94,18 @@ namespace ExcelSupport.Services
                 else if (options.JoinMode == SpecialCopyJoinMode.ByColumn)
                 {
                     // Nhóm theo từng cột: mỗi cột nối thành 1 dòng
-                    var colDictValues = new SortedDictionary<int, SortedDictionary<int, object?>>();
-                    foreach (var rowKvp in rowDictValues)
-                    {
-                        int rowIdx = rowKvp.Key;
-                        foreach (var colKvp in rowKvp.Value)
-                        {
-                            int colIdx = colKvp.Key;
-                            if (!colDictValues.ContainsKey(colIdx))
-                            {
-                                colDictValues[colIdx] = new SortedDictionary<int, object?>();
-                            }
-                            colDictValues[colIdx][rowIdx] = colKvp.Value;
-                        }
-                    }
-
-                    foreach (var kvp in colDictValues)
+                    int maxCols = gridValues.Max(r => r.Count);
+                    for (int c = 0; c < maxCols; c++)
                     {
                         var cellStrings = new List<string>();
-                        foreach (var rowVal in kvp.Value)
+                        for (int r = 0; r < gridValues.Count; r++)
                         {
-                            object? val = rowVal.Value;
-                            if (options.SkipBlanks && IsBlank(val)) continue;
-                            cellStrings.Add(FormatCellString(val, delimiter, options));
+                            if (c < gridValues[r].Count)
+                            {
+                                object? val = gridValues[r][c];
+                                if (options.SkipBlanks && IsBlank(val)) continue;
+                                cellStrings.Add(FormatCellString(val, delimiter, options));
+                            }
                         }
 
                         if (cellStrings.Count > 0 || !options.SkipBlanks)
@@ -159,12 +117,11 @@ namespace ExcelSupport.Services
                 else // SpecialCopyJoinMode.ByRow
                 {
                     // Nhóm theo từng dòng: mỗi dòng các cột nối lại với nhau
-                    foreach (var kvp in rowDictValues)
+                    foreach (var rowList in gridValues)
                     {
                         var cellStrings = new List<string>();
-                        foreach (var colVal in kvp.Value)
+                        foreach (var val in rowList)
                         {
-                            object? val = colVal.Value;
                             if (options.SkipBlanks && IsBlank(val)) continue;
                             cellStrings.Add(FormatCellString(val, delimiter, options));
                         }
@@ -190,8 +147,8 @@ namespace ExcelSupport.Services
                 }
                 FilteredCopyPasteService.SetCustomCache(cacheMatrix);
 
-                // Đưa vào Windows Clipboard chuẩn Unicode (có cơ chế thử lại nhiều lần nếu clipboard bị lock)
-                bool clipOk = SetClipboardTextWithRetry(fullText);
+                // Đưa vào Windows Clipboard chuẩn Unicode qua ClipboardBridge
+                bool clipOk = ExcelSupport.Helpers.ClipboardBridge.SetText(fullText);
 
                 // Đảm bảo Excel CutCopyMode được giải phóng để Ctrl+V dán từ Windows Clipboard
                 try { app.CutCopyMode = (XlCutCopyMode)0; } catch { }
@@ -389,31 +346,7 @@ namespace ExcelSupport.Services
 
         public static bool SetClipboardTextWithRetry(string text, int retries = 10, int delayMs = 50)
         {
-            for (int i = 0; i < retries; i++)
-            {
-                try
-                {
-                    var dataObj = new System.Windows.Forms.DataObject();
-                    dataObj.SetData(System.Windows.Forms.DataFormats.UnicodeText, true, text);
-                    dataObj.SetData(System.Windows.Forms.DataFormats.Text, true, text);
-                    dataObj.SetData(System.Windows.Forms.DataFormats.StringFormat, true, text);
-                    System.Windows.Forms.Clipboard.SetDataObject(dataObj, true, 5, 50);
-                    return true;
-                }
-                catch
-                {
-                    try
-                    {
-                        System.Windows.Clipboard.SetText(text);
-                        return true;
-                    }
-                    catch
-                    {
-                        Thread.Sleep(delayMs);
-                    }
-                }
-            }
-            return false;
+            return ExcelSupport.Helpers.ClipboardBridge.SetText(text, retries, delayMs);
         }
 
         public static string GetDelimiterDisplay(SpecialCopyDelimiter delimiter)

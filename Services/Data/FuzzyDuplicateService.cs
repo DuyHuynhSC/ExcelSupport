@@ -156,28 +156,22 @@ namespace ExcelSupport.Services
                 usedRange = ws.UsedRange;
                 if (usedRange == null || usedRange.Rows.Count == 0) return clusters;
 
-                int startRow = usedRange.Row;
-                int startCol = usedRange.Column;
-                int numRows = usedRange.Rows.Count;
-                int numCols = usedRange.Columns.Count;
+                var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(usedRange);
+                if (matrix.IsEmpty) return clusters;
 
-                int colOffset = options.TargetColumnIndex - startCol + 1;
-                if (colOffset < 1 || colOffset > numCols) return clusters;
-
-                object? rawVal = usedRange.Value2;
-                if (!(rawVal is object[,] allVals)) return clusters;
+                int startRow = matrix.StartRow;
+                int startCol = matrix.StartColumn;
+                int colOffset = options.TargetColumnIndex - startCol; // 0-based
+                if (colOffset < 0 || colOffset >= matrix.ColumnCount) return clusters;
 
                 var records = new List<FuzzyRecordItem>();
 
-                for (int r = 1; r <= numRows; r++)
+                for (int r = 0; r < matrix.RowCount; r++)
                 {
-                    int absoluteRow = startRow + r - 1;
+                    int absoluteRow = startRow + r;
                     if (absoluteRow < options.StartRow) continue;
 
-                    object? cellVal = allVals[r, colOffset];
-                    if (cellVal == null) continue;
-
-                    string original = cellVal.ToString()?.Trim() ?? string.Empty;
+                    string original = matrix.GetString(r, colOffset);
                     if (string.IsNullOrEmpty(original)) continue;
 
                     string normalized = CleanString(original, options.IgnoreCase, options.IgnoreAccent, options.CleanInvisibleSpaces);

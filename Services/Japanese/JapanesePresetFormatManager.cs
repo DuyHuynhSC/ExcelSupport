@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ExcelSupport.Helpers;
 using ExcelSupport.Models;
 using Newtonsoft.Json;
 
@@ -12,12 +13,7 @@ namespace ExcelSupport.Services
     /// </summary>
     public static class JapanesePresetFormatManager
     {
-        private static readonly string ConfigDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ExcelSupport"
-        );
-
-        private static readonly string ConfigFilePath = Path.Combine(ConfigDirectory, "format_presets.json");
+        private const string ConfigFileName = "format_presets.json";
 
         private static JapanesePresetConfig? _currentConfig;
         private static readonly object SyncLock = new object();
@@ -214,51 +210,23 @@ namespace ExcelSupport.Services
 
         private static JapanesePresetConfig LoadConfig()
         {
-            try
-            {
-                if (File.Exists(ConfigFilePath))
-                {
-                    var json = File.ReadAllText(ConfigFilePath);
-                    var cfg = JsonConvert.DeserializeObject<JapanesePresetConfig>(json);
-                    if (cfg != null && cfg.Presets != null && cfg.Presets.Count > 0)
-                    {
-                        return cfg;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[JapanesePresetFormatManager] Load error: {ex.Message}");
-            }
-
-            // Mặc định tạo mới nếu chưa tồn tại hoặc file lỗi
-            var defaultCfg = new JapanesePresetConfig
+            var cfg = JsonConfigStore.Load(ConfigFileName, () => new JapanesePresetConfig
             {
                 Version = 1,
                 ActivePresetId = "builtin_table_header",
                 Presets = JapaneseFormatPreset.CreateDefaultPresets()
-            };
+            });
 
-            SaveConfig(defaultCfg);
-            return defaultCfg;
+            if (cfg.Presets == null || cfg.Presets.Count == 0)
+            {
+                cfg.Presets = JapaneseFormatPreset.CreateDefaultPresets();
+            }
+            return cfg;
         }
 
         private static void SaveConfig(JapanesePresetConfig config)
         {
-            try
-            {
-                if (!Directory.Exists(ConfigDirectory))
-                {
-                    Directory.CreateDirectory(ConfigDirectory);
-                }
-
-                var json = JsonConvert.SerializeObject(config, Formatting.Indented);
-                File.WriteAllText(ConfigFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[JapanesePresetFormatManager] Save error: {ex.Message}");
-            }
+            JsonConfigStore.Save(ConfigFileName, config);
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ExcelSupport.Helpers;
 using ExcelSupport.Models;
 using Newtonsoft.Json;
 
@@ -9,12 +10,7 @@ namespace ExcelSupport.Services
 {
     public static class AiConfigManager
     {
-        private static readonly string ConfigDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ExcelSupport"
-        );
-
-        private static readonly string ConfigFilePath = Path.Combine(ConfigDirectory, "ai_config.json");
+        private const string ConfigFileName = "ai_config.json";
 
         private static AiConfig? _currentConfig;
         private static readonly object SyncLock = new object();
@@ -100,28 +96,15 @@ namespace ExcelSupport.Services
 
         public static AiConfig Load()
         {
-            try
+            var config = JsonConfigStore.Load(ConfigFileName, () =>
             {
-                if (File.Exists(ConfigFilePath))
-                {
-                    string json = File.ReadAllText(ConfigFilePath);
-                    var config = JsonConvert.DeserializeObject<AiConfig>(json);
-                    if (config != null)
-                    {
-                        EnsureProfiles(config);
-                        return config;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[AiConfigManager] Load error: {ex.Message}");
-            }
+                var def = new AiConfig();
+                EnsureProfiles(def);
+                return def;
+            });
 
-            var defaultConfig = new AiConfig();
-            EnsureProfiles(defaultConfig);
-            Save(defaultConfig);
-            return defaultConfig;
+            EnsureProfiles(config);
+            return config;
         }
 
         private static void EnsureProfiles(AiConfig config)
@@ -169,27 +152,14 @@ namespace ExcelSupport.Services
         {
             lock (SyncLock)
             {
-                try
+                EnsureProfiles(config);
+                bool success = JsonConfigStore.Save(ConfigFileName, config);
+                if (success)
                 {
-                    if (!Directory.Exists(ConfigDirectory))
-                    {
-                        Directory.CreateDirectory(ConfigDirectory);
-                    }
-
-                    EnsureProfiles(config);
-
-                    string json = JsonConvert.SerializeObject(config, Formatting.Indented);
-                    File.WriteAllText(ConfigFilePath, json);
                     _currentConfig = config;
-
                     ProfilesChanged?.Invoke();
-                    return true;
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[AiConfigManager] Save error: {ex.Message}");
-                    return false;
-                }
+                return success;
             }
         }
 

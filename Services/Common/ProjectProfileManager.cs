@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ExcelSupport.Helpers;
 using ExcelSupport.Models;
 using Newtonsoft.Json;
 
@@ -12,12 +13,7 @@ namespace ExcelSupport.Services
     /// </summary>
     public static class ProjectProfileManager
     {
-        private static readonly string ConfigDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ExcelSupport"
-        );
-
-        private static readonly string ConfigFilePath = Path.Combine(ConfigDirectory, "project_profiles.json");
+        private const string ConfigFileName = "project_profiles.json";
 
         private static ProjectProfilesConfig? _currentConfig;
         private static readonly object SyncLock = new object();
@@ -159,32 +155,31 @@ namespace ExcelSupport.Services
 
         private static ProjectProfilesConfig LoadConfig()
         {
-            try
+            var config = JsonConfigStore.Load(ConfigFileName, () =>
             {
-                if (!Directory.Exists(ConfigDirectory))
+                var def = new ProjectProfilesConfig
                 {
-                    Directory.CreateDirectory(ConfigDirectory);
-                }
-
-                if (File.Exists(ConfigFilePath))
-                {
-                    string json = File.ReadAllText(ConfigFilePath);
-                    var config = JsonConvert.DeserializeObject<ProjectProfilesConfig>(json);
-                    if (config != null && config.Profiles != null && config.Profiles.Count > 0)
+                    Profiles = new List<ProjectProfile>
                     {
-                        return config;
+                        new ProjectProfile
+                        {
+                            Name = "Dự Án Mẫu (Sample Project)",
+                            RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                            DetailedDesignFolder = "Detailed_Design",
+                            BasicDesignFolder = "Basic_Design",
+                            TestSpecFolder = "Test_Specification",
+                            OpenReadOnlyDefault = false,
+                            FileExtensions = ".xlsx;.xlsm;.xls;.docx;.pdf;.pptx"
+                        }
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProjectProfileManager] Error loading config: {ex.Message}");
-            }
+                };
+                def.ActiveProfileId = def.Profiles[0].Id;
+                return def;
+            });
 
-            // Tạo cấu hình mặc định ban đầu
-            var defaultConfig = new ProjectProfilesConfig
+            if (config.Profiles == null || config.Profiles.Count == 0)
             {
-                Profiles = new List<ProjectProfile>
+                config.Profiles = new List<ProjectProfile>
                 {
                     new ProjectProfile
                     {
@@ -196,30 +191,16 @@ namespace ExcelSupport.Services
                         OpenReadOnlyDefault = false,
                         FileExtensions = ".xlsx;.xlsm;.xls;.docx;.pdf;.pptx"
                     }
-                }
-            };
-            defaultConfig.ActiveProfileId = defaultConfig.Profiles[0].Id;
+                };
+                config.ActiveProfileId = config.Profiles[0].Id;
+            }
 
-            SaveConfig(defaultConfig);
-            return defaultConfig;
+            return config;
         }
 
         private static void SaveConfig(ProjectProfilesConfig config)
         {
-            try
-            {
-                if (!Directory.Exists(ConfigDirectory))
-                {
-                    Directory.CreateDirectory(ConfigDirectory);
-                }
-
-                string json = JsonConvert.SerializeObject(config, Formatting.Indented);
-                File.WriteAllText(ConfigFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProjectProfileManager] Error saving config: {ex.Message}");
-            }
+            JsonConfigStore.Save(ConfigFileName, config);
         }
     }
 }
