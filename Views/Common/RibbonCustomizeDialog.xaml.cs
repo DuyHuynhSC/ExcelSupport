@@ -150,6 +150,8 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
+                System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
+
                 _currentInstance.ShowDialog();
                 _currentInstance = null;
             }

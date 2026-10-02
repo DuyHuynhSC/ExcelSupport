@@ -345,23 +345,26 @@ namespace ExcelSupport.Views
         {
             if (_selectedProfile == null) return;
 
+            var win = Window.GetWindow(this);
             if (_profiles.Count <= 1)
             {
                 WpfMessageBox.Show(
-                    Window.GetWindow(this),
+                    win,
                     LocalizationService.Get("SpecProfile_MinProfilePrompt", "Cần duy trì ít nhất 1 Profile dự án trong hệ thống."),
                     LocalizationService.Get("Common_Notice", "Thông Báo"),
                     WpfMessageBoxButton.OK,
                     WpfMessageBoxImage.Warning);
+                win?.Activate();
                 return;
             }
 
             var result = WpfMessageBox.Show(
-                Window.GetWindow(this),
-                string.Format(LocalizationService.Get("SpecProfile_DeleteConfirmPrompt", "Bạn có chắc chắn muốn xóa profile dự án '{0}'?"), _selectedProfile.Name),
+                win,
+                LocalizationService.Get("SpecProfile_DeleteConfirmPrompt", _selectedProfile.Name),
                 LocalizationService.Get("SpecProfile_DeleteConfirmTitle", "Xác Nhận Xóa"),
                 WpfMessageBoxButton.YesNo,
                 WpfMessageBoxImage.Question);
+            win?.Activate();
 
             if (result == WpfMessageBoxResult.Yes)
             {
@@ -398,7 +401,7 @@ namespace ExcelSupport.Views
             // Persist active profile
             ProjectProfileManager.SetActiveProfile(_activeProfileId);
 
-            txtStatusNote.Text = string.Format(LocalizationService.Get("SpecProfile_MsgActiveChanged", "✓ Đã kích hoạt dự án '{0}' thành công!"), _selectedProfile.Name);
+            txtStatusNote.Text = LocalizationService.Get("SpecProfile_MsgActiveChanged", _selectedProfile.Name);
             txtStatusNote.Foreground = SuccessBrush;
         }
 
@@ -524,7 +527,7 @@ namespace ExcelSupport.Views
                 };
                 _settingUsers.Add(newUser);
                 dgSettingUsers.SelectedItem = newUser;
-                txtSettingDbStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgUserAdded", "Đã thêm tài khoản '{0}' vào danh sách."), newUser.Username);
+                txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgUserAdded", newUser.Username);
                 txtSettingDbStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
             }
             catch (Exception ex)
@@ -573,100 +576,124 @@ namespace ExcelSupport.Views
 
         private async void BtnSettingTest_Click(object sender, RoutedEventArgs e)
         {
-            string host = txtSettingHost.Text.Trim();
-            if (string.IsNullOrEmpty(host))
+            var win = Window.GetWindow(this);
+            try
             {
-                WpfMessageBox.Show(Window.GetWindow(this), LocalizationService.Get("Oracle_MsgEnterHost", "Vui lòng nhập Host của Oracle Server."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
+                string host = txtSettingHost.Text.Trim();
+                if (string.IsNullOrEmpty(host))
+                {
+                    WpfMessageBox.Show(win, LocalizationService.Get("Oracle_MsgEnterHost", "Vui lòng nhập Host của Oracle Server."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    win?.Activate();
+                    return;
+                }
+
+                if (!int.TryParse(txtSettingPort.Text.Trim(), out int port))
+                {
+                    port = 1521;
+                }
+
+                string service = txtSettingService.Text.Trim();
+                if (string.IsNullOrEmpty(service))
+                {
+                    WpfMessageBox.Show(win, LocalizationService.Get("Oracle_MsgEnterService", "Vui lòng nhập Service Name hoặc SID."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    win?.Activate();
+                    return;
+                }
+
+                var user = dgSettingUsers.SelectedItem as OracleUserCredential ?? _settingUsers.FirstOrDefault(u => u.IsDefault) ?? _settingUsers.FirstOrDefault();
+                if (user == null || string.IsNullOrWhiteSpace(user.Username))
+                {
+                    WpfMessageBox.Show(win, LocalizationService.Get("Oracle_MsgEnterUser", "Vui lòng nhập Username để kiểm tra kết nối."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    win?.Activate();
+                    return;
+                }
+
+                var config = new OracleConnectionConfig
+                {
+                    Host = host,
+                    Port = port,
+                    ServiceNameOrSid = service,
+                    ServiceType = rbSettingSid.IsChecked == true ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName,
+                    Username = user.Username,
+                    Password = user.Password
+                };
+
+                btnSettingTest.IsEnabled = false;
+                txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgConnecting", "Đang thử kết nối...");
+                txtSettingDbStatus.Foreground = InfoBrush;
+
+                var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
+
+                if (success)
+                {
+                    txtSettingDbStatus.Text = $"✓ Kết nối thành công! {version}";
+                    txtSettingDbStatus.Foreground = SuccessBrush;
+                    string msgSuccess = LocalizationService.Get("Oracle_MsgConnectedUser", user.Username) + $"\n{version}";
+                    WpfMessageBox.Show(win, msgSuccess, LocalizationService.Get("Common_Success", "Thành Công"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                    win?.Activate();
+                }
+                else
+                {
+                    txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgConnectFailed", "✗ Kết nối thất bại!");
+                    txtSettingDbStatus.Foreground = ErrorBrush;
+                    WpfMessageBox.Show(win, msg, LocalizationService.Get("Oracle_TitleConnectError", "Lỗi Kết Nối Oracle"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                    win?.Activate();
+                }
             }
-
-            if (!int.TryParse(txtSettingPort.Text.Trim(), out int port))
+            catch (Exception ex)
             {
-                port = 1521;
-            }
-
-            string service = txtSettingService.Text.Trim();
-            if (string.IsNullOrEmpty(service))
-            {
-                WpfMessageBox.Show(Window.GetWindow(this), LocalizationService.Get("Oracle_MsgEnterService", "Vui lòng nhập Service Name hoặc SID."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
-            }
-
-            var user = dgSettingUsers.SelectedItem as OracleUserCredential ?? _settingUsers.FirstOrDefault(u => u.IsDefault) ?? _settingUsers.FirstOrDefault();
-            if (user == null || string.IsNullOrWhiteSpace(user.Username))
-            {
-                WpfMessageBox.Show(Window.GetWindow(this), LocalizationService.Get("Oracle_MsgEnterUser", "Vui lòng nhập Username để kiểm tra kết nối."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
-            }
-
-            var config = new OracleConnectionConfig
-            {
-                Host = host,
-                Port = port,
-                ServiceNameOrSid = service,
-                ServiceType = rbSettingSid.IsChecked == true ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName,
-                Username = user.Username,
-                Password = user.Password
-            };
-
-            btnSettingTest.IsEnabled = false;
-            txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgConnecting", "Đang thử kết nối...");
-            txtSettingDbStatus.Foreground = InfoBrush;
-
-            var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
-
-            btnSettingTest.IsEnabled = true;
-            if (success)
-            {
-                txtSettingDbStatus.Text = $"✓ Kết nối thành công! {version}";
-                txtSettingDbStatus.Foreground = SuccessBrush;
-                WpfMessageBox.Show(Window.GetWindow(this), string.Format(LocalizationService.Get("Oracle_MsgConnectedUser", "Kết nối Oracle thành công với tài khoản '{0}'!"), user.Username) + $"\n{version}", LocalizationService.Get("Common_Success", "Thành Công"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
-            }
-            else
-            {
-                txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgConnectFailed", "✗ Kết nối thất bại!");
+                txtSettingDbStatus.Text = "✗ " + ex.Message;
                 txtSettingDbStatus.Foreground = ErrorBrush;
-                WpfMessageBox.Show(Window.GetWindow(this), msg, LocalizationService.Get("Oracle_TitleConnectError", "Lỗi Kết Nối Oracle"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                WpfMessageBox.Show(win, ex.Message, LocalizationService.Get("Oracle_TitleConnectError", "Lỗi Kết Nối Oracle"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                win?.Activate();
+            }
+            finally
+            {
+                btnSettingTest.IsEnabled = true;
             }
         }
 
         private async void BtnSettingTestAll_Click(object sender, RoutedEventArgs e)
         {
-            string host = txtSettingHost.Text.Trim();
-            if (string.IsNullOrEmpty(host))
-            {
-                WpfMessageBox.Show(Window.GetWindow(this), LocalizationService.Get("Oracle_MsgEnterHost", "Vui lòng nhập Host của Oracle Server."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
-            }
-
-            if (!int.TryParse(txtSettingPort.Text.Trim(), out int port))
-            {
-                port = 1521;
-            }
-
-            string service = txtSettingService.Text.Trim();
-            if (string.IsNullOrEmpty(service))
-            {
-                WpfMessageBox.Show(Window.GetWindow(this), LocalizationService.Get("Oracle_MsgEnterService", "Vui lòng nhập Service Name hoặc SID."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
-            }
-
-            var usersToTest = _settingUsers.Where(u => !string.IsNullOrWhiteSpace(u.Username)).ToList();
-            if (usersToTest.Count == 0)
-            {
-                WpfMessageBox.Show(Window.GetWindow(this), LocalizationService.Get("Oracle_MsgNoUsersToTest", "Chưa có tài khoản kết nối nào được nhập để kiểm tra."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
-                return;
-            }
-
-            btnSettingTestAll.IsEnabled = false;
-            btnSettingTest.IsEnabled = false;
-            txtSettingDbStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestingAllConn", "Đang kiểm tra song song {0} kết nối..."), usersToTest.Count);
-            txtSettingDbStatus.Foreground = InfoBrush;
-
-            var serviceType = rbSettingSid.IsChecked == true ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName;
-
+            var win = Window.GetWindow(this);
             try
             {
+                string host = txtSettingHost.Text.Trim();
+                if (string.IsNullOrEmpty(host))
+                {
+                    WpfMessageBox.Show(win, LocalizationService.Get("Oracle_MsgEnterHost", "Vui lòng nhập Host của Oracle Server."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    win?.Activate();
+                    return;
+                }
+
+                if (!int.TryParse(txtSettingPort.Text.Trim(), out int port))
+                {
+                    port = 1521;
+                }
+
+                string service = txtSettingService.Text.Trim();
+                if (string.IsNullOrEmpty(service))
+                {
+                    WpfMessageBox.Show(win, LocalizationService.Get("Oracle_MsgEnterService", "Vui lòng nhập Service Name hoặc SID."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    win?.Activate();
+                    return;
+                }
+
+                var usersToTest = _settingUsers.Where(u => !string.IsNullOrWhiteSpace(u.Username)).ToList();
+                if (usersToTest.Count == 0)
+                {
+                    WpfMessageBox.Show(win, LocalizationService.Get("Oracle_MsgNoUsersToTest", "Chưa có tài khoản kết nối nào được nhập để kiểm tra."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    win?.Activate();
+                    return;
+                }
+
+                btnSettingTestAll.IsEnabled = false;
+                btnSettingTest.IsEnabled = false;
+                txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgTestingAllConn", usersToTest.Count);
+                txtSettingDbStatus.Foreground = InfoBrush;
+
+                var serviceType = rbSettingSid.IsChecked == true ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName;
+
                 var tasks = usersToTest.Select(async u =>
                 {
                     var cfg = new OracleConnectionConfig
@@ -691,10 +718,10 @@ namespace ExcelSupport.Views
 
                 if (failed.Count == 0)
                 {
-                    txtSettingDbStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestAllSuccess", "✓ Toàn bộ {0} kết nối đều thành công!"), testResults.Length);
+                    txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgTestAllSuccess", testResults.Length, testResults.Length);
                     txtSettingDbStatus.Foreground = SuccessBrush;
 
-                    sb.AppendLine(string.Format(LocalizationService.Get("Oracle_MsgAllConnSuccessHeader", "Đã kiểm tra thành công toàn bộ {0} kết nối:"), testResults.Length));
+                    sb.AppendLine(LocalizationService.Get("Oracle_MsgAllConnSuccessHeader", testResults.Length));
                     sb.AppendLine($"Host: {host}:{port} ({service})");
                     sb.AppendLine();
                     foreach (var s in succeeded)
@@ -703,14 +730,16 @@ namespace ExcelSupport.Views
                         sb.AppendLine($"  ✓ {s.User.Username}{role} — {s.Version}");
                     }
 
-                    WpfMessageBox.Show(Window.GetWindow(this), sb.ToString(), LocalizationService.Get("Oracle_TitleTestAllResults", "Kết quả kiểm tra kết nối"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                    WpfMessageBox.Show(win, sb.ToString(), LocalizationService.Get("Oracle_TitleTestAllResults", "Kết quả kiểm tra kết nối"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                    win?.Activate();
                 }
                 else
                 {
-                    txtSettingDbStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestAllFailed", "✗ Có {0}/{1} kết nối bị lỗi!"), failed.Count, testResults.Length);
+                    txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgTestAllFailed", failed.Count, testResults.Length);
                     txtSettingDbStatus.Foreground = ErrorBrush;
 
-                    sb.AppendLine(string.Format(LocalizationService.Get("Oracle_MsgTestAllFailedHeader", "Phát hiện {0}/{1} kết nối gặp lỗi:"), failed.Count, testResults.Length));
+                    string profName = _selectedProfile?.Name ?? "";
+                    sb.AppendLine(LocalizationService.Get("Oracle_MsgTestAllFailedHeader", failed.Count, testResults.Length, profName));
                     sb.AppendLine($"Host: {host}:{port} ({service})");
                     sb.AppendLine();
                     foreach (var f in failed)
@@ -724,7 +753,7 @@ namespace ExcelSupport.Views
                     if (succeeded.Count > 0)
                     {
                         sb.AppendLine("────────────────────────");
-                        sb.AppendLine(string.Format(LocalizationService.Get("Oracle_MsgSomeConnSuccessHeader", "Các kết nối thành công ({0}):"), succeeded.Count));
+                        sb.AppendLine(LocalizationService.Get("Oracle_MsgSomeConnSuccessHeader", succeeded.Count));
                         foreach (var s in succeeded)
                         {
                             string role = !string.IsNullOrWhiteSpace(s.User.RoleOrDescription) ? $" ({s.User.RoleOrDescription})" : "";
@@ -732,8 +761,16 @@ namespace ExcelSupport.Views
                         }
                     }
 
-                    WpfMessageBox.Show(Window.GetWindow(this), sb.ToString(), LocalizationService.Get("Oracle_TitleTestAllResults", "Kết quả kiểm tra kết nối"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    WpfMessageBox.Show(win, sb.ToString(), LocalizationService.Get("Oracle_TitleTestAllResults", "Kết quả kiểm tra kết nối"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                    win?.Activate();
                 }
+            }
+            catch (Exception ex)
+            {
+                txtSettingDbStatus.Text = "✗ " + ex.Message;
+                txtSettingDbStatus.Foreground = ErrorBrush;
+                WpfMessageBox.Show(win, ex.Message, LocalizationService.Get("Oracle_TitleConnectError", "Lỗi Kết Nối Oracle"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                win?.Activate();
             }
             finally
             {
