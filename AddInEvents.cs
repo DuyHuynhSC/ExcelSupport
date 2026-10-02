@@ -113,6 +113,13 @@ namespace ExcelSupport
                 RegisterKey("^+j", "OpenTestSpecCommand");
 
                 QueueRefresh();
+                if (AppSettings.IsTaskPaneAutoOpen && MainViewModel != null)
+                {
+                    ExcelAsyncUtil.QueueAsMacro(() =>
+                    {
+                        TaskPaneRegistry.AutoRestoreForActiveWindow(MainViewModel);
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -265,8 +272,30 @@ namespace ExcelSupport
             catch { }
         }
 
-        private void ExcelApp_NewWorkbook(Workbook Wb) => QueueRefresh();
-        private void ExcelApp_WorkbookOpen(Workbook Wb) => QueueRefresh();
+        private void ExcelApp_NewWorkbook(Workbook Wb)
+        {
+            QueueRefresh();
+            if (AppSettings.IsTaskPaneAutoOpen && MainViewModel != null)
+            {
+                ExcelAsyncUtil.QueueAsMacro(() =>
+                {
+                    TaskPaneRegistry.AutoRestoreForActiveWindow(MainViewModel);
+                });
+            }
+        }
+
+        private void ExcelApp_WorkbookOpen(Workbook Wb)
+        {
+            QueueRefresh();
+            if (AppSettings.IsTaskPaneAutoOpen && MainViewModel != null)
+            {
+                ExcelAsyncUtil.QueueAsMacro(() =>
+                {
+                    TaskPaneRegistry.AutoRestoreForActiveWindow(MainViewModel);
+                });
+            }
+        }
+
         private void ExcelApp_WorkbookBeforeClose(Workbook Wb, ref bool Cancel)
         {
             Services.GridRulerService.OnWorkbookBeforeSave(Wb);
@@ -299,7 +328,14 @@ namespace ExcelSupport
         {
             Services.QuickActionBarService.HideBar();
         }
-        private void ExcelApp_WindowActivate(Workbook Wb, Window Wn) => QueueActiveSelectionSync();
+        private void ExcelApp_WindowActivate(Workbook Wb, Window Wn)
+        {
+            QueueActiveSelectionSync();
+            if (AppSettings.IsTaskPaneAutoOpen && MainViewModel != null)
+            {
+                TaskPaneRegistry.AutoRestoreForWindow(Wn, MainViewModel);
+            }
+        }
 
         private System.Threading.Timer? _refreshDebounceTimer;
         private readonly object _refreshLock = new object();
