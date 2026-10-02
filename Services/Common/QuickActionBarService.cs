@@ -21,12 +21,45 @@ namespace ExcelSupport.Services
         public int Y;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Win32Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Win32MonitorInfo
+    {
+        public int cbSize;
+        public Win32Rect rcMonitor;
+        public Win32Rect rcWork;
+        public uint dwFlags;
+    }
+
     public static class QuickActionBarService
     {
-        #region Win32 Native Cursor Methods
+        #region Win32 Native Cursor & Window Positioning Methods
 
         [DllImport("user32.dll")]
         private static extern bool GetCursorPos(out Win32Point lpPoint);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromPoint(Win32Point pt, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref Win32MonitorInfo lpmi);
+
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
+        private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint SWP_SHOWWINDOW = 0x0040;
 
         #endregion
 
@@ -110,14 +143,43 @@ namespace ExcelSupport.Services
                 var app = AddInEvents.Instance?.ExcelAppInstance;
                 if (app == null) return;
 
-                // 1. Xác định tọa độ vật lý (Physical Screen Pixels)
-                int physicalX = -1;
-                int physicalY = -1;
+                // 1. Lấy DPI scale của hệ thống / màn hình (DIP = PhysicalPixels / dpiScale)
+                double dpiScaleX = 1.0;
+                double dpiScaleY = 1.0;
 
-                bool hasRangeCoords = false;
+                if (_barWindow != null && _barWindow.IsLoaded)
+                {
+                    try
+                    {
+                        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(_barWindow);
+                        dpiScaleX = dpi.DpiScaleX;
+                        dpiScaleY = dpi.DpiScaleY;
+                    }
+                    catch { }
+                }
+
+                if (dpiScaleX <= 0.1 || dpiScaleY <= 0.1)
+                {
+                    try
+                    {
+                        using (var g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
+                        {
+                            dpiScaleX = g.DpiX / 96.0;
+                            dpiScaleY = g.DpiY / 96.0;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (dpiScaleX <= 0.1) dpiScaleX = 1.0;
+                if (dpiScaleY <= 0.1) dpiScaleY = 1.0;
+
+                // 2. Xác định tọa độ (Physical Screen Pixels) của vùng chọn Excel
                 int selLeftPx = -1;
+                int selTopPx = -1;
                 int selRightPx = -1;
                 int selBottomPx = -1;
+                bool hasRangeCoords = false;
 
                 Range? rng = targetRange;
                 if (rng == null)
@@ -132,111 +194,143 @@ namespace ExcelSupport.Services
                         var win = app.ActiveWindow;
                         if (win != null)
                         {
+                            // Tọa độ gốc ô (0,0) của worksheet pane hiện tại trên màn hình
+                            int originX = win.PointsToScreenPixelsX(0);
+                            int originY = win.PointsToScreenPixelsY(0);
+
+                            // Hệ số quy đổi từ Excel Points sang Physical Screen Pixels:
+                            // 1 point = 1/72 inch. Tại 96 DPI: 1 point = 96/72 = 1.33333 physical pixels.
+                            // Tính đúng hệ số Zoom của ActiveWindow và DPI Scale của màn hình.
+                            double zoom = 1.0;
+                            try
+                            {
+                                if (win.Zoom is int z && z > 0)
+                                {
+                                    zoom = z / 100.0;
+                                }
+                            }
+                            catch { }
+
+                            double ptToPxX = (dpiScaleX * 96.0) / 72.0 * zoom;
+                            double ptToPxY = (dpiScaleY * 96.0) / 72.0 * zoom;
+
                             double rLeft = (double)rng.Left;
                             double rTop = (double)rng.Top;
                             double rWidth = (double)rng.Width;
                             double rHeight = (double)rng.Height;
 
-                            selLeftPx = win.PointsToScreenPixelsX((int)Math.Round(rLeft));
-                            selRightPx = win.PointsToScreenPixelsX((int)Math.Round(rLeft + rWidth));
-                            selBottomPx = win.PointsToScreenPixelsY((int)Math.Round(rTop + rHeight));
+                            selLeftPx = originX + (int)Math.Round(rLeft * ptToPxX);
+                            selTopPx = originY + (int)Math.Round(rTop * ptToPxY);
+                            selRightPx = selLeftPx + (int)Math.Round(rWidth * ptToPxX);
+                            selBottomPx = selTopPx + (int)Math.Round(rHeight * ptToPxY);
 
-                            // Đặt thanh bar ở ngay bên dưới góc trái vùng chọn
-                            physicalX = selLeftPx;
-                            physicalY = selBottomPx + 10;
-                            hasRangeCoords = true;
+                            hasRangeCoords = (selLeftPx >= 0 && selBottomPx >= 0);
                         }
                     }
                     catch { }
                 }
 
-                // Lấy tọa độ con trỏ chuột
-                if (GetCursorPos(out Win32Point mousePt))
-                {
-                    if (hasRangeCoords)
-                    {
-                        // Nếu con trỏ chuột nằm gần vùng chọn (trong vòng bán kính 250px)
-                        // -> Ưu tiên hiển thị ngay cạnh con trỏ chuột người dùng vừa kéo!
-                        bool isMouseNearSelection =
-                            mousePt.X >= (selLeftPx - 100) && mousePt.X <= (selRightPx + 250) &&
-                            mousePt.Y >= (selBottomPx - 250) && mousePt.Y <= (selBottomPx + 250);
+                // 3. Kích thước thanh nổi (Physical Pixels)
+                const double defaultBarWidthDip = 500;
+                const double defaultBarHeightDip = 48;
+                double barWidthDip = (_barWindow != null && _barWindow.ActualWidth > 100) ? _barWindow.ActualWidth : defaultBarWidthDip;
+                double barHeightDip = (_barWindow != null && _barWindow.ActualHeight > 20) ? _barWindow.ActualHeight : defaultBarHeightDip;
+                double barWidthPx = barWidthDip * dpiScaleX;
+                double barHeightPx = barHeightDip * dpiScaleY;
 
-                        if (isMouseNearSelection)
-                        {
-                            physicalX = mousePt.X + 12;
-                            physicalY = mousePt.Y + 16;
-                        }
-                    }
-                    else
+                // 4. Tính toán vị trí hiển thị (Physical Pixels)
+                int physicalX = -1;
+                int physicalY = -1;
+
+                bool hasMouse = GetCursorPos(out Win32Point mousePt);
+
+                if (hasRangeCoords)
+                {
+                    // Canh lề ngang: Mặc định canh theo cạnh trái của vùng chọn
+                    physicalX = selLeftPx;
+
+                    // Nếu con trỏ chuột nằm gần vùng chọn và vùng chọn rộng hơn thanh bar:
+                    // Di chuyển thanh bar theo ngang gần con trỏ chuột để người dùng dễ click
+                    if (hasMouse && (selRightPx - selLeftPx) > barWidthPx)
                     {
-                        physicalX = mousePt.X + 12;
-                        physicalY = mousePt.Y + 16;
+                        int idealX = mousePt.X - (int)(barWidthPx / 2);
+                        physicalX = Math.Max(selLeftPx, Math.Min(idealX, selRightPx - (int)barWidthPx));
                     }
+
+                    // Canh lề dọc: Hiển thị NGAY BÊN DƯỚI vùng chọn (cách 4px)
+                    physicalY = selBottomPx + (int)(4 * dpiScaleY);
+                }
+                else if (hasMouse)
+                {
+                    // Fallback theo con trỏ chuột
+                    physicalX = mousePt.X + (int)(12 * dpiScaleX);
+                    physicalY = mousePt.Y + (int)(16 * dpiScaleY);
                 }
 
                 if (physicalX < 0 || physicalY < 0) return;
 
-                // 2. Lấy thông tin màn hình chứa vị trí hiển thị
-                var screen = Screen.FromPoint(new System.Drawing.Point(physicalX, physicalY));
-                var workArea = screen.WorkingArea; // Toàn bộ workArea tính theo Physical Pixels
-
-                // 3. Tính toán DPI Scale của hệ thống (96 DPI = 1.0)
-                double dpiScaleX = 1.0;
-                double dpiScaleY = 1.0;
-
-                if (_barWindow != null && _barWindow.IsLoaded)
+                // 5. Lấy diện tích làm việc chuẩn của màn hình (Physical Pixels) qua Win32 Monitor Info
+                Win32Rect workArea = new Win32Rect { Left = 0, Top = 0, Right = 1920, Bottom = 1040 };
+                try
                 {
-                    try
+                    IntPtr hMonitor = MonitorFromPoint(new Win32Point { X = physicalX, Y = physicalY }, MONITOR_DEFAULTTONEAREST);
+                    if (hMonitor != IntPtr.Zero)
                     {
-                        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(_barWindow);
-                        dpiScaleX = dpi.DpiScaleX;
-                        dpiScaleY = dpi.DpiScaleY;
-                    }
-                    catch { }
-                }
-                else
-                {
-                    try
-                    {
-                        using (var g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
+                        Win32MonitorInfo mi = new Win32MonitorInfo();
+                        mi.cbSize = Marshal.SizeOf(typeof(Win32MonitorInfo));
+                        if (GetMonitorInfo(hMonitor, ref mi))
                         {
-                            dpiScaleX = g.DpiX / 96.0;
-                            dpiScaleY = g.DpiY / 96.0;
+                            workArea = mi.rcWork;
                         }
                     }
+                }
+                catch
+                {
+                    try
+                    {
+                        var screen = Screen.FromPoint(new System.Drawing.Point(physicalX, physicalY));
+                        workArea = new Win32Rect
+                        {
+                            Left = screen.WorkingArea.Left,
+                            Top = screen.WorkingArea.Top,
+                            Right = screen.WorkingArea.Right,
+                            Bottom = screen.WorkingArea.Bottom
+                        };
+                    }
                     catch { }
                 }
 
-                if (dpiScaleX <= 0) dpiScaleX = 1.0;
-                if (dpiScaleY <= 0) dpiScaleY = 1.0;
-
-                // Kích thước thanh nổi quy đổi sang Physical Pixels để căn lề
-                const double barWidthDip = 475;
-                const double barHeightDip = 48;
-                double barWidthPx = barWidthDip * dpiScaleX;
-                double barHeightPx = barHeightDip * dpiScaleY;
-
-                // Chống tràn màn hình bên phải
-                if (physicalX + barWidthPx > workArea.Right - 10)
+                // Chống tràn viền phải / trái màn hình
+                if (physicalX + barWidthPx > workArea.Right - (10 * dpiScaleX))
                 {
-                    physicalX = (int)(workArea.Right - barWidthPx - 10);
+                    physicalX = (int)(workArea.Right - barWidthPx - (10 * dpiScaleX));
                 }
-                if (physicalX < workArea.Left + 10)
+                if (physicalX < workArea.Left + (10 * dpiScaleX))
                 {
-                    physicalX = workArea.Left + 10;
+                    physicalX = (int)(workArea.Left + (10 * dpiScaleX));
                 }
 
-                // Chống tràn màn hình bên dưới: Nếu chạm đáy màn hình thì cho nổi lên phía trên
-                if (physicalY + barHeightPx > workArea.Bottom - 10)
+                // Chống tràn đáy màn hình:
+                // Nếu vùng chọn nằm sát đáy màn hình không đủ chỗ bên dưới -> Đảo lên NGAY TRÊN ĐẦU vùng chọn (cách 4px)
+                if (physicalY + barHeightPx > workArea.Bottom - (10 * dpiScaleY))
                 {
-                    physicalY = (int)(physicalY - barHeightPx - 36);
-                }
-                if (physicalY < workArea.Top + 10)
-                {
-                    physicalY = workArea.Top + 10;
+                    if (hasRangeCoords)
+                    {
+                        physicalY = selTopPx - (int)barHeightPx - (int)(4 * dpiScaleY);
+                    }
+                    else if (hasMouse)
+                    {
+                        physicalY = mousePt.Y - (int)barHeightPx - (int)(12 * dpiScaleY);
+                    }
                 }
 
-                // 4. QUY ĐỔI SANG WPF DIPs ĐỂ GÁN WINDOW.LEFT / WINDOW.TOP
+                // Chống tràn mép trên màn hình
+                if (physicalY < workArea.Top + (10 * dpiScaleY))
+                {
+                    physicalY = (int)(workArea.Top + (10 * dpiScaleY));
+                }
+
+                // 6. QUY ĐỔI SANG WPF DIPs (Device-Independent Pixels: wpf = physical / dpiScale)
                 double wpfLeft = physicalX / dpiScaleX;
                 double wpfTop = physicalY / dpiScaleY;
 
@@ -253,6 +347,14 @@ namespace ExcelSupport.Services
                 {
                     _barWindow.Show();
                 }
+
+                try
+                {
+                    var helper = new System.Windows.Interop.WindowInteropHelper(_barWindow);
+                    IntPtr hwnd = helper.EnsureHandle();
+                    SetWindowPos(hwnd, HWND_TOPMOST, physicalX, physicalY, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+                }
+                catch { }
             }
             catch (Exception ex)
             {

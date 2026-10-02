@@ -127,7 +127,10 @@
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnExternalLinksManager' />
+        </group>
 
+        <!-- Group: Cơ Sở Dữ Liệu & SQL -->
+        <group id='grpDatabaseTools' getLabel='GetRibbonLabel'>
           <button id='btnOracleTableCompare'
                   size='large'
                   image='oracle_compare_icon'
@@ -145,6 +148,15 @@
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnOracleQuickQuery' />
+
+          <button id='btnSqlScriptGenerator'
+                  size='large'
+                  image='sql_script_icon'
+                  getVisible='GetControlVisible'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnSqlScriptGenerator' />
         </group>
 
         <!-- Group 4: Xử Lý Dữ Liệu -->

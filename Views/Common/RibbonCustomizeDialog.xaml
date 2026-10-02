@@ -7,8 +7,8 @@
         xmlns:views="clr-namespace:ExcelSupport.Views"
         mc:Ignorable="d"
         Title="{loc:Loc Settings_Title}"
-        Height="620" Width="800"
-        MinHeight="500" MinWidth="680"
+        Height="680" Width="900"
+        MinHeight="550" MinWidth="800"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
@@ -420,7 +420,16 @@
             <!-- ========== TAB 2: CẤU HÌNH AI NỘI BỘ ========== -->
             <TabItem Header="{loc:Loc Settings_TabAi}" Style="{StaticResource ModernTabItemStyle}">
                 <Grid Margin="6,4">
-                    <views:AiSettingsControl x:Name="aiSettingsControl"/>
+                    <views:AiSettingsControl x:Name="aiSettingsControl"
+                                             IsDarkTheme="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </Grid>
+            </TabItem>
+
+            <!-- ========== TAB 3: CẤU HÌNH DỰ ÁN & CSDL (PROFILE SETTINGS) ========== -->
+            <TabItem Header="{loc:Loc Settings_TabProfile}" Style="{StaticResource ModernTabItemStyle}">
+                <Grid Margin="6,4">
+                    <views:ProjectProfileSettingsControl x:Name="profileSettingsControl"
+                                                         IsDarkTheme="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </Grid>
             </TabItem>
         </TabControl>

@@ -221,6 +221,28 @@ namespace ExcelSupport.Services
             {
                 cfg.Presets = JapaneseFormatPreset.CreateDefaultPresets();
             }
+            else
+            {
+                // Tự động dọn dẹp các đuôi (Copy) bị lặp lại do lỗi trước đây
+                bool modified = false;
+                foreach (var p in cfg.Presets)
+                {
+                    if (!string.IsNullOrEmpty(p.Name))
+                    {
+                        string cleaned = System.Text.RegularExpressions.Regex.Replace(p.Name, @"(\s*\([Cc]opy\))+$", "").Trim();
+                        if (!string.IsNullOrEmpty(cleaned) && cleaned != p.Name)
+                        {
+                            p.Name = cleaned;
+                            modified = true;
+                        }
+                    }
+                }
+
+                if (modified)
+                {
+                    SaveConfig(cfg);
+                }
+            }
             return cfg;
         }
 

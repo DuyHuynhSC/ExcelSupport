@@ -17,10 +17,42 @@ namespace ExcelSupport.Services
 
         public static event Action? ProfilesChanged;
 
+        static OracleConnectionManager()
+        {
+            ProjectProfileManager.ActiveProfileChanged += RaiseProfilesChanged;
+            ProjectProfileManager.ProfilesUpdated += RaiseProfilesChanged;
+        }
+
+        public static void RaiseProfilesChanged()
+        {
+            lock (SyncLock)
+            {
+                _profiles = null;
+            }
+            ProfilesChanged?.Invoke();
+        }
+
         public static List<OracleConnectionProfile> GetProfiles()
         {
             lock (SyncLock)
             {
+                var projectProfiles = ProjectProfileManager.CurrentConfig.Profiles;
+                if (projectProfiles != null && projectProfiles.Count > 0)
+                {
+                    string? activeId = ProjectProfileManager.CurrentConfig.ActiveProfileId;
+                    var list = new List<OracleConnectionProfile>();
+                    foreach (var p in projectProfiles)
+                    {
+                        var db = p.DatabaseConnection;
+                        db.Id = p.Id;
+                        db.Name = p.Name;
+                        db.IsDefault = (p.Id == activeId);
+                        list.Add(db);
+                    }
+                    _profiles = list;
+                    return list;
+                }
+
                 if (_profiles == null)
                 {
                     _profiles = Load();
@@ -72,6 +104,20 @@ namespace ExcelSupport.Services
                 bool success = JsonConfigStore.Save(ConfigFileName, profiles);
                 if (success)
                 {
+                    var currentProjects = ProjectProfileManager.CurrentConfig.Profiles;
+                    if (currentProjects != null && currentProjects.Count > 0)
+                    {
+                        foreach (var p in profiles)
+                        {
+                            var match = currentProjects.FirstOrDefault(cp => cp.Id == p.Id);
+                            if (match != null)
+                            {
+                                match.DatabaseConnection = p;
+                            }
+                        }
+                        ProjectProfileManager.SaveAllProfiles(currentProjects, ProjectProfileManager.CurrentConfig.ActiveProfileId);
+                    }
+
                     _profiles = profiles;
                     ProfilesChanged?.Invoke();
                 }
@@ -107,6 +153,15 @@ namespace ExcelSupport.Services
 
         public static OracleConnectionProfile? GetDefaultProfile()
         {
+            var activeProject = ProjectProfileManager.GetActiveProfile();
+            if (activeProject != null)
+            {
+                var db = activeProject.DatabaseConnection;
+                db.Id = activeProject.Id;
+                db.Name = activeProject.Name;
+                db.IsDefault = true;
+                return db;
+            }
             var list = GetProfiles();
             if (list.Count == 0) return null;
             return list.FirstOrDefault(p => p.IsDefault) ?? list.FirstOrDefault();
@@ -114,25 +169,8 @@ namespace ExcelSupport.Services
 
         public static bool SetDefaultProfile(string profileId)
         {
-            var list = GetProfiles().ToList();
-            bool found = false;
-            foreach (var p in list)
-            {
-                if (p.Id == profileId)
-                {
-                    p.IsDefault = true;
-                    found = true;
-                }
-                else
-                {
-                    p.IsDefault = false;
-                }
-            }
-            if (found)
-            {
-                return Save(list);
-            }
-            return false;
+            ProjectProfileManager.SetActiveProfile(profileId);
+            return true;
         }
 
         #region Last Compare Session History

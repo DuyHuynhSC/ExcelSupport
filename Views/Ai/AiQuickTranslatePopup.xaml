@@ -201,9 +201,10 @@
 
                     <!-- Direction Switcher -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0">
-                        <RadioButton x:Name="RbJaVi" Content="JP ➔ VN" Style="{StaticResource DirectionPillStyle}" IsChecked="True" Checked="OnDirectionChanged"/>
+                        <RadioButton x:Name="RbJaVi" Content="JP ➔ VN" Style="{StaticResource DirectionPillStyle}" Checked="OnDirectionChanged"/>
                         <RadioButton x:Name="RbViJa" Content="VN ➔ JP" Style="{StaticResource DirectionPillStyle}" Checked="OnDirectionChanged"/>
                         <RadioButton x:Name="RbEnVi" Content="EN ➔ VN" Style="{StaticResource DirectionPillStyle}" Checked="OnDirectionChanged"/>
+                        <RadioButton x:Name="RbAuto" Content="🌐 Auto" Style="{StaticResource DirectionPillStyle}" Checked="OnDirectionChanged"/>
                     </StackPanel>
 
                     <!-- Close Button -->

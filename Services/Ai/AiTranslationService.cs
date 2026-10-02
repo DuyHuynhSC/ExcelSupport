@@ -68,6 +68,64 @@ namespace ExcelSupport.Services
             }
         }
 
+        public static TranslationDirection DetectDirection(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return TranslationDirection.JapaneseToVietnamese;
+
+            int japaneseCharScore = 0;
+            int vietnameseCharScore = 0;
+
+            const string vietnameseChars = "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđĐÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ";
+
+            foreach (char c in text!)
+            {
+                // Hiragana: 0x3040 - 0x309F, Katakana: 0x30A0 - 0x30FF, Halfwidth Katakana: 0xFF65 - 0xFF9F
+                if ((c >= 0x3040 && c <= 0x309F) || (c >= 0x30A0 && c <= 0x30FF) || (c >= 0xFF65 && c <= 0xFF9F))
+                {
+                    japaneseCharScore += 3;
+                }
+                // CJK Unified Ideographs (Kanji)
+                else if (c >= 0x4E00 && c <= 0x9FFF)
+                {
+                    japaneseCharScore += 2;
+                }
+                else if (vietnameseChars.IndexOf(c) >= 0)
+                {
+                    vietnameseCharScore += 3;
+                }
+            }
+
+            if (vietnameseCharScore > 0 && vietnameseCharScore >= japaneseCharScore)
+            {
+                return TranslationDirection.VietnameseToJapanese;
+            }
+
+            if (japaneseCharScore > 0)
+            {
+                return TranslationDirection.JapaneseToVietnamese;
+            }
+
+            return TranslationDirection.JapaneseToVietnamese;
+        }
+
+        public static TranslationDirection DetectDirection(IEnumerable<string>? texts)
+        {
+            if (texts == null) return TranslationDirection.JapaneseToVietnamese;
+
+            int vnCount = 0;
+            int jpCount = 0;
+
+            foreach (var t in texts.Take(50))
+            {
+                if (string.IsNullOrWhiteSpace(t)) continue;
+                var dir = DetectDirection(t);
+                if (dir == TranslationDirection.VietnameseToJapanese) vnCount++;
+                else if (dir == TranslationDirection.JapaneseToVietnamese) jpCount++;
+            }
+
+            return vnCount > jpCount ? TranslationDirection.VietnameseToJapanese : TranslationDirection.JapaneseToVietnamese;
+        }
+
         public static async Task<List<CellTextItem>> TranslateBatchAsync(
             List<CellTextItem> items,
             TranslationDirection direction,
@@ -169,7 +227,26 @@ namespace ExcelSupport.Services
                     sbUser.AppendLine();
                 }
 
-                sbUser.AppendLine("Dịch mảng các đoạn văn bản trong Excel sau đây theo đúng yêu cầu:");
+                if (direction == TranslationDirection.VietnameseToJapanese)
+                {
+                    sbUser.AppendLine("Dịch mảng văn bản TIẾNG VIỆT sau đây SANG TIẾNG NHẬT (日本語). Giá trị trường \"trans\" trong JSON BẮT BUỘC phải là tiếng Nhật:");
+                }
+                else if (direction == TranslationDirection.JapaneseToVietnamese)
+                {
+                    sbUser.AppendLine("Dịch mảng văn bản TIẾNG NHẬT sau đây SANG TIẾNG VIỆT. Giá trị trường \"trans\" trong JSON BẮT BUỘC phải là tiếng Việt:");
+                }
+                else if (direction == TranslationDirection.VietnameseToEnglish)
+                {
+                    sbUser.AppendLine("Dịch mảng văn bản TIẾNG VIỆT sau đây SANG TIẾNG ANH (English). Giá trị trường \"trans\" trong JSON BẮT BUỘC phải là tiếng Anh:");
+                }
+                else if (direction == TranslationDirection.AutoDetect)
+                {
+                    sbUser.AppendLine("Nhận diện ngôn ngữ từng ô và dịch: Nếu nguồn là tiếng Việt -> dịch sang tiếng Nhật (日本語); Nếu nguồn là tiếng Nhật hoặc tiếng Anh -> dịch sang tiếng Việt:");
+                }
+                else
+                {
+                    sbUser.AppendLine("Dịch mảng các đoạn văn bản trong Excel sau đây theo đúng yêu cầu:");
+                }
                 sbUser.AppendLine(inputJson);
 
                 string systemPrompt = BuildSystemPrompt(direction, tone, glossarySection);
@@ -194,8 +271,14 @@ namespace ExcelSupport.Services
                         }
                         else
                         {
-                            // Fallback to original text if missing in response
-                            resultList[itemIdx].TranslatedText = resultList[itemIdx].OriginalText;
+                            if (map.Count == 0 && !string.IsNullOrWhiteSpace(aiResponse))
+                            {
+                                resultList[itemIdx].TranslatedText = "[Lỗi đọc kết quả phản hồi từ AI]";
+                            }
+                            else
+                            {
+                                resultList[itemIdx].TranslatedText = resultList[itemIdx].OriginalText;
+                            }
                         }
                     }
                 }
@@ -229,22 +312,30 @@ namespace ExcelSupport.Services
             {
                 case TranslationDirection.JapaneseToVietnamese:
                     sb.AppendLine("Nhiệm vụ: Dịch chính xác từ TIẾNG NHẬT sang TIẾNG VIỆT.");
+                    sb.AppendLine("BẮT BUỘC: Bản dịch ở trường \"trans\" PHẢI LÀ TIẾNG VIỆT. Tuyệt đối không để nguyên tiếng Nhật.");
                     break;
                 case TranslationDirection.VietnameseToJapanese:
-                    sb.AppendLine("Nhiệm vụ: Dịch chính xác từ TIẾNG VIỆT sang TIẾNG NHẬT.");
+                    sb.AppendLine("Nhiệm vụ: Dịch chính xác từ TIẾNG VIỆT sang TIẾNG NHẬT (日本語).");
+                    sb.AppendLine("BẮT BUỘC: Bản dịch ở trường \"trans\" PHẢI LÀ TIẾNG NHẬT (日本語) CHUẨN XÁC, TỰ NHIÊN. TUYỆT ĐỐI KHÔNG ĐƯỢC GIỮ NGUYÊN TIẾNG VIỆT, KHÔNG TRẢ VỀ TIẾNG VIỆT TRONG KẾT QUẢ \"trans\"!");
                     break;
                 case TranslationDirection.EnglishToVietnamese:
                     sb.AppendLine("Nhiệm vụ: Dịch chính xác từ TIẾNG ANH sang TIẾNG VIỆT.");
+                    sb.AppendLine("BẮT BUỘC: Bản dịch ở trường \"trans\" PHẢI LÀ TIẾNG VIỆT.");
                     break;
                 case TranslationDirection.VietnameseToEnglish:
                     sb.AppendLine("Nhiệm vụ: Dịch chính xác từ TIẾNG VIỆT sang TIẾNG ANH.");
+                    sb.AppendLine("BẮT BUỘC: Bản dịch ở trường \"trans\" PHẢI LÀ TIẾNG ANH.");
                     break;
                 case TranslationDirection.JapaneseToEnglish:
                     sb.AppendLine("Nhiệm vụ: Dịch chính xác từ TIẾNG NHẬT sang TIẾNG ANH.");
+                    sb.AppendLine("BẮT BUỘC: Bản dịch ở trường \"trans\" PHẢI LÀ TIẾNG ANH.");
                     break;
                 case TranslationDirection.AutoDetect:
                 default:
-                    sb.AppendLine("Nhiệm vụ: Tự động nhận diện ngôn ngữ nguồn từng ô. Nếu nguồn là tiếng Nhật hoặc tiếng Anh thì dịch sang tiếng Việt; nếu nguồn là tiếng Việt thì dịch sang tiếng Nhật chuẩn.");
+                    sb.AppendLine("Nhiệm vụ: Tự động nhận diện ngôn ngữ nguồn từng ô:");
+                    sb.AppendLine("- Nếu văn bản nguồn là TIẾNG VIỆT: BẮT BUỘC DỊCH SANG TIẾNG NHẬT (日本語). Trường \"trans\" PHẢI LÀ TIẾNG NHẬT!");
+                    sb.AppendLine("- Nếu văn bản nguồn là TIẾNG NHẬT hoặc TIẾNG ANH: BẮT BUỘC DỊCH SANG TIẾNG VIỆT. Trường \"trans\" PHẢI LÀ TIẾNG VIỆT!");
+                    sb.AppendLine("- Tuyệt đối không trả về cùng một ngôn ngữ với văn bản nguồn.");
                     break;
             }
 
@@ -270,15 +361,47 @@ namespace ExcelSupport.Services
             sb.AppendLine();
             sb.AppendLine("[QUY TẮC BẢO TOÀN ĐỊNH DẠNG ĐẶC BIỆT - BẮT BUỘC]:");
             sb.AppendLine("- Nếu văn bản nguồn chứa các thẻ định dạng HTML/XML như `<s color=\"...\">...</s>` hoặc `<s>...</s>` (gạch ngang / sửa đổi), `<color hex=\"...\">...</color>` (chữ màu đỏ/màu khác), `<b>...</b>` (in đậm), `<i>...</i>` (in nghiêng), bạn BẮT BUỘC PHẢI GIỮ NGUYÊN các thẻ này và bao bọc đúng phần nội dung dịch tương ứng.");
-            sb.AppendLine("- Ví dụ nguồn: `・<s color=\"#FF0000\">画面.実行時パスによりCentral側のファイル出力を行う。</s>` ➔ Bản dịch: `・<s color=\"#FF0000\">Thực hiện output file phía Central theo đường dẫn thời gian chạy màn hình.</s>`");
-            sb.AppendLine("- Ví dụ nguồn: `・<color hex=\"#FF0000\">Local → Centralでファイル出力パスのチェックを行う。</color>` ➔ Bản dịch: `・<color hex=\"#FF0000\">Thực hiện kiểm tra đường dẫn output file từ Local → Central.</color>`");
+
+            if (direction == TranslationDirection.VietnameseToJapanese)
+            {
+                sb.AppendLine("- Ví dụ nguồn: `・<s color=\"#FF0000\">Thực hiện xuất file phía Central theo đường dẫn thời gian chạy màn hình.</s>` ➔ Bản dịch: `・<s color=\"#FF0000\">画面.実行時パスによりCentral側のファイル出力を行う。</s>`");
+                sb.AppendLine("- Ví dụ nguồn: `・<color hex=\"#FF0000\">Local → Central: Thực hiện kiểm tra đường dẫn xuất file.</color>` ➔ Bản dịch: `・<color hex=\"#FF0000\">Local → Centralでファイル出力パスのチェックを行う。</color>`");
+            }
+            else if (direction == TranslationDirection.VietnameseToEnglish || direction == TranslationDirection.JapaneseToEnglish)
+            {
+                sb.AppendLine("- Ví dụ nguồn: `・<s color=\"#FF0000\">Kiểm tra đường dẫn file.</s>` ➔ Bản dịch: `・<s color=\"#FF0000\">Check the file path.</s>`");
+            }
+            else if (direction == TranslationDirection.AutoDetect)
+            {
+                sb.AppendLine("- Ví dụ nguồn tiếng Nhật: `・<s color=\"#FF0000\">画面.実行時パスによりCentral側のファイル出力を行う。</s>` ➔ Bản dịch: `・<s color=\"#FF0000\">Thực hiện xuất file phía Central theo đường dẫn runtime màn hình.</s>`");
+                sb.AppendLine("- Ví dụ nguồn tiếng Việt: `・<color hex=\"#FF0000\">Thực hiện kiểm tra đường dẫn xuất file.</s>` ➔ Bản dịch: `・<color hex=\"#FF0000\">ファイル出力パスのチェックを行う。</s>`");
+            }
+            else
+            {
+                sb.AppendLine("- Ví dụ nguồn: `・<s color=\"#FF0000\">画面.実行時パスによりCentral側のファイル出力を行う。</s>` ➔ Bản dịch: `・<s color=\"#FF0000\">Thực hiện output file phía Central theo đường dẫn thời gian chạy màn hình.</s>`");
+                sb.AppendLine("- Ví dụ nguồn: `・<color hex=\"#FF0000\">Local → Centralでファイル出力パスのチェックを行う。</color>` ➔ Bản dịch: `・<color hex=\"#FF0000\">Thực hiện kiểm tra đường dẫn output file từ Local → Central.</color>`");
+            }
+
             sb.AppendLine("- Tuyệt đối không xóa thẻ, không làm mất thuộc tính màu `color=\"...\"`, `hex=\"...\"`, không dịch tên thẻ.");
             sb.AppendLine();
             sb.AppendLine("ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:");
             sb.AppendLine("Trả về DUY NHẤT một mảng JSON hợp lệ, không kèm giải thích, không bọc trong markdown hay bất kỳ văn bản nào ngoài JSON:");
             sb.AppendLine("[");
-            sb.AppendLine("  { \"id\": 0, \"trans\": \"Nội dung đã dịch\" },");
-            sb.AppendLine("  { \"id\": 1, \"trans\": \"Nội dung đã dịch\" }");
+            if (direction == TranslationDirection.VietnameseToJapanese)
+            {
+                sb.AppendLine("  { \"id\": 0, \"trans\": \"翻訳された日本語テキスト\" },");
+                sb.AppendLine("  { \"id\": 1, \"trans\": \"翻訳された日本語テキスト\" }");
+            }
+            else if (direction == TranslationDirection.VietnameseToEnglish || direction == TranslationDirection.JapaneseToEnglish)
+            {
+                sb.AppendLine("  { \"id\": 0, \"trans\": \"Translated English text\" },");
+                sb.AppendLine("  { \"id\": 1, \"trans\": \"Translated English text\" }");
+            }
+            else
+            {
+                sb.AppendLine("  { \"id\": 0, \"trans\": \"Nội dung đã dịch\" },");
+                sb.AppendLine("  { \"id\": 1, \"trans\": \"Nội dung đã dịch\" }");
+            }
             sb.AppendLine("]");
 
             return sb.ToString();
@@ -323,68 +446,145 @@ namespace ExcelSupport.Services
             var result = new Dictionary<int, string>();
             if (string.IsNullOrWhiteSpace(response)) return result;
 
+            string cleanJson = response.Trim();
+
+            // Extract content from markdown code block if present
+            var matchCodeFence = Regex.Match(cleanJson, @"```(?:json)?\s*([\s\S]*?)\s*```", RegexOptions.IgnoreCase);
+            if (matchCodeFence.Success)
+            {
+                cleanJson = matchCodeFence.Groups[1].Value.Trim();
+            }
+
+            // Attempt JSON parsing using JToken
             try
             {
-                string cleanJson = response.Trim();
+                // Find outer bracket or brace
+                int arrStart = cleanJson.IndexOf('[');
+                int arrEnd = cleanJson.LastIndexOf(']');
+                int objStart = cleanJson.IndexOf('{');
+                int objEnd = cleanJson.LastIndexOf('}');
 
-                // Strip markdown code block fences if present
-                if (cleanJson.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+                string jsonToParse = cleanJson;
+                if (arrStart >= 0 && arrEnd > arrStart && (objStart < 0 || arrStart < objStart))
                 {
-                    cleanJson = cleanJson.Substring(7);
+                    jsonToParse = cleanJson.Substring(arrStart, arrEnd - arrStart + 1);
                 }
-                else if (cleanJson.StartsWith("```", StringComparison.OrdinalIgnoreCase))
+                else if (objStart >= 0 && objEnd > objStart)
                 {
-                    cleanJson = cleanJson.Substring(3);
-                }
-
-                if (cleanJson.EndsWith("```"))
-                {
-                    cleanJson = cleanJson.Substring(0, cleanJson.Length - 3);
-                }
-
-                cleanJson = cleanJson.Trim();
-
-                // Find opening bracket
-                int startIdx = cleanJson.IndexOf('[');
-                int endIdx = cleanJson.LastIndexOf(']');
-                if (startIdx >= 0 && endIdx > startIdx)
-                {
-                    cleanJson = cleanJson.Substring(startIdx, endIdx - startIdx + 1);
+                    jsonToParse = cleanJson.Substring(objStart, objEnd - objStart + 1);
                 }
 
-                var array = JArray.Parse(cleanJson);
-                foreach (var token in array)
-                {
-                    if (token is JObject obj)
-                    {
-                        int id = obj.Value<int>("id");
-                        string trans = obj.Value<string>("trans") ?? obj.Value<string>("text") ?? string.Empty;
-                        result[id] = trans;
-                    }
-                }
+                var token = JToken.Parse(jsonToParse);
+                ExtractTokensToMap(token, result);
+
+                if (result.Count > 0) return result;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[AiTranslationService] JSON Parse Error: {ex.Message}. Raw: {response}");
+                Debug.WriteLine($"[AiTranslationService] JToken Parse warning: {ex.Message}. Raw: {response}");
+            }
 
-                // Fallback: Regex extraction of {"id": X, "trans": "..."}
+            // Fallback 1: Regex extraction {"id": X, "trans": "..."} or {"trans": "...", "id": X}
+            try
+            {
+                // Matches {"id": 0, "trans": "..."}
+                var matches1 = Regex.Matches(response, @"\{\s*""id""\s*:\s*(\d+)\s*,\s*""(?:trans|translation|translated|text|content|result|target|ja|vi)""\s*:\s*""((?:\\.|[^""\\])*)""");
+                foreach (Match m in matches1)
+                {
+                    if (int.TryParse(m.Groups[1].Value, out int id) && !result.ContainsKey(id))
+                    {
+                        result[id] = Regex.Unescape(m.Groups[2].Value);
+                    }
+                }
+
+                // Matches {"trans": "...", "id": 0}
+                var matches2 = Regex.Matches(response, @"""(?:trans|translation|translated|text|content|result|target|ja|vi)""\s*:\s*""((?:\\.|[^""\\])*)""\s*,\s*""id""\s*:\s*(\d+)");
+                foreach (Match m in matches2)
+                {
+                    if (int.TryParse(m.Groups[2].Value, out int id) && !result.ContainsKey(id))
+                    {
+                        result[id] = Regex.Unescape(m.Groups[1].Value);
+                    }
+                }
+            }
+            catch { }
+
+            // Fallback 2: Single item without id or simple text
+            if (result.Count == 0)
+            {
                 try
                 {
-                    var matches = Regex.Matches(response, @"\{\s*""id""\s*:\s*(\d+)\s*,\s*""(?:trans|text)""\s*:\s*""((?:\\.|[^""\\])*)""\s*\}");
-                    foreach (Match m in matches)
+                    var singleMatch = Regex.Match(response, @"""(?:trans|translation|translated|ja|vi)""\s*:\s*""((?:\\.|[^""\\])*)""");
+                    if (singleMatch.Success)
                     {
-                        if (int.TryParse(m.Groups[1].Value, out int id))
-                        {
-                            string rawTrans = m.Groups[2].Value;
-                            string unescaped = Regex.Unescape(rawTrans);
-                            result[id] = unescaped;
-                        }
+                        result[0] = Regex.Unescape(singleMatch.Groups[1].Value);
                     }
                 }
                 catch { }
             }
 
             return result;
+        }
+
+        private static void ExtractTokensToMap(JToken token, Dictionary<int, string> result)
+        {
+            if (token is JArray arr)
+            {
+                for (int i = 0; i < arr.Count; i++)
+                {
+                    var item = arr[i];
+                    if (item is JObject obj)
+                    {
+                        int id = obj.Value<int?>("id") ?? i;
+                        string? trans = ExtractTranslationStringFromObject(obj);
+                        if (!string.IsNullOrEmpty(trans))
+                        {
+                            result[id] = trans!;
+                        }
+                    }
+                    else if (item is JValue val && val.Value != null)
+                    {
+                        result[i] = val.Value.ToString() ?? string.Empty;
+                    }
+                }
+            }
+            else if (token is JObject obj)
+            {
+                // Check if object wraps a list under 'translations', 'data', 'items', 'results'
+                foreach (var propName in new[] { "translations", "items", "results", "data", "list" })
+                {
+                    if (obj.TryGetValue(propName, StringComparison.OrdinalIgnoreCase, out var innerToken) && innerToken is JArray innerArr)
+                    {
+                        ExtractTokensToMap(innerArr, result);
+                        return;
+                    }
+                }
+
+                // Single object
+                int id = obj.Value<int?>("id") ?? 0;
+                string? trans = ExtractTranslationStringFromObject(obj);
+                if (!string.IsNullOrEmpty(trans))
+                {
+                    result[id] = trans!;
+                }
+            }
+        }
+
+        private static string? ExtractTranslationStringFromObject(JObject obj)
+        {
+            var candidateKeys = new[] { "trans", "translation", "translated", "target", "text", "content", "result", "ja", "vi", "en" };
+            foreach (var key in candidateKeys)
+            {
+                if (obj.TryGetValue(key, StringComparison.OrdinalIgnoreCase, out var val))
+                {
+                    string s = val.ToString();
+                    if (!string.IsNullOrWhiteSpace(s)) return s;
+                }
+            }
+
+            // Fallback: Pick any non-id property value
+            var otherProp = obj.Properties().FirstOrDefault(p => !string.Equals(p.Name, "id", StringComparison.OrdinalIgnoreCase));
+            return otherProp?.Value?.ToString();
         }
 
         public static (string plainText, List<TextRunModel>? runs) ParseTaggedText(string taggedText)

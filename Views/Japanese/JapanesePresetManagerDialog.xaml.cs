@@ -97,8 +97,56 @@ namespace ExcelSupport.Views
             }
         }
 
+        private static List<string>? _cachedSystemFonts;
+
+        private static List<string> GetSystemFontNames()
+        {
+            if (_cachedSystemFonts != null) return _cachedSystemFonts;
+
+            var fonts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                foreach (var font in System.Windows.Media.Fonts.SystemFontFamilies)
+                {
+                    string name = font.Source;
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        fonts.Add(name);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[JapanesePresetManagerDialog] Error getting system fonts: {ex.Message}");
+            }
+
+            // Đảm bảo Tahoma và các font chuẩn thông dụng luôn có mặt
+            var standardFonts = new[]
+            {
+                "Tahoma",
+                "Meiryo UI",
+                "Yu Gothic UI",
+                "MS Gothic",
+                "MS Mincho",
+                "Segoe UI",
+                "Arial",
+                "Calibri",
+                "Consolas",
+                "Times New Roman"
+            };
+
+            foreach (var sf in standardFonts)
+            {
+                fonts.Add(sf);
+            }
+
+            _cachedSystemFonts = fonts.OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
+            return _cachedSystemFonts;
+        }
+
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            cboFontFamily.ItemsSource = GetSystemFontNames();
             LoadData();
         }
 
@@ -174,7 +222,7 @@ namespace ExcelSupport.Views
                 txtDescription.Text = _selectedPreset.Description;
 
                 // Font Family
-                SelectComboBoxByContent(cboFontFamily, _selectedPreset.FontName);
+                SetSelectedFontName(_selectedPreset.FontName);
 
                 // Font Size
                 cboFontSize.Text = _selectedPreset.FontSize.ToString("0.#");
@@ -185,11 +233,11 @@ namespace ExcelSupport.Views
                 chkUnderline.IsChecked = _selectedPreset.IsUnderline;
 
                 // Font Color
-                txtFontColor.Text = _selectedPreset.FontColorHex;
+                cpFontColor.ColorHex = _selectedPreset.FontColorHex;
 
                 // Fill
                 chkHasFill.IsChecked = _selectedPreset.HasFill;
-                txtFillColor.Text = _selectedPreset.FillColorHex;
+                cpFillColor.ColorHex = _selectedPreset.FillColorHex;
 
                 // Alignment
                 cboHAlign.SelectedIndex = (int)_selectedPreset.HorizontalAlign;
@@ -198,7 +246,7 @@ namespace ExcelSupport.Views
 
                 // Border
                 cboBorderStyle.SelectedIndex = (int)_selectedPreset.BorderStyle;
-                txtBorderColor.Text = _selectedPreset.BorderColorHex;
+                cpBorderColor.ColorHex = _selectedPreset.BorderColorHex;
 
                 // Number format
                 chkApplyNumberFormat.IsChecked = _selectedPreset.ApplyNumberFormat;
@@ -212,17 +260,38 @@ namespace ExcelSupport.Views
             UpdateLivePreview();
         }
 
-        private void SelectComboBoxByContent(WpfComboBox cbo, string value)
+        private void SetSelectedFontName(string? fontName)
         {
-            foreach (ComboBoxItem item in cbo.Items)
+            if (string.IsNullOrWhiteSpace(fontName)) fontName = "Tahoma";
+
+            string? matched = null;
+            if (cboFontFamily.ItemsSource is IEnumerable<string> list)
             {
-                if (string.Equals(item.Content?.ToString(), value, StringComparison.OrdinalIgnoreCase))
-                {
-                    cbo.SelectedItem = item;
-                    return;
-                }
+                matched = list.FirstOrDefault(f => string.Equals(f, fontName, StringComparison.OrdinalIgnoreCase));
             }
-            if (cbo.Items.Count > 0) cbo.SelectedIndex = 0;
+
+            if (matched != null)
+            {
+                cboFontFamily.SelectedItem = matched;
+            }
+            else
+            {
+                cboFontFamily.Text = fontName!;
+            }
+        }
+
+        private string GetSelectedFontName()
+        {
+            string? name = cboFontFamily.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = (cboFontFamily.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = cboFontFamily.Text?.Trim();
+            }
+            return string.IsNullOrWhiteSpace(name) ? "Tahoma" : name!;
         }
 
         private void OnLivePreviewFieldChanged(object sender, RoutedEventArgs e)
@@ -238,7 +307,7 @@ namespace ExcelSupport.Views
             try
             {
                 // Font Family
-                string fontName = (cboFontFamily.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Meiryo UI";
+                string fontName = GetSelectedFontName();
                 pvwCellText.FontFamily = new WpfFontFamily(fontName);
 
                 // Font Size (preview scale down slightly if too large to fit box)
@@ -255,14 +324,14 @@ namespace ExcelSupport.Views
                 pvwCellText.TextDecorations = (chkUnderline.IsChecked == true) ? TextDecorations.Underline : null;
 
                 // Font Color
-                var fontBrush = ParseBrush(txtFontColor?.Text, WpfColor.FromRgb(15, 23, 42));
+                var fontBrush = ParseBrush(cpFontColor?.ColorHex, WpfColor.FromRgb(15, 23, 42));
                 pvwCellText.Foreground = fontBrush;
 
                 // Fill Color
                 bool hasFill = (chkHasFill.IsChecked == true);
                 if (hasFill)
                 {
-                    pvwCellBorder.Background = ParseBrush(txtFillColor?.Text, WpfColor.FromRgb(255, 255, 255));
+                    pvwCellBorder.Background = ParseBrush(cpFillColor?.ColorHex, WpfColor.FromRgb(255, 255, 255));
                 }
                 else
                 {
@@ -311,7 +380,7 @@ namespace ExcelSupport.Views
                 pvwCellText.TextWrapping = (chkWrapText.IsChecked == true) ? TextWrapping.Wrap : TextWrapping.NoWrap;
 
                 // Borders
-                var borderBrush = ParseBrush(txtBorderColor?.Text, WpfColor.FromRgb(203, 213, 225));
+                var borderBrush = ParseBrush(cpBorderColor?.ColorHex, WpfColor.FromRgb(203, 213, 225));
                 pvwCellBorder.BorderBrush = borderBrush;
 
                 int borderIndex = cboBorderStyle.SelectedIndex;
@@ -357,11 +426,17 @@ namespace ExcelSupport.Views
             }
         }
 
+        private void OnPickerColorChanged(object? sender, string hex)
+        {
+            if (_isUpdatingForm) return;
+            UpdateLivePreview();
+        }
+
         private void OnQuickFontColorClick(object sender, RoutedEventArgs e)
         {
             if (sender is WpfButton btn && btn.Background is SolidColorBrush brush)
             {
-                txtFontColor.Text = $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
+                cpFontColor.ColorHex = $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
                 UpdateLivePreview();
             }
         }
@@ -371,7 +446,16 @@ namespace ExcelSupport.Views
             if (sender is WpfButton btn && btn.Background is SolidColorBrush brush)
             {
                 chkHasFill.IsChecked = true;
-                txtFillColor.Text = $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
+                cpFillColor.ColorHex = $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
+                UpdateLivePreview();
+            }
+        }
+
+        private void OnQuickBorderColorClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is WpfButton btn && btn.Background is SolidColorBrush brush)
+            {
+                cpBorderColor.ColorHex = $"#{brush.Color.R:X2}{brush.Color.G:X2}{brush.Color.B:X2}";
                 UpdateLivePreview();
             }
         }
@@ -396,7 +480,7 @@ namespace ExcelSupport.Views
                 Name = LocalizationService.Get("JpPreset_NewPresetDefaultName", "Mẫu Mới (Custom Preset)"),
                 Description = LocalizationService.Get("JpPreset_NewPresetDefaultDesc", "Mẫu định dạng do người dùng thiết lập"),
                 IsBuiltIn = false,
-                FontName = "Meiryo UI",
+                FontName = "Tahoma",
                 FontSize = 10.0,
                 FontColorHex = "#0F172A",
                 HasFill = true,
@@ -417,7 +501,7 @@ namespace ExcelSupport.Views
             if (_selectedPreset == null) return;
 
             SaveFormToPreset(_selectedPreset);
-            var clone = _selectedPreset.Clone();
+            var clone = _selectedPreset.Duplicate();
             _presets.Add(clone);
             RefreshPresetsList();
             lstPresets.SelectedItem = clone;
@@ -629,7 +713,7 @@ namespace ExcelSupport.Views
             preset.Name = string.IsNullOrWhiteSpace(txtName.Text) ? "Custom Preset" : txtName.Text.Trim();
             preset.Description = txtDescription.Text?.Trim() ?? string.Empty;
 
-            preset.FontName = (cboFontFamily.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Meiryo UI";
+            preset.FontName = GetSelectedFontName();
 
             if (double.TryParse(cboFontSize.Text, out double size) && size > 0)
             {
@@ -640,17 +724,17 @@ namespace ExcelSupport.Views
             preset.IsItalic = (chkItalic.IsChecked == true);
             preset.IsUnderline = (chkUnderline.IsChecked == true);
 
-            preset.FontColorHex = string.IsNullOrWhiteSpace(txtFontColor.Text) ? "#0F172A" : txtFontColor.Text.Trim();
+            preset.FontColorHex = string.IsNullOrWhiteSpace(cpFontColor.ColorHex) ? "#0F172A" : cpFontColor.ColorHex.Trim();
 
             preset.HasFill = (chkHasFill.IsChecked == true);
-            preset.FillColorHex = string.IsNullOrWhiteSpace(txtFillColor.Text) ? "#FFFFFF" : txtFillColor.Text.Trim();
+            preset.FillColorHex = string.IsNullOrWhiteSpace(cpFillColor.ColorHex) ? "#FFFFFF" : cpFillColor.ColorHex.Trim();
 
             preset.HorizontalAlign = (PresetHorizontalAlign)Math.Max(0, cboHAlign.SelectedIndex);
             preset.VerticalAlign = (PresetVerticalAlign)Math.Max(0, cboVAlign.SelectedIndex);
             preset.WrapText = (chkWrapText.IsChecked == true);
 
             preset.BorderStyle = (PresetBorderStyle)Math.Max(0, cboBorderStyle.SelectedIndex);
-            preset.BorderColorHex = string.IsNullOrWhiteSpace(txtBorderColor.Text) ? "#CBD5E1" : txtBorderColor.Text.Trim();
+            preset.BorderColorHex = string.IsNullOrWhiteSpace(cpBorderColor.ColorHex) ? "#CBD5E1" : cpBorderColor.ColorHex.Trim();
 
             preset.ApplyNumberFormat = (chkApplyNumberFormat.IsChecked == true);
             preset.NumberFormat = txtNumberFormat.Text?.Trim() ?? string.Empty;

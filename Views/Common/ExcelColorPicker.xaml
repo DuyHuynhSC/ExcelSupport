@@ -1,0 +1,150 @@
+<UserControl x:Class="ExcelSupport.Views.Common.ExcelColorPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+             Height="26" MinWidth="110">
+
+    <Grid>
+        <!-- Main ComboBox-like Toggle Button -->
+        <ToggleButton x:Name="btnToggle" Height="26" Padding="4,2" Cursor="Hand"
+                      HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center">
+            <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="bdToggle" Background="{TemplateBinding Background}" 
+                            BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Padding="5,2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Color Swatch Preview -->
+                            <Border Grid.Column="0" Width="16" Height="16" CornerRadius="2" 
+                                    BorderBrush="#94A3B8" BorderThickness="1" Margin="0,0,6,0" VerticalAlignment="Center">
+                                <Grid>
+                                    <Border x:Name="bdSwatch" Background="{Binding SwatchBrush, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <!-- Slash indicator if transparent / no color -->
+                                    <Line x:Name="lineNoColor" X1="0" Y1="14" X2="14" Y2="0" Stroke="#EF4444" StrokeThickness="1.5"
+                                          Visibility="{Binding NoColorVisibility, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Hex Display Text -->
+                            <TextBlock Grid.Column="1" Text="{Binding DisplayHex, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                       FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="#0F172A"/>
+
+                            <!-- Dropdown Arrow Icon -->
+                            <Path Grid.Column="2" Data="M 0 0 L 3.5 3.5 L 7 0 Z" Fill="#64748B" 
+                                  VerticalAlignment="Center" Margin="4,0,2,0"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bdToggle" Property="BorderBrush" Value="#94A3B8"/>
+                            <Setter TargetName="bdToggle" Property="Background" Value="#F1F5F9"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="bdToggle" Property="BorderBrush" Value="#0284C7"/>
+                            <Setter TargetName="bdToggle" Property="Background" Value="#E0F2FE"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </ToggleButton.Template>
+        </ToggleButton>
+
+        <!-- Dropdown Popup Palette -->
+        <Popup x:Name="popupPicker" IsOpen="{Binding IsChecked, ElementName=btnToggle, Mode=TwoWay}"
+               StaysOpen="False" AllowsTransparency="True" Placement="Bottom" PopupAnimation="Fade">
+            <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="8" Margin="4">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                </Border.Effect>
+                <StackPanel Width="204">
+                    <!-- Option: No Color (Transparent) -->
+                    <Button x:Name="btnNoColor" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            Margin="0,0,0,6" Padding="4,3" Cursor="Hand" Background="Transparent" BorderThickness="1" BorderBrush="#E2E8F0"
+                            Visibility="{Binding AllowTransparentVisibility, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Click="OnNoColorClick">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="14" Height="14" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="2" Margin="0,0,6,0">
+                                <Line X1="0" Y1="12" X2="12" Y2="0" Stroke="#EF4444" StrokeThickness="1.5"/>
+                            </Border>
+                            <TextBlock Text="{loc:Loc ColorPicker_NoColor}" FontSize="11" Foreground="#334155" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Section 1: Theme Colors -->
+                    <TextBlock Text="{loc:Loc ColorPicker_ThemeColors}" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="2,0,0,4"/>
+                    <ItemsControl x:Name="icThemeColors">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="10" Rows="6"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Width="18" Height="18" Margin="1" Cursor="Hand" ToolTip="{Binding}" Tag="{Binding}" Click="OnColorSwatchClick">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bd" Background="{Binding}" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="2"/>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="BorderBrush" Value="#0F172A"/>
+                                                    <Setter TargetName="bd" Property="BorderThickness" Value="1.5"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Section 2: Standard Colors -->
+                    <TextBlock Text="{loc:Loc ColorPicker_StandardColors}" FontSize="10" FontWeight="SemiBold" Foreground="#64748B" Margin="2,8,0,4"/>
+                    <ItemsControl x:Name="icStandardColors">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="10" Rows="1"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Width="18" Height="18" Margin="1" Cursor="Hand" ToolTip="{Binding}" Tag="{Binding}" Click="OnColorSwatchClick">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bd" Background="{Binding}" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="2"/>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="BorderBrush" Value="#0F172A"/>
+                                                    <Setter TargetName="bd" Property="BorderThickness" Value="1.5"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Separator Margin="0,8,0,6" Background="#E2E8F0"/>
+
+                    <!-- Section 3: Custom Hex Input -->
+                    <Grid Margin="1,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="{loc:Loc ColorPicker_CustomHex}" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox x:Name="txtCustomHex" Grid.Column="1" Height="22" FontSize="11" VerticalContentAlignment="Center" 
+                                 Padding="3,1" Margin="0,0,4,0" KeyDown="OnCustomHexKeyDown"/>
+                        <Button Grid.Column="2" Content="{loc:Loc ColorPicker_Apply}" FontSize="10" Padding="6,2" Cursor="Hand" Click="OnApplyCustomHexClick"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

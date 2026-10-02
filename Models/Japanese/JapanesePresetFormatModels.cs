@@ -84,7 +84,7 @@ namespace ExcelSupport.Models
         public bool IsBuiltIn { get; set; }
 
         // ==================== Font & Typography ====================
-        public string FontName { get; set; } = "Meiryo UI";
+        public string FontName { get; set; } = "Tahoma";
         public double FontSize { get; set; } = 10.0;
         public string FontColorHex { get; set; } = "#0F172A";
         public bool IsBold { get; set; }
@@ -118,10 +118,10 @@ namespace ExcelSupport.Models
         {
             return new JapaneseFormatPreset
             {
-                Id = Guid.NewGuid().ToString(),
-                Name = this.Name + " (Copy)",
+                Id = this.Id,
+                Name = this.Name,
                 Description = this.Description,
-                IsBuiltIn = false,
+                IsBuiltIn = this.IsBuiltIn,
                 FontName = this.FontName,
                 FontSize = this.FontSize,
                 FontColorHex = this.FontColorHex,
@@ -136,8 +136,23 @@ namespace ExcelSupport.Models
                 BorderStyle = this.BorderStyle,
                 BorderColorHex = this.BorderColorHex,
                 ApplyNumberFormat = this.ApplyNumberFormat,
-                NumberFormat = this.NumberFormat
+                NumberFormat = this.NumberFormat,
+                IsDefault = this.IsDefault
             };
+        }
+
+        /// <summary>
+        /// Tạo bản sao mới (dùng khi người dùng nhấn nút Nhân bản / Clone)
+        /// </summary>
+        public JapaneseFormatPreset Duplicate()
+        {
+            var copy = this.Clone();
+            copy.Id = Guid.NewGuid().ToString();
+            string cleanName = System.Text.RegularExpressions.Regex.Replace(this.Name ?? string.Empty, @"(\s*\([Cc]opy\))+$", "").Trim();
+            copy.Name = (string.IsNullOrWhiteSpace(cleanName) ? "Preset" : cleanName) + " (Copy)";
+            copy.IsBuiltIn = false;
+            copy.IsDefault = false;
+            return copy;
         }
 
         /// <summary>

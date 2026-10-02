@@ -199,5 +199,35 @@ namespace ExcelSupport
                 System.Windows.MessageBox.Show(ex.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             }
         }
+
+        [ExcelCommand(ShortCut = "^+K", Name = "SqlScriptGeneratorCommand")]
+        public static void OpenSqlScriptGenerator()
+        {
+            try
+            {
+                var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                Views.SqlScriptGeneratorDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "Thông Báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+        }
+    }
+
+    public static class SettingsCommands
+    {
+        [ExcelCommand(ShortCut = "^+I", Name = "OpenSettingsCommand")]
+        public static void OpenSettings()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    RibbonCustomizeDialog.ShowWindow(0, null);
+                }
+                catch { }
+            });
+        }
     }
 }

@@ -216,7 +216,7 @@ namespace ExcelSupport.Services
                     Id = "oracle_table_compare",
                     TitleKey = "btnOracleTableCompare",
                     DescriptionKey = "btnOracleTableCompare_SuperTip",
-                    CategoryKey = "grpAuditTools",
+                    CategoryKey = "grpDatabaseTools",
                     IconEmoji = "🗄️",
                     Keywords = new List<string> { "oracle compare", "so sanh oracle", "database diff", "so sanh bang", "schema compare", "oracle" },
                     Action = () => OracleTableCompareDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
@@ -226,11 +226,26 @@ namespace ExcelSupport.Services
                     Id = "oracle_quick_query",
                     TitleKey = "btnOracleQuickQuery",
                     DescriptionKey = "btnOracleQuickQuery_SuperTip",
-                    CategoryKey = "grpAuditTools",
+                    CategoryKey = "grpDatabaseTools",
                     IconEmoji = "⚡",
                     ShortcutText = "Ctrl + Shift + Q",
                     Keywords = new List<string> { "oracle query", "truy van oracle", "sql", "select", "database query", "oracle" },
                     Action = () => OracleQuickQueryDialog.ShowWindow(AddInEvents.MainViewModel?.IsDarkTheme ?? false)
+                },
+                new PaletteCommandItem
+                {
+                    Id = "sql_script_generator",
+                    TitleKey = "btnSqlScriptGenerator",
+                    DescriptionKey = "btnSqlScriptGenerator_SuperTip",
+                    CategoryKey = "grpDatabaseTools",
+                    IconEmoji = "🗄️",
+                    ShortcutText = "Ctrl + Shift + K",
+                    Keywords = new List<string> { "sql", "range to sql", "insert", "merge", "upsert", "script", "database", "sinh sql", "xuat sql", "tao insert", "table", "cau lenh sql" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        SqlScriptGeneratorDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                    }
                 },
 
                 // ==================== 4. XỬ LÝ DỮ LIỆU (grpDataTools) ====================
@@ -822,6 +837,7 @@ namespace ExcelSupport.Services
                     DescriptionKey = "btnCustomizeRibbon_SuperTip",
                     CategoryKey = "grpSettings",
                     IconEmoji = "⚙️",
+                    ShortcutText = "Ctrl + Shift + I",
                     Keywords = new List<string> { "settings", "cai dat", "tuy chinh ribbon", "customize", "an hien nut", "giao dien" },
                     Action = () => RibbonCustomizeDialog.ShowWindow(0)
                 },
@@ -834,6 +850,16 @@ namespace ExcelSupport.Services
                     IconEmoji = "🤖",
                     Keywords = new List<string> { "ai settings", "api key", "cau hinh ai", "openai", "gemini", "claude", "deepseek" },
                     Action = () => RibbonCustomizeDialog.ShowWindow(1)
+                },
+                new PaletteCommandItem
+                {
+                    Id = "profile_settings",
+                    TitleKey = "Settings_TabProfile",
+                    DescriptionKey = "SpecProfile_HeaderSubtitle",
+                    CategoryKey = "grpSettings",
+                    IconEmoji = "📁",
+                    Keywords = new List<string> { "profile", "project", "du an", "connection", "oracle", "database", "ket noi", "cau hinh", "tai lieu", "spec" },
+                    Action = () => RibbonCustomizeDialog.ShowWindow(2)
                 },
                 new PaletteCommandItem
                 {

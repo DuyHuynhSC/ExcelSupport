@@ -57,35 +57,15 @@ namespace ExcelSupport.Views
             };
         }
 
-        public static void ShowWindow(bool isDarkTheme = false)
+        public static void ShowWindow(bool isDarkTheme = false, Window? owner = null)
         {
             try
             {
-                if (_currentInstance != null && _currentInstance.IsLoaded)
-                {
-                    _currentInstance.Activate();
-                    return;
-                }
-
-                _currentInstance = new ProjectProfileSettingsDialog(isDarkTheme);
-
-                try
-                {
-                    var addIn = AddInEvents.Instance;
-                    if (addIn?.ExcelAppInstance != null)
-                    {
-                        var helper = new WindowInteropHelper(_currentInstance);
-                        helper.Owner = new IntPtr(addIn.ExcelAppInstance.Hwnd);
-                    }
-                }
-                catch { }
-
-                System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
-                _currentInstance.ShowDialog();
+                RibbonCustomizeDialog.ShowWindow(2, owner);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ProjectProfileSettingsDialog] ShowWindow error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ProjectProfileSettingsDialog] ShowWindow redirect error: {ex.Message}");
             }
         }
 

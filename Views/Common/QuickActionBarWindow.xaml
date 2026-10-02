@@ -200,6 +200,16 @@
                     </StackPanel>
                 </Button>
 
+                <!-- 4.1. Generate SQL Script -->
+                <Button Style="{StaticResource FloatingActionBtnStyle}"
+                        ToolTip="{loc:Loc QuickActionBar_GenerateSql_Tip}"
+                        Click="OnGenerateSqlClick">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🗄️" FontSize="13" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="{loc:Loc QuickActionBar_GenerateSql}" FontSize="11.5" FontWeight="Medium" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
                 <!-- 5. Trim Spaces -->
                 <Button Style="{StaticResource FloatingActionBtnStyle}"
                         ToolTip="{loc:Loc QuickActionBar_TrimSpaces_Tip}"

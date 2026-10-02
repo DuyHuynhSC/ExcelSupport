@@ -213,6 +213,12 @@ namespace ExcelSupport.Views
             });
         }
 
+        private void OnGenerateSqlClick(object sender, RoutedEventArgs e)
+        {
+            QuickActionBarService.HideBar();
+            SqlScriptGeneratorDialog.ShowWindow(null, IsDarkTheme);
+        }
+
         private void OnTrimSpacesClick(object sender, RoutedEventArgs e)
         {
             _ = RunActionAsync(async () =>
