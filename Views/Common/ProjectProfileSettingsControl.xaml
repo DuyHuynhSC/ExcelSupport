@@ -6,12 +6,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:loc="clr-namespace:ExcelSupport.Helpers"
              mc:Ignorable="d"
-             FontFamily="Segoe UI" FontSize="12">
+             FontFamily="Segoe UI" FontSize="12"
+             TextOptions.TextFormattingMode="Display"
+             UseLayoutRounding="True">
 
     <UserControl.Resources>
         <!-- Form Input Style -->
         <Style x:Key="ProfInputStyle" TargetType="TextBox">
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Setter Property="Padding" Value="8,2"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
@@ -344,9 +348,9 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Content="{loc:Loc SpecProfile_BtnAdd}" Style="{StaticResource ProfSecondaryBtn}" Margin="0,0,2,0" Click="BtnAddProject_Click"/>
-                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BtnClone}" Style="{StaticResource ProfSecondaryBtn}" Margin="2,0,2,0" Click="BtnCloneProject_Click"/>
-                    <Button Grid.Column="2" Content="{loc:Loc SpecProfile_BtnDelete}" Style="{StaticResource ProfDangerBtn}" Margin="2,0,0,0" Click="BtnDeleteProject_Click"/>
+                    <Button Grid.Column="0" Content="{loc:Loc SpecProfile_BtnAdd}" Style="{StaticResource ProfSecondaryBtn}" Height="30" Margin="0,0,2,0" Click="BtnAddProject_Click"/>
+                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BtnClone}" Style="{StaticResource ProfSecondaryBtn}" Height="30" Margin="2,0,2,0" Click="BtnCloneProject_Click"/>
+                    <Button Grid.Column="2" Content="{loc:Loc SpecProfile_BtnDelete}" Style="{StaticResource ProfDangerBtn}" Height="30" Margin="2,0,0,0" Click="BtnDeleteProject_Click"/>
                 </Grid>
             </Grid>
         </Border>
@@ -415,7 +419,7 @@
                             <StackPanel>
                                 <!-- Project Name -->
                                 <TextBlock Text="{loc:Loc SpecProfile_ProjectName}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
-                                <TextBox x:Name="txtName" Style="{StaticResource ProfInputStyle}" Height="28" Margin="0,0,0,10" TextChanged="TxtName_TextChanged"/>
+                                <TextBox x:Name="txtName" Style="{StaticResource ProfInputStyle}" Height="32" Margin="0,0,0,10" TextChanged="TxtName_TextChanged"/>
 
                                 <!-- Root Folder -->
                                 <TextBlock Text="{loc:Loc SpecProfile_RootFolder}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
@@ -424,8 +428,8 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="txtRootFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="28" TextChanged="OnFolderFieldChanged"/>
-                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseRootFolderClick"/>
+                                    <TextBox x:Name="txtRootFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="32" TextChanged="OnFolderFieldChanged"/>
+                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Height="32" Margin="6,0,0,0" Click="OnBrowseRootFolderClick"/>
                                 </Grid>
 
                                 <!-- Detailed Design (TKCT) Group -->
@@ -458,8 +462,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="txtTkctViFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="26" TextChanged="OnFolderFieldChanged"/>
-                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkctViFolderClick"/>
+                                            <TextBox x:Name="txtTkctViFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="32" TextChanged="OnFolderFieldChanged"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Height="32" Margin="6,0,0,0" Click="OnBrowseTkctViFolderClick"/>
                                         </Grid>
 
                                         <!-- TKCT Ja -->
@@ -476,8 +480,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="txtTkctJaFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="26" TextChanged="OnFolderFieldChanged"/>
-                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkctJaFolderClick"/>
+                                            <TextBox x:Name="txtTkctJaFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="32" TextChanged="OnFolderFieldChanged"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Height="32" Margin="6,0,0,0" Click="OnBrowseTkctJaFolderClick"/>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -512,8 +516,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="txtTkcbViFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="26" TextChanged="OnFolderFieldChanged"/>
-                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkcbViFolderClick"/>
+                                            <TextBox x:Name="txtTkcbViFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="32" TextChanged="OnFolderFieldChanged"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Height="32" Margin="6,0,0,0" Click="OnBrowseTkcbViFolderClick"/>
                                         </Grid>
 
                                         <!-- TKCB Ja -->
@@ -530,8 +534,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="txtTkcbJaFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="26" TextChanged="OnFolderFieldChanged"/>
-                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTkcbJaFolderClick"/>
+                                            <TextBox x:Name="txtTkcbJaFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="32" TextChanged="OnFolderFieldChanged"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Height="32" Margin="6,0,0,0" Click="OnBrowseTkcbJaFolderClick"/>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -550,8 +554,8 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="txtTestSpecFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="26" TextChanged="OnFolderFieldChanged"/>
-                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Margin="6,0,0,0" Click="OnBrowseTestSpecFolderClick"/>
+                                    <TextBox x:Name="txtTestSpecFolder" Grid.Column="0" Style="{StaticResource ProfInputStyle}" Height="32" TextChanged="OnFolderFieldChanged"/>
+                                    <Button Grid.Column="1" Content="{loc:Loc SpecProfile_BrowseBtn}" Style="{StaticResource ProfSecondaryBtn}" Height="32" Margin="6,0,0,0" Click="OnBrowseTestSpecFolderClick"/>
                                 </Grid>
 
                                 <!-- Search Options -->
@@ -559,7 +563,7 @@
                                 <CheckBox x:Name="chkOpenReadOnly" Content="{loc:Loc SpecProfile_ReadOnlyDefault}" Margin="0,0,0,8"/>
 
                                 <TextBlock Text="{loc:Loc SpecProfile_Extensions}" FontWeight="SemiBold" FontSize="11.5" Margin="0,0,0,3"/>
-                                <TextBox x:Name="txtFileExtensions" Style="{StaticResource ProfInputStyle}" Height="26" Margin="0,0,0,8"/>
+                                <TextBox x:Name="txtFileExtensions" Style="{StaticResource ProfInputStyle}" Height="32" Margin="0,0,0,8"/>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
@@ -598,13 +602,13 @@
                                         <!-- Host -->
                                         <StackPanel Grid.Row="0" Grid.Column="0">
                                             <TextBlock Text="{loc:Loc Oracle_Host}" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                                            <TextBox x:Name="txtSettingHost" Style="{StaticResource ProfInputStyle}" Height="28"/>
+                                            <TextBox x:Name="txtSettingHost" Style="{StaticResource ProfInputStyle}" Height="32"/>
                                         </StackPanel>
 
                                         <!-- Port -->
                                         <StackPanel Grid.Row="0" Grid.Column="2">
                                             <TextBlock Text="{loc:Loc Oracle_Port}" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                                            <TextBox x:Name="txtSettingPort" Style="{StaticResource ProfInputStyle}" Height="28"/>
+                                            <TextBox x:Name="txtSettingPort" Style="{StaticResource ProfInputStyle}" Height="32"/>
                                         </StackPanel>
 
                                         <!-- Service Name / SID -->
@@ -613,7 +617,7 @@
                                                 <RadioButton x:Name="rbSettingService" Content="{loc:Loc Oracle_ServiceName}" IsChecked="True" GroupName="DbServiceType" Margin="0,0,10,0"/>
                                                 <RadioButton x:Name="rbSettingSid" Content="{loc:Loc Oracle_Sid}" GroupName="DbServiceType"/>
                                             </StackPanel>
-                                            <TextBox x:Name="txtSettingService" Style="{StaticResource ProfInputStyle}" Height="28"/>
+                                            <TextBox x:Name="txtSettingService" Style="{StaticResource ProfInputStyle}" Height="32"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -644,7 +648,7 @@
 
                                         <DataGrid x:Name="dgSettingUsers" AutoGenerateColumns="False" CanUserAddRows="False"
                                                   HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                                                  MaxHeight="160" BorderThickness="1" BorderBrush="#CBD5E1"
+                                                  MaxHeight="180" RowHeight="34" BorderThickness="1" BorderBrush="#CBD5E1"
                                                   Background="Transparent" RowHeaderWidth="0">
                                             <DataGrid.Columns>
                                                 <!-- Default Selector -->
@@ -654,9 +658,9 @@
                                                     </DataGridTemplateColumn.Header>
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
-                                                            <RadioButton GroupName="SettingUsersDefaultGroup" IsChecked="{Binding IsDefault, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                         Click="RbUserDefault_Click"/>
+                                                             <RadioButton GroupName="SettingUsersDefaultGroup" IsChecked="{Binding IsDefault, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                          Click="RbUserDefault_Click"/>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
@@ -666,7 +670,7 @@
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <TextBox Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                     Style="{StaticResource ProfInputStyle}" Height="24" Padding="4,1" Margin="2,1"/>
+                                                                     Style="{StaticResource ProfInputStyle}" Height="28" Padding="6,2" Margin="2,1"/>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
@@ -676,7 +680,7 @@
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <TextBox Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                     Style="{StaticResource ProfInputStyle}" Height="24" Padding="4,1" Margin="2,1"/>
+                                                                     Style="{StaticResource ProfInputStyle}" Height="28" Padding="6,2" Margin="2,1"/>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
@@ -686,7 +690,7 @@
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <TextBox Text="{Binding RoleOrDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                                     Style="{StaticResource ProfInputStyle}" Height="24" Padding="4,1" Margin="2,1"/>
+                                                                     Style="{StaticResource ProfInputStyle}" Height="28" Padding="6,2" Margin="2,1"/>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
@@ -696,7 +700,7 @@
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <Button Content="🗑️" Style="{StaticResource ProfSecondaryBtn}" 
-                                                                    Padding="0" Width="24" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                    Padding="0" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                     Click="BtnRowDeleteUser_Click"/>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
