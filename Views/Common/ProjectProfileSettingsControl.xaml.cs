@@ -17,6 +17,7 @@ using WpfMessageBoxButton = System.Windows.MessageBoxButton;
 using WpfMessageBoxImage = System.Windows.MessageBoxImage;
 using WpfMessageBoxResult = System.Windows.MessageBoxResult;
 using MediaColor = System.Windows.Media.Color;
+using MediaBrush = System.Windows.Media.Brush;
 using WpfRadioButton = System.Windows.Controls.RadioButton;
 using WpfButton = System.Windows.Controls.Button;
 using WpfUserControl = System.Windows.Controls.UserControl;
@@ -30,13 +31,38 @@ namespace ExcelSupport.Views
                 nameof(IsDarkTheme),
                 typeof(bool),
                 typeof(ProjectProfileSettingsControl),
-                new PropertyMetadata(false));
+                new PropertyMetadata(false, OnIsDarkThemeChanged));
+
+        private static void OnIsDarkThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ProjectProfileSettingsControl ctrl && ctrl._selectedProfile != null)
+            {
+                ctrl.UpdateActiveStatusBanner(ctrl._selectedProfile);
+                ctrl.UpdateFolderStatusLabels();
+            }
+        }
 
         public bool IsDarkTheme
         {
             get => (bool)GetValue(IsDarkThemeProperty);
             set => SetValue(IsDarkThemeProperty, value);
         }
+
+        private MediaBrush SuccessBrush => IsDarkTheme
+            ? new SolidColorBrush(MediaColor.FromRgb(74, 222, 128)) // #4ADE80
+            : new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));  // #16A34A
+
+        private MediaBrush ErrorBrush => IsDarkTheme
+            ? new SolidColorBrush(MediaColor.FromRgb(248, 113, 113)) // #F87171
+            : new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));  // #DC2626
+
+        private MediaBrush MutedBrush => IsDarkTheme
+            ? new SolidColorBrush(MediaColor.FromRgb(148, 163, 184)) // #94A3B8
+            : new SolidColorBrush(MediaColor.FromRgb(100, 116, 139)); // #64748B
+
+        private MediaBrush InfoBrush => IsDarkTheme
+            ? new SolidColorBrush(MediaColor.FromRgb(96, 165, 250))  // #60A5FA
+            : new SolidColorBrush(MediaColor.FromRgb(37, 99, 235));  // #2563EB
 
         private readonly ObservableCollection<ProjectProfile> _profiles = new ObservableCollection<ProjectProfile>();
         private readonly ObservableCollection<OracleUserCredential> _settingUsers = new ObservableCollection<OracleUserCredential>();
@@ -211,7 +237,7 @@ namespace ExcelSupport.Views
             if (isActive)
             {
                 lblActiveStatus.Text = LocalizationService.Get("SpecProfile_StatusActive", "Đang kích hoạt (Active)");
-                lblActiveStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+                lblActiveStatus.Foreground = SuccessBrush;
                 iconActiveStatus.Text = "🟢";
                 btnSetActive.IsEnabled = false;
                 btnSetActive.Content = LocalizationService.Get("SpecProfile_BtnIsActive", "✓ Đang Kích Hoạt");
@@ -219,7 +245,7 @@ namespace ExcelSupport.Views
             else
             {
                 lblActiveStatus.Text = LocalizationService.Get("SpecProfile_StatusInactive", "Không kích hoạt");
-                lblActiveStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(100, 116, 139));
+                lblActiveStatus.Foreground = MutedBrush;
                 iconActiveStatus.Text = "⚪";
                 btnSetActive.IsEnabled = true;
                 btnSetActive.Content = LocalizationService.Get("SpecProfile_BtnSetActive", "⭐ Đặt Làm Dự Án Đang Kích Hoạt");
@@ -243,7 +269,7 @@ namespace ExcelSupport.Views
             if (string.IsNullOrWhiteSpace(folderPath))
             {
                 lbl.Text = LocalizationService.Get("SpecProfile_StatusNotConfigured", "— Chưa cấu hình");
-                lbl.Foreground = new SolidColorBrush(MediaColor.FromRgb(148, 163, 184));
+                lbl.Foreground = MutedBrush;
                 return;
             }
 
@@ -251,12 +277,12 @@ namespace ExcelSupport.Views
             if (Directory.Exists(fullPath))
             {
                 lbl.Text = LocalizationService.Get("SpecProfile_StatusValid", "✓ Hợp lệ");
-                lbl.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+                lbl.Foreground = SuccessBrush;
             }
             else
             {
                 lbl.Text = LocalizationService.Get("SpecProfile_StatusNotFound", "⚠ Không tìm thấy");
-                lbl.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
+                lbl.Foreground = ErrorBrush;
             }
         }
 
@@ -373,7 +399,7 @@ namespace ExcelSupport.Views
             ProjectProfileManager.SetActiveProfile(_activeProfileId);
 
             txtStatusNote.Text = string.Format(LocalizationService.Get("SpecProfile_MsgActiveChanged", "✓ Đã kích hoạt dự án '{0}' thành công!"), _selectedProfile.Name);
-            txtStatusNote.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+            txtStatusNote.Foreground = SuccessBrush;
         }
 
         private void BtnSaveProject_Click(object sender, RoutedEventArgs e)
@@ -389,13 +415,13 @@ namespace ExcelSupport.Views
                 ProjectProfileManager.SaveAllProfiles(_profiles.ToList(), _activeProfileId);
 
                 txtStatusNote.Text = LocalizationService.Get("SpecProfile_SaveSuccess", "✓ Đã lưu thành công cấu hình Profile dự án!");
-                txtStatusNote.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+                txtStatusNote.Foreground = SuccessBrush;
                 lstProfiles.Items.Refresh();
             }
             catch (Exception ex)
             {
                 txtStatusNote.Text = ex.Message;
-                txtStatusNote.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
+                txtStatusNote.Foreground = ErrorBrush;
             }
         }
 
@@ -585,7 +611,7 @@ namespace ExcelSupport.Views
 
             btnSettingTest.IsEnabled = false;
             txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgConnecting", "Đang thử kết nối...");
-            txtSettingDbStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(37, 99, 235));
+            txtSettingDbStatus.Foreground = InfoBrush;
 
             var (success, msg, version) = await OracleDataCompareService.TestConnectionAsync(config);
 
@@ -593,13 +619,13 @@ namespace ExcelSupport.Views
             if (success)
             {
                 txtSettingDbStatus.Text = $"✓ Kết nối thành công! {version}";
-                txtSettingDbStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+                txtSettingDbStatus.Foreground = SuccessBrush;
                 WpfMessageBox.Show(Window.GetWindow(this), string.Format(LocalizationService.Get("Oracle_MsgConnectedUser", "Kết nối Oracle thành công với tài khoản '{0}'!"), user.Username) + $"\n{version}", LocalizationService.Get("Common_Success", "Thành Công"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
             }
             else
             {
                 txtSettingDbStatus.Text = LocalizationService.Get("Oracle_MsgConnectFailed", "✗ Kết nối thất bại!");
-                txtSettingDbStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
+                txtSettingDbStatus.Foreground = ErrorBrush;
                 WpfMessageBox.Show(Window.GetWindow(this), msg, LocalizationService.Get("Oracle_TitleConnectError", "Lỗi Kết Nối Oracle"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
             }
         }
@@ -635,7 +661,7 @@ namespace ExcelSupport.Views
             btnSettingTestAll.IsEnabled = false;
             btnSettingTest.IsEnabled = false;
             txtSettingDbStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestingAllConn", "Đang kiểm tra song song {0} kết nối..."), usersToTest.Count);
-            txtSettingDbStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(37, 99, 235));
+            txtSettingDbStatus.Foreground = InfoBrush;
 
             var serviceType = rbSettingSid.IsChecked == true ? OracleServiceNameType.SID : OracleServiceNameType.ServiceName;
 
@@ -666,7 +692,7 @@ namespace ExcelSupport.Views
                 if (failed.Count == 0)
                 {
                     txtSettingDbStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestAllSuccess", "✓ Toàn bộ {0} kết nối đều thành công!"), testResults.Length);
-                    txtSettingDbStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(22, 163, 74));
+                    txtSettingDbStatus.Foreground = SuccessBrush;
 
                     sb.AppendLine(string.Format(LocalizationService.Get("Oracle_MsgAllConnSuccessHeader", "Đã kiểm tra thành công toàn bộ {0} kết nối:"), testResults.Length));
                     sb.AppendLine($"Host: {host}:{port} ({service})");
@@ -682,7 +708,7 @@ namespace ExcelSupport.Views
                 else
                 {
                     txtSettingDbStatus.Text = string.Format(LocalizationService.Get("Oracle_MsgTestAllFailed", "✗ Có {0}/{1} kết nối bị lỗi!"), failed.Count, testResults.Length);
-                    txtSettingDbStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(220, 38, 38));
+                    txtSettingDbStatus.Foreground = ErrorBrush;
 
                     sb.AppendLine(string.Format(LocalizationService.Get("Oracle_MsgTestAllFailedHeader", "Phát hiện {0}/{1} kết nối gặp lỗi:"), failed.Count, testResults.Length));
                     sb.AppendLine($"Host: {host}:{port} ({service})");

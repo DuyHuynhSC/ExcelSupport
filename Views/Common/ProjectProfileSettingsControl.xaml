@@ -10,7 +10,49 @@
              TextOptions.TextFormattingMode="Display"
              UseLayoutRounding="True">
 
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+
     <UserControl.Resources>
+        <!-- Global Text Elements Default Styles -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                    <Setter Property="Foreground" Value="#F1F5F9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Form Input Style -->
         <Style x:Key="ProfInputStyle" TargetType="TextBox">
             <Setter Property="Height" Value="32"/>
@@ -125,6 +167,23 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
                             </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#CBD5E1"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="bd" Property="Background" Value="#475569"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                    <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="bd" Property="Background" Value="#334155"/>
+                            </MultiDataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -173,7 +232,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
                         <Border x:Name="tabBorder" Background="Transparent" BorderBrush="Transparent" BorderThickness="0,0,0,2.5" Padding="12,7" Margin="0,0,8,0" Cursor="Hand">
-                            <ContentPresenter x:Name="tabContent" ContentSource="Header" TextBlock.FontWeight="SemiBold" TextBlock.FontSize="12" TextBlock.Foreground="#64748B"/>
+                            <ContentPresenter x:Name="tabContent" ContentSource="Header" TextBlock.FontWeight="SemiBold" TextBlock.FontSize="12"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -185,6 +244,33 @@
                                 <Setter TargetName="tabContent" Property="TextBlock.FontWeight" Value="Bold"/>
                                 <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#2563EB"/>
                             </Trigger>
+                            <!-- Dark Theme Triggers -->
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#94A3B8"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="tabBorder" Property="Background" Value="#334155"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#F8FAFC"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.FontWeight" Value="Bold"/>
+                                <Setter TargetName="tabContent" Property="TextBlock.Foreground" Value="#38BDF8"/>
+                            </MultiDataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -241,7 +327,6 @@
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Padding" Value="8,6"/>
                             <Setter Property="Margin" Value="0,0,0,4"/>
-                            <Setter Property="Foreground" Value="#0F172A"/>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListBoxItem">
@@ -249,32 +334,50 @@
                                             <ContentPresenter/>
                                         </Border>
                                         <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
+                                            <!-- Light theme hover (unselected) -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="False"/>
+                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
                                                 <Setter TargetName="itemBorder" Property="Background" Value="#F1F5F9"/>
-                                            </Trigger>
-                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#CBD5E1"/>
+                                            </MultiDataTrigger>
+                                            <!-- Light theme selected -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="False"/>
+                                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
                                                 <Setter TargetName="itemBorder" Property="Background" Value="#EFF6FF"/>
-                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#BFDBFE"/>
-                                            </Trigger>
+                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                                <Setter TargetName="itemBorder" Property="BorderThickness" Value="1.5"/>
+                                            </MultiDataTrigger>
+                                            <!-- Dark theme hover (unselected) -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter TargetName="itemBorder" Property="Background" Value="#334155"/>
+                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#475569"/>
+                                            </MultiDataTrigger>
+                                            <!-- Dark theme selected -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter TargetName="itemBorder" Property="Background" Value="#1E3A8A"/>
+                                                <Setter TargetName="itemBorder" Property="BorderBrush" Value="#60A5FA"/>
+                                                <Setter TargetName="itemBorder" Property="BorderThickness" Value="1.5"/>
+                                            </MultiDataTrigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Foreground" Value="#1E40AF"/>
-                                </Trigger>
-                                <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
-                                    <Setter Property="Foreground" Value="#F8FAFC"/>
-                                </DataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
-                                        <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter Property="Foreground" Value="#60A5FA"/>
-                                </MultiDataTrigger>
-                            </Style.Triggers>
                         </Style>
                     </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
@@ -290,9 +393,13 @@
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="#0F172A"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                                        <Setter Property="Foreground" Value="#1E40AF"/>
-                                                    </DataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="False"/>
+                                                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                    </MultiDataTrigger>
                                                     <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
                                                         <Setter Property="Foreground" Value="#F8FAFC"/>
                                                     </DataTrigger>
@@ -301,7 +408,8 @@
                                                             <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
                                                             <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"/>
                                                         </MultiDataTrigger.Conditions>
-                                                        <Setter Property="Foreground" Value="#93C5FD"/>
+                                                        <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                        <Setter Property="FontWeight" Value="Bold"/>
                                                     </MultiDataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -312,9 +420,23 @@
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="#64748B"/>
                                                 <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="False"/>
+                                                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Foreground" Value="#2563EB"/>
+                                                    </MultiDataTrigger>
                                                     <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
                                                         <Setter Property="Foreground" Value="#94A3B8"/>
                                                     </DataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Foreground" Value="#BFDBFE"/>
+                                                    </MultiDataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
@@ -322,19 +444,40 @@
                                 </StackPanel>
 
                                 <!-- Active Badge -->
-                                <Border Grid.Column="1" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" 
+                                <Border Grid.Column="1" BorderThickness="1" 
                                         CornerRadius="4" Padding="5,2" VerticalAlignment="Center" Margin="4,0,0,0">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Setter Property="Background" Value="#DCFCE7"/>
+                                            <Setter Property="BorderBrush" Value="#86EFAC"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True"/>
+                                                        <Condition Binding="{Binding IsActive}" Value="True"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="#064E3B"/>
+                                                    <Setter Property="BorderBrush" Value="#059669"/>
+                                                </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock Text="ACTIVE" FontWeight="Bold" FontSize="9" Foreground="#15803D"/>
+                                    <TextBlock Text="ACTIVE" FontWeight="Bold" FontSize="9">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#15803D"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                                        <Setter Property="Foreground" Value="#34D399"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </Border>
                             </Grid>
                         </DataTemplate>
@@ -399,8 +542,19 @@
 
                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
                             <TextBlock x:Name="iconActiveStatus" Text="⚪" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{loc:Loc SpecProfile_StatusLabel}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="lblActiveStatus" Text="{loc:Loc SpecProfile_StatusActive}" FontWeight="Bold" FontSize="12" Foreground="#15803D" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Loc SpecProfile_StatusLabel}" FontSize="12" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#64748B"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                                <Setter Property="Foreground" Value="#94A3B8"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock x:Name="lblActiveStatus" Text="{loc:Loc SpecProfile_StatusActive}" FontWeight="Bold" FontSize="12" Foreground="#15803D" VerticalAlignment="Center" Margin="4,0,0,0"/>
                         </StackPanel>
 
                         <Button x:Name="btnSetActive" Grid.Column="1" 
@@ -447,7 +601,18 @@
                                         </Style>
                                     </Border.Style>
                                     <StackPanel>
-                                        <TextBlock Text="{loc:Loc SpecProfile_TkctGroup}" FontWeight="Bold" FontSize="12" Foreground="#2563EB" Margin="0,0,0,6"/>
+                                        <TextBlock Text="{loc:Loc SpecProfile_TkctGroup}" FontWeight="Bold" FontSize="12" Margin="0,0,0,6">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#2563EB"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                                            <Setter Property="Foreground" Value="#60A5FA"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                         <!-- TKCT Vi -->
                                         <Grid Margin="0,0,0,2">
                                             <Grid.ColumnDefinitions>
@@ -501,7 +666,18 @@
                                         </Style>
                                     </Border.Style>
                                     <StackPanel>
-                                        <TextBlock Text="{loc:Loc SpecProfile_TkcbGroup}" FontWeight="Bold" FontSize="12" Foreground="#2563EB" Margin="0,0,0,6"/>
+                                        <TextBlock Text="{loc:Loc SpecProfile_TkcbGroup}" FontWeight="Bold" FontSize="12" Margin="0,0,0,6">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#2563EB"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                                            <Setter Property="Foreground" Value="#60A5FA"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                         <!-- TKCB Vi -->
                                         <Grid Margin="0,0,0,2">
                                             <Grid.ColumnDefinitions>
@@ -648,8 +824,50 @@
 
                                         <DataGrid x:Name="dgSettingUsers" AutoGenerateColumns="False" CanUserAddRows="False"
                                                   HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                                                  MaxHeight="180" RowHeight="34" BorderThickness="1" BorderBrush="#CBD5E1"
-                                                  Background="Transparent" RowHeaderWidth="0">
+                                                  MaxHeight="180" RowHeight="34" BorderThickness="1"
+                                                  SelectionMode="Single" RowHeaderWidth="0">
+                                            <DataGrid.Style>
+                                                <Style TargetType="DataGrid">
+                                                    <Setter Property="Background" Value="#FFFFFF"/>
+                                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                                    <Setter Property="HorizontalGridLinesBrush" Value="#E2E8F0"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                                            <Setter Property="Background" Value="#1E293B"/>
+                                                            <Setter Property="BorderBrush" Value="#475569"/>
+                                                            <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.Style>
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                                            <Setter Property="Background" Value="#1E293B"/>
+                                                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
+                                            <DataGrid.ColumnHeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="Background" Value="#F1F5F9"/>
+                                                    <Setter Property="Foreground" Value="#475569"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="Padding" Value="6,4"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                                    <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                                            <Setter Property="Background" Value="#0F172A"/>
+                                                            <Setter Property="Foreground" Value="#CBD5E1"/>
+                                                            <Setter Property="BorderBrush" Value="#334155"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.ColumnHeaderStyle>
                                             <DataGrid.Columns>
                                                 <!-- Default Selector -->
                                                 <DataGridTemplateColumn Width="46">
@@ -714,7 +932,7 @@
                                 <WrapPanel Orientation="Horizontal" Margin="0,0,0,4">
                                     <Button x:Name="btnSettingTest" Content="{loc:Loc Oracle_BtnTestConn}" Style="{StaticResource ProfSecondaryBtn}" Padding="12,5" Margin="0,0,8,4" Click="BtnSettingTest_Click"/>
                                     <Button x:Name="btnSettingTestAll" Content="{loc:Loc Oracle_BtnTestAllConn}" Style="{StaticResource ProfSecondaryBtn}" Padding="12,5" Margin="0,0,8,4" Click="BtnSettingTestAll_Click"/>
-                                    <TextBlock x:Name="txtSettingDbStatus" VerticalAlignment="Center" Margin="4,0,0,4" FontSize="11" Foreground="#16A34A"/>
+                                    <TextBlock x:Name="txtSettingDbStatus" VerticalAlignment="Center" Margin="4,0,0,4" FontSize="11"/>
                                 </WrapPanel>
                             </StackPanel>
                         </ScrollViewer>
@@ -729,7 +947,18 @@
                     </Grid.ColumnDefinitions>
 
                     <Button Grid.Column="0" x:Name="btnSaveProject" Content="{loc:Loc SpecProfile_BtnSave}" Style="{StaticResource ProfSuccessBtn}" Click="BtnSaveProject_Click"/>
-                    <TextBlock Grid.Column="1" x:Name="txtStatusNote" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11.5" Foreground="#16A34A" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Column="1" x:Name="txtStatusNote" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="11.5" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#16A34A"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, ElementName=RootProfileSettingsControl}" Value="True">
+                                        <Setter Property="Foreground" Value="#4ADE80"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </Grid>
             </Grid>
         </Border>
