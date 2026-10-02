@@ -45,9 +45,9 @@ namespace ExcelSupport.Views
                 {
                     vm.IsDarkTheme = isDark;
                 }
-                if (dlg.connectionSettingsControl != null)
+                if (dlg.profileSettingsControl != null)
                 {
-                    dlg.connectionSettingsControl.IsDarkTheme = isDark;
+                    dlg.profileSettingsControl.IsDarkTheme = isDark;
                 }
             }
         }
@@ -64,7 +64,7 @@ namespace ExcelSupport.Views
             var aiVm = AddInEvents.MainViewModel?.AiSettings ?? new AiSettingsViewModel();
             aiVm.ReloadProfiles();
             aiSettingsControl.DataContext = aiVm;
-            connectionSettingsControl.ReloadProfiles();
+            profileSettingsControl.ReloadProfiles();
             InitThemeSelection();
             BuildGroupSections();
 
@@ -108,9 +108,9 @@ namespace ExcelSupport.Views
                     vm.IsDarkTheme = isDark;
                 }
 
-                if (connectionSettingsControl != null)
+                if (profileSettingsControl != null)
                 {
-                    connectionSettingsControl.IsDarkTheme = isDark;
+                    profileSettingsControl.IsDarkTheme = isDark;
                 }
             }
             catch { }

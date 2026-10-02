@@ -60,12 +60,21 @@ namespace ExcelSupport.Services
                 if (config.Profiles.Any(p => p.Id == profileId))
                 {
                     config.ActiveProfileId = profileId;
+                    foreach (var p in config.Profiles)
+                    {
+                        p.IsActive = (p.Id == profileId);
+                        if (p.DatabaseConnection != null)
+                        {
+                            p.DatabaseConnection.IsDefault = (p.Id == profileId);
+                        }
+                    }
                     SaveConfig(config);
                 }
             }
 
             ActiveProfileChanged?.Invoke();
             ProfilesUpdated?.Invoke();
+            OracleConnectionManager.RaiseProfilesChanged();
         }
 
         public static void SaveAllProfiles(List<ProjectProfile> profiles, string? activeProfileId)
@@ -77,11 +86,24 @@ namespace ExcelSupport.Services
                 config.ActiveProfileId = !string.IsNullOrWhiteSpace(activeProfileId)
                     ? activeProfileId
                     : config.Profiles.FirstOrDefault()?.Id;
+
+                foreach (var p in config.Profiles)
+                {
+                    p.IsActive = (p.Id == config.ActiveProfileId);
+                    if (p.DatabaseConnection != null)
+                    {
+                        p.DatabaseConnection.Id = p.Id;
+                        p.DatabaseConnection.Name = p.Name;
+                        p.DatabaseConnection.IsDefault = (p.Id == config.ActiveProfileId);
+                    }
+                }
+
                 SaveConfig(config);
             }
 
             ActiveProfileChanged?.Invoke();
             ProfilesUpdated?.Invoke();
+            OracleConnectionManager.RaiseProfilesChanged();
         }
 
         public static void SaveProfile(ProjectProfile profile)
@@ -108,10 +130,22 @@ namespace ExcelSupport.Services
                     config.ActiveProfileId = profile.Id;
                 }
 
+                foreach (var p in config.Profiles)
+                {
+                    p.IsActive = (p.Id == config.ActiveProfileId);
+                    if (p.DatabaseConnection != null)
+                    {
+                        p.DatabaseConnection.Id = p.Id;
+                        p.DatabaseConnection.Name = p.Name;
+                        p.DatabaseConnection.IsDefault = (p.Id == config.ActiveProfileId);
+                    }
+                }
+
                 SaveConfig(config);
             }
 
             ProfilesUpdated?.Invoke();
+            OracleConnectionManager.RaiseProfilesChanged();
         }
 
         public static bool DeleteProfile(string profileId)
@@ -172,6 +206,39 @@ namespace ExcelSupport.Services
                     var config = JsonConvert.DeserializeObject<ProjectProfilesConfig>(json);
                     if (config != null && config.Profiles != null && config.Profiles.Count > 0)
                     {
+                        // Ensure database connection is initialized for all profiles
+                        int pIdx = 1;
+                        foreach (var p in config.Profiles)
+                        {
+                            if (string.IsNullOrWhiteSpace(p.Name))
+                            {
+                                p.Name = $"Dự Án {pIdx}";
+                            }
+                            pIdx++;
+
+                            if (p.DatabaseConnection == null)
+                            {
+                                p.DatabaseConnection = new OracleConnectionProfile
+                                {
+                                    Id = p.Id,
+                                    Name = p.Name,
+                                    Host = "localhost",
+                                    Port = 1521,
+                                    ServiceNameOrSid = "ORCL",
+                                    ServiceType = OracleServiceNameType.ServiceName
+                                };
+                            }
+                            else
+                            {
+                                p.DatabaseConnection.Id = p.Id;
+                                p.DatabaseConnection.Name = p.Name;
+                            }
+                            p.DatabaseConnection.EnsureDefaultUsers();
+                            p.IsActive = (p.Id == config.ActiveProfileId);
+                            p.DatabaseConnection.IsDefault = (p.Id == config.ActiveProfileId);
+                        }
+
+                        TryMigrateLegacyOracleConnections(config);
                         return config;
                     }
                 }
@@ -199,9 +266,48 @@ namespace ExcelSupport.Services
                 }
             };
             defaultConfig.ActiveProfileId = defaultConfig.Profiles[0].Id;
+            defaultConfig.Profiles[0].IsActive = true;
+            defaultConfig.Profiles[0].DatabaseConnection.Id = defaultConfig.Profiles[0].Id;
+            defaultConfig.Profiles[0].DatabaseConnection.Name = defaultConfig.Profiles[0].Name;
+            defaultConfig.Profiles[0].DatabaseConnection.IsDefault = true;
+
+            TryMigrateLegacyOracleConnections(defaultConfig);
 
             SaveConfig(defaultConfig);
             return defaultConfig;
+        }
+
+        private static void TryMigrateLegacyOracleConnections(ProjectProfilesConfig config)
+        {
+            try
+            {
+                string oracleJsonPath = Path.Combine(ConfigDirectory, "oracle_connections.json");
+                if (File.Exists(oracleJsonPath) && config.Profiles.Count > 0)
+                {
+                    string json = File.ReadAllText(oracleJsonPath);
+                    var legacyList = JsonConvert.DeserializeObject<List<OracleConnectionProfile>>(json);
+                    if (legacyList != null && legacyList.Count > 0)
+                    {
+                        var firstProj = config.Profiles[0];
+                        // If first project's DB is untouched/default, import legacy settings
+                        if (firstProj.DatabaseConnection.Users.Count <= 1 &&
+                            (firstProj.DatabaseConnection.Users.Count == 0 || firstProj.DatabaseConnection.Users[0].Username == "XXX_USR1" || firstProj.DatabaseConnection.Users[0].Username == ""))
+                        {
+                            var legacy = legacyList[0];
+                            firstProj.DatabaseConnection.Host = legacy.Host;
+                            firstProj.DatabaseConnection.Port = legacy.Port;
+                            firstProj.DatabaseConnection.ServiceNameOrSid = legacy.ServiceNameOrSid;
+                            firstProj.DatabaseConnection.ServiceType = legacy.ServiceType;
+                            firstProj.DatabaseConnection.Users = legacy.Users;
+                            firstProj.DatabaseConnection.SelectedUserId = legacy.SelectedUserId;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProjectProfileManager] Migration error: {ex.Message}");
+            }
         }
 
         private static void SaveConfig(ProjectProfilesConfig config)

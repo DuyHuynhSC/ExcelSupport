@@ -28,25 +28,46 @@ namespace ExcelSupport.Models
     /// <summary>
     /// Cấu hình Profile cho một dự án phần mềm
     /// </summary>
-    public class ProjectProfile
+    public class ProjectProfile : ObservableModel
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        private string _id = Guid.NewGuid().ToString();
+        private string _name = string.Empty;
+        private string _rootFolder = string.Empty;
+        private bool _isActive = false;
+
+        public string Id
+        {
+            get => _id;
+            set { _id = value; OnPropertyChanged(nameof(Id)); }
+        }
 
         /// <summary>
         /// Tên dự án (Ví dụ: Dự Án ERP Khách Hàng Sakura)
         /// </summary>
-        public string Name { get; set; } = string.Empty;
+        public string Name
+        {
+            get => _name;
+            set { _name = value; OnPropertyChanged(nameof(Name)); }
+        }
 
         /// <summary>
         /// Thư mục gốc của dự án (Root directory)
         /// </summary>
-        public string RootFolder { get; set; } = string.Empty;
+        public string RootFolder
+        {
+            get => _rootFolder;
+            set { _rootFolder = value; OnPropertyChanged(nameof(RootFolder)); }
+        }
 
         /// <summary>
         /// Trạng thái đang kích hoạt (chỉ dùng cho hiển thị UI)
         /// </summary>
         [Newtonsoft.Json.JsonIgnore]
-        public bool IsActive { get; set; }
+        public bool IsActive
+        {
+            get => _isActive;
+            set { _isActive = value; OnPropertyChanged(nameof(IsActive)); }
+        }
 
         /// <summary>
         /// Thư mục chứa tài liệu Thiết Kế Chi Tiết (TKCT) - Tiếng Việt.
@@ -161,9 +182,43 @@ namespace ExcelSupport.Models
             return folder;
         }
 
+        private OracleConnectionProfile? _databaseConnection;
+
+        /// <summary>
+        /// Cấu hình kết nối Cơ sở dữ liệu Oracle cho dự án
+        /// </summary>
+        public OracleConnectionProfile DatabaseConnection
+        {
+            get
+            {
+                if (_databaseConnection == null)
+                {
+                    _databaseConnection = new OracleConnectionProfile
+                    {
+                        Id = this.Id,
+                        Name = string.IsNullOrWhiteSpace(this.Name) ? "Default Oracle DB" : $"{this.Name} DB",
+                        Host = "localhost",
+                        Port = 1521,
+                        ServiceNameOrSid = "ORCL",
+                        ServiceType = OracleServiceNameType.ServiceName
+                    };
+                    _databaseConnection.EnsureDefaultUsers();
+                }
+                return _databaseConnection;
+            }
+            set
+            {
+                _databaseConnection = value;
+                if (_databaseConnection != null)
+                {
+                    _databaseConnection.EnsureDefaultUsers();
+                }
+            }
+        }
+
         public ProjectProfile Clone()
         {
-            return new ProjectProfile
+            var cloned = new ProjectProfile
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = $"{Name} (Bản sao)",
@@ -178,6 +233,15 @@ namespace ExcelSupport.Models
                 FileExtensions = FileExtensions,
                 LastModified = DateTime.Now
             };
+
+            if (_databaseConnection != null)
+            {
+                cloned.DatabaseConnection = _databaseConnection.Clone();
+                cloned.DatabaseConnection.Id = cloned.Id;
+                cloned.DatabaseConnection.Name = $"{cloned.Name} DB";
+            }
+
+            return cloned;
         }
     }
 

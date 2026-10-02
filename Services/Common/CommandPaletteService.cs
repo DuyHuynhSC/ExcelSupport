@@ -837,6 +837,7 @@ namespace ExcelSupport.Services
                     DescriptionKey = "btnCustomizeRibbon_SuperTip",
                     CategoryKey = "grpSettings",
                     IconEmoji = "⚙️",
+                    ShortcutText = "Ctrl + Shift + I",
                     Keywords = new List<string> { "settings", "cai dat", "tuy chinh ribbon", "customize", "an hien nut", "giao dien" },
                     Action = () => RibbonCustomizeDialog.ShowWindow(0)
                 },
@@ -852,12 +853,12 @@ namespace ExcelSupport.Services
                 },
                 new PaletteCommandItem
                 {
-                    Id = "connection_settings",
-                    TitleKey = "Settings_TabConnection",
-                    DescriptionKey = "Oracle_ProfilesListHeader",
+                    Id = "profile_settings",
+                    TitleKey = "Settings_TabProfile",
+                    DescriptionKey = "SpecProfile_HeaderSubtitle",
                     CategoryKey = "grpSettings",
-                    IconEmoji = "🔌",
-                    Keywords = new List<string> { "connection", "oracle", "database", "ket noi", "cau hinh ket noi", "profile", "connection settings" },
+                    IconEmoji = "📁",
+                    Keywords = new List<string> { "profile", "project", "du an", "connection", "oracle", "database", "ket noi", "cau hinh", "tai lieu", "spec" },
                     Action = () => RibbonCustomizeDialog.ShowWindow(2)
                 },
                 new PaletteCommandItem

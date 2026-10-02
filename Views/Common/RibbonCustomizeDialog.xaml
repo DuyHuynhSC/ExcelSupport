@@ -425,10 +425,11 @@
                 </Grid>
             </TabItem>
 
-            <!-- ========== TAB 3: QUẢN LÝ KẾT NỐI (CONNECTION SETTINGS) ========== -->
-            <TabItem Header="{loc:Loc Settings_TabConnection}" Style="{StaticResource ModernTabItemStyle}">
+            <!-- ========== TAB 3: CẤU HÌNH DỰ ÁN & CSDL (PROFILE SETTINGS) ========== -->
+            <TabItem Header="{loc:Loc Settings_TabProfile}" Style="{StaticResource ModernTabItemStyle}">
                 <Grid Margin="6,4">
-                    <views:OracleConnectionSettingsControl x:Name="connectionSettingsControl"/>
+                    <views:ProjectProfileSettingsControl x:Name="profileSettingsControl"
+                                                         IsDarkTheme="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}"/>
                 </Grid>
             </TabItem>
         </TabControl>

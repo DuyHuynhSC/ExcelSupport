@@ -214,4 +214,20 @@ namespace ExcelSupport
             }
         }
     }
+
+    public static class SettingsCommands
+    {
+        [ExcelCommand(ShortCut = "^+I", Name = "OpenSettingsCommand")]
+        public static void OpenSettings()
+        {
+            ExcelAsyncUtil.QueueAsMacro(() =>
+            {
+                try
+                {
+                    RibbonCustomizeDialog.ShowWindow(0, null);
+                }
+                catch { }
+            });
+        }
+    }
 }
