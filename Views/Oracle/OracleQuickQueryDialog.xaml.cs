@@ -40,10 +40,19 @@ namespace ExcelSupport.Views
 
         private static OracleQuickQueryDialog? _currentInstance;
 
-        public OracleQuickQueryDialog(bool isDarkTheme = false)
+        public OracleQuickQueryDialog(bool isDarkTheme = false, string? initialSql = null, string? initialStatus = null)
         {
             InitializeComponent();
             IsDarkTheme = isDarkTheme;
+
+            if (!string.IsNullOrWhiteSpace(initialSql))
+            {
+                txtSqlQuery.Text = initialSql;
+            }
+            if (!string.IsNullOrWhiteSpace(initialStatus))
+            {
+                txtStatus.Text = initialStatus;
+            }
 
             LoadProfiles();
             InitTargetLocation();
@@ -56,6 +65,18 @@ namespace ExcelSupport.Views
             try
             {
                 bool isDark = isDarkTheme ?? (AddInEvents.MainViewModel?.IsDarkTheme ?? AiConfigManager.Current.IsDarkTheme);
+                string? initialStatus = null;
+
+                // Tự động nhận diện nếu người dùng đang bôi đen các ô chứa ngôn ngữ tự nhiên hoặc câu lệnh SQL trên Excel
+                if (string.IsNullOrWhiteSpace(initialSql))
+                {
+                    var app = AddInEvents.Instance?.ExcelAppInstance;
+                    if (app != null && NaturalLanguageSqlService.TryExtractFromSelection(app, out string autoSql, out string autoMsg, out string _))
+                    {
+                        initialSql = autoSql;
+                        initialStatus = autoMsg;
+                    }
+                }
 
                 if (_currentInstance != null && _currentInstance.IsLoaded)
                 {
@@ -63,16 +84,16 @@ namespace ExcelSupport.Views
                     if (!string.IsNullOrWhiteSpace(initialSql))
                     {
                         _currentInstance.txtSqlQuery.Text = initialSql;
+                        if (!string.IsNullOrWhiteSpace(initialStatus))
+                        {
+                            _currentInstance.txtStatus.Text = initialStatus;
+                        }
                     }
                     _currentInstance.Activate();
                     return;
                 }
 
-                _currentInstance = new OracleQuickQueryDialog(isDark);
-                if (!string.IsNullOrWhiteSpace(initialSql))
-                {
-                    _currentInstance.txtSqlQuery.Text = initialSql;
-                }
+                _currentInstance = new OracleQuickQueryDialog(isDark, initialSql, initialStatus);
 
                 try
                 {
@@ -170,6 +191,11 @@ namespace ExcelSupport.Views
 
         private void RestoreLastQuery()
         {
+            if (!string.IsNullOrWhiteSpace(txtSqlQuery.Text) && !txtSqlQuery.Text.Equals("SELECT * FROM DUAL", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             try
             {
                 var history = OracleConnectionManager.GetQueryHistory();
@@ -228,6 +254,82 @@ namespace ExcelSupport.Views
             if (cboProfile.SelectedItem is OracleConnectionProfile p && cboUser.SelectedItem is OracleUserCredential u)
             {
                 p.SelectedUserId = u.Id;
+            }
+        }
+
+        private void BtnLoadFromSelection_Click(object sender, RoutedEventArgs e)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            if (app == null)
+            {
+                WpfMessageBox.Show(this, LocalizationService.Get("Oracle_NlEmptySelection", "Vui lòng chọn các ô chứa nội dung truy vấn trên Excel trước."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            if (NaturalLanguageSqlService.TryExtractFromSelection(app, out string generatedSql, out string infoMsg, out _))
+            {
+                txtSqlQuery.Text = generatedSql;
+                txtStatus.Text = infoMsg;
+                txtSqlQuery.Focus();
+                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+            }
+            else
+            {
+                WpfMessageBox.Show(this, LocalizationService.Get("Oracle_NlNoTableFound", "Không tìm thấy tên bảng hoặc nội dung truy vấn trong các ô đã chọn. Vui lòng kiểm tra lại nội dung."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+            }
+        }
+
+        private async void BtnAiGenerateSql_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isExecuting) return;
+
+            string input = !string.IsNullOrWhiteSpace(txtSqlQuery.SelectedText) 
+                ? txtSqlQuery.SelectedText.Trim() 
+                : txtSqlQuery.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                var app = AddInEvents.Instance?.ExcelAppInstance;
+                if (app != null && NaturalLanguageSqlService.TryExtractFromSelection(app, out string genSql, out _, out _))
+                {
+                    input = genSql;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                WpfMessageBox.Show(this, LocalizationService.Get("Oracle_NlEmptySelection", "Vui lòng nhập hoặc bôi đen văn bản ngôn ngữ tự nhiên cần AI chuyển thành SQL."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            var aiConfig = AiConfigManager.Current;
+            if (string.IsNullOrWhiteSpace(aiConfig?.BaseUrl))
+            {
+                WpfMessageBox.Show(this, LocalizationService.Get("AiSet_BaseUrlExample", "Chưa cấu hình máy chủ AI. Vui lòng vào Cài đặt (Ctrl+Shift+I) -> Cấu hình AI để thiết lập URL máy chủ AI."), LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            btnAiGenerateSql.IsEnabled = false;
+            pbProgress.Visibility = Visibility.Visible;
+            txtStatus.Text = LocalizationService.Get("Oracle_NlAiGenerating", "⏳ Đang kết nối AI để chuyển đổi ngôn ngữ tự nhiên thành câu lệnh SQL...");
+
+            try
+            {
+                string sql = await NaturalLanguageSqlService.ConvertWithAiAsync(input, aiConfig);
+                txtSqlQuery.Text = sql;
+                txtStatus.Text = LocalizationService.Get("Oracle_NlAiSuccess", "✨ AI đã chuyển đổi thành công sang câu lệnh SQL!");
+                txtSqlQuery.Focus();
+                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = string.Format(LocalizationService.Get("Oracle_NlAiError", "Lỗi AI: {0}"), ex.Message);
+                WpfMessageBox.Show(this, $"{LocalizationService.Get("Oracle_NlAiError", "Lỗi AI chuyển đổi SQL:")}\n\n{ex.Message}", LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+            }
+            finally
+            {
+                btnAiGenerateSql.IsEnabled = true;
+                pbProgress.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -504,7 +606,12 @@ namespace ExcelSupport.Views
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.T && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            if (e.Key == Key.L && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                BtnLoadFromSelection_Click(btnLoadFromSelection, new RoutedEventArgs());
+            }
+            else if (e.Key == Key.T && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
                 e.Handled = true;
                 BtnInspectStructure_Click(btnInspectStructure, new RoutedEventArgs());

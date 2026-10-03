@@ -6,8 +6,8 @@
         xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         mc:Ignorable="d"
         Title="{loc:Loc Oracle_QuickQueryTitle}"
-        Height="680" Width="880"
-        MinHeight="540" MinWidth="740"
+        Height="680" Width="940"
+        MinHeight="540" MinWidth="800"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI"
         KeyDown="Window_KeyDown">
@@ -589,9 +589,23 @@
                         <TextBlock Text=" (vd: SELECT * FROM ADDMTA WHERE ROWNUM &lt;= 50)" FontSize="11" Foreground="#94A3B8" Margin="6,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Table Structure Inspector & Query History Selector -->
+                    <!-- Natural Language, Table Structure Inspector & Query History Selector -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="btnInspectStructure" Style="{StaticResource SecondaryActionBtn}" Padding="8,3" Margin="0,0,10,0" Height="26" Click="BtnInspectStructure_Click" ToolTip="{loc:Loc Oracle_BtnTableStructureTip}">
+                        <Button x:Name="btnLoadFromSelection" Style="{StaticResource SecondaryActionBtn}" Padding="7,3" Margin="0,0,6,0" Height="26" Click="BtnLoadFromSelection_Click" ToolTip="{loc:Loc Oracle_BtnLoadFromSelectionTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚡" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="{loc:Loc Oracle_BtnLoadFromSelection}" FontSize="11" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button x:Name="btnAiGenerateSql" Style="{StaticResource SecondaryActionBtn}" Padding="7,3" Margin="0,0,8,0" Height="26" Click="BtnAiGenerateSql_Click" ToolTip="{loc:Loc Oracle_BtnAiGenerateSqlTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✨" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="{loc:Loc Oracle_BtnAiGenerateSql}" FontSize="11"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button x:Name="btnInspectStructure" Style="{StaticResource SecondaryActionBtn}" Padding="7,3" Margin="0,0,10,0" Height="26" Click="BtnInspectStructure_Click" ToolTip="{loc:Loc Oracle_BtnTableStructureTip}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="🔍" FontSize="11" Margin="0,0,4,0"/>
                                 <TextBlock Text="{loc:Loc Oracle_BtnTableStructure}" FontSize="11"/>
@@ -611,7 +625,7 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <ComboBox x:Name="cboQueryHistory" Width="240" Height="26" FontSize="11" SelectionChanged="CboQueryHistory_SelectionChanged" ToolTip="{loc:Loc Oracle_QueryHistoryTip}"/>
+                        <ComboBox x:Name="cboQueryHistory" Width="180" Height="26" FontSize="11" SelectionChanged="CboQueryHistory_SelectionChanged" ToolTip="{loc:Loc Oracle_QueryHistoryTip}"/>
                         <Button x:Name="btnClearHistory" Style="{StaticResource SecondaryActionBtn}" Padding="6,2" Margin="3,0,0,0" Height="26" Click="BtnClearHistory_Click" ToolTip="{loc:Loc Oracle_ClearHistoryTip}">
                             <TextBlock Text="🗑️" FontSize="10"/>
                         </Button>
