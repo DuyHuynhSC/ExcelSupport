@@ -44,6 +44,21 @@ namespace ExcelSupport.Models
 
         public bool HasSuggestedFormula => !string.IsNullOrWhiteSpace(SuggestedFormula);
 
+        private string? _suggestedSql;
+        public string? SuggestedSql
+        {
+            get => _suggestedSql;
+            set
+            {
+                if (SetProperty(ref _suggestedSql, value))
+                {
+                    OnPropertyChanged(nameof(HasSuggestedSql));
+                }
+            }
+        }
+
+        public bool HasSuggestedSql => !string.IsNullOrWhiteSpace(SuggestedSql);
+
         public void NotifyCellsChanged()
         {
             OnPropertyChanged(nameof(HasReferencedCells));

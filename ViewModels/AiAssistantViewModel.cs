@@ -188,6 +188,7 @@ namespace ExcelSupport.ViewModels
         public ICommand ClearSheetChatCommand { get; }
         public ICommand NavigateToCellCommand { get; }
         public ICommand ApplySuggestedFormulaCommand { get; }
+        public ICommand OpenInQuickSqlCommand { get; }
         public ICommand QuickPromptCommand { get; }
 
         public AiAssistantViewModel()
@@ -207,6 +208,7 @@ namespace ExcelSupport.ViewModels
             ClearSheetChatCommand = new RelayCommand(_ => ExecuteClearSheetChat());
             NavigateToCellCommand = new RelayCommand(param => ExecuteNavigateToCell(param as string));
             ApplySuggestedFormulaCommand = new RelayCommand(param => ExecuteApplySuggestedFormula(param as string));
+            OpenInQuickSqlCommand = new RelayCommand(param => ExecuteOpenInQuickSql(param as string));
             QuickPromptCommand = new RelayCommand(async param => await ExecuteQuickPromptAsync(param as string));
 
             InitWelcomeMessage();
@@ -588,6 +590,12 @@ namespace ExcelSupport.ViewModels
             }
         }
 
+        private void ExecuteOpenInQuickSql(string? sql)
+        {
+            if (string.IsNullOrWhiteSpace(sql)) return;
+            Views.OracleQuickQueryDialog.ShowWindow(IsDarkTheme, sql);
+        }
+
         private async Task ExecuteQuickPromptAsync(string? prompt)
         {
             if (string.IsNullOrWhiteSpace(prompt)) return;
@@ -620,13 +628,14 @@ namespace ExcelSupport.ViewModels
                 string sheetData = addIn?.GetSheetChatContext(IsSelectionOnly) ?? string.Empty;
 
                 string systemPrompt = 
-                    "Bạn là Trợ lý AI Bảng tính (Chat With Sheet) cao cấp, chuyên gia phân tích dữ liệu Excel.\n" +
+                    "Bạn là Trợ lý AI Bảng tính (Chat With Sheet) cao cấp, chuyên gia phân tích dữ liệu Excel và kỹ sư cơ sở dữ liệu Oracle.\n" +
                     "Bạn giao tiếp bằng tiếng Việt tự nhiên, ngắn gọn, lịch sự, chuyên nghiệp và đi thẳng vào trọng tâm.\n\n" +
                     "QUY TẮC QUAN TRỌNG (BẮT BUỘC TUÂN THỦ):\n" +
                     "1. Dữ liệu bảng tính hiện tại được cung cấp dưới dạng Markdown. Hãy căn cứ CHÍNH XÁC vào dữ liệu này để trả lời.\n" +
                     "2. Khi nhắc tới bất kỳ ô hoặc vùng ô cụ thể nào, hãy LUÔN đặt trong ngoặc vuông dạng [CộtDòng] (ví dụ: [A1], [B5], [C2:D10], [DoanhThu!C5]) để hệ thống tạo liên kết click nhảy ô cho người dùng.\n" +
                     "3. Nếu người dùng hỏi cách tính toán hoặc đề xuất công thức Excel, hãy cung cấp công thức chuẩn xác bắt đầu bằng dấu '=' trong khối code: ```excel\n=CÔNG_THỨC\n```\n" +
-                    "4. Trình bày câu trả lời rõ ràng, dùng bullet point (•), biểu tượng (📌, 🔢, 💡, ⚠️) và in đậm tiêu đề quan trọng.";
+                    "4. Nếu người dùng yêu cầu viết câu lệnh SQL, truy vấn SQL, hoặc trích xuất điều kiện bảng (ví dụ từ đặc tả thiết kế table [JDNTHA], [DATKB]='1'), hãy cung cấp câu lệnh SQL chuẩn Oracle trong khối code: ```sql\nSELECT ...\n```\n" +
+                    "5. Trình bày câu trả lời rõ ràng, dùng bullet point (•), biểu tượng (📌, 🔢, 💡, ⚠️) và in đậm tiêu đề quan trọng.";
 
                 // Chuẩn bị danh sách lịch sử hội thoại (lấy tối đa 6 lượt tin nhắn gần nhất)
                 var historyList = new List<(string role, string content)>();
@@ -667,6 +676,13 @@ namespace ExcelSupport.ViewModels
                 if (!string.IsNullOrWhiteSpace(suggestedFormula))
                 {
                     assistantItem.SuggestedFormula = suggestedFormula;
+                }
+
+                // Trích xuất câu lệnh SQL đề xuất nếu có
+                string suggestedSql = OracleQuickQueryService.ExtractSqlBlock(reply);
+                if (!string.IsNullOrWhiteSpace(suggestedSql))
+                {
+                    assistantItem.SuggestedSql = suggestedSql;
                 }
 
                 SheetChatMessages.Add(assistantItem);

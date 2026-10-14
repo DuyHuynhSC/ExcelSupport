@@ -231,6 +231,60 @@ namespace ExcelSupport.Views
             }
         }
 
+        private async void BtnAiGenerateSql_Click(object sender, RoutedEventArgs e)
+        {
+            await GenerateSqlFromExcelSelectionAsync();
+        }
+
+        private async Task GenerateSqlFromExcelSelectionAsync()
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance;
+            if (app == null)
+            {
+                WpfMessageBox.Show(this, "Không thể kết nối với ứng dụng Excel.", "Lỗi Excel", WpfMessageBoxButton.OK, WpfMessageBoxImage.Warning);
+                return;
+            }
+
+            string selectionText = OracleQuickQueryService.GetExcelSelectionText(app);
+            if (string.IsNullOrWhiteSpace(selectionText))
+            {
+                string msg = LocalizationService.Get("Oracle_AiSqlNoSelection", "Vui lòng chọn vùng ô chứa điều kiện trích xuất trên Sheet trước khi nhấn AI Sinh SQL.");
+                txtStatus.Text = msg;
+                WpfMessageBox.Show(this, msg, LocalizationService.Get("Common_Notice", "Thông Báo"), WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                btnAiGenerateSql.IsEnabled = false;
+                pbProgress.Visibility = Visibility.Visible;
+                txtStatus.Text = "AI đang phân tích các ô điều kiện trên Sheet và sinh câu lệnh SQL...";
+
+                string sql = await OracleQuickQueryService.GenerateSqlFromSelectionAsync(selectionText);
+                if (!string.IsNullOrWhiteSpace(sql))
+                {
+                    txtSqlQuery.Text = sql;
+                    txtSqlQuery.Focus();
+                    txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+                    txtStatus.Text = LocalizationService.Get("Oracle_AiSqlSuccess", "✨ Đã sinh thành công câu truy vấn SQL từ vùng chọn! Nhấn Ctrl + Enter để thực thi.");
+                }
+                else
+                {
+                    txtStatus.Text = "Không thể nhận diện điều kiện trích xuất từ các ô đang chọn.";
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi sinh SQL: {ex.Message}";
+                WpfMessageBox.Show(this, $"Quá trình sinh câu lệnh SQL phát sinh lỗi:\n{ex.Message}", "Lỗi AI", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+            }
+            finally
+            {
+                btnAiGenerateSql.IsEnabled = true;
+                pbProgress.Visibility = Visibility.Collapsed;
+            }
+        }
+
         private void BtnInspectStructure_Click(object sender, RoutedEventArgs e)
         {
             var profile = cboProfile.SelectedItem as OracleConnectionProfile;
@@ -504,7 +558,12 @@ namespace ExcelSupport.Views
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.T && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            if (e.Key == Key.G && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                BtnAiGenerateSql_Click(btnAiGenerateSql, new RoutedEventArgs());
+            }
+            else if (e.Key == Key.T && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
                 e.Handled = true;
                 BtnInspectStructure_Click(btnInspectStructure, new RoutedEventArgs());

@@ -591,6 +591,14 @@
 
                     <!-- Table Structure Inspector & Query History Selector -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Nút AI Sinh SQL từ ô chọn Excel (Ctrl+G) -->
+                        <Button x:Name="btnAiGenerateSql" Style="{StaticResource SecondaryActionBtn}" Padding="8,3" Margin="0,0,8,0" Height="26" Click="BtnAiGenerateSql_Click" ToolTip="{loc:Loc Oracle_BtnAiGenerateSqlTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✨" FontSize="11" Margin="0,0,4,0"/>
+                                <TextBlock Text="{loc:Loc Oracle_BtnAiGenerateSql}" FontSize="11" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
                         <Button x:Name="btnInspectStructure" Style="{StaticResource SecondaryActionBtn}" Padding="8,3" Margin="0,0,10,0" Height="26" Click="BtnInspectStructure_Click" ToolTip="{loc:Loc Oracle_BtnTableStructureTip}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="🔍" FontSize="11" Margin="0,0,4,0"/>

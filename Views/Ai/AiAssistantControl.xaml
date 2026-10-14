@@ -920,6 +920,27 @@
                                                                 <TextBlock Text="{loc:Loc Ai_BtnInsertFormulaShort}" FontSize="10.5" VerticalAlignment="Center"/>
                                                             </StackPanel>
                                                         </Button>
+
+                                                        <!-- Nút Mở Câu Lệnh SQL Trong Quick SQL (1-Click) -->
+                                                        <Button Command="{Binding DataContext.OpenInQuickSqlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding SuggestedSql}"
+                                                                Padding="6,3" Margin="0,4,0,0">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource AiPrimaryButtonStyle}">
+                                                                    <Setter Property="Background" Value="#7C3AED"/>
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding HasSuggestedSql}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="⚡ " FontSize="10" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{loc:Loc SqlGen_BtnOpenInQuickQuery}" FontSize="10.5" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Button>
                                                     </StackPanel>
                                                 </Border>
                                             </Grid>
