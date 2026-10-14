@@ -37,7 +37,7 @@ namespace ExcelSupport.Services
                 string markdown = RangeToMarkdown(rng, new TableExportOptions());
                 if (!string.IsNullOrEmpty(markdown))
                 {
-                    Clipboard.SetText(markdown);
+                    ExcelSupport.Helpers.ClipboardBridge.SetText(markdown);
                     app.StatusBar = $"📋 ExcelSupport: Đã sao chép bảng Markdown ({rng.Rows.Count}x{rng.Columns.Count}) vào Clipboard (Ctrl + Shift + M)!";
                     return true;
                 }
@@ -54,12 +54,16 @@ namespace ExcelSupport.Services
         public static string RangeToMarkdown(Range rng, TableExportOptions options)
         {
             if (rng == null) return string.Empty;
+            var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(rng);
+            return MatrixToMarkdown(matrix, options);
+        }
 
-            object[,] values = GetRangeValues2D(rng);
-            int rows = values.GetLength(0);
-            int cols = values.GetLength(1);
+        public static string MatrixToMarkdown(ExcelSupport.Helpers.ExcelRangeMatrix matrix, TableExportOptions options)
+        {
+            if (matrix == null || matrix.IsEmpty) return string.Empty;
 
-            if (rows == 0 || cols == 0) return string.Empty;
+            int rows = matrix.RowCount;
+            int cols = matrix.ColumnCount;
 
             // Xác định kiểu dữ liệu của từng cột để căn lề (Left / Right)
             bool[] isNumberCol = new bool[cols];
@@ -78,8 +82,7 @@ namespace ExcelSupport.Services
             {
                 for (int c = 0; c < cols; c++)
                 {
-                    object? val = values[r + 1, c + 1];
-                    string cellText = val?.ToString() ?? string.Empty;
+                    string cellText = matrix.GetString(r, c, trim: false);
 
                     // Thoát ký tự pipe '|' và xử lý xuống dòng
                     cellText = cellText.Replace("|", "\\|");
@@ -186,12 +189,16 @@ namespace ExcelSupport.Services
         public static string RangeToHtml(Range rng, TableExportOptions options)
         {
             if (rng == null) return string.Empty;
+            var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(rng);
+            return MatrixToHtml(matrix, options);
+        }
 
-            object[,] values = GetRangeValues2D(rng);
-            int rows = values.GetLength(0);
-            int cols = values.GetLength(1);
+        public static string MatrixToHtml(ExcelSupport.Helpers.ExcelRangeMatrix matrix, TableExportOptions options)
+        {
+            if (matrix == null || matrix.IsEmpty) return string.Empty;
 
-            if (rows == 0 || cols == 0) return string.Empty;
+            int rows = matrix.RowCount;
+            int cols = matrix.ColumnCount;
 
             var sb = new StringBuilder();
 
@@ -213,31 +220,31 @@ namespace ExcelSupport.Services
 
             sb.AppendLine($"<table {tableStyle}>");
 
-            int startDataRow = 1;
+            int startDataRow = 0;
 
             if (options.FirstRowAsHeader)
             {
                 sb.AppendLine("  <thead>");
                 sb.AppendLine("    <tr>");
-                for (int c = 1; c <= cols; c++)
+                for (int c = 0; c < cols; c++)
                 {
-                    string text = FormatHtmlCell(values[1, c], options);
+                    string text = FormatHtmlCell(matrix[0, c], options);
                     sb.AppendLine($"      <th {thStyle}>{text}</th>");
                 }
                 sb.AppendLine("    </tr>");
                 sb.AppendLine("  </thead>");
-                startDataRow = 2;
+                startDataRow = 1;
             }
 
             sb.AppendLine("  <tbody>");
-            for (int r = startDataRow; r <= rows; r++)
+            for (int r = startDataRow; r < rows; r++)
             {
                 string rowBg = (options.IncludeHtmlStyles && r % 2 == 0) ? " style=\"background-color: #f8fafc;\"" : "";
                 sb.AppendLine($"    <tr{rowBg}>");
 
-                for (int c = 1; c <= cols; c++)
+                for (int c = 0; c < cols; c++)
                 {
-                    object? cellVal = values[r, c];
+                    object? cellVal = matrix[r, c];
                     string text = FormatHtmlCell(cellVal, options);
                     bool isNum = options.AlignNumbersRight && double.TryParse(cellVal?.ToString(), out _);
                     string styleToUse = isNum ? tdNumStyle : tdStyle;
@@ -263,27 +270,6 @@ namespace ExcelSupport.Services
                 text = text.Replace("\r\n", "<br>").Replace("\n", "<br>").Replace("\r", "<br>");
             }
             return text;
-        }
-
-        private static object[,] GetRangeValues2D(Range rng)
-        {
-            try
-            {
-                object raw = rng.Value2;
-                if (raw is object[,] arr)
-                {
-                    return arr;
-                }
-                else if (raw != null)
-                {
-                    object[,] single = new object[2, 2];
-                    single[1, 1] = raw;
-                    return single;
-                }
-            }
-            catch { }
-
-            return new object[1, 1];
         }
     }
 }

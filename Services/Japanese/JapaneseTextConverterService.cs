@@ -356,65 +356,23 @@ namespace ExcelSupport.Services
         {
             if (rng == null) return;
 
-            int rowCount = rng.Rows.Count;
-            int colCount = rng.Columns.Count;
+            var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(rng);
+            if (matrix.IsEmpty) return;
 
-            if (rowCount == 1 && colCount == 1)
-            {
-                result.TotalCellsProcessed++;
-                object? val = rng.Value2;
-                if (val is string str && !string.IsNullOrEmpty(str))
-                {
-                    string converted = ConvertText(str, options);
-                    if (converted != str)
-                    {
-                        rng.Value2 = converted;
-                        result.TotalCellsChanged++;
-                        result.TotalCharactersChanged += Math.Abs(converted.Length - str.Length) + 1;
-                    }
-                }
-                return;
-            }
-
-            // Xử lý mảng 2 chiều tốc độ cao cho vùng ô lớn
-            object[,] values;
-            try
-            {
-                object raw = rng.Value2;
-                if (raw is object[,] arr)
-                {
-                    values = arr;
-                }
-                else
-                {
-                    return;
-                }
-            }
-            catch
-            {
-                return;
-            }
-
-            int rLower = values.GetLowerBound(0);
-            int rUpper = values.GetUpperBound(0);
-            int cLower = values.GetLowerBound(1);
-            int cUpper = values.GetUpperBound(1);
+            result.TotalCellsProcessed += matrix.RowCount * matrix.ColumnCount;
 
             bool anyChange = false;
-
-            for (int r = rLower; r <= rUpper; r++)
+            for (int r = 0; r < matrix.RowCount; r++)
             {
-                for (int c = cLower; c <= cUpper; c++)
+                for (int c = 0; c < matrix.ColumnCount; c++)
                 {
-                    object? cellVal = values[r, c];
-                    result.TotalCellsProcessed++;
-
+                    object? cellVal = matrix[r, c];
                     if (cellVal is string str && !string.IsNullOrEmpty(str))
                     {
                         string converted = ConvertText(str, options);
                         if (converted != str)
                         {
-                            values[r, c] = converted;
+                            matrix[r, c] = converted;
                             anyChange = true;
                             result.TotalCellsChanged++;
                             result.TotalCharactersChanged += Math.Abs(converted.Length - str.Length) + 1;
@@ -425,11 +383,7 @@ namespace ExcelSupport.Services
 
             if (anyChange)
             {
-                try
-                {
-                    rng.Value2 = values;
-                }
-                catch { }
+                matrix.WriteBack(rng);
             }
         }
 

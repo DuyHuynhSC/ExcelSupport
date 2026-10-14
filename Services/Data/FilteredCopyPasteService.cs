@@ -302,67 +302,9 @@ namespace ExcelSupport.Services
 
         private static void ExtractVisibleData(Range visibleRange)
         {
-            CachedValues = new List<List<object?>>();
-            CachedFormulas = new List<List<string?>>();
-
-            // Duyệt qua từng Area của SpecialCells(xlCellTypeVisible)
-            // Nhóm theo hàng để tạo ma trận dòng x cột chuẩn
-            var rowDictValues = new SortedDictionary<int, SortedDictionary<int, object?>>();
-            var rowDictFormulas = new SortedDictionary<int, SortedDictionary<int, string?>>();
-
-            foreach (Range area in visibleRange.Areas)
-            {
-                int rowCount = area.Rows.Count;
-                int colCount = area.Columns.Count;
-                int baseRow = area.Row;
-                int baseCol = area.Column;
-
-                object? rawValues = area.Value2;
-                object? rawFormulas = area.Formula;
-
-                object?[,]? valArray = rawValues as object[,];
-                object?[,]? formulaArray = rawFormulas as object[,];
-
-                for (int r = 1; r <= rowCount; r++)
-                {
-                    int actualRow = baseRow + r - 1;
-                    if (!rowDictValues.ContainsKey(actualRow))
-                    {
-                        rowDictValues[actualRow] = new SortedDictionary<int, object?>();
-                        rowDictFormulas[actualRow] = new SortedDictionary<int, string?>();
-                    }
-
-                    for (int c = 1; c <= colCount; c++)
-                    {
-                        int actualCol = baseCol + c - 1;
-                        object? val = (valArray != null) ? valArray[r, c] : rawValues;
-                        string? formula = (formulaArray != null) ? formulaArray[r, c]?.ToString() : rawFormulas?.ToString();
-
-                        rowDictValues[actualRow][actualCol] = val;
-                        rowDictFormulas[actualRow][actualCol] = formula;
-                    }
-                }
-            }
-
-            foreach (var kvp in rowDictValues)
-            {
-                var rowList = new List<object?>();
-                foreach (var colVal in kvp.Value)
-                {
-                    rowList.Add(colVal.Value);
-                }
-                CachedValues.Add(rowList);
-            }
-
-            foreach (var kvp in rowDictFormulas)
-            {
-                var rowList = new List<string?>();
-                foreach (var colVal in kvp.Value)
-                {
-                    rowList.Add(colVal.Value);
-                }
-                CachedFormulas.Add(rowList);
-            }
+            var extracted = ExcelSupport.Helpers.ClipboardBridge.ExtractRangeAreas(visibleRange, includeFormulas: true);
+            CachedValues = extracted.Values;
+            CachedFormulas = extracted.Formulas;
         }
 
         private static List<List<object?>> GetSourceData(FilteredPasteOptions options)
@@ -373,29 +315,7 @@ namespace ExcelSupport.Services
             }
 
             // Fallback đọc từ Clipboard hệ thống nếu người dùng đã copy từ ngoài
-            var list = new List<List<object?>>();
-            try
-            {
-                if (System.Windows.Forms.Clipboard.ContainsText())
-                {
-                    string text = System.Windows.Forms.Clipboard.GetText();
-                    var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-                    foreach (var line in lines)
-                    {
-                        if (string.IsNullOrEmpty(line) && line == lines.Last()) continue;
-                        var cols = line.Split('\t');
-                        var row = new List<object?>();
-                        foreach (var c in cols)
-                        {
-                            row.Add(c);
-                        }
-                        list.Add(row);
-                    }
-                }
-            }
-            catch { }
-
-            return list;
+            return ExcelSupport.Helpers.ClipboardBridge.ParseTableFromClipboard();
         }
     }
 }

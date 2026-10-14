@@ -202,128 +202,73 @@ namespace ExcelSupport.Services
                         targetRange = isSelectionOnly ? (app.Selection as Range) : ws.UsedRange;
                         if (targetRange == null || targetRange.Rows.Count == 0) continue;
 
-                        int numRows = targetRange.Rows.Count;
-                        int numCols = targetRange.Columns.Count;
-                        int startRow = targetRange.Row;
-                        int startCol = targetRange.Column;
+                        bool isFormula = (options.LookIn == FindReplaceLookIn.Formulas);
+                        var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(targetRange, loadFormulas: isFormula);
+                        if (matrix.IsEmpty) continue;
 
-                        object? rawVal = (options.LookIn == FindReplaceLookIn.Formulas) ? targetRange.Formula : targetRange.Value2;
-                        if (rawVal == null) continue;
-
+                        int startRow = matrix.StartRow;
+                        int startCol = matrix.StartColumn;
                         bool sheetChanged = false;
 
-                        if (rawVal is object[,] allVals)
+                        for (int r = 0; r < matrix.RowCount; r++)
                         {
-                            var modifiedCellsToHighlight = new List<Range>();
-
-                            for (int r = 1; r <= numRows; r++)
+                            for (int c = 0; c < matrix.ColumnCount; c++)
                             {
-                                for (int c = 1; c <= numCols; c++)
+                                object? cellObj = matrix[r, c];
+                                if (cellObj == null) continue;
+                                string originalStr = cellObj.ToString() ?? string.Empty;
+                                if (string.IsNullOrEmpty(originalStr)) continue;
+
+                                string currentStr = originalStr;
+                                bool cellModified = false;
+
+                                foreach (var pair in options.Pairs)
                                 {
-                                    object? cellObj = allVals[r, c];
-                                    if (cellObj == null) continue;
-                                    string originalStr = cellObj.ToString() ?? string.Empty;
-                                    if (string.IsNullOrEmpty(originalStr)) continue;
-
-                                    string currentStr = originalStr;
-                                    bool cellModified = false;
-
-                                    foreach (var pair in options.Pairs)
+                                    if (options.MatchEntireCell)
                                     {
-                                        if (options.MatchEntireCell)
+                                        if (string.Equals(currentStr, pair.FindText, comp))
                                         {
-                                            if (string.Equals(currentStr, pair.FindText, comp))
-                                            {
-                                                currentStr = pair.ReplaceText;
-                                                pairCounts[pair.FindText]++;
-                                                cellModified = true;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (currentStr.IndexOf(pair.FindText, comp) >= 0)
-                                            {
-                                                int countBefore = (currentStr.Length - currentStr.Replace(pair.FindText, "").Length) / Math.Max(1, pair.FindText.Length);
-                                                currentStr = ReplaceString(currentStr, pair.FindText, pair.ReplaceText, comp);
-                                                pairCounts[pair.FindText] += countBefore;
-                                                cellModified = true;
-                                            }
+                                            currentStr = pair.ReplaceText;
+                                            pairCounts[pair.FindText]++;
+                                            cellModified = true;
                                         }
                                     }
-
-                                    if (cellModified && currentStr != originalStr)
+                                    else
                                     {
-                                        allVals[r, c] = currentStr;
-                                        totalCellsModified++;
-                                        sheetChanged = true;
-
-                                        if (options.HighlightReplacedCells)
+                                        if (currentStr.IndexOf(pair.FindText, comp) >= 0)
                                         {
-                                            try
-                                            {
-                                                Range cellRange = ws.Cells[startRow + r - 1, startCol + c - 1];
-                                                cellRange.Interior.Color = highlightColorOle;
-                                                Marshal.ReleaseComObject(cellRange);
-                                            }
-                                            catch { }
+                                            int countBefore = (currentStr.Length - currentStr.Replace(pair.FindText, "").Length) / Math.Max(1, pair.FindText.Length);
+                                            currentStr = ReplaceString(currentStr, pair.FindText, pair.ReplaceText, comp);
+                                            pairCounts[pair.FindText] += countBefore;
+                                            cellModified = true;
                                         }
                                     }
                                 }
-                            }
 
-                            if (sheetChanged)
-                            {
-                                sheetsModifiedCount++;
-                                if (options.LookIn == FindReplaceLookIn.Formulas)
-                                    targetRange.Formula = allVals;
-                                else
-                                    targetRange.Value2 = allVals;
+                                if (cellModified && currentStr != originalStr)
+                                {
+                                    matrix[r, c] = currentStr;
+                                    totalCellsModified++;
+                                    sheetChanged = true;
+
+                                    if (options.HighlightReplacedCells)
+                                    {
+                                        try
+                                        {
+                                            Range cellRange = ws.Cells[startRow + r, startCol + c];
+                                            cellRange.Interior.Color = highlightColorOle;
+                                            Marshal.ReleaseComObject(cellRange);
+                                        }
+                                        catch { }
+                                    }
+                                }
                             }
                         }
-                        else
+
+                        if (sheetChanged)
                         {
-                            // Đơn lẻ 1 ô
-                            string originalStr = rawVal.ToString() ?? string.Empty;
-                            string currentStr = originalStr;
-                            bool cellModified = false;
-
-                            foreach (var pair in options.Pairs)
-                            {
-                                if (options.MatchEntireCell)
-                                {
-                                    if (string.Equals(currentStr, pair.FindText, comp))
-                                    {
-                                        currentStr = pair.ReplaceText;
-                                        pairCounts[pair.FindText]++;
-                                        cellModified = true;
-                                    }
-                                }
-                                else
-                                {
-                                    if (currentStr.IndexOf(pair.FindText, comp) >= 0)
-                                    {
-                                        currentStr = ReplaceString(currentStr, pair.FindText, pair.ReplaceText, comp);
-                                        pairCounts[pair.FindText]++;
-                                        cellModified = true;
-                                    }
-                                }
-                            }
-
-                            if (cellModified && currentStr != originalStr)
-                            {
-                                if (options.LookIn == FindReplaceLookIn.Formulas)
-                                    targetRange.Formula = currentStr;
-                                else
-                                    targetRange.Value2 = currentStr;
-
-                                totalCellsModified++;
-                                sheetsModifiedCount++;
-
-                                if (options.HighlightReplacedCells)
-                                {
-                                    try { targetRange.Interior.Color = highlightColorOle; } catch { }
-                                }
-                            }
+                            sheetsModifiedCount++;
+                            matrix.WriteBack(targetRange, writeAsFormulas: isFormula);
                         }
                     }
                     catch (Exception ex)

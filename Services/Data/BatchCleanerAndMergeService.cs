@@ -119,23 +119,13 @@ namespace ExcelSupport.Services
                 usedRange = ws.UsedRange;
                 if (usedRange == null || usedRange.Rows.Count == 0) return (0, 0);
 
-                int startRow = usedRange.Row;
-                int totalRows = usedRange.Rows.Count;
-                int startCol = usedRange.Column;
-                int totalCols = usedRange.Columns.Count;
+                var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(usedRange);
+                if (matrix.IsEmpty) return (0, 0);
 
-                object[,]? values2D = null;
-                if (totalRows == 1 && totalCols == 1)
-                {
-                    values2D = new object[2, 2];
-                    values2D[1, 1] = usedRange.Value2;
-                }
-                else
-                {
-                    values2D = (object[,])usedRange.Value2;
-                }
-
-                if (values2D == null) return (0, 0);
+                int startRow = matrix.StartRow;
+                int totalRows = matrix.RowCount;
+                int startCol = matrix.StartColumn;
+                int totalCols = matrix.ColumnCount;
 
                 ws.Application.ScreenUpdating = false;
 
@@ -144,12 +134,12 @@ namespace ExcelSupport.Services
                     // Xử lý Cột trống
                     var blankCols = new List<int>();
 
-                    for (int c = 1; c <= totalCols; c++)
+                    for (int c = 0; c < totalCols; c++)
                     {
                         bool isColBlank = true;
-                        for (int r = 1; r <= totalRows; r++)
+                        for (int r = 0; r < totalRows; r++)
                         {
-                            object? v = values2D[r, c];
+                            object? v = matrix[r, c];
                             if (v != null && !string.IsNullOrWhiteSpace(v.ToString()))
                             {
                                 isColBlank = false;
@@ -158,7 +148,7 @@ namespace ExcelSupport.Services
                         }
                         if (isColBlank)
                         {
-                            blankCols.Add(startCol + c - 1);
+                            blankCols.Add(startCol + c);
                         }
                     }
 
@@ -206,16 +196,16 @@ namespace ExcelSupport.Services
                     // Xử lý Dòng trống
                     var blankRows = new List<int>();
 
-                    for (int r = 1; r <= totalRows; r++)
+                    for (int r = 0; r < totalRows; r++)
                     {
                         bool isRowBlank = false;
 
                         if (target == BlankCleanupTarget.EntirelyBlankRows)
                         {
                             isRowBlank = true;
-                            for (int c = 1; c <= totalCols; c++)
+                            for (int c = 0; c < totalCols; c++)
                             {
-                                object? v = values2D[r, c];
+                                object? v = matrix[r, c];
                                 if (v != null && !string.IsNullOrWhiteSpace(v.ToString()))
                                 {
                                     isRowBlank = false;
@@ -225,17 +215,17 @@ namespace ExcelSupport.Services
                         }
                         else // BlankRowsInKeyColumn
                         {
-                            int keyColOffset = keyColumnIndex - startCol + 1;
-                            if (keyColOffset >= 1 && keyColOffset <= totalCols)
+                            int keyColOffset = keyColumnIndex - startCol; // 0-based
+                            if (keyColOffset >= 0 && keyColOffset < totalCols)
                             {
-                                object? v = values2D[r, keyColOffset];
+                                object? v = matrix[r, keyColOffset];
                                 isRowBlank = (v == null || string.IsNullOrWhiteSpace(v.ToString()));
                             }
                         }
 
                         if (isRowBlank)
                         {
-                            blankRows.Add(startRow + r - 1);
+                            blankRows.Add(startRow + r);
                         }
                     }
 
@@ -367,13 +357,14 @@ namespace ExcelSupport.Services
 
             try
             {
-                int rowCount = selection.Rows.Count;
-                int colCount = selection.Columns.Count;
-
-                if (rowCount <= 1 && colCount <= 1)
+                var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(selection);
+                if (matrix.IsEmpty || (matrix.RowCount <= 1 && matrix.ColumnCount <= 1))
                 {
                     return (false, "Vùng chọn chỉ có 1 ô duy nhất. Vui lòng chọn ít nhất 2 ô trở lên để gộp.", 0);
                 }
+
+                int rowCount = matrix.RowCount;
+                int colCount = matrix.ColumnCount;
 
                 ws.Application.ScreenUpdating = false;
                 ws.Application.DisplayAlerts = false; // Tắt popup cảnh báo mất dữ liệu của Excel
@@ -381,29 +372,15 @@ namespace ExcelSupport.Services
                 string separator = options.GetActualSeparator();
                 int mergedGroups = 0;
 
-                object[,] rawValues;
-                if (rowCount == 1 && colCount == 1)
-                {
-                    rawValues = new object[2, 2];
-                    rawValues[1, 1] = selection.Value2;
-                }
-                else
-                {
-                    rawValues = (object[,])selection.Value2;
-                }
-
                 if (options.Direction == SafeMergeDirection.AcrossRows)
                 {
                     // Gộp theo từng dòng (Row by row)
-                    for (int r = 1; r <= rowCount; r++)
+                    for (int r = 0; r < rowCount; r++)
                     {
                         var texts = new List<string>();
-                        for (int c = 1; c <= colCount; c++)
+                        for (int c = 0; c < colCount; c++)
                         {
-                            object? val = rawValues[r, c];
-                            string s = val?.ToString() ?? "";
-                            if (options.TrimSpaces) s = s.Trim();
-
+                            string s = matrix.GetString(r, c, options.TrimSpaces);
                             if (!options.IgnoreBlankCells || !string.IsNullOrEmpty(s))
                             {
                                 texts.Add(s);
@@ -415,7 +392,7 @@ namespace ExcelSupport.Services
                         Range? rowRange = null;
                         try
                         {
-                            rowRange = selection.Rows[r] as Range;
+                            rowRange = selection.Rows[r + 1] as Range;
                             if (rowRange != null)
                             {
                                 rowRange.ClearContents();
@@ -435,15 +412,12 @@ namespace ExcelSupport.Services
                 else if (options.Direction == SafeMergeDirection.DownColumns)
                 {
                     // Gộp theo từng cột (Column by column)
-                    for (int c = 1; c <= colCount; c++)
+                    for (int c = 0; c < colCount; c++)
                     {
                         var texts = new List<string>();
-                        for (int r = 1; r <= rowCount; r++)
+                        for (int r = 0; r < rowCount; r++)
                         {
-                            object? val = rawValues[r, c];
-                            string s = val?.ToString() ?? "";
-                            if (options.TrimSpaces) s = s.Trim();
-
+                            string s = matrix.GetString(r, c, options.TrimSpaces);
                             if (!options.IgnoreBlankCells || !string.IsNullOrEmpty(s))
                             {
                                 texts.Add(s);
@@ -455,7 +429,7 @@ namespace ExcelSupport.Services
                         Range? colRange = null;
                         try
                         {
-                            colRange = selection.Columns[c] as Range;
+                            colRange = selection.Columns[c + 1] as Range;
                             if (colRange != null)
                             {
                                 colRange.ClearContents();
@@ -476,14 +450,11 @@ namespace ExcelSupport.Services
                 {
                     // Gộp toàn bộ vùng chọn thành 1 ô duy nhất
                     var texts = new List<string>();
-                    for (int r = 1; r <= rowCount; r++)
+                    for (int r = 0; r < rowCount; r++)
                     {
-                        for (int c = 1; c <= colCount; c++)
+                        for (int c = 0; c < colCount; c++)
                         {
-                            object? val = rawValues[r, c];
-                            string s = val?.ToString() ?? "";
-                            if (options.TrimSpaces) s = s.Trim();
-
+                            string s = matrix.GetString(r, c, options.TrimSpaces);
                             if (!options.IgnoreBlankCells || !string.IsNullOrEmpty(s))
                             {
                                 texts.Add(s);
@@ -555,37 +526,37 @@ namespace ExcelSupport.Services
                         usedRange = ws.UsedRange;
                         if (usedRange == null || usedRange.Rows.Count == 0) continue;
 
-                        int totalRows = usedRange.Rows.Count;
-                        int totalCols = usedRange.Columns.Count;
-                        if (totalRows == 0 || totalCols == 0) continue;
+                        var matrix = ExcelSupport.Helpers.ExcelRangeMatrix.Load(usedRange);
+                        if (matrix.IsEmpty) continue;
 
-                        object[,] values = (object[,])usedRange.Value2;
+                        int totalRows = matrix.RowCount;
+                        int totalCols = matrix.ColumnCount;
                         maxCols = Math.Max(maxCols, totalCols);
 
-                        int startDataRow = 1;
+                        int startDataRow = 0;
 
                         // Nếu có dòng tiêu đề và đây là sheet đầu tiên -> Lấy tiêu đề
                         if (options.HasHeaderRow)
                         {
                             if (headerRowData.Count == 0)
                             {
-                                for (int c = 1; c <= totalCols; c++)
+                                for (int c = 0; c < totalCols; c++)
                                 {
-                                    headerRowData.Add(values[1, c]);
+                                    headerRowData.Add(matrix[0, c]);
                                 }
                             }
-                            startDataRow = options.HeaderRowCount + 1;
+                            startDataRow = options.HeaderRowCount;
                         }
 
                         // Lấy các dòng dữ liệu
-                        for (int r = startDataRow; r <= totalRows; r++)
+                        for (int r = startDataRow; r < totalRows; r++)
                         {
                             var rowList = new List<object?>();
                             bool hasData = false;
 
-                            for (int c = 1; c <= totalCols; c++)
+                            for (int c = 0; c < totalCols; c++)
                             {
-                                object? cellVal = values[r, c];
+                                object? cellVal = matrix[r, c];
                                 rowList.Add(cellVal);
                                 if (cellVal != null && !string.IsNullOrWhiteSpace(cellVal.ToString()))
                                 {

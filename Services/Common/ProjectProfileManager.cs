@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ExcelSupport.Helpers;
 using ExcelSupport.Models;
 using Newtonsoft.Json;
 
@@ -12,12 +13,7 @@ namespace ExcelSupport.Services
     /// </summary>
     public static class ProjectProfileManager
     {
-        private static readonly string ConfigDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ExcelSupport"
-        );
-
-        private static readonly string ConfigFilePath = Path.Combine(ConfigDirectory, "project_profiles.json");
+        private const string ConfigFileName = "project_profiles.json";
 
         private static ProjectProfilesConfig? _currentConfig;
         private static readonly object SyncLock = new object();
@@ -193,104 +189,127 @@ namespace ExcelSupport.Services
 
         private static ProjectProfilesConfig LoadConfig()
         {
-            try
+            var config = JsonConfigStore.Load(ConfigFileName, () =>
             {
-                if (!Directory.Exists(ConfigDirectory))
+                var defaultProf = new ProjectProfile
                 {
-                    Directory.CreateDirectory(ConfigDirectory);
-                }
+                    Name = "Dự Án Mẫu (Sample Project)",
+                    RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    DetailedDesignFolder = "Detailed_Design",
+                    BasicDesignFolder = "Basic_Design",
+                    TestSpecFolder = "Test_Specification",
+                    OpenReadOnlyDefault = false,
+                    FileExtensions = ".xlsx;.xlsm;.xls;.docx;.pdf;.pptx"
+                };
+                defaultProf.IsActive = true;
+                defaultProf.DatabaseConnection = new OracleConnectionProfile
+                {
+                    Id = defaultProf.Id,
+                    Name = defaultProf.Name,
+                    Host = "localhost",
+                    Port = 1521,
+                    ServiceNameOrSid = "ORCL",
+                    ServiceType = OracleServiceNameType.ServiceName,
+                    IsDefault = true
+                };
+                defaultProf.DatabaseConnection.EnsureDefaultUsers();
 
-                if (File.Exists(ConfigFilePath))
+                var def = new ProjectProfilesConfig
                 {
-                    string json = File.ReadAllText(ConfigFilePath);
-                    var config = JsonConvert.DeserializeObject<ProjectProfilesConfig>(json);
-                    if (config != null && config.Profiles != null && config.Profiles.Count > 0)
+                    Profiles = new List<ProjectProfile> { defaultProf },
+                    ActiveProfileId = defaultProf.Id
+                };
+                TryMigrateLegacyOracleConnections(def);
+                return def;
+            });
+
+            if (config.Profiles == null || config.Profiles.Count == 0)
+            {
+                var defaultProf = new ProjectProfile
+                {
+                    Name = "Dự Án Mẫu (Sample Project)",
+                    RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    DetailedDesignFolder = "Detailed_Design",
+                    BasicDesignFolder = "Basic_Design",
+                    TestSpecFolder = "Test_Specification",
+                    OpenReadOnlyDefault = false,
+                    FileExtensions = ".xlsx;.xlsm;.xls;.docx;.pdf;.pptx"
+                };
+                defaultProf.IsActive = true;
+                defaultProf.DatabaseConnection = new OracleConnectionProfile
+                {
+                    Id = defaultProf.Id,
+                    Name = defaultProf.Name,
+                    Host = "localhost",
+                    Port = 1521,
+                    ServiceNameOrSid = "ORCL",
+                    ServiceType = OracleServiceNameType.ServiceName,
+                    IsDefault = true
+                };
+                defaultProf.DatabaseConnection.EnsureDefaultUsers();
+
+                config.Profiles = new List<ProjectProfile> { defaultProf };
+                config.ActiveProfileId = defaultProf.Id;
+                TryMigrateLegacyOracleConnections(config);
+            }
+            else
+            {
+                // Ensure database connection is initialized for all profiles
+                int pIdx = 1;
+                foreach (var p in config.Profiles)
+                {
+                    if (string.IsNullOrWhiteSpace(p.Name))
                     {
-                        // Ensure database connection is initialized for all profiles
-                        int pIdx = 1;
-                        foreach (var p in config.Profiles)
+                        p.Name = $"Dự Án {pIdx}";
+                    }
+                    pIdx++;
+
+                    if (p.DatabaseConnection == null)
+                    {
+                        p.DatabaseConnection = new OracleConnectionProfile
                         {
-                            if (string.IsNullOrWhiteSpace(p.Name))
-                            {
-                                p.Name = $"Dự Án {pIdx}";
-                            }
-                            pIdx++;
-
-                            if (p.DatabaseConnection == null)
-                            {
-                                p.DatabaseConnection = new OracleConnectionProfile
-                                {
-                                    Id = p.Id,
-                                    Name = p.Name,
-                                    Host = "localhost",
-                                    Port = 1521,
-                                    ServiceNameOrSid = "ORCL",
-                                    ServiceType = OracleServiceNameType.ServiceName
-                                };
-                            }
-                            else
-                            {
-                                p.DatabaseConnection.Id = p.Id;
-                                p.DatabaseConnection.Name = p.Name;
-                            }
-                            p.DatabaseConnection.EnsureDefaultUsers();
-                            p.IsActive = (p.Id == config.ActiveProfileId);
-                            p.DatabaseConnection.IsDefault = (p.Id == config.ActiveProfileId);
-                        }
-
-                        TryMigrateLegacyOracleConnections(config);
-                        return config;
+                            Id = p.Id,
+                            Name = p.Name,
+                            Host = "localhost",
+                            Port = 1521,
+                            ServiceNameOrSid = "ORCL",
+                            ServiceType = OracleServiceNameType.ServiceName
+                        };
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProjectProfileManager] Error loading config: {ex.Message}");
-            }
-
-            // Tạo cấu hình mặc định ban đầu
-            var defaultConfig = new ProjectProfilesConfig
-            {
-                Profiles = new List<ProjectProfile>
-                {
-                    new ProjectProfile
+                    else
                     {
-                        Name = "Dự Án Mẫu (Sample Project)",
-                        RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                        DetailedDesignFolder = "Detailed_Design",
-                        BasicDesignFolder = "Basic_Design",
-                        TestSpecFolder = "Test_Specification",
-                        OpenReadOnlyDefault = false,
-                        FileExtensions = ".xlsx;.xlsm;.xls;.docx;.pdf;.pptx"
+                        p.DatabaseConnection.Id = p.Id;
+                        p.DatabaseConnection.Name = p.Name;
                     }
+                    p.DatabaseConnection.EnsureDefaultUsers();
+                    p.IsActive = (p.Id == config.ActiveProfileId);
+                    p.DatabaseConnection.IsDefault = (p.Id == config.ActiveProfileId);
                 }
-            };
-            defaultConfig.ActiveProfileId = defaultConfig.Profiles[0].Id;
-            defaultConfig.Profiles[0].IsActive = true;
-            defaultConfig.Profiles[0].DatabaseConnection.Id = defaultConfig.Profiles[0].Id;
-            defaultConfig.Profiles[0].DatabaseConnection.Name = defaultConfig.Profiles[0].Name;
-            defaultConfig.Profiles[0].DatabaseConnection.IsDefault = true;
 
-            TryMigrateLegacyOracleConnections(defaultConfig);
+                TryMigrateLegacyOracleConnections(config);
+            }
 
-            SaveConfig(defaultConfig);
-            return defaultConfig;
+            return config;
         }
 
         private static void TryMigrateLegacyOracleConnections(ProjectProfilesConfig config)
         {
             try
             {
-                string oracleJsonPath = Path.Combine(ConfigDirectory, "oracle_connections.json");
-                if (File.Exists(oracleJsonPath) && config.Profiles.Count > 0)
+                string oracleJsonPath = Path.Combine(JsonConfigStore.BaseDirectory, "oracle_connections.json");
+                if (File.Exists(oracleJsonPath) && config.Profiles != null && config.Profiles.Count > 0)
                 {
                     string json = File.ReadAllText(oracleJsonPath);
                     var legacyList = JsonConvert.DeserializeObject<List<OracleConnectionProfile>>(json);
                     if (legacyList != null && legacyList.Count > 0)
                     {
                         var firstProj = config.Profiles[0];
+                        if (firstProj.DatabaseConnection == null)
+                        {
+                            firstProj.DatabaseConnection = new OracleConnectionProfile();
+                        }
                         // If first project's DB is untouched/default, import legacy settings
-                        if (firstProj.DatabaseConnection.Users.Count <= 1 &&
+                        if (firstProj.DatabaseConnection.Users == null || firstProj.DatabaseConnection.Users.Count <= 1 &&
                             (firstProj.DatabaseConnection.Users.Count == 0 || firstProj.DatabaseConnection.Users[0].Username == "XXX_USR1" || firstProj.DatabaseConnection.Users[0].Username == ""))
                         {
                             var legacy = legacyList[0];
@@ -312,20 +331,7 @@ namespace ExcelSupport.Services
 
         private static void SaveConfig(ProjectProfilesConfig config)
         {
-            try
-            {
-                if (!Directory.Exists(ConfigDirectory))
-                {
-                    Directory.CreateDirectory(ConfigDirectory);
-                }
-
-                string json = JsonConvert.SerializeObject(config, Formatting.Indented);
-                File.WriteAllText(ConfigFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProjectProfileManager] Error saving config: {ex.Message}");
-            }
+            JsonConfigStore.Save(ConfigFileName, config);
         }
     }
 }
