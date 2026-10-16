@@ -52,26 +52,24 @@ namespace ExcelSupport.Services
 
                 if (rowTokens.Count == 0) continue;
 
-                // Kiểm tra xem có cell nào chứa ký tự xuống dòng \n (như Alt+Enter trong Excel)
-                bool hasNewline = rowTokens.Any(t => t.Contains("\n"));
-                if (hasNewline)
+                // Trường hợp 1 ô duy nhất chứa nhiều dòng do Alt+Enter
+                if (rowTokens.Count == 1 && rowTokens[0].Contains("\n"))
                 {
-                    foreach (var token in rowTokens)
+                    var subLines = rowTokens[0].Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var sl in subLines)
                     {
-                        var subLines = token.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var sl in subLines)
+                        if (!string.IsNullOrWhiteSpace(sl))
                         {
-                            if (!string.IsNullOrWhiteSpace(sl))
-                            {
-                                lines.Add(sl.Trim());
-                            }
+                            lines.Add(sl.Trim());
                         }
                     }
                 }
                 else
                 {
-                    // Ghép các cột trong cùng 1 dòng thành 1 chuỗi hoàn chỉnh
-                    string joined = string.Join(" ", rowTokens).Trim();
+                    // Ghép các cột trong cùng 1 dòng thành 1 chuỗi hoàn chỉnh (VD: Cột 1: [HANKB], Cột 2: =, Cột 3: 画面.HANKB)
+                    var cleanedTokens = rowTokens.Select(t => Regex.Replace(t, @"[\r\n]+", " ").Trim())
+                                                 .Where(t => !string.IsNullOrEmpty(t));
+                    string joined = string.Join(" ", cleanedTokens).Trim();
                     if (!string.IsNullOrWhiteSpace(joined))
                     {
                         lines.Add(joined);

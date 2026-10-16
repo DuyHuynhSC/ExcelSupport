@@ -1123,8 +1123,17 @@ namespace ExcelSupport.Ribbon
 
         public void OnOracleSpecToPlSql(IRibbonControl control)
         {
-            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
-            Views.OracleSpecToPlSqlDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+            try
+            {
+                var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+                Views.OracleSpecToPlSqlDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"Lỗi mở tính năng Spec to PL/SQL:\n{ex.Message}\n\n{ex.StackTrace}",
+                    "ExcelSupport", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         public void OnAdvancedFilter(IRibbonControl control)

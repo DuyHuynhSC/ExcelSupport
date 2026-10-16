@@ -187,7 +187,7 @@ namespace ExcelSupport.ViewModels
 
     public class OracleSpecToPlSqlViewModel : ViewModelBase
     {
-        private readonly ExcelApp _excelApp;
+        private readonly ExcelApp? _excelApp;
 
         private OracleSpecType _specType = OracleSpecType.QueryLogicSpec;
         private string _schemaName = string.Empty;
@@ -437,9 +437,9 @@ namespace ExcelSupport.ViewModels
 
         public Action<string>? OnSendToOracleQueryAction { get; set; }
 
-        public OracleSpecToPlSqlViewModel(ExcelApp excelApp, bool isDarkTheme = false)
+        public OracleSpecToPlSqlViewModel(ExcelApp? excelApp = null, bool isDarkTheme = false)
         {
-            _excelApp = excelApp ?? throw new ArgumentNullException(nameof(excelApp));
+            _excelApp = excelApp;
             IsDarkTheme = isDarkTheme;
 
             GenerateScriptCommand = new RelayCommand(_ => TriggerGenerateScript());
@@ -468,6 +468,12 @@ namespace ExcelSupport.ViewModels
         {
             try
             {
+                if (_excelApp == null)
+                {
+                    StatusMessage = LocalizationService.Get("OracleSpec_ErrNoSelection", "⚠️ Vui lòng quét chọn một vùng đặc tả trên bảng tính Excel!");
+                    return;
+                }
+
                 dynamic sel = _excelApp.Selection;
                 if (sel is not Range rng)
                 {

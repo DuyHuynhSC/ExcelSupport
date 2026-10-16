@@ -700,7 +700,7 @@
                              IsReadOnly="False"
                              AcceptsReturn="True"
                              AcceptsTab="True"
-                             TextWrapping="No"
+                             TextWrapping="NoWrap"
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Auto"
                              Padding="12"
