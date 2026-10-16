@@ -626,7 +626,8 @@
                             </TextBlock.Style>
                         </TextBlock>
                         <Border CornerRadius="10" Padding="6,1" Margin="5,0,0,0"
-                                Visibility="{Binding HasSelectedWorkbook, Converter={StaticResource BoolToVisConverter}}">
+                                Visibility="{Binding HasSelectedWorkbook, Converter={StaticResource BoolToVisConverter}}"
+                                ToolTip="{Binding SheetCountTooltip}">
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Setter Property="Background" Value="#E2E8F0"/>
@@ -634,10 +635,20 @@
                                         <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
                                             <Setter Property="Background" Value="#334155"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsSheetFiltered}" Value="True">
+                                            <Setter Property="Background" Value="#DCFCE7"/>
+                                        </DataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsSheetFiltered}" Value="True"/>
+                                                <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Background" Value="#065F46"/>
+                                        </MultiDataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <TextBlock Text="{Binding SelectedWorkbook.SheetCount, StringFormat='{}{0}'}" 
+                            <TextBlock Text="{Binding SheetCountDisplay}" 
                                        FontSize="10.5" FontWeight="SemiBold">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -646,6 +657,16 @@
                                             <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
                                                 <Setter Property="Foreground" Value="#94A3B8"/>
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsSheetFiltered}" Value="True">
+                                                <Setter Property="Foreground" Value="#15803D"/>
+                                            </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsSheetFiltered}" Value="True"/>
+                                                    <Condition Binding="{Binding IsDarkTheme}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="#34D399"/>
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </TextBlock.Style>

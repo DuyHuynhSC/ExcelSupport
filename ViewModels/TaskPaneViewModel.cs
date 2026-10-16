@@ -73,6 +73,7 @@ namespace ExcelSupport.ViewModels
                 if (SetProperty(ref _sheetSearchText, value))
                 {
                     SheetsView?.Refresh();
+                    NotifySheetCountChanged();
                 }
             }
         }
@@ -86,6 +87,7 @@ namespace ExcelSupport.ViewModels
                 {
                     SheetsView?.Refresh();
                     OnPropertyChanged(nameof(ShowHiddenSheetsTooltip));
+                    NotifySheetCountChanged();
                 }
             }
         }
@@ -103,6 +105,7 @@ namespace ExcelSupport.ViewModels
                 {
                     SheetsView?.Refresh();
                     OnPropertyChanged(nameof(FilterColoredSheetsTooltip));
+                    NotifySheetCountChanged();
                 }
             }
         }
@@ -110,6 +113,65 @@ namespace ExcelSupport.ViewModels
         public string FilterColoredSheetsTooltip => FilterOnlyColoredSheets
             ? (ExcelSupport.Services.LocalizationService.Instance["Nav_FilterColoredSheetsTip_On"] ?? "Đang lọc Sheet có màu Tab (Bấm để hiển thị lại tất cả Sheet)")
             : (ExcelSupport.Services.LocalizationService.Instance["Nav_FilterColoredSheetsTip_Off"] ?? "Lọc chỉ Sheet có màu Tab (khác màu mặc định của Excel)");
+
+        public bool IsSheetFiltered =>
+            !string.IsNullOrWhiteSpace(SheetSearchText) ||
+            FilterOnlyColoredSheets ||
+            (SelectedWorkbook != null && FilteredSheetCount < SelectedWorkbook.SheetCount);
+
+        public int FilteredSheetCount
+        {
+            get
+            {
+                if (SheetsView == null) return 0;
+                int count = 0;
+                foreach (var _ in SheetsView)
+                {
+                    count++;
+                }
+                return count;
+            }
+        }
+
+        public string SheetCountDisplay
+        {
+            get
+            {
+                if (SelectedWorkbook == null) return "0";
+                int total = SelectedWorkbook.SheetCount;
+                if (IsSheetFiltered)
+                {
+                    return $"{FilteredSheetCount} / {total}";
+                }
+                return total.ToString();
+            }
+        }
+
+        public string SheetCountTooltip
+        {
+            get
+            {
+                if (SelectedWorkbook == null) return string.Empty;
+                int total = SelectedWorkbook.SheetCount;
+                if (IsSheetFiltered)
+                {
+                    return string.Format(
+                        ExcelSupport.Services.LocalizationService.Get("Nav_SheetCount_FilteredTip", "Đang hiển thị {0} trên tổng số {1} sheet (đang lọc/tìm kiếm)"),
+                        FilteredSheetCount, total);
+                }
+                return string.Format(
+                    ExcelSupport.Services.LocalizationService.Get("Nav_SheetCount_TotalTip", "Tổng cộng {0} sheet"),
+                    total);
+            }
+        }
+
+        public void NotifySheetCountChanged()
+        {
+            OnPropertyChanged(nameof(FilteredSheetCount));
+            OnPropertyChanged(nameof(IsSheetFiltered));
+            OnPropertyChanged(nameof(SheetCountDisplay));
+            OnPropertyChanged(nameof(SheetCountTooltip));
+        }
 
         public SortOrder WorkbookSortOrder
         {
@@ -459,6 +521,7 @@ namespace ExcelSupport.ViewModels
             {
                 SheetsView = null;
             }
+            NotifySheetCountChanged();
         }
 
         private void ApplyWorkbookSorting()
@@ -597,6 +660,7 @@ namespace ExcelSupport.ViewModels
 
                 SheetsView?.Refresh();
                 WorkbooksView.Refresh();
+                NotifySheetCountChanged();
             }
             finally
             {

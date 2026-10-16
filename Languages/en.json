@@ -751,6 +751,8 @@
   "Nav_SearchSheetTip": "Search Sheet (supports A|B|C for multiple sheets. Enter to activate, Up/Down to navigate)",
   "Nav_FilterColoredSheetsTip_On": "Filtering sheets with tab color (Click to show all sheets)",
   "Nav_FilterColoredSheetsTip_Off": "Filter only sheets with tab color (different from Excel default)",
+  "Nav_SheetCount_FilteredTip": "Showing {0} of {1} sheets (filtered/search)",
+  "Nav_SheetCount_TotalTip": "Total {0} sheets",
   "Nav_ProtectedSheetTip": "This sheet is protected (Protected Sheet)",
   "Nav_TocTip": "Create Sheet Table of Contents (TOC)",
   "Nav_SplitMergeTip": "Split / Merge & Rename Sheets Tools",

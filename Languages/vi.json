@@ -751,6 +751,8 @@
   "Nav_SearchSheetTip": "Tìm kiếm Sheet (hỗ trợ A|B|C để lọc nhiều sheet. Nhấn Enter để chuyển sheet, Mũi tên Lên/Xuống để duyệt nhanh)",
   "Nav_FilterColoredSheetsTip_On": "Đang lọc Sheet có màu Tab (Bấm để hiển thị lại tất cả Sheet)",
   "Nav_FilterColoredSheetsTip_Off": "Lọc chỉ Sheet có màu Tab (khác màu mặc định của Excel)",
+  "Nav_SheetCount_FilteredTip": "Đang hiển thị {0} trên tổng số {1} sheet (đang lọc/tìm kiếm)",
+  "Nav_SheetCount_TotalTip": "Tổng cộng {0} sheet",
   "Nav_ProtectedSheetTip": "Sheet này đang được bảo vệ (Protected Sheet)",
   "Nav_TocTip": "Tạo Trang Mục Lục Sheet (Table of Contents)",
   "Nav_SplitMergeTip": "Tách / Gộp & Đổi Tên Sheet Nâng Cao",
