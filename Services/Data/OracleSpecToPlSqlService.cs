@@ -724,36 +724,43 @@ namespace ExcelSupport.Services
         {
             var sb = new StringBuilder();
             var q = opt.QuerySpec;
+            string curName = $"csr{pureTableName}";
+            string recName = $"rec{pureTableName}";
 
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine($"-- ORACLE PL/SQL: Trích xuất / Kiểm tra data table {q.TableLogicalName} [{pureTableName}]");
+            sb.AppendLine($"-- Cursor Name  : {curName}");
             sb.AppendLine("-- Sinh tự động từ đặc tả xử lý bảng tính (TKCT - 詳細設計書)");
             sb.AppendLine($"-- Thời gian sinh: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine("DECLARE");
-            sb.AppendLine("    v_count NUMBER := 0;");
-            sb.AppendLine("BEGIN");
-            sb.AppendLine($"    -- 1. Kiểm tra tồn tại dữ liệu trong bảng {pureTableName}");
-            sb.AppendLine("    SELECT COUNT(*)");
-            sb.AppendLine("    INTO v_count");
-            sb.AppendLine($"    FROM {fullTableName}");
+            sb.AppendLine($"    -- 1. Khai báo cursor trích xuất data table {q.TableLogicalName} [{pureTableName}]");
+            sb.AppendLine($"    CURSOR {curName} IS");
+            sb.AppendLine("        SELECT *");
+            sb.AppendLine($"        FROM {fullTableName}");
 
             if (conds.Count > 0)
             {
-                sb.AppendLine("    WHERE");
+                sb.AppendLine("        WHERE");
                 for (int i = 0; i < conds.Count; i++)
                 {
                     var c = conds[i];
                     string prefix = (i == 0) ? "        " : "    AND ";
                     string comment = !string.IsNullOrWhiteSpace(c.LogicalName) ? $" -- {c.LogicalName}" : "";
-                    sb.AppendLine($"{prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {c.TargetSqlValue}{comment}");
+                    sb.AppendLine($"        {prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {c.TargetSqlValue}{comment}");
                 }
             }
-            sb.AppendLine("    ;");
+            sb.AppendLine("        ;");
             sb.AppendLine();
-
-            sb.AppendLine("    -- 2. Xử lý rẽ nhánh theo kết quả kiểm tra");
-            sb.AppendLine("    IF v_count > 0 THEN");
+            sb.AppendLine($"    {recName} {curName}%ROWTYPE;");
+            sb.AppendLine("BEGIN");
+            sb.AppendLine($"    -- 2. Mở cursor {curName} và trích xuất dữ liệu từ bảng {pureTableName}");
+            sb.AppendLine($"    OPEN {curName};");
+            sb.AppendLine($"    FETCH {curName} INTO {recName};");
+            sb.AppendLine();
+            sb.AppendLine($"    -- 3. Kiểm tra kết quả trích xuất dữ liệu từ cursor");
+            sb.AppendLine($"    IF {curName}%FOUND THEN");
+            sb.AppendLine($"        CLOSE {curName};");
 
             if (!string.IsNullOrWhiteSpace(q.OnExistsAction))
             {
@@ -765,16 +772,17 @@ namespace ExcelSupport.Services
             }
             else
             {
-                sb.AppendLine("        DBMS_OUTPUT.PUT_LINE('Dữ liệu đã tồn tại trong ' || '" + pureTableName + "');");
+                sb.AppendLine($"        DBMS_OUTPUT.PUT_LINE('Dữ liệu đã tồn tại trong {pureTableName}');");
             }
 
             sb.AppendLine("    ELSE");
+            sb.AppendLine($"        CLOSE {curName};");
 
             if (!string.IsNullOrWhiteSpace(q.OnNotExistsAction))
             {
                 sb.AppendLine($"        -- {q.OnNotExistsAction}");
             }
-            sb.AppendLine("        NULL; -- Tiếp tục luồng xử lý tiếp theo");
+            sb.AppendLine("        DBMS_OUTPUT.PUT_LINE('Thỏa mãn điều kiện: Không tìm thấy data, tiếp tục xử lý.');");
             sb.AppendLine("    END IF;");
 
             if (q.OtherNotes.Count > 0)
@@ -790,7 +798,10 @@ namespace ExcelSupport.Services
             sb.AppendLine();
             sb.AppendLine("EXCEPTION");
             sb.AppendLine("    WHEN OTHERS THEN");
-            sb.AppendLine($"        DBMS_OUTPUT.PUT_LINE('Lỗi khi kiểm tra {pureTableName}: ' || SQLERRM);");
+            sb.AppendLine($"        IF {curName}%ISOPEN THEN");
+            sb.AppendLine($"            CLOSE {curName};");
+            sb.AppendLine("        END IF;");
+            sb.AppendLine($"        DBMS_OUTPUT.PUT_LINE('Lỗi khi trích xuất dữ liệu {pureTableName} qua cursor {curName}: ' || SQLERRM);");
             sb.AppendLine("        RAISE;");
             sb.AppendLine("END;");
             sb.AppendLine("/");
@@ -830,13 +841,15 @@ namespace ExcelSupport.Services
         {
             var sb = new StringBuilder();
             var q = opt.QuerySpec;
-            string curName = $"c_{pureTableName.ToLowerInvariant()}";
-            string recName = $"r_{pureTableName.ToLowerInvariant()}";
+            string curName = $"csr{pureTableName}";
+            string recName = $"rec{pureTableName}";
 
             sb.AppendLine("-- =============================================================================");
-            sb.AppendLine($"-- PL/SQL CURSOR LOOP: {pureTableName}");
+            sb.AppendLine($"-- PL/SQL CURSOR LOOP: {curName} ({pureTableName})");
+            sb.AppendLine($"-- Table Logical : {q.TableLogicalName}");
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine("DECLARE");
+            sb.AppendLine($"    -- 1. Khai báo cursor trích xuất data table {q.TableLogicalName} [{pureTableName}]");
             sb.AppendLine($"    CURSOR {curName} IS");
             sb.AppendLine("        SELECT *");
             sb.AppendLine($"        FROM {fullTableName}");
@@ -856,28 +869,31 @@ namespace ExcelSupport.Services
             sb.AppendLine();
             sb.AppendLine($"    {recName} {curName}%ROWTYPE;");
             sb.AppendLine("BEGIN");
+            sb.AppendLine($"    -- 2. Mở cursor {curName} và duyệt từng dòng dữ liệu trích xuất");
             sb.AppendLine($"    OPEN {curName};");
-            sb.AppendLine($"    FETCH {curName} INTO {recName};");
-            sb.AppendLine($"    IF {curName}%FOUND THEN");
-
-            if (!string.IsNullOrWhiteSpace(q.OnExistsAction))
-            {
-                sb.AppendLine($"        -- {q.OnExistsAction}");
-                sb.AppendLine("        DBMS_OUTPUT.PUT_LINE('Tìm thấy dữ liệu!');");
-            }
-            else
-            {
-                sb.AppendLine("        DBMS_OUTPUT.PUT_LINE('Dữ liệu tồn tại.');");
-            }
-
-            sb.AppendLine("    ELSE");
-            if (!string.IsNullOrWhiteSpace(q.OnNotExistsAction))
-            {
-                sb.AppendLine($"        -- {q.OnNotExistsAction}");
-            }
-            sb.AppendLine("        NULL;");
-            sb.AppendLine("    END IF;");
+            sb.AppendLine("    LOOP");
+            sb.AppendLine($"        FETCH {curName} INTO {recName};");
+            sb.AppendLine($"        EXIT WHEN {curName}%NOTFOUND;");
+            sb.AppendLine();
+            sb.AppendLine($"        -- Xử lý nghiệp vụ với từng dòng dữ liệu ({recName}.<COL>):");
+            sb.AppendLine($"        DBMS_OUTPUT.PUT_LINE('Đang xử lý bản ghi từ {curName}...');");
+            sb.AppendLine("    END LOOP;");
             sb.AppendLine($"    CLOSE {curName};");
+            sb.AppendLine();
+            sb.AppendLine($"    /*");
+            sb.AppendLine($"    -- Hoặc dùng cú pháp FOR loop ngắn gọn:");
+            sb.AppendLine($"    FOR {recName} IN {curName} LOOP");
+            sb.AppendLine($"        -- Xử lý từng bản ghi {recName}...");
+            sb.AppendLine($"    END LOOP;");
+            sb.AppendLine($"    */");
+            sb.AppendLine();
+            sb.AppendLine("EXCEPTION");
+            sb.AppendLine("    WHEN OTHERS THEN");
+            sb.AppendLine($"        IF {curName}%ISOPEN THEN");
+            sb.AppendLine($"            CLOSE {curName};");
+            sb.AppendLine("        END IF;");
+            sb.AppendLine($"        DBMS_OUTPUT.PUT_LINE('Lỗi khi duyệt cursor {curName}: ' || SQLERRM);");
+            sb.AppendLine("        RAISE;");
             sb.AppendLine("END;");
             sb.AppendLine("/");
 
@@ -889,6 +905,8 @@ namespace ExcelSupport.Services
             var sb = new StringBuilder();
             var q = opt.QuerySpec;
             string spName = $"SP_CHECK_{pureTableName}";
+            string curName = $"csr{pureTableName}";
+            string recName = $"rec{pureTableName}";
 
             // Lấy danh sách các biến bind
             var bindParams = conds.Where(c => !string.IsNullOrEmpty(c.BindVariableName))
@@ -898,6 +916,7 @@ namespace ExcelSupport.Services
 
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine($"-- STORED PROCEDURE / FUNCTION: {spName}");
+            sb.AppendLine($"-- Cursor Name: {curName}");
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine($"CREATE OR REPLACE PROCEDURE {spName} (");
 
@@ -912,32 +931,43 @@ namespace ExcelSupport.Services
             sb.AppendLine("    p_exists_flag              OUT NUMBER   -- 1: Tồn tại, 0: Không tồn tại");
             sb.AppendLine(")");
             sb.AppendLine("IS");
-            sb.AppendLine("    v_count NUMBER := 0;");
-            sb.AppendLine("BEGIN");
-            sb.AppendLine("    SELECT COUNT(*)");
-            sb.AppendLine("    INTO v_count");
-            sb.AppendLine($"    FROM {fullTableName}");
+            sb.AppendLine($"    -- 1. Khai báo cursor trích xuất data table {q.TableLogicalName} [{pureTableName}]");
+            sb.AppendLine($"    CURSOR {curName} IS");
+            sb.AppendLine("        SELECT *");
+            sb.AppendLine($"        FROM {fullTableName}");
 
             if (conds.Count > 0)
             {
-                sb.AppendLine("    WHERE");
+                sb.AppendLine("        WHERE");
                 for (int i = 0; i < conds.Count; i++)
                 {
                     var c = conds[i];
                     string prefix = (i == 0) ? "        " : "    AND ";
                     string valExpr = !string.IsNullOrEmpty(c.BindVariableName) ? $"p_{c.BindVariableName}" : c.TargetSqlValue;
-                    sb.AppendLine($"{prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {valExpr}");
+                    string comment = !string.IsNullOrWhiteSpace(c.LogicalName) ? $" -- {c.LogicalName}" : "";
+                    sb.AppendLine($"{prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {valExpr}{comment}");
                 }
             }
-            sb.AppendLine("    ;");
+            sb.AppendLine("        ;");
             sb.AppendLine();
-            sb.AppendLine("    IF v_count > 0 THEN");
+            sb.AppendLine($"    {recName} {curName}%ROWTYPE;");
+            sb.AppendLine("BEGIN");
+            sb.AppendLine($"    -- 2. Mở cursor {curName} và kiểm tra kết quả trích xuất dữ liệu");
+            sb.AppendLine($"    OPEN {curName};");
+            sb.AppendLine($"    FETCH {curName} INTO {recName};");
+            sb.AppendLine();
+            sb.AppendLine($"    IF {curName}%FOUND THEN");
             sb.AppendLine("        p_exists_flag := 1;");
             sb.AppendLine("    ELSE");
             sb.AppendLine("        p_exists_flag := 0;");
             sb.AppendLine("    END IF;");
+            sb.AppendLine();
+            sb.AppendLine($"    CLOSE {curName};");
             sb.AppendLine("EXCEPTION");
             sb.AppendLine("    WHEN OTHERS THEN");
+            sb.AppendLine($"        IF {curName}%ISOPEN THEN");
+            sb.AppendLine($"            CLOSE {curName};");
+            sb.AppendLine("        END IF;");
             sb.AppendLine($"        RAISE_APPLICATION_ERROR(-20001, 'Lỗi trong {spName}: ' || SQLERRM);");
             sb.AppendLine("END;");
             sb.AppendLine("/");
