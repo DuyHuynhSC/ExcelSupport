@@ -30,6 +30,58 @@ namespace ExcelSupport.Services
             return null;
         }
 
+        public static List<string> ExtractLinesFrom2D(object[,]? data)
+        {
+            var lines = new List<string>();
+            if (data == null) return lines;
+
+            int rowCount = data.GetLength(0);
+            int colCount = data.GetLength(1);
+
+            for (int r = 1; r <= rowCount; r++)
+            {
+                var rowTokens = new List<string>();
+                for (int c = 1; c <= colCount; c++)
+                {
+                    string cellStr = data[r, c]?.ToString()?.Trim() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(cellStr))
+                    {
+                        rowTokens.Add(cellStr);
+                    }
+                }
+
+                if (rowTokens.Count == 0) continue;
+
+                // Kiểm tra xem có cell nào chứa ký tự xuống dòng \n (như Alt+Enter trong Excel)
+                bool hasNewline = rowTokens.Any(t => t.Contains("\n"));
+                if (hasNewline)
+                {
+                    foreach (var token in rowTokens)
+                    {
+                        var subLines = token.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var sl in subLines)
+                        {
+                            if (!string.IsNullOrWhiteSpace(sl))
+                            {
+                                lines.Add(sl.Trim());
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Ghép các cột trong cùng 1 dòng thành 1 chuỗi hoàn chỉnh
+                    string joined = string.Join(" ", rowTokens).Trim();
+                    if (!string.IsNullOrWhiteSpace(joined))
+                    {
+                        lines.Add(joined);
+                    }
+                }
+            }
+
+            return lines;
+        }
+
         public static OracleSpecParseResult ParseRangeSpec(object[,]? data, string fallbackSheetName)
         {
             var result = new OracleSpecParseResult();
@@ -40,25 +92,251 @@ namespace ExcelSupport.Services
                 return result;
             }
 
-            int rowCount = data.GetLength(0);
-            int colCount = data.GetLength(1);
-
-            if (rowCount < 1 || colCount < 1)
+            var lines = ExtractLinesFrom2D(data);
+            if (lines.Count == 0)
             {
                 result.Success = false;
-                result.ErrorMessage = "Vùng chọn không có dòng hoặc cột hợp lệ.";
+                result.ErrorMessage = "Vùng chọn không có dòng dữ liệu hợp lệ.";
                 return result;
             }
 
-            // Gợi ý tên bảng mặc định từ tên Sheet
-            string defaultTableName = SanitizeIdentifier(fallbackSheetName);
-            if (string.IsNullOrWhiteSpace(defaultTableName))
+            // 1. Phân loại xem vùng chọn là Đặc tả Truy vấn / TKCT (QueryLogicSpec) hay Đặc tả DDL (TableDefinitionDdl)
+            bool isQueryLogic = DetectIsQueryLogicSpec(lines);
+
+            if (isQueryLogic)
             {
-                defaultTableName = "MY_TABLE";
+                result.SpecType = OracleSpecType.QueryLogicSpec;
+                return ParseQueryLogicSpec(lines, fallbackSheetName);
             }
+            else
+            {
+                result.SpecType = OracleSpecType.TableDefinitionDdl;
+                return ParseTableDefinitionDdl(data, fallbackSheetName);
+            }
+        }
+
+        private static bool DetectIsQueryLogicSpec(List<string> lines)
+        {
+            int queryScore = 0;
+            foreach (var line in lines)
+            {
+                // Có chứa [COLUMN] theo sau bởi toán tử so sánh: = , <> , >= , <= , != , LIKE , IN
+                if (Regex.IsMatch(line, @"\[[A-Za-z0-9_#$]+\]\s*(=|<>|!=|>=|<=|>|<|LIKE|IN)", RegexOptions.IgnoreCase))
+                {
+                    queryScore += 3;
+                }
+                // Có chứa từ khóa trích xuất / query
+                if (Regex.IsMatch(line, @"(?:trích\s*xuất|lấy\s*data|kiểm\s*tra|tồn\s*tại|抽出|取得|data\s*table|画面\.)", RegexOptions.IgnoreCase))
+                {
+                    queryScore += 2;
+                }
+            }
+
+            return queryScore >= 2;
+        }
+
+        // =========================================================================================
+        // PARSER CHO QUERY / LOGIC SPEC (ĐẶC TẢ TRÍCH XUẤT TKCT)
+        // =========================================================================================
+
+        public static OracleSpecParseResult ParseQueryLogicSpec(List<string> lines, string fallbackSheetName)
+        {
+            var result = new OracleSpecParseResult
+            {
+                Success = true,
+                SpecType = OracleSpecType.QueryLogicSpec
+            };
+
+            var queryInfo = new OracleQuerySpecInfo();
+            string detectedTable = string.Empty;
+            string detectedLogicalTable = string.Empty;
+
+            // 1. Quét tìm Table Name và Action Type
+            foreach (var line in lines)
+            {
+                // Match: Trích xuất data table 受注見出トラン[JDNTHA]
+                var matchTable = Regex.Match(line, @"(?:data\s*table|table|bảng|テーブル)?\s*([^\r\n\[\]]+)?\s*\[([A-Za-z0-9_#$]+)\]", RegexOptions.IgnoreCase);
+                if (matchTable.Success)
+                {
+                    string candidateLogical = matchTable.Groups[1].Value.Trim();
+                    string candidatePhysical = matchTable.Groups[2].Value.Trim().ToUpperInvariant();
+
+                    // Loại bỏ các từ tiền tố thừa như "Trích xuất data table ", "・ "
+                    candidateLogical = Regex.Replace(candidateLogical, @"^[・\-\*\s]*(?:trích\s*xuất|cập\s*nhật|xóa|thêm|data\s*table|table|bảng|テーブル)?\s*", "", RegexOptions.IgnoreCase).Trim();
+
+                    // Đảm bảo không phải là dòng điều kiện cột (dòng điều kiện thường có toán tử = hoặc <>)
+                    if (!line.Contains("=") && !line.Contains("<>") && !line.Contains(">=") && !line.Contains("<="))
+                    {
+                        detectedTable = candidatePhysical;
+                        detectedLogicalTable = candidateLogical;
+                    }
+                    else if (string.IsNullOrEmpty(detectedTable))
+                    {
+                        // Fallback lấy table name đầu tiên nếu chưa có
+                        detectedTable = candidatePhysical;
+                    }
+                }
+
+                // Nhận diện Action Type
+                if (Regex.IsMatch(line, @"(?:trích\s*xuất|lấy|kiểm\s*tra|check|tìm\s*kiếm|抽出|取得|検索|select)", RegexOptions.IgnoreCase))
+                {
+                    queryInfo.ActionType = "SELECT";
+                }
+                else if (Regex.IsMatch(line, @"(?:cập\s*nhật|sửa|更新|update)", RegexOptions.IgnoreCase))
+                {
+                    queryInfo.ActionType = "UPDATE";
+                }
+                else if (Regex.IsMatch(line, @"(?:xóa|hủy|削除|delete)", RegexOptions.IgnoreCase))
+                {
+                    queryInfo.ActionType = "DELETE";
+                }
+                else if (Regex.IsMatch(line, @"(?:thêm|chèn|tạo|登録|insert)", RegexOptions.IgnoreCase))
+                {
+                    queryInfo.ActionType = "INSERT";
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(detectedTable))
+            {
+                detectedTable = SanitizeIdentifier(fallbackSheetName);
+                if (string.IsNullOrWhiteSpace(detectedTable)) detectedTable = "MY_TABLE";
+            }
+
+            queryInfo.TableName = detectedTable;
+            queryInfo.TableLogicalName = detectedLogicalTable;
+            result.DetectedTableName = detectedTable;
+            result.DetectedTableLogicalName = detectedLogicalTable;
+
+            // 2. Quét các dòng điều kiện (Conditions) và Hậu điều kiện (Post-actions)
+            int condIndex = 1;
+            foreach (var rawLine in lines)
+            {
+                string line = rawLine.Trim();
+                if (string.IsNullOrEmpty(line)) continue;
+
+                // A. Nhận diện Post-Condition: Trường hợp tồn tại data...
+                if (Regex.IsMatch(line, @"(?:tồn\s*tại\s*data|có\s*data|データが存在する場合)", RegexOptions.IgnoreCase))
+                {
+                    queryInfo.OnExistsAction = line.TrimStart('・', '-', '*', ' ');
+                    continue;
+                }
+
+                // B. Nhận diện Post-Condition: Trường hợp không tồn tại data...
+                if (Regex.IsMatch(line, @"(?:không\s*tồn\s*tại\s*data|không\s*có\s*data|データが存在しない場合)", RegexOptions.IgnoreCase))
+                {
+                    queryInfo.OnNotExistsAction = line.TrimStart('・', '-', '*', ' ');
+                    continue;
+                }
+
+                // C. Nhận diện Điều Kiện Cột: [COLUMN] toán_tử giá_trị
+                // Ví dụ: 伝票削除区分 [DATKB] = "1"
+                // Hoặc: 処理区分 [HANKB] = 画面.処理区分[HD_HANKB]
+                var matchCond = Regex.Match(line,
+                    @"^[・\-\*\s]*(?<logical>[^\[\r\n=<>]+)?\s*\[(?<physical>[A-Za-z0-9_#$]+)\]\s*(?<op>=|<>|!=|>=|<=|>|<|LIKE|NOT\s+LIKE|IN|NOT\s+IN|IS\s+NULL|IS\s+NOT\s+NULL)\s*(?<val>.+)$",
+                    RegexOptions.IgnoreCase);
+
+                if (matchCond.Success)
+                {
+                    string logicalName = matchCond.Groups["logical"].Value.Trim();
+                    string physicalCol = matchCond.Groups["physical"].Value.Trim().ToUpperInvariant();
+                    string op = matchCond.Groups["op"].Value.Trim().ToUpperInvariant();
+                    string rawVal = matchCond.Groups["val"].Value.Trim();
+
+                    // Chuẩn hóa SQL Value & Bind Variable
+                    var (targetSql, bindVar) = ParseSqlValueAndBindVar(rawVal);
+
+                    var cond = new OracleConditionSpec
+                    {
+                        RowIndex = condIndex++,
+                        LogicalName = logicalName,
+                        PhysicalColumn = physicalCol,
+                        Operator = op,
+                        RawValue = rawVal,
+                        TargetSqlValue = targetSql,
+                        BindVariableName = bindVar,
+                        IsSelected = true
+                    };
+
+                    queryInfo.Conditions.Add(cond);
+                }
+                else
+                {
+                    // D. Ghi chú nghiệp vụ khác (VD: 部門制御 thì giống chuẩn)
+                    if (!line.StartsWith("・") && !line.Contains(detectedTable))
+                    {
+                        queryInfo.OtherNotes.Add(line);
+                    }
+                }
+            }
+
+            result.QuerySpec = queryInfo;
+            return result;
+        }
+
+        private static (string TargetSql, string BindVar) ParseSqlValueAndBindVar(string rawVal)
+        {
+            if (string.IsNullOrWhiteSpace(rawVal)) return ("NULL", string.Empty);
+            string v = rawVal.Trim();
+
+            // 1. Nếu là giá trị chuỗi cố định trong dấu ngoặc kép: "1", "0", "9"
+            var matchQuote = Regex.Match(v, @"^[""'](.*)[""']$");
+            if (matchQuote.Success)
+            {
+                string inner = matchQuote.Groups[1].Value;
+                return ($"'{EscapeSqlString(inner)}'", string.Empty);
+            }
+
+            // 2. Nếu là item từ màn hình: 画面.処理区分[HD_HANKB] hoặc 画面.出荷予定日[HD_SYUYTIDT]
+            var matchScreen = Regex.Match(v, @"(?:画面[.\s]*[^\r\n\[\]]*)?\[([A-Za-z0-9_#$]+)\]");
+            if (matchScreen.Success)
+            {
+                string varName = matchScreen.Groups[1].Value.Trim().ToUpperInvariant();
+                return ($":{varName}", varName);
+            }
+
+            // 3. Nếu là số nguyên hoặc số thập phân
+            if (decimal.TryParse(v, out _))
+            {
+                return (v, string.Empty);
+            }
+
+            // 4. Nếu là hàm SQL hoặc từ khóa hệ thống: SYSDATE, NULL, CURRENT_TIMESTAMP
+            if (v.Equals("SYSDATE", StringComparison.OrdinalIgnoreCase) ||
+                v.Equals("NULL", StringComparison.OrdinalIgnoreCase) ||
+                v.Equals("CURRENT_TIMESTAMP", StringComparison.OrdinalIgnoreCase))
+            {
+                return (v.ToUpperInvariant(), string.Empty);
+            }
+
+            // 5. Mặc định coi là biến bind hoặc chuỗi
+            if (Regex.IsMatch(v, @"^[A-Za-z0-9_#$]+$"))
+            {
+                return ($":{v.ToUpperInvariant()}", v.ToUpperInvariant());
+            }
+
+            return ($"'{EscapeSqlString(v)}'", string.Empty);
+        }
+
+        // =========================================================================================
+        // PARSER CHO TABLE DEFINITION DDL SPEC (ĐẶC TẢ CẤU TRÚC BẢNG)
+        // =========================================================================================
+
+        public static OracleSpecParseResult ParseTableDefinitionDdl(object[,] data, string fallbackSheetName)
+        {
+            var result = new OracleSpecParseResult
+            {
+                Success = true,
+                SpecType = OracleSpecType.TableDefinitionDdl
+            };
+
+            int rowCount = data.GetLength(0);
+            int colCount = data.GetLength(1);
+
+            string defaultTableName = SanitizeIdentifier(fallbackSheetName);
+            if (string.IsNullOrWhiteSpace(defaultTableName)) defaultTableName = "MY_TABLE";
             result.DetectedTableName = defaultTableName;
 
-            // 1. Quét tìm Table Name hoặc Logical Table Name ở các dòng trên cùng (nếu có)
+            // 1. Quét tìm Table Name hoặc Logical Table Name ở các dòng trên cùng
             for (int r = 1; r <= Math.Min(5, rowCount); r++)
             {
                 for (int c = 1; c <= colCount; c++)
@@ -66,14 +344,12 @@ namespace ExcelSupport.Services
                     string cellStr = data[r, c]?.ToString()?.Trim() ?? string.Empty;
                     if (string.IsNullOrWhiteSpace(cellStr)) continue;
 
-                    // Nhận diện Table Name: Table:, テーブル名:, Bảng:
                     var matchTable = Regex.Match(cellStr, @"(?:table|tbl|bảng|テーブル名?|table\s*name)[:：\s]+([A-Za-z0-9_]+)", RegexOptions.IgnoreCase);
                     if (matchTable.Success && matchTable.Groups.Count > 1)
                     {
                         result.DetectedTableName = matchTable.Groups[1].Value.ToUpperInvariant();
                     }
 
-                    // Nhận diện Logical Table Name: 論理名:, Tên logic:
                     var matchLogical = Regex.Match(cellStr, @"(?:論理名|logical|tên\s*bảng|mô\s*tả)[:：\s]+([^\r\n]+)", RegexOptions.IgnoreCase);
                     if (matchLogical.Success && matchLogical.Groups.Count > 1)
                     {
@@ -82,17 +358,11 @@ namespace ExcelSupport.Services
                 }
             }
 
-            // 2. Nhận diện dòng Header (Header Row Detection)
+            // 2. Nhận diện dòng Header
             int bestHeaderRow = -1;
             int maxScore = 0;
-            int colPhysical = -1;
-            int colLogical = -1;
-            int colType = -1;
-            int colLength = -1;
-            int colNullable = -1;
-            int colPk = -1;
-            int colDefault = -1;
-            int colComment = -1;
+            int colPhysical = -1, colLogical = -1, colType = -1, colLength = -1;
+            int colNullable = -1, colPk = -1, colDefault = -1, colComment = -1;
 
             int scanLimit = Math.Min(10, rowCount);
             for (int r = 1; r <= scanLimit; r++)
@@ -106,50 +376,42 @@ namespace ExcelSupport.Services
                     string h = data[r, c]?.ToString()?.Trim().ToLowerInvariant() ?? string.Empty;
                     if (string.IsNullOrEmpty(h)) continue;
 
-                    // Physical Column Name
                     if (MatchesHeader(h, "physical", "物理名", "tên cột", "cột", "column name", "col_name", "field name", "column", "field", "item_id", "項目名")
                         && !MatchesHeader(h, "logical", "論理"))
                     {
                         curPhysical = c;
                         score += 3;
                     }
-                    // Logical Name
                     else if (MatchesHeader(h, "logical", "論理名", "tên logic", "tên trường", "tiêu đề", "和名", "tên tiếng việt", "tên tiếng nhật"))
                     {
                         curLogical = c;
                         score += 3;
                     }
-                    // Data Type
                     else if (MatchesHeader(h, "data type", "datatype", "type", "データ型", "kiểu dữ liệu", "kiểu", "型"))
                     {
                         curType = c;
                         score += 3;
                     }
-                    // Length / Scale
                     else if (MatchesHeader(h, "length", "size", "precision", "scale", "桁数", "桁", "độ dài", "kích thước", "長さ"))
                     {
                         curLength = c;
                         score += 2;
                     }
-                    // Nullable
                     else if (MatchesHeader(h, "nullable", "allow null", "null", "not null", "必須", "cho phép null", "bắt buộc", "null?"))
                     {
                         curNullable = c;
                         score += 2;
                     }
-                    // Primary Key
                     else if (MatchesHeader(h, "pk", "primary key", "primary", "主キー", "khóa chính", "key"))
                     {
                         curPk = c;
                         score += 2;
                     }
-                    // Default
                     else if (MatchesHeader(h, "default", "initial", "初期値", "mặc định", "default value"))
                     {
                         curDefault = c;
                         score += 1;
                     }
-                    // Comments / Remarks
                     else if (MatchesHeader(h, "comment", "remarks", "description", "note", "備考", "説明", "ghi chú", "mô tả"))
                     {
                         curComment = c;
@@ -172,11 +434,9 @@ namespace ExcelSupport.Services
                 }
             }
 
-            // Fallback nếu không phát hiện được rõ ràng dòng tiêu đề
             if (bestHeaderRow == -1 || maxScore < 2)
             {
                 bestHeaderRow = 1;
-                // Heuristic mapping theo thứ tự cột thông dụng
                 if (colPhysical == -1 && colCount >= 1) colPhysical = 1;
                 if (colLogical == -1 && colCount >= 2) colLogical = 2;
                 if (colType == -1 && colCount >= 3) colType = 3;
@@ -198,13 +458,11 @@ namespace ExcelSupport.Services
                 string rawDefault = colDefault > 0 ? (data[r, colDefault]?.ToString()?.Trim() ?? string.Empty) : string.Empty;
                 string rawComment = colComment > 0 ? (data[r, colComment]?.ToString()?.Trim() ?? string.Empty) : string.Empty;
 
-                // Nếu dòng trống hoàn toàn hoặc không có tên cột physical lẫn logical -> bỏ qua
                 if (string.IsNullOrWhiteSpace(rawPhysical) && string.IsNullOrWhiteSpace(rawLogical) && string.IsNullOrWhiteSpace(rawType))
                 {
                     continue;
                 }
 
-                // Nếu physical name trống nhưng có logical name, thử tạo physical name
                 if (string.IsNullOrWhiteSpace(rawPhysical))
                 {
                     rawPhysical = "COL_" + r;
@@ -213,18 +471,10 @@ namespace ExcelSupport.Services
                 string physicalName = SanitizeIdentifier(rawPhysical);
                 if (string.IsNullOrWhiteSpace(physicalName)) continue;
 
-                // Chuẩn hóa Data Type & Length
                 var (dataType, dataLength) = NormalizeOracleType(rawType, rawLength);
-
-                // Chuẩn hóa Nullable
                 bool isNullable = ParseNullable(rawNullable);
-
-                // Chuẩn hóa PK
                 bool isPk = ParsePrimaryKey(rawPk, rawPhysical, rawLogical);
-                if (isPk)
-                {
-                    isNullable = false; // Primary Key bắt buộc NOT NULL trong Oracle
-                }
+                if (isPk) isNullable = false;
 
                 var colSpec = new OracleColumnSpec
                 {
@@ -266,7 +516,6 @@ namespace ExcelSupport.Services
             string t = rawType.Trim().ToUpperInvariant();
             string l = rawLength.Trim();
 
-            // Nếu rawType có chứa length dạng VARCHAR2(50) hay NUMBER(10,2)
             var matchParen = Regex.Match(t, @"^([A-Z0-9_]+)\s*\(([^)]+)\)$");
             if (matchParen.Success)
             {
@@ -277,7 +526,6 @@ namespace ExcelSupport.Services
                 }
             }
 
-            // Ánh xạ sang chuẩn Oracle
             switch (t)
             {
                 case "VARCHAR":
@@ -401,7 +649,6 @@ namespace ExcelSupport.Services
                 return true;
             }
 
-            // Gợi ý nếu tên cột là ID, USER_ID, CODE hoặc có ghi chú PK
             if (physical.EndsWith("_ID", StringComparison.OrdinalIgnoreCase) && physical.Length <= 10 && v.Length > 0)
             {
                 return true;
@@ -419,13 +666,327 @@ namespace ExcelSupport.Services
         }
 
         // =========================================================================================
-        // CODE & PL/SQL GENERATION LOGIC
+        // CODE & PL/SQL GENERATION DISPATCHER
         // =========================================================================================
 
         public static string GenerateScript(OracleSpecOptions options)
         {
             if (options == null) return string.Empty;
 
+            if (options.SpecType == OracleSpecType.QueryLogicSpec)
+            {
+                return GenerateQueryLogicScript(options);
+            }
+            else
+            {
+                return GenerateDdlSpecScript(options);
+            }
+        }
+
+        // =========================================================================================
+        // GENERATION CHO QUERY / LOGIC SPEC (TKCT)
+        // =========================================================================================
+
+        private static string GenerateQueryLogicScript(OracleSpecOptions opt)
+        {
+            var q = opt.QuerySpec;
+            var conds = q.Conditions.Where(c => c.IsSelected).ToList();
+
+            string fullTableName = string.IsNullOrWhiteSpace(opt.SchemaName)
+                ? opt.TableName.ToUpperInvariant()
+                : $"{opt.SchemaName.ToUpperInvariant()}.{opt.TableName.ToUpperInvariant()}";
+
+            string pureTableName = opt.TableName.ToUpperInvariant();
+
+            switch (opt.GenMode)
+            {
+                case OraclePlSqlGenMode.QueryCheckBlock:
+                    return GeneratePlSqlCheckBlock(opt, fullTableName, pureTableName, conds);
+
+                case OraclePlSqlGenMode.QueryPureSelect:
+                    return GeneratePureSelectQuery(opt, fullTableName, pureTableName, conds);
+
+                case OraclePlSqlGenMode.QueryCursorLoop:
+                    return GenerateCursorLoopBlock(opt, fullTableName, pureTableName, conds);
+
+                case OraclePlSqlGenMode.QueryProcedure:
+                    return GenerateQueryProcedure(opt, fullTableName, pureTableName, conds);
+
+                case OraclePlSqlGenMode.QueryCSharpCode:
+                    return GenerateQueryCSharpCode(opt, pureTableName, conds);
+
+                default:
+                    return GeneratePlSqlCheckBlock(opt, fullTableName, pureTableName, conds);
+            }
+        }
+
+        private static string GeneratePlSqlCheckBlock(OracleSpecOptions opt, string fullTableName, string pureTableName, List<OracleConditionSpec> conds)
+        {
+            var sb = new StringBuilder();
+            var q = opt.QuerySpec;
+
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine($"-- ORACLE PL/SQL: Trích xuất / Kiểm tra data table {q.TableLogicalName} [{pureTableName}]");
+            sb.AppendLine("-- Sinh tự động từ đặc tả xử lý bảng tính (TKCT - 詳細設計書)");
+            sb.AppendLine($"-- Thời gian sinh: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine("DECLARE");
+            sb.AppendLine("    v_count NUMBER := 0;");
+            sb.AppendLine("BEGIN");
+            sb.AppendLine($"    -- 1. Kiểm tra tồn tại dữ liệu trong bảng {pureTableName}");
+            sb.AppendLine("    SELECT COUNT(*)");
+            sb.AppendLine("    INTO v_count");
+            sb.AppendLine($"    FROM {fullTableName}");
+
+            if (conds.Count > 0)
+            {
+                sb.AppendLine("    WHERE");
+                for (int i = 0; i < conds.Count; i++)
+                {
+                    var c = conds[i];
+                    string prefix = (i == 0) ? "        " : "    AND ";
+                    string comment = !string.IsNullOrWhiteSpace(c.LogicalName) ? $" -- {c.LogicalName}" : "";
+                    sb.AppendLine($"{prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {c.TargetSqlValue}{comment}");
+                }
+            }
+            sb.AppendLine("    ;");
+            sb.AppendLine();
+
+            sb.AppendLine("    -- 2. Xử lý rẽ nhánh theo kết quả kiểm tra");
+            sb.AppendLine("    IF v_count > 0 THEN");
+
+            if (!string.IsNullOrWhiteSpace(q.OnExistsAction))
+            {
+                sb.AppendLine($"        -- {q.OnExistsAction}");
+                // Nếu có nhắc tới mã lỗi No.X thì sinh mã lỗi tương ứng
+                var matchErr = Regex.Match(q.OnExistsAction, @"No\.?(\d+)", RegexOptions.IgnoreCase);
+                int errNum = matchErr.Success ? int.Parse(matchErr.Groups[1].Value) : 5;
+                sb.AppendLine($"        RAISE_APPLICATION_ERROR(-{20000 + errNum}, '{EscapeSqlString(q.OnExistsAction)}');");
+            }
+            else
+            {
+                sb.AppendLine("        DBMS_OUTPUT.PUT_LINE('Dữ liệu đã tồn tại trong ' || '" + pureTableName + "');");
+            }
+
+            sb.AppendLine("    ELSE");
+
+            if (!string.IsNullOrWhiteSpace(q.OnNotExistsAction))
+            {
+                sb.AppendLine($"        -- {q.OnNotExistsAction}");
+            }
+            sb.AppendLine("        NULL; -- Tiếp tục luồng xử lý tiếp theo");
+            sb.AppendLine("    END IF;");
+
+            if (q.OtherNotes.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("    -- Ghi chú bổ sung từ đặc tả:");
+                foreach (var note in q.OtherNotes)
+                {
+                    sb.AppendLine($"    -- * {note}");
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("EXCEPTION");
+            sb.AppendLine("    WHEN OTHERS THEN");
+            sb.AppendLine($"        DBMS_OUTPUT.PUT_LINE('Lỗi khi kiểm tra {pureTableName}: ' || SQLERRM);");
+            sb.AppendLine("        RAISE;");
+            sb.AppendLine("END;");
+            sb.AppendLine("/");
+
+            return sb.ToString();
+        }
+
+        private static string GeneratePureSelectQuery(OracleSpecOptions opt, string fullTableName, string pureTableName, List<OracleConditionSpec> conds)
+        {
+            var sb = new StringBuilder();
+            var q = opt.QuerySpec;
+
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine($"-- SELECT QUERY: {fullTableName} ({q.TableLogicalName})");
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine("SELECT");
+            sb.AppendLine("    *");
+            sb.AppendLine($"FROM {fullTableName}");
+
+            if (conds.Count > 0)
+            {
+                sb.AppendLine("WHERE");
+                for (int i = 0; i < conds.Count; i++)
+                {
+                    var c = conds[i];
+                    string prefix = (i == 0) ? "    " : "AND ";
+                    string comment = !string.IsNullOrWhiteSpace(c.LogicalName) ? $" -- {c.LogicalName}" : "";
+                    sb.AppendLine($"    {prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {c.TargetSqlValue}{comment}");
+                }
+            }
+            sb.AppendLine(";");
+
+            return sb.ToString();
+        }
+
+        private static string GenerateCursorLoopBlock(OracleSpecOptions opt, string fullTableName, string pureTableName, List<OracleConditionSpec> conds)
+        {
+            var sb = new StringBuilder();
+            var q = opt.QuerySpec;
+            string curName = $"c_{pureTableName.ToLowerInvariant()}";
+            string recName = $"r_{pureTableName.ToLowerInvariant()}";
+
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine($"-- PL/SQL CURSOR LOOP: {pureTableName}");
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine("DECLARE");
+            sb.AppendLine($"    CURSOR {curName} IS");
+            sb.AppendLine("        SELECT *");
+            sb.AppendLine($"        FROM {fullTableName}");
+
+            if (conds.Count > 0)
+            {
+                sb.AppendLine("        WHERE");
+                for (int i = 0; i < conds.Count; i++)
+                {
+                    var c = conds[i];
+                    string prefix = (i == 0) ? "        " : "    AND ";
+                    string comment = !string.IsNullOrWhiteSpace(c.LogicalName) ? $" -- {c.LogicalName}" : "";
+                    sb.AppendLine($"        {prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {c.TargetSqlValue}{comment}");
+                }
+            }
+            sb.AppendLine("        ;");
+            sb.AppendLine();
+            sb.AppendLine($"    {recName} {curName}%ROWTYPE;");
+            sb.AppendLine("BEGIN");
+            sb.AppendLine($"    OPEN {curName};");
+            sb.AppendLine($"    FETCH {curName} INTO {recName};");
+            sb.AppendLine($"    IF {curName}%FOUND THEN");
+
+            if (!string.IsNullOrWhiteSpace(q.OnExistsAction))
+            {
+                sb.AppendLine($"        -- {q.OnExistsAction}");
+                sb.AppendLine("        DBMS_OUTPUT.PUT_LINE('Tìm thấy dữ liệu!');");
+            }
+            else
+            {
+                sb.AppendLine("        DBMS_OUTPUT.PUT_LINE('Dữ liệu tồn tại.');");
+            }
+
+            sb.AppendLine("    ELSE");
+            if (!string.IsNullOrWhiteSpace(q.OnNotExistsAction))
+            {
+                sb.AppendLine($"        -- {q.OnNotExistsAction}");
+            }
+            sb.AppendLine("        NULL;");
+            sb.AppendLine("    END IF;");
+            sb.AppendLine($"    CLOSE {curName};");
+            sb.AppendLine("END;");
+            sb.AppendLine("/");
+
+            return sb.ToString();
+        }
+
+        private static string GenerateQueryProcedure(OracleSpecOptions opt, string fullTableName, string pureTableName, List<OracleConditionSpec> conds)
+        {
+            var sb = new StringBuilder();
+            var q = opt.QuerySpec;
+            string spName = $"SP_CHECK_{pureTableName}";
+
+            // Lấy danh sách các biến bind
+            var bindParams = conds.Where(c => !string.IsNullOrEmpty(c.BindVariableName))
+                                  .GroupBy(c => c.BindVariableName)
+                                  .Select(g => g.First())
+                                  .ToList();
+
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine($"-- STORED PROCEDURE / FUNCTION: {spName}");
+            sb.AppendLine("-- =============================================================================");
+            sb.AppendLine($"CREATE OR REPLACE PROCEDURE {spName} (");
+
+            for (int i = 0; i < bindParams.Count; i++)
+            {
+                var bp = bindParams[i];
+                string comma = (i < bindParams.Count - 1 || true) ? "," : "";
+                string comment = !string.IsNullOrWhiteSpace(bp.LogicalName) ? $" -- {bp.LogicalName}" : "";
+                sb.AppendLine($"    p_{bp.BindVariableName,-26} IN  VARCHAR2{comma}{comment}");
+            }
+
+            sb.AppendLine("    p_exists_flag              OUT NUMBER   -- 1: Tồn tại, 0: Không tồn tại");
+            sb.AppendLine(")");
+            sb.AppendLine("IS");
+            sb.AppendLine("    v_count NUMBER := 0;");
+            sb.AppendLine("BEGIN");
+            sb.AppendLine("    SELECT COUNT(*)");
+            sb.AppendLine("    INTO v_count");
+            sb.AppendLine($"    FROM {fullTableName}");
+
+            if (conds.Count > 0)
+            {
+                sb.AppendLine("    WHERE");
+                for (int i = 0; i < conds.Count; i++)
+                {
+                    var c = conds[i];
+                    string prefix = (i == 0) ? "        " : "    AND ";
+                    string valExpr = !string.IsNullOrEmpty(c.BindVariableName) ? $"p_{c.BindVariableName}" : c.TargetSqlValue;
+                    sb.AppendLine($"{prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {valExpr}");
+                }
+            }
+            sb.AppendLine("    ;");
+            sb.AppendLine();
+            sb.AppendLine("    IF v_count > 0 THEN");
+            sb.AppendLine("        p_exists_flag := 1;");
+            sb.AppendLine("    ELSE");
+            sb.AppendLine("        p_exists_flag := 0;");
+            sb.AppendLine("    END IF;");
+            sb.AppendLine("EXCEPTION");
+            sb.AppendLine("    WHEN OTHERS THEN");
+            sb.AppendLine($"        RAISE_APPLICATION_ERROR(-20001, 'Lỗi trong {spName}: ' || SQLERRM);");
+            sb.AppendLine("END;");
+            sb.AppendLine("/");
+
+            return sb.ToString();
+        }
+
+        private static string GenerateQueryCSharpCode(OracleSpecOptions opt, string pureTableName, List<OracleConditionSpec> conds)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("// =============================================================================");
+            sb.AppendLine($"// C# DAPPER / ADO.NET QUERY: {pureTableName}");
+            sb.AppendLine("// =============================================================================");
+            sb.AppendLine("const string sql = @\"");
+            sb.AppendLine("    SELECT *");
+            sb.AppendLine($"    FROM {pureTableName}");
+
+            if (conds.Count > 0)
+            {
+                sb.AppendLine("    WHERE");
+                for (int i = 0; i < conds.Count; i++)
+                {
+                    var c = conds[i];
+                    string prefix = (i == 0) ? "        " : "    AND ";
+                    sb.AppendLine($"{prefix}{c.PhysicalColumn,-24} {c.Operator,-3} {c.TargetSqlValue}");
+                }
+            }
+            sb.AppendLine("\";");
+            sb.AppendLine();
+            sb.AppendLine("var parameters = new DynamicParameters();");
+            var bindParams = conds.Where(c => !string.IsNullOrEmpty(c.BindVariableName))
+                                  .GroupBy(c => c.BindVariableName)
+                                  .Select(g => g.First())
+                                  .ToList();
+
+            foreach (var bp in bindParams)
+            {
+                sb.AppendLine($"parameters.Add(\"{bp.BindVariableName}\", model.{ToPascalCase(bp.BindVariableName)}); // {bp.LogicalName}");
+            }
+
+            return sb.ToString();
+        }
+
+        // =========================================================================================
+        // GENERATION CHO TABLE DEFINITION DDL SPEC (ĐẶC TẢ BẢNG)
+        // =========================================================================================
+
+        private static string GenerateDdlSpecScript(OracleSpecOptions options)
+        {
             var cols = options.Columns.Where(c => c.IsSelected).ToList();
             if (cols.Count == 0)
             {
@@ -486,7 +1047,6 @@ namespace ExcelSupport.Services
                 var col = cols[i];
                 string typeDef = col.GetFullDataTypeDefinition();
 
-                // Identity cho Oracle 12c+
                 string identityClause = string.Empty;
                 if (opt.UseIdentityColumn && col.IsPrimaryKey && (typeDef.StartsWith("NUMBER", StringComparison.OrdinalIgnoreCase) || typeDef == "INT"))
                 {
@@ -500,17 +1060,15 @@ namespace ExcelSupport.Services
                 }
 
                 string nullClause = col.IsNullable ? " NULL" : " NOT NULL";
-                if (!string.IsNullOrEmpty(identityClause)) nullClause = string.Empty; // Identity tự mang NOT NULL
+                if (!string.IsNullOrEmpty(identityClause)) nullClause = string.Empty;
 
                 string line = $"    {col.PhysicalName,-30} {typeDef,-18}{defaultClause}{identityClause}{nullClause}";
 
-                // Dấu phẩy nếu còn cột tiếp theo hoặc có Primary Key Constraint
                 if (i < cols.Count - 1 || pkCols.Count > 0)
                 {
                     line += ",";
                 }
 
-                // Ghi chú inline tiếng Nhật / Việt nếu có
                 if (!string.IsNullOrWhiteSpace(col.LogicalName))
                 {
                     line += $" -- {col.LogicalName}";
@@ -519,7 +1077,6 @@ namespace ExcelSupport.Services
                 sb.AppendLine(line);
             }
 
-            // Khóa chính Constraint
             if (pkCols.Count > 0)
             {
                 string pkColList = string.Join(", ", pkCols.Select(c => c.PhysicalName));
@@ -529,14 +1086,12 @@ namespace ExcelSupport.Services
             sb.AppendLine(");");
             sb.AppendLine();
 
-            // Table Comment
             if (opt.IncludeComments)
             {
                 string tblComment = !string.IsNullOrWhiteSpace(opt.TableLogicalName) ? opt.TableLogicalName : pureTableName;
                 sb.AppendLine($"COMMENT ON TABLE {fullTableName} IS '{EscapeSqlString(tblComment)}';");
                 sb.AppendLine();
 
-                // Column Comments
                 sb.AppendLine("-- Column Comments");
                 foreach (var col in cols)
                 {
@@ -549,7 +1104,6 @@ namespace ExcelSupport.Services
                 sb.AppendLine();
             }
 
-            // Sequence & Trigger nếu người dùng chọn và không dùng Identity
             if (opt.IncludeSequenceTrigger && !opt.UseIdentityColumn && pkCols.Count > 0)
             {
                 var firstPk = pkCols[0];
@@ -579,7 +1133,6 @@ namespace ExcelSupport.Services
             var sb = new StringBuilder();
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine($"-- PL/SQL IDEMPOTENT CREATION BLOCK: {pureTableName}");
-            sb.AppendLine("-- Kiểm tra và tạo bảng an toàn nếu chưa tồn tại trong Schema");
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine("DECLARE");
             sb.AppendLine("    v_table_exists NUMBER := 0;");
@@ -655,25 +1208,18 @@ namespace ExcelSupport.Services
             var sb = new StringBuilder();
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine($"-- PL/SQL CRUD PROCEDURES SKELETON: {pureTableName}");
-            sb.AppendLine("-- Generated based on Excel Table Specification");
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine();
 
             var pkCols = cols.Where(c => c.IsPrimaryKey).ToList();
-            if (pkCols.Count == 0)
-            {
-                pkCols = cols.Take(1).ToList();
-            }
-
+            if (pkCols.Count == 0) pkCols = cols.Take(1).ToList();
             var nonPkCols = cols.Where(c => !c.IsPrimaryKey).ToList();
 
-            // 1. Procedure INSERT
-            sb.AppendLine($"-- 1. INSERT PROCEDURE: SP_INS_{pureTableName}");
+            // INSERT
             sb.AppendLine($"CREATE OR REPLACE PROCEDURE SP_INS_{pureTableName} (");
             for (int i = 0; i < cols.Count; i++)
             {
                 var col = cols[i];
-                string paramType = col.GetFullDataTypeDefinition();
                 string comma = (i < cols.Count - 1) ? "," : "";
                 sb.AppendLine($"    p_{col.PhysicalName,-28} IN  {pureTableName}.{col.PhysicalName}%TYPE{comma}");
             }
@@ -692,8 +1238,7 @@ namespace ExcelSupport.Services
             sb.AppendLine("/");
             sb.AppendLine();
 
-            // 2. Procedure UPDATE
-            sb.AppendLine($"-- 2. UPDATE PROCEDURE: SP_UPD_{pureTableName}");
+            // UPDATE
             sb.AppendLine($"CREATE OR REPLACE PROCEDURE SP_UPD_{pureTableName} (");
             for (int i = 0; i < cols.Count; i++)
             {
@@ -715,8 +1260,7 @@ namespace ExcelSupport.Services
             sb.AppendLine("/");
             sb.AppendLine();
 
-            // 3. Procedure DELETE
-            sb.AppendLine($"-- 3. DELETE PROCEDURE: SP_DEL_{pureTableName}");
+            // DELETE
             sb.AppendLine($"CREATE OR REPLACE PROCEDURE SP_DEL_{pureTableName} (");
             for (int i = 0; i < pkCols.Count; i++)
             {
@@ -745,16 +1289,11 @@ namespace ExcelSupport.Services
             var sb = new StringBuilder();
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine($"-- PL/SQL MERGE INTO (UPSERT) TEMPLATE: {pureTableName}");
-            sb.AppendLine("-- Cập nhật nếu đã tồn tại, chèn mới nếu chưa có theo Khóa Chính");
             sb.AppendLine("-- =============================================================================");
             sb.AppendLine();
 
             var pkCols = cols.Where(c => c.IsPrimaryKey).ToList();
-            if (pkCols.Count == 0)
-            {
-                pkCols = cols.Take(1).ToList();
-            }
-
+            if (pkCols.Count == 0) pkCols = cols.Take(1).ToList();
             var nonPkCols = cols.Where(c => !c.IsPrimaryKey).ToList();
 
             sb.AppendLine($"MERGE INTO {pureTableName} t");
@@ -878,7 +1417,6 @@ namespace ExcelSupport.Services
             if (string.IsNullOrWhiteSpace(defVal)) return string.Empty;
             string v = defVal.Trim();
 
-            // Nếu là hàm hệ thống
             if (v.Equals("SYSDATE", StringComparison.OrdinalIgnoreCase) ||
                 v.Equals("CURRENT_TIMESTAMP", StringComparison.OrdinalIgnoreCase) ||
                 v.Equals("SYSTIMESTAMP", StringComparison.OrdinalIgnoreCase))
@@ -886,13 +1424,11 @@ namespace ExcelSupport.Services
                 return v.ToUpperInvariant();
             }
 
-            // Nếu đã có dấu nháy đơn
             if (v.StartsWith("'") && v.EndsWith("'"))
             {
                 return v;
             }
 
-            // Nếu là kiểu số
             if (dataType == "NUMBER" || dataType == "INT" || dataType == "INTEGER" || dataType == "FLOAT")
             {
                 return v;
@@ -974,7 +1510,11 @@ namespace ExcelSupport.Services
             {
                 return "string";
             }
-            if (t.StartsWith("NUMBER") || t == "DECIMAL" || t == "NUMERIC" || t == "INT" || t == "INTEGER")
+            if (t.StartsWith("NUMBER") || t == "DECIMAL" || t == "NUMERIC")
+            {
+                return "number";
+            }
+            if (t == "INT" || t == "INTEGER")
             {
                 return "number";
             }

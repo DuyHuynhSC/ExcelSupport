@@ -1659,6 +1659,18 @@
   "OracleSpec_CopiedToClipboard": "スクリプトをクリップボードにコピーしました！",
   "OracleSpec_SaveFileTitle": "Oracleスクリプトファイルの保存",
   "OracleSpec_SavedSuccess": "ファイルを保存しました: {0}",
+  "OracleSpec_BadgeQueryLogic": "抽出条件・データ取得／チェック仕様",
+  "OracleSpec_BadgeDdl": "テーブル定義書 (DDL)",
+  "OracleSpec_LblConditionList": "抽出条件・検証条件一覧",
+  "OracleSpec_ColCondition": "条件式 / 内容",
+  "OracleSpec_ColOperator": "演算子",
+  "OracleSpec_ColRawValue": "比較値 / 画面項目",
+  "OracleSpec_ModeQueryCheck": "1. 存在チェック・エラー制御 (PL/SQL)",
+  "OracleSpec_ModeQuerySelect": "2. 単体SELECT文 (SQL)",
+  "OracleSpec_ModeQueryCursor": "3. カーソルループ処理 (Cursor Loop)",
+  "OracleSpec_ModeQueryProcedure": "4. ストアドプロシージャ雛形",
+  "OracleSpec_ModeQueryCSharp": "5. C#クエリメソッド雛形",
+  "OracleSpec_LoadedQuerySuccess": "テーブル「{0}」の抽出仕様から {1} 件の条件を解析しました。",
   "Cmd_OracleSpecToPlSql": "テーブル定義書からOracle PL/SQL & DDL生成 (Spec to PL/SQL)",
   "Cmd_OracleSpecToPlSql_Desc": "Excelの設計書範囲からDDL CREATE TABLE、COMMENT、PL/SQLブロックまたはCRUDプロシージャを自動生成"
 }

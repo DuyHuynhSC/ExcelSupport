@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Input;
 using ExcelSupport.Models;
@@ -14,6 +13,81 @@ using ExcelApp = Microsoft.Office.Interop.Excel.Application;
 
 namespace ExcelSupport.ViewModels
 {
+    public class OracleConditionItemViewModel : ObservableModel
+    {
+        private int _rowIndex;
+        private string _logicalName = string.Empty;
+        private string _physicalColumn = string.Empty;
+        private string _operator = "=";
+        private string _rawValue = string.Empty;
+        private string _targetSqlValue = string.Empty;
+        private string _bindVariableName = string.Empty;
+        private bool _isSelected = true;
+
+        public int RowIndex
+        {
+            get => _rowIndex;
+            set => SetProperty(ref _rowIndex, value);
+        }
+
+        public string LogicalName
+        {
+            get => _logicalName;
+            set => SetProperty(ref _logicalName, value);
+        }
+
+        public string PhysicalColumn
+        {
+            get => _physicalColumn;
+            set => SetProperty(ref _physicalColumn, value);
+        }
+
+        public string Operator
+        {
+            get => _operator;
+            set => SetProperty(ref _operator, value);
+        }
+
+        public string RawValue
+        {
+            get => _rawValue;
+            set => SetProperty(ref _rawValue, value);
+        }
+
+        public string TargetSqlValue
+        {
+            get => _targetSqlValue;
+            set => SetProperty(ref _targetSqlValue, value);
+        }
+
+        public string BindVariableName
+        {
+            get => _bindVariableName;
+            set => SetProperty(ref _bindVariableName, value);
+        }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
+
+        public OracleConditionSpec ToModel()
+        {
+            return new OracleConditionSpec
+            {
+                RowIndex = RowIndex,
+                LogicalName = LogicalName,
+                PhysicalColumn = PhysicalColumn,
+                Operator = Operator,
+                RawValue = RawValue,
+                TargetSqlValue = TargetSqlValue,
+                BindVariableName = BindVariableName,
+                IsSelected = IsSelected
+            };
+        }
+    }
+
     public class OracleColumnSpecViewModel : ObservableModel
     {
         private int _rowIndex;
@@ -115,10 +189,11 @@ namespace ExcelSupport.ViewModels
     {
         private readonly ExcelApp _excelApp;
 
+        private OracleSpecType _specType = OracleSpecType.QueryLogicSpec;
         private string _schemaName = string.Empty;
         private string _tableName = "MY_TABLE";
         private string _tableLogicalName = string.Empty;
-        private OraclePlSqlGenMode _selectedGenMode = OraclePlSqlGenMode.DdlScript;
+        private OraclePlSqlGenMode _selectedGenMode = OraclePlSqlGenMode.QueryCheckBlock;
         private bool _includeComments = true;
         private bool _includeSequenceTrigger = false;
         private bool _useIdentityColumn = false;
@@ -126,10 +201,28 @@ namespace ExcelSupport.ViewModels
 
         private string _generatedScriptText = string.Empty;
         private string _statusMessage = string.Empty;
-        private int _columnsCount = 0;
-        private int _selectedColumnsCount = 0;
+        private int _itemsCount = 0;
+        private int _selectedItemsCount = 0;
         private long _executionTimeMs = 0;
         private bool _isGenerating = false;
+
+        private OracleQuerySpecInfo _cachedQuerySpec = new();
+
+        public OracleSpecType SpecType
+        {
+            get => _specType;
+            set
+            {
+                if (SetProperty(ref _specType, value))
+                {
+                    OnPropertyChanged(nameof(IsQueryLogicSpec));
+                    OnPropertyChanged(nameof(IsTableDefinitionDdl));
+                }
+            }
+        }
+
+        public bool IsQueryLogicSpec => SpecType == OracleSpecType.QueryLogicSpec;
+        public bool IsTableDefinitionDdl => SpecType == OracleSpecType.TableDefinitionDdl;
 
         public string SchemaName
         {
@@ -174,8 +267,11 @@ namespace ExcelSupport.ViewModels
             {
                 if (SetProperty(ref _selectedGenMode, value))
                 {
-                    OnPropertyChanged(nameof(IsDdlMode));
-                    OnPropertyChanged(nameof(CanSendToOracleQuery));
+                    OnPropertyChanged(nameof(IsModeQueryCheck));
+                    OnPropertyChanged(nameof(IsModeQuerySelect));
+                    OnPropertyChanged(nameof(IsModeQueryCursor));
+                    OnPropertyChanged(nameof(IsModeQueryProcedure));
+                    OnPropertyChanged(nameof(IsModeQueryCSharp));
                     OnPropertyChanged(nameof(IsModeDdl));
                     OnPropertyChanged(nameof(IsModePlSqlBlock));
                     OnPropertyChanged(nameof(IsModeCrudProcedures));
@@ -186,6 +282,21 @@ namespace ExcelSupport.ViewModels
                 }
             }
         }
+
+        // Mode flags cho Query / Logic Spec
+        public bool IsModeQueryCheck => SelectedGenMode == OraclePlSqlGenMode.QueryCheckBlock;
+        public bool IsModeQuerySelect => SelectedGenMode == OraclePlSqlGenMode.QueryPureSelect;
+        public bool IsModeQueryCursor => SelectedGenMode == OraclePlSqlGenMode.QueryCursorLoop;
+        public bool IsModeQueryProcedure => SelectedGenMode == OraclePlSqlGenMode.QueryProcedure;
+        public bool IsModeQueryCSharp => SelectedGenMode == OraclePlSqlGenMode.QueryCSharpCode;
+
+        // Mode flags cho Table Definition DDL Spec
+        public bool IsModeDdl => SelectedGenMode == OraclePlSqlGenMode.DdlScript;
+        public bool IsModePlSqlBlock => SelectedGenMode == OraclePlSqlGenMode.PlSqlSafeBlock;
+        public bool IsModeCrudProcedures => SelectedGenMode == OraclePlSqlGenMode.PlSqlCrudProcedures;
+        public bool IsModeMergeUpsert => SelectedGenMode == OraclePlSqlGenMode.PlSqlMergeUpsert;
+        public bool IsModeCSharp => SelectedGenMode == OraclePlSqlGenMode.CSharpEntity;
+        public bool IsModeTypeScript => SelectedGenMode == OraclePlSqlGenMode.TypeScriptDto;
 
         public bool IncludeComments
         {
@@ -247,16 +358,16 @@ namespace ExcelSupport.ViewModels
             set => SetProperty(ref _statusMessage, value);
         }
 
-        public int ColumnsCount
+        public int ItemsCount
         {
-            get => _columnsCount;
-            set => SetProperty(ref _columnsCount, value);
+            get => _itemsCount;
+            set => SetProperty(ref _itemsCount, value);
         }
 
-        public int SelectedColumnsCount
+        public int SelectedItemsCount
         {
-            get => _selectedColumnsCount;
-            set => SetProperty(ref _selectedColumnsCount, value);
+            get => _selectedItemsCount;
+            set => SetProperty(ref _selectedItemsCount, value);
         }
 
         public long ExecutionTimeMs
@@ -271,29 +382,20 @@ namespace ExcelSupport.ViewModels
             set => SetProperty(ref _isGenerating, value);
         }
 
-        public bool IsDdlMode => SelectedGenMode == OraclePlSqlGenMode.DdlScript || SelectedGenMode == OraclePlSqlGenMode.PlSqlSafeBlock;
-        public bool CanSendToOracleQuery => SelectedGenMode == OraclePlSqlGenMode.DdlScript ||
-                                            SelectedGenMode == OraclePlSqlGenMode.PlSqlSafeBlock ||
-                                            SelectedGenMode == OraclePlSqlGenMode.PlSqlCrudProcedures ||
-                                            SelectedGenMode == OraclePlSqlGenMode.PlSqlMergeUpsert;
+        public bool CanSendToOracleQuery => !string.IsNullOrWhiteSpace(GeneratedScriptText) &&
+                                            (SelectedGenMode == OraclePlSqlGenMode.QueryCheckBlock ||
+                                             SelectedGenMode == OraclePlSqlGenMode.QueryPureSelect ||
+                                             SelectedGenMode == OraclePlSqlGenMode.QueryCursorLoop ||
+                                             SelectedGenMode == OraclePlSqlGenMode.QueryProcedure ||
+                                             SelectedGenMode == OraclePlSqlGenMode.DdlScript ||
+                                             SelectedGenMode == OraclePlSqlGenMode.PlSqlSafeBlock ||
+                                             SelectedGenMode == OraclePlSqlGenMode.PlSqlCrudProcedures ||
+                                             SelectedGenMode == OraclePlSqlGenMode.PlSqlMergeUpsert);
 
-        public bool IsModeDdl => SelectedGenMode == OraclePlSqlGenMode.DdlScript;
-        public bool IsModePlSqlBlock => SelectedGenMode == OraclePlSqlGenMode.PlSqlSafeBlock;
-        public bool IsModeCrudProcedures => SelectedGenMode == OraclePlSqlGenMode.PlSqlCrudProcedures;
-        public bool IsModeMergeUpsert => SelectedGenMode == OraclePlSqlGenMode.PlSqlMergeUpsert;
-        public bool IsModeCSharp => SelectedGenMode == OraclePlSqlGenMode.CSharpEntity;
-        public bool IsModeTypeScript => SelectedGenMode == OraclePlSqlGenMode.TypeScriptDto;
+        // Danh sách điều kiện (cho Query / Logic Spec)
+        public ObservableCollection<OracleConditionItemViewModel> Conditions { get; } = new();
 
-        public IReadOnlyList<OraclePlSqlGenMode> AvailableGenModes { get; } = new[]
-        {
-            OraclePlSqlGenMode.DdlScript,
-            OraclePlSqlGenMode.PlSqlSafeBlock,
-            OraclePlSqlGenMode.PlSqlCrudProcedures,
-            OraclePlSqlGenMode.PlSqlMergeUpsert,
-            OraclePlSqlGenMode.CSharpEntity,
-            OraclePlSqlGenMode.TypeScriptDto
-        };
-
+        // Danh sách cột (cho Table Definition DDL Spec)
         public ObservableCollection<OracleColumnSpecViewModel> Columns { get; } = new();
 
         public IReadOnlyList<string> CommonOracleDataTypes { get; } = new[]
@@ -308,13 +410,29 @@ namespace ExcelSupport.ViewModels
             "BLOB"
         };
 
+        public IReadOnlyList<string> CommonComparisonOperators { get; } = new[]
+        {
+            "=",
+            "<>",
+            "!=",
+            ">=",
+            "<=",
+            ">",
+            "<",
+            "LIKE",
+            "IN",
+            "NOT IN",
+            "IS NULL",
+            "IS NOT NULL"
+        };
+
         public ICommand GenerateScriptCommand { get; }
         public ICommand SetGenModeCommand { get; }
         public ICommand CopyClipboardCommand { get; }
         public ICommand SaveFileCommand { get; }
         public ICommand SendToOracleQuickQueryCommand { get; }
-        public ICommand SelectAllColumnsCommand { get; }
-        public ICommand DeselectAllColumnsCommand { get; }
+        public ICommand SelectAllItemsCommand { get; }
+        public ICommand DeselectAllItemsCommand { get; }
         public ICommand RefreshFromSelectionCommand { get; }
 
         public Action<string>? OnSendToOracleQueryAction { get; set; }
@@ -338,9 +456,9 @@ namespace ExcelSupport.ViewModels
             });
             CopyClipboardCommand = new RelayCommand(_ => ExecuteCopyClipboard());
             SaveFileCommand = new RelayCommand(_ => ExecuteSaveFile());
-            SendToOracleQuickQueryCommand = new RelayCommand(_ => ExecuteSendToOracleQuery(), _ => CanSendToOracleQuery && !string.IsNullOrWhiteSpace(GeneratedScriptText));
-            SelectAllColumnsCommand = new RelayCommand(_ => ExecuteSetAllColumnsSelection(true));
-            DeselectAllColumnsCommand = new RelayCommand(_ => ExecuteSetAllColumnsSelection(false));
+            SendToOracleQuickQueryCommand = new RelayCommand(_ => ExecuteSendToOracleQuery(), _ => CanSendToOracleQuery);
+            SelectAllItemsCommand = new RelayCommand(_ => ExecuteSetAllItemsSelection(true));
+            DeselectAllItemsCommand = new RelayCommand(_ => ExecuteSetAllItemsSelection(false));
             RefreshFromSelectionCommand = new RelayCommand(_ => LoadFromCurrentSelection());
 
             LoadFromCurrentSelection();
@@ -373,43 +491,84 @@ namespace ExcelSupport.ViewModels
                     return;
                 }
 
+                SpecType = parseResult.SpecType;
                 _tableName = parseResult.DetectedTableName;
                 OnPropertyChanged(nameof(TableName));
 
                 _tableLogicalName = parseResult.DetectedTableLogicalName;
                 OnPropertyChanged(nameof(TableLogicalName));
 
-                Columns.Clear();
-                foreach (var col in parseResult.Columns)
+                if (SpecType == OracleSpecType.QueryLogicSpec)
                 {
-                    var vm = new OracleColumnSpecViewModel
+                    // Nạp Query Conditions
+                    _cachedQuerySpec = parseResult.QuerySpec;
+                    Conditions.Clear();
+                    foreach (var cond in parseResult.QuerySpec.Conditions)
                     {
-                        RowIndex = col.RowIndex,
-                        PhysicalName = col.PhysicalName,
-                        LogicalName = col.LogicalName,
-                        OracleDataType = col.OracleDataType,
-                        DataLength = col.DataLength,
-                        IsNullable = col.IsNullable,
-                        IsPrimaryKey = col.IsPrimaryKey,
-                        DefaultValue = col.DefaultValue,
-                        Comments = col.Comments,
-                        IsSelected = col.IsSelected
-                    };
+                        var vm = new OracleConditionItemViewModel
+                        {
+                            RowIndex = cond.RowIndex,
+                            LogicalName = cond.LogicalName,
+                            PhysicalColumn = cond.PhysicalColumn,
+                            Operator = cond.Operator,
+                            RawValue = cond.RawValue,
+                            TargetSqlValue = cond.TargetSqlValue,
+                            BindVariableName = cond.BindVariableName,
+                            IsSelected = cond.IsSelected
+                        };
 
-                    vm.PropertyChanged += (s, e) =>
-                    {
-                        UpdateCounts();
-                        TriggerGenerateScript();
-                    };
+                        vm.PropertyChanged += (s, e) =>
+                        {
+                            UpdateCounts();
+                            TriggerGenerateScript();
+                        };
 
-                    Columns.Add(vm);
+                        Conditions.Add(vm);
+                    }
+
+                    SelectedGenMode = OraclePlSqlGenMode.QueryCheckBlock;
+                    UpdateCounts();
+                    TriggerGenerateScript();
+
+                    StatusMessage = LocalizationService.Get("OracleSpec_LoadedQuerySuccess",
+                        "✓ Đã nạp thành công {0} điều kiện trích xuất logic cho bảng {1}", Conditions.Count, TableName);
                 }
+                else
+                {
+                    // Nạp Table Definition DDL Columns
+                    Columns.Clear();
+                    foreach (var col in parseResult.Columns)
+                    {
+                        var vm = new OracleColumnSpecViewModel
+                        {
+                            RowIndex = col.RowIndex,
+                            PhysicalName = col.PhysicalName,
+                            LogicalName = col.LogicalName,
+                            OracleDataType = col.OracleDataType,
+                            DataLength = col.DataLength,
+                            IsNullable = col.IsNullable,
+                            IsPrimaryKey = col.IsPrimaryKey,
+                            DefaultValue = col.DefaultValue,
+                            Comments = col.Comments,
+                            IsSelected = col.IsSelected
+                        };
 
-                UpdateCounts();
-                TriggerGenerateScript();
+                        vm.PropertyChanged += (s, e) =>
+                        {
+                            UpdateCounts();
+                            TriggerGenerateScript();
+                        };
 
-                StatusMessage = LocalizationService.Get("OracleSpec_LoadedSuccess",
-                    "✓ Đã nạp thành công {0} cột đặc tả từ vùng chọn Excel.", Columns.Count);
+                        Columns.Add(vm);
+                    }
+
+                    SelectedGenMode = OraclePlSqlGenMode.DdlScript;
+                    UpdateCounts();
+                    TriggerGenerateScript();
+
+                    StatusMessage = LocalizationService.Get("OracleSpec_LoadedSuccess",
+                        "✓ Đã nạp thành công {0} cột đặc tả từ vùng chọn Excel.", Columns.Count);
+                }
             }
             catch (Exception ex)
             {
@@ -419,8 +578,16 @@ namespace ExcelSupport.ViewModels
 
         private void UpdateCounts()
         {
-            ColumnsCount = Columns.Count;
-            SelectedColumnsCount = Columns.Count(c => c.IsSelected);
+            if (SpecType == OracleSpecType.QueryLogicSpec)
+            {
+                ItemsCount = Conditions.Count;
+                SelectedItemsCount = Conditions.Count(c => c.IsSelected);
+            }
+            else
+            {
+                ItemsCount = Columns.Count;
+                SelectedItemsCount = Columns.Count(c => c.IsSelected);
+            }
         }
 
         public void TriggerGenerateScript()
@@ -434,6 +601,7 @@ namespace ExcelSupport.ViewModels
             {
                 var options = new OracleSpecOptions
                 {
+                    SpecType = SpecType,
                     SchemaName = SchemaName.Trim(),
                     TableName = string.IsNullOrWhiteSpace(TableName) ? "MY_TABLE" : TableName.Trim(),
                     TableLogicalName = TableLogicalName.Trim(),
@@ -442,7 +610,17 @@ namespace ExcelSupport.ViewModels
                     IncludeSequenceTrigger = IncludeSequenceTrigger,
                     UseIdentityColumn = UseIdentityColumn,
                     IncludeSafeCheck = IncludeSafeCheck,
-                    Columns = Columns.Select(c => c.ToModel()).ToList()
+                    Columns = Columns.Select(c => c.ToModel()).ToList(),
+                    QuerySpec = new OracleQuerySpecInfo
+                    {
+                        ActionType = _cachedQuerySpec.ActionType,
+                        TableName = string.IsNullOrWhiteSpace(TableName) ? "MY_TABLE" : TableName.Trim(),
+                        TableLogicalName = TableLogicalName.Trim(),
+                        Conditions = Conditions.Select(c => c.ToModel()).ToList(),
+                        OnExistsAction = _cachedQuerySpec.OnExistsAction,
+                        OnNotExistsAction = _cachedQuerySpec.OnNotExistsAction,
+                        OtherNotes = _cachedQuerySpec.OtherNotes
+                    }
                 };
 
                 GeneratedScriptText = OracleSpecToPlSqlService.GenerateScript(options);
@@ -450,7 +628,7 @@ namespace ExcelSupport.ViewModels
                 ExecutionTimeMs = sw.ElapsedMilliseconds;
 
                 StatusMessage = LocalizationService.Get("OracleSpec_GeneratedSuccess",
-                    "✓ Đã sinh thành công {0} cột ({1}ms)", SelectedColumnsCount, ExecutionTimeMs);
+                    "✓ Đã sinh thành công ({0} mục, {1}ms)", SelectedItemsCount, ExecutionTimeMs);
             }
             catch (Exception ex)
             {
@@ -484,23 +662,23 @@ namespace ExcelSupport.ViewModels
 
             try
             {
-                string ext = (SelectedGenMode == OraclePlSqlGenMode.CSharpEntity) ? "cs"
-                    : (SelectedGenMode == OraclePlSqlGenMode.TypeScriptDto) ? "ts" : "sql";
+                bool isCs = (SelectedGenMode == OraclePlSqlGenMode.CSharpEntity || SelectedGenMode == OraclePlSqlGenMode.QueryCSharpCode);
+                bool isTs = (SelectedGenMode == OraclePlSqlGenMode.TypeScriptDto);
 
-                string filter = (SelectedGenMode == OraclePlSqlGenMode.CSharpEntity) ? "C# Source File (*.cs)|*.cs"
-                    : (SelectedGenMode == OraclePlSqlGenMode.TypeScriptDto) ? "TypeScript File (*.ts)|*.ts"
+                string ext = isCs ? "cs" : (isTs ? "ts" : "sql");
+                string filter = isCs ? "C# Source File (*.cs)|*.cs"
+                    : isTs ? "TypeScript File (*.ts)|*.ts"
                     : "Oracle SQL Script (*.sql)|*.sql|All Files (*.*)|*.*";
 
                 using var sfd = new SaveFileDialog
                 {
                     Filter = filter,
-                    FileName = $"{TableName.ToLowerInvariant()}_spec.{ext}",
+                    FileName = $"{TableName.ToLowerInvariant()}_plsql.{ext}",
                     Title = LocalizationService.Get("OracleSpec_SaveFileTitle", "Lưu mã kịch bản Oracle")
                 };
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    // Lưu file kèm UTF-8 BOM chuẩn để không bị lỗi font tiếng Nhật/Việt
                     File.WriteAllText(sfd.FileName, GeneratedScriptText, new System.Text.UTF8Encoding(true));
                     StatusMessage = LocalizationService.Get("OracleSpec_SavedSuccess", "✓ Đã lưu file: {0}", Path.GetFileName(sfd.FileName));
                 }
@@ -518,12 +696,17 @@ namespace ExcelSupport.ViewModels
             OnSendToOracleQueryAction?.Invoke(GeneratedScriptText);
         }
 
-        private void ExecuteSetAllColumnsSelection(bool isSelected)
+        private void ExecuteSetAllItemsSelection(bool isSelected)
         {
-            foreach (var col in Columns)
+            if (SpecType == OracleSpecType.QueryLogicSpec)
             {
-                col.IsSelected = isSelected;
+                foreach (var c in Conditions) c.IsSelected = isSelected;
             }
+            else
+            {
+                foreach (var col in Columns) col.IsSelected = isSelected;
+            }
+
             UpdateCounts();
             TriggerGenerateScript();
         }

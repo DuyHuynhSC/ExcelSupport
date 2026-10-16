@@ -1659,6 +1659,18 @@
   "OracleSpec_CopiedToClipboard": "Đã sao chép mã kịch bản vào Clipboard!",
   "OracleSpec_SaveFileTitle": "Lưu mã kịch bản Oracle",
   "OracleSpec_SavedSuccess": "Đã lưu file thành công: {0}",
+  "OracleSpec_BadgeQueryLogic": "Đặc Tả Truy Vấn / Kiểm Tra Dữ Liệu",
+  "OracleSpec_BadgeDdl": "Đặc Tả Thiết Kế Bảng (DDL)",
+  "OracleSpec_LblConditionList": "Danh Sách Điều Kiện Trích Xuất / Kiểm Tra",
+  "OracleSpec_ColCondition": "Biểu Thức Điều Kiện",
+  "OracleSpec_ColOperator": "Toán Tử",
+  "OracleSpec_ColRawValue": "Giá Trị / Biến Màn Hình",
+  "OracleSpec_ModeQueryCheck": "1. Khối Kiểm Tra Lỗi (PL/SQL Check)",
+  "OracleSpec_ModeQuerySelect": "2. Câu SELECT Trực Tiếp",
+  "OracleSpec_ModeQueryCursor": "3. Cursor Vòng Lặp (FOR REC IN)",
+  "OracleSpec_ModeQueryProcedure": "4. Stored Procedure Skeleton",
+  "OracleSpec_ModeQueryCSharp": "5. C# LINQ / Query Method",
+  "OracleSpec_LoadedQuerySuccess": "Đã phân tích đặc tả truy vấn bảng {0} với {1} điều kiện.",
   "Cmd_OracleSpecToPlSql": "Sinh PL/SQL Oracle & DDL từ Bảng Đặc Tả (Spec to PL/SQL)",
   "Cmd_OracleSpecToPlSql_Desc": "Quét chọn bảng thiết kế Excel để sinh câu lệnh DDL CREATE TABLE, COMMENT, PL/SQL Block hoặc CRUD Procedures"
 }

@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:ExcelSupport.Helpers"
         Title="{loc:Loc OracleSpec_WindowTitle}"
-        Height="760" Width="1200"
-        MinHeight="600" MinWidth="1020"
+        Height="780" Width="1240"
+        MinHeight="620" MinWidth="1050"
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI" FontSize="12"
         TextOptions.TextFormattingMode="Display"
@@ -150,18 +150,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Active Segmented Tab Button Style -->
-        <Style x:Key="ActiveSegmentedTabBtn" TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
-            <Setter Property="Background" Value="#2563EB"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                    <Setter Property="Background" Value="#3B82F6"/>
-                    <Setter Property="Foreground" Value="#FFFFFF"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
         <!-- Card Border Style -->
         <Style x:Key="SpecCardBorder" TargetType="Border">
             <Setter Property="Background" Value="#FFFFFF"/>
@@ -247,7 +235,20 @@
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{loc:Loc OracleSpec_HeaderTitle}" FontSize="15" FontWeight="Bold"/>
-                            <Border Background="#EA580C" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+
+                            <!-- Badge: Query / Logic Spec -->
+                            <Border Background="#2563EB" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                    Visibility="{Binding IsQueryLogicSpec, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{loc:Loc OracleSpec_BadgeQueryLogic}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                            </Border>
+
+                            <!-- Badge: Table DDL Spec -->
+                            <Border Background="#059669" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                    Visibility="{Binding IsTableDefinitionDdl, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{loc:Loc OracleSpec_BadgeDdl}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                            </Border>
+
+                            <Border Background="#EA580C" CornerRadius="4" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
                                 <TextBlock Text="Oracle PL/SQL" Foreground="White" FontSize="10" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
@@ -266,8 +267,8 @@
         <!-- ========================================== -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <!-- Left Column: Table & Spec Grid (460px) -->
-                <ColumnDefinition Width="480" MinWidth="380"/>
+                <!-- Left Column: Table & Spec Grid (500px) -->
+                <ColumnDefinition Width="520" MinWidth="420"/>
                 <!-- Splitter -->
                 <ColumnDefinition Width="12"/>
                 <!-- Right Column: Code Generator Preview (*) -->
@@ -279,7 +280,7 @@
                 <Grid.RowDefinitions>
                     <!-- Table Meta Settings -->
                     <RowDefinition Height="Auto"/>
-                    <!-- Columns DataGrid -->
+                    <!-- Columns / Conditions DataGrid -->
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
@@ -313,8 +314,8 @@
                             <TextBox Text="{Binding TableLogicalName, UpdateSourceTrigger=PropertyChanged}" Padding="6,4"/>
                         </StackPanel>
 
-                        <!-- Options Checkboxes -->
-                        <WrapPanel Margin="0,4,0,0">
+                        <!-- Options Checkboxes (Cho DDL Spec) -->
+                        <WrapPanel Margin="0,4,0,0" Visibility="{Binding IsTableDefinitionDdl, Converter={StaticResource BoolToVis}}">
                             <CheckBox Content="{loc:Loc OracleSpec_OptIncludeComments}" IsChecked="{Binding IncludeComments}" Margin="0,0,14,4"/>
                             <CheckBox Content="{loc:Loc OracleSpec_OptSeqTrigger}" IsChecked="{Binding IncludeSequenceTrigger}" Margin="0,0,14,4"/>
                             <CheckBox Content="{loc:Loc OracleSpec_OptIdentity}" IsChecked="{Binding UseIdentityColumn}" Margin="0,0,14,4"/>
@@ -322,8 +323,94 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Card 2: Columns Specification Grid -->
-                <Border Grid.Row="1" Style="{StaticResource SpecCardBorder}">
+                <!-- Card 2A: CONDITIONS DATAGRID (KHI LÀ QUERY / LOGIC SPEC) -->
+                <Border Grid.Row="1" Style="{StaticResource SpecCardBorder}"
+                        Visibility="{Binding IsQueryLogicSpec, Converter={StaticResource BoolToVis}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Grid Toolbar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc OracleSpec_LblConditionList}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text=" (" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SelectedItemsCount}" FontWeight="Bold" Foreground="#2563EB" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="/" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ItemsCount}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text=")" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="{loc:Loc OracleSpec_BtnSelectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding SelectAllItemsCommand}" FontSize="10.5" Padding="6,2" Margin="0,0,4,0"/>
+                                <Button Content="{loc:Loc OracleSpec_BtnDeselectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding DeselectAllItemsCommand}" FontSize="10.5" Padding="6,2"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- DataGrid cho Conditions -->
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Conditions}" Style="{StaticResource SpecDataGridStyle}">
+                            <DataGrid.Columns>
+                                <!-- CheckBox -->
+                                <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="32">
+                                    <DataGridCheckBoxColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="✓" FontWeight="Bold"/>
+                                        </DataTemplate>
+                                    </DataGridCheckBoxColumn.HeaderTemplate>
+                                </DataGridCheckBoxColumn>
+
+                                <!-- Physical Column -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColPhysical}" Binding="{Binding PhysicalColumn, UpdateSourceTrigger=PropertyChanged}" Width="105">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Logical Name -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColLogical}" Binding="{Binding LogicalName, UpdateSourceTrigger=PropertyChanged}" Width="110"/>
+
+                                <!-- Operator -->
+                                <DataGridTemplateColumn Header="{loc:Loc OracleSpec_ColOperator}" Width="65">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Operator}" FontWeight="Bold" Foreground="#EA580C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <ComboBox ItemsSource="{Binding DataContext.CommonComparisonOperators, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      SelectedItem="{Binding Operator, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEditable="True"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Target SQL Value (Bind Var or Literal) -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColCondition}" Binding="{Binding TargetSqlValue, UpdateSourceTrigger=PropertyChanged}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                            <Setter Property="Foreground" Value="#0284C7"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Raw Value from Excel -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColRawValue}" Binding="{Binding RawValue, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <!-- Card 2B: DDL COLUMNS DATAGRID (KHI LÀ TABLE DEFINITION DDL SPEC) -->
+                <Border Grid.Row="1" Style="{StaticResource SpecCardBorder}"
+                        Visibility="{Binding IsTableDefinitionDdl, Converter={StaticResource BoolToVis}}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -335,22 +422,21 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Text="{loc:Loc OracleSpec_LblColumnList}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                                 <TextBlock Text=" (" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding SelectedColumnsCount}" FontWeight="Bold" Foreground="#2563EB" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SelectedItemsCount}" FontWeight="Bold" Foreground="#2563EB" FontSize="11" VerticalAlignment="Center"/>
                                 <TextBlock Text="/" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding ColumnsCount}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ItemsCount}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
                                 <TextBlock Text=")" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="{loc:Loc OracleSpec_BtnSelectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding SelectAllColumnsCommand}" FontSize="10.5" Padding="6,2" Margin="0,0,4,0"/>
-                                <Button Content="{loc:Loc OracleSpec_BtnDeselectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding DeselectAllColumnsCommand}" FontSize="10.5" Padding="6,2"/>
+                                <Button Content="{loc:Loc OracleSpec_BtnSelectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding SelectAllItemsCommand}" FontSize="10.5" Padding="6,2" Margin="0,0,4,0"/>
+                                <Button Content="{loc:Loc OracleSpec_BtnDeselectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding DeselectAllItemsCommand}" FontSize="10.5" Padding="6,2"/>
                             </StackPanel>
                         </Grid>
 
-                        <!-- DataGrid -->
+                        <!-- DataGrid cho DDL Columns -->
                         <DataGrid Grid.Row="1" ItemsSource="{Binding Columns}" Style="{StaticResource SpecDataGridStyle}">
                             <DataGrid.Columns>
-                                <!-- Selected CheckBox -->
                                 <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="32">
                                     <DataGridCheckBoxColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -359,8 +445,7 @@
                                     </DataGridCheckBoxColumn.HeaderTemplate>
                                 </DataGridCheckBoxColumn>
 
-                                <!-- Physical Column Name -->
-                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColPhysical}" Binding="{Binding PhysicalName, UpdateSourceTrigger=PropertyChanged}" Width="110">
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColPhysical}" Binding="{Binding PhysicalName, UpdateSourceTrigger=PropertyChanged}" Width="105">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -369,10 +454,8 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- Logical Name -->
                                 <DataGridTextColumn Header="{loc:Loc OracleSpec_ColLogical}" Binding="{Binding LogicalName, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
 
-                                <!-- Data Type -->
                                 <DataGridTemplateColumn Header="{loc:Loc OracleSpec_ColDataType}" Width="85">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -388,20 +471,11 @@
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Length / Precision -->
                                 <DataGridTextColumn Header="{loc:Loc OracleSpec_ColLength}" Binding="{Binding DataLength, UpdateSourceTrigger=PropertyChanged}" Width="55"/>
-
-                                <!-- PK -->
                                 <DataGridCheckBoxColumn Header="{loc:Loc OracleSpec_ColPk}" Binding="{Binding IsPrimaryKey, UpdateSourceTrigger=PropertyChanged}" Width="35"/>
-
-                                <!-- Nullable -->
                                 <DataGridCheckBoxColumn Header="{loc:Loc OracleSpec_ColNullable}" Binding="{Binding IsNullable, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
-
-                                <!-- Default Value -->
                                 <DataGridTextColumn Header="{loc:Loc OracleSpec_ColDefault}" Binding="{Binding DefaultValue, UpdateSourceTrigger=PropertyChanged}" Width="65"/>
-
-                                <!-- Comments -->
-                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColComments}" Binding="{Binding Comments, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColComments}" Binding="{Binding Comments, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -434,103 +508,189 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <WrapPanel>
-                            <!-- DDL Script -->
-                            <Button Content="{loc:Loc OracleSpec_ModeDdl}"
-                                    Command="{Binding SetGenModeCommand}" CommandParameter="DdlScript"
-                                    Margin="2">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsModeDdl}" Value="True">
-                                                <Setter Property="Background" Value="#2563EB"/>
-                                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                        <StackPanel>
+                            <!-- Tab Bar cho Query / Logic Spec -->
+                            <WrapPanel Visibility="{Binding IsQueryLogicSpec, Converter={StaticResource BoolToVis}}">
+                                <!-- Check Block -->
+                                <Button Content="{loc:Loc OracleSpec_ModeQueryCheck}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="QueryCheckBlock"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeQueryCheck}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
 
-                            <!-- PL/SQL Safe Block -->
-                            <Button Content="{loc:Loc OracleSpec_ModePlSqlBlock}"
-                                    Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlSafeBlock"
-                                    Margin="2">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsModePlSqlBlock}" Value="True">
-                                                <Setter Property="Background" Value="#2563EB"/>
-                                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                <!-- Pure SELECT -->
+                                <Button Content="{loc:Loc OracleSpec_ModeQuerySelect}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="QueryPureSelect"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeQuerySelect}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
 
-                            <!-- PL/SQL CRUD Procedures -->
-                            <Button Content="{loc:Loc OracleSpec_ModeProcedures}"
-                                    Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlCrudProcedures"
-                                    Margin="2">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsModeCrudProcedures}" Value="True">
-                                                <Setter Property="Background" Value="#2563EB"/>
-                                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                <!-- Cursor Loop -->
+                                <Button Content="{loc:Loc OracleSpec_ModeQueryCursor}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="QueryCursorLoop"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeQueryCursor}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
 
-                            <!-- PL/SQL MERGE INTO -->
-                            <Button Content="{loc:Loc OracleSpec_ModeMerge}"
-                                    Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlMergeUpsert"
-                                    Margin="2">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsModeMergeUpsert}" Value="True">
-                                                <Setter Property="Background" Value="#2563EB"/>
-                                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                <!-- Procedure -->
+                                <Button Content="{loc:Loc OracleSpec_ModeQueryProcedure}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="QueryProcedure"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeQueryProcedure}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
 
-                            <!-- C# Entity -->
-                            <Button Content="{loc:Loc OracleSpec_ModeCSharp}"
-                                    Command="{Binding SetGenModeCommand}" CommandParameter="CSharpEntity"
-                                    Margin="2">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsModeCSharp}" Value="True">
-                                                <Setter Property="Background" Value="#2563EB"/>
-                                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                <!-- C# Code -->
+                                <Button Content="{loc:Loc OracleSpec_ModeQueryCSharp}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="QueryCSharpCode"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeQueryCSharp}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </WrapPanel>
 
-                            <!-- TypeScript DTO -->
-                            <Button Content="{loc:Loc OracleSpec_ModeTypeScript}"
-                                    Command="{Binding SetGenModeCommand}" CommandParameter="TypeScriptDto"
-                                    Margin="2">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsModeTypeScript}" Value="True">
-                                                <Setter Property="Background" Value="#2563EB"/>
-                                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </WrapPanel>
+                            <!-- Tab Bar cho Table Definition DDL Spec -->
+                            <WrapPanel Visibility="{Binding IsTableDefinitionDdl, Converter={StaticResource BoolToVis}}">
+                                <!-- DDL Script -->
+                                <Button Content="{loc:Loc OracleSpec_ModeDdl}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="DdlScript"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeDdl}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- PL/SQL Safe Block -->
+                                <Button Content="{loc:Loc OracleSpec_ModePlSqlBlock}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlSafeBlock"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModePlSqlBlock}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- CRUD Procedures -->
+                                <Button Content="{loc:Loc OracleSpec_ModeProcedures}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlCrudProcedures"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeCrudProcedures}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- PL/SQL MERGE INTO -->
+                                <Button Content="{loc:Loc OracleSpec_ModeMerge}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlMergeUpsert"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeMergeUpsert}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- C# Entity -->
+                                <Button Content="{loc:Loc OracleSpec_ModeCSharp}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="CSharpEntity"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeCSharp}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- TypeScript DTO -->
+                                <Button Content="{loc:Loc OracleSpec_ModeTypeScript}"
+                                        Command="{Binding SetGenModeCommand}" CommandParameter="TypeScriptDto"
+                                        Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsModeTypeScript}" Value="True">
+                                                    <Setter Property="Background" Value="#2563EB"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
                     </Border>
 
                     <!-- Code Preview TextBox -->

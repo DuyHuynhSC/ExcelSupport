@@ -1659,6 +1659,18 @@
   "OracleSpec_CopiedToClipboard": "Successfully copied script to Clipboard!",
   "OracleSpec_SaveFileTitle": "Save Oracle PL/SQL Script",
   "OracleSpec_SavedSuccess": "Successfully saved file: {0}",
+  "OracleSpec_BadgeQueryLogic": "Query / Validation Spec",
+  "OracleSpec_BadgeDdl": "Table Definition Spec (DDL)",
+  "OracleSpec_LblConditionList": "Extraction & Validation Conditions",
+  "OracleSpec_ColCondition": "Condition Expression",
+  "OracleSpec_ColOperator": "Operator",
+  "OracleSpec_ColRawValue": "Value / Screen Variable",
+  "OracleSpec_ModeQueryCheck": "1. Validation Block (PL/SQL Check)",
+  "OracleSpec_ModeQuerySelect": "2. Pure SELECT Query",
+  "OracleSpec_ModeQueryCursor": "3. Cursor Loop (FOR REC IN)",
+  "OracleSpec_ModeQueryProcedure": "4. Stored Procedure Skeleton",
+  "OracleSpec_ModeQueryCSharp": "5. C# LINQ / Query Method",
+  "OracleSpec_LoadedQuerySuccess": "Successfully parsed query spec for table {0} with {1} conditions.",
   "Cmd_OracleSpecToPlSql": "Oracle Spec to PL/SQL & DDL Generator",
   "Cmd_OracleSpecToPlSql_Desc": "Parse selected Excel table spec to generate DDL CREATE TABLE, COMMENT, PL/SQL Block or CRUD Procedures"
 }
