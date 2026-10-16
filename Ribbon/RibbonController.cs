@@ -129,6 +129,10 @@ namespace ExcelSupport.Ribbon
             {
                 return CreateSqlScriptBitmap();
             }
+            if (imageId == "spec_plsql_icon")
+            {
+                return CreateSpecPlSqlBitmap();
+            }
             if (imageId == "doctor_formula_icon")
             {
                 return CreateDoctorFormulaBitmap();
@@ -667,6 +671,76 @@ namespace ExcelSupport.Ribbon
             return bmp;
         }
 
+        private Bitmap CreateSpecPlSqlBitmap()
+        {
+            var bmp = new Bitmap(32, 32);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // 1. Spec Sheet (Trang đặc tả bảng tính bên trái: Màu trắng viền slate)
+                using (var sheetBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                {
+                    FillRoundedRectangle(g, sheetBrush, new Rectangle(3, 4, 17, 24), 2);
+                }
+                using (var sheetBorder = new Pen(Color.FromArgb(100, 116, 139), 1f))
+                {
+                    DrawRoundedRectangle(g, sheetBorder, new Rectangle(3, 4, 17, 24), 2);
+                }
+
+                // Header bảng đặc tả (Màu xanh Slate/Navy)
+                using (var headerBrush = new SolidBrush(Color.FromArgb(51, 65, 85)))
+                {
+                    g.FillRectangle(headerBrush, new Rectangle(4, 5, 15, 5));
+                }
+
+                // Các dòng đặc tả cột
+                using (var rowPen = new Pen(Color.FromArgb(203, 213, 225), 1f))
+                {
+                    g.DrawLine(rowPen, 5, 14, 18, 14);
+                    g.DrawLine(rowPen, 5, 18, 18, 18);
+                    g.DrawLine(rowPen, 5, 22, 18, 22);
+                }
+
+                // 2. Oracle Database Cylinder (Bên phải, màu Cam/Đỏ thương hiệu Oracle #EA580C / #C2410C)
+                using (var brushDb = new LinearGradientBrush(new Rectangle(14, 8, 15, 20),
+                    Color.FromArgb(234, 88, 12), Color.FromArgb(194, 65, 12), 45f))
+                {
+                    FillRoundedRectangle(g, brushDb, new Rectangle(14, 8, 15, 20), 3);
+                }
+                using (var penDb = new Pen(Color.FromArgb(154, 52, 18), 1f))
+                {
+                    DrawRoundedRectangle(g, penDb, new Rectangle(14, 8, 15, 20), 3);
+                }
+
+                // Vạch đĩa trên Database
+                using (var diskPen = new Pen(Color.FromArgb(254, 215, 170), 1.2f))
+                {
+                    g.DrawLine(diskPen, 16, 13, 26, 13);
+                    g.DrawLine(diskPen, 16, 18, 26, 18);
+                    g.DrawLine(diskPen, 16, 23, 23, 23);
+                }
+
+                // Tia sét nhỏ màu vàng (Lightning bolt biểu thị Sinh mã tức thì)
+                using (var boltBrush = new SolidBrush(Color.FromArgb(250, 204, 21)))
+                {
+                    var pts = new PointF[]
+                    {
+                        new PointF(25, 2),
+                        new PointF(21, 9),
+                        new PointF(24, 9),
+                        new PointF(22, 15),
+                        new PointF(28, 7),
+                        new PointF(25, 7)
+                    };
+                    g.FillPolygon(boltBrush, pts);
+                }
+            }
+            return bmp;
+        }
+
         private Bitmap CreateDoctorFormulaBitmap()
         {
             var bmp = new Bitmap(32, 32);
@@ -1045,6 +1119,12 @@ namespace ExcelSupport.Ribbon
         {
             var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
             Views.SqlScriptGeneratorDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+        }
+
+        public void OnOracleSpecToPlSql(IRibbonControl control)
+        {
+            var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDna.Integration.ExcelDnaUtil.Application;
+            Views.OracleSpecToPlSqlDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
         }
 
         public void OnAdvancedFilter(IRibbonControl control)

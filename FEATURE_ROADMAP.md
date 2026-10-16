@@ -37,14 +37,17 @@ graph TD
 
 ### 🇯🇵 2. Bộ Tiện Ích Chuyên Sâu Cho BSE / IT Dev & QA (Japan Offshore Suite)
 
-#### 2.1. Spec to Code / DDL Generator (Sinh Code từ Thiết Kế Bảng Tính) — [Ưu tiên P0]
-* **Vấn đề giải quyết:** Trong dự án Nhật, **Tài liệu thiết kế bảng (テーブル定義書)** hoặc **Thiết kế API/Giao diện (I/F 仕様書)** 100% viết bằng Excel. Dev/BSE phải gõ tay lại câu lệnh SQL `CREATE TABLE` hoặc viết Model C#/TypeScript/Java.
-* **Mô tả hoạt động:**
-  - Chọn vùng định nghĩa bảng (Tên vật lý, Tên logic Nhật, Kiểu dữ liệu, Length, Nullable, PK, Comment).
-  - 1-Click sinh:
-    - **SQL DDL:** `CREATE TABLE` / `ALTER TABLE` cho Oracle, PostgreSQL, MySQL, SQL Server (kèm đầy đủ `COMMENT ON COLUMN`).
-    - **Entity / DTO Models:** C# Class, Java Entity, TypeScript Interface, Python Pydantic (có XML summary lấy từ tên tiếng Nhật).
-    - **Mock JSON:** Dữ liệu mẫu JSON chuẩn cấu trúc phục vụ test API.
+#### 2.1. Spec to Code / DDL Generator (Sinh Câu Lệnh PL/SQL Oracle từ Thiết Kế Bảng Tính) — [Ưu tiên P0]
+* **Vấn đề giải quyết:** Trong các dự án phần mềm (đặc biệt khi làm việc với khách hàng Nhật Bản), **Tài liệu thiết kế bảng (テーブル定義書 - Table Definition)**, **Danh mục cột** và **Đặc tả CRUD / Xử lý dữ liệu** 100% được viết bằng Excel. Dev và BSE thường phải đọc từng dòng để gõ lại các câu lệnh DDL `CREATE TABLE`, `COMMENT ON COLUMN` hoặc viết thủ công các khối PL/SQL `MERGE INTO`, `INSERT`, Stored Procedure tốn rất nhiều thời gian và dễ phát sinh lỗi lệch kiểu dữ liệu, sai độ dài hay thiếu chú thích.
+* **Mô tả hoạt động & Luồng tương tác (Khi quét chọn 1 vùng):**
+  - **Quét chọn 1 vùng đặc tả trên Excel:** Người dùng quét chọn vùng đặc tả thiết kế trên bảng tính Excel (chứa các cột: Tên logic tiếng Nhật/Việt, Tên vật lý Physical Column, Kiểu dữ liệu Data Type, Độ dài Length/Scale, Cho phép Null, Khóa chính PK, Giá trị mặc định Default, Ghi chú/Comment) hoặc vùng bảng dữ liệu mẫu.
+  - **Tự động nhận diện cấu trúc thông minh (Smart Header & Column Auto-Detection):** Tự động nhận diện dòng tiêu đề (Header row), tự động nhận diện Tên Bảng / Schema (từ ô phía trên vùng chọn hoặc tên Sheet) và tự động ánh xạ các cột sang quy chuẩn Oracle Database (`VARCHAR2`, `NUMBER`, `DATE`, `TIMESTAMP`, `CLOB`...). Cho phép người dùng xác nhận hoặc điều chỉnh lại cột mapping nếu thiết kế có cấu trúc đặc thù.
+  - **1-Click sinh các câu lệnh PL/SQL Oracle đa dạng:**
+    - **Oracle DDL Script:** Sinh câu lệnh `CREATE TABLE <SCHEMA>.<TABLE_NAME> (...)` chuẩn cú pháp Oracle, bọc trong khối PL/SQL an toàn kiểm tra tồn tại (`DECLARE v_count NUMBER; BEGIN ... EXCEPTION ... END;`), sinh `ALTER TABLE ... ADD CONSTRAINT ... PRIMARY KEY`, Sequence & Trigger tự tăng (hoặc `GENERATED AS IDENTITY` cho Oracle 12c trở lên), kèm đầy đủ `COMMENT ON TABLE` và `COMMENT ON COLUMN` bảo toàn 100% tiếng Nhật/Việt từ đặc tả.
+    - **PL/SQL DML & Synchronization Script:** Sinh câu lệnh `MERGE INTO ... USING ... ON (...) WHEN MATCHED THEN UPDATE ... WHEN NOT MATCHED THEN INSERT ...` (Upsert dữ liệu), khối Anonymous Block PL/SQL `DECLARE ... BEGIN ... INSERT ... COMMIT; EXCEPTION WHEN OTHERS THEN ROLLBACK; END;` với xử lý chuẩn escape nháy đơn `''` và hàm `TO_DATE()`, hoặc mảng `FORALL ... INSERT` tối ưu hiệu năng nạp dữ liệu lớn (Bulk Load).
+    - **PL/SQL Stored Procedure / Package Skeleton:** Tự động sinh khung Procedure CRUD (`SP_INS_<TABLE>`, `SP_UPD_<TABLE>`, `SP_DEL_<TABLE>`, `SP_SEL_<TABLE>`) với danh sách tham số `IN`/`OUT` khớp đúng kiểu dữ liệu và độ dài trong đặc tả, kèm khối bắt lỗi `EXCEPTION WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20001, SQLERRM);`.
+    - **Code Models (Tùy chọn mở rộng):** C# Entity, TypeScript Interface, Python Pydantic hoặc Mock JSON theo nhu cầu.
+  - **Thao tác nhanh & Tích hợp:** Trình xem trước có Syntax Highlighting cho PL/SQL (Dark & Light Theme), nút 1-Click sao chép vào Clipboard (dán ngay vào PL/SQL Developer, DBeaver, SQL Developer, Toad), nút xuất file `.sql` mã hóa UTF-8 BOM, và nút thực thi trực tiếp vào kết nối Oracle Database hiện tại.
 
 #### 2.2. QA Test Evidence Smart Paster (Tự Động Canh Khung Ảnh Bằng Chứng) — [Ưu tiên P1]
 * **Vấn đề giải quyết:** Tester/QA khi chụp màn hình nghiệm thu (Evidence) phải dán ảnh vào Excel, sau đó dùng chuột kéo co giãn cho vừa ô, canh lề rất mất thời gian.
@@ -182,7 +185,7 @@ graph TD
 |:---:|---|---|:---:|:---:|:---:|
 | 1 | **Quick Command Palette (`Ctrl + Shift + P`)** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
 | 2 | **Project Document & Quick Spec Launcher** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
-| 3 | **Spec to Code / DDL Generator** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1** |
+| 3 | **Spec to Code / DDL Generator (Sinh PL/SQL Oracle từ Đặc Tả Excel)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1** |
 | 4 | **Japanese Design Quick Formatter (Chuẩn hóa format TKCT Nhật)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 1 (Đã hoàn thành ✅)** |
 | 5 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
 | 6 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |

@@ -1,0 +1,607 @@
+<Window x:Class="ExcelSupport.Views.OracleSpecToPlSqlDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        Title="{loc:Loc OracleSpec_WindowTitle}"
+        Height="760" Width="1200"
+        MinHeight="600" MinWidth="1020"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI" FontSize="12"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <!-- Boolean to Visibility Converter -->
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Primary Action Button (Blue/Indigo) -->
+        <Style x:Key="SpecPrimaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1E40AF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style x:Key="SpecSecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#F1F5F9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="Foreground" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Accent Action Button (Oracle Red/Orange) -->
+        <Style x:Key="SpecAccentBtn" TargetType="Button">
+            <Setter Property="Background" Value="#EA580C"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#C2410C"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Segmented Tab Button Style -->
+        <Style x:Key="SegmentedTabBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
+                                <Setter Property="Foreground" Value="#0F172A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Foreground" Value="#94A3B8"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Active Segmented Tab Button Style -->
+        <Style x:Key="ActiveSegmentedTabBtn" TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#3B82F6"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Card Border Style -->
+        <Style x:Key="SpecCardBorder" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- DataGrid Style -->
+        <Style x:Key="SpecDataGridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="RowBackground" Value="#FFFFFF"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#F1F5F9"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="True"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="RowBackground" Value="#1E293B"/>
+                    <Setter Property="AlternatingRowBackground" Value="#0F172A"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                    <Setter Property="HorizontalGridLinesBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Column Header Style -->
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#0F172A"/>
+                    <Setter Property="Foreground" Value="#94A3B8"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <!-- Header Row -->
+            <RowDefinition Height="Auto"/>
+            <!-- Main Content Row -->
+            <RowDefinition Height="*"/>
+            <!-- Footer Action Row -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ========================================== -->
+        <!-- HEADER ROW                                 -->
+        <!-- ========================================== -->
+        <Border Grid.Row="0" Margin="0,0,0,12" Padding="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#EA580C" Width="32" Height="32" CornerRadius="6" Margin="0,0,10,0">
+                        <TextBlock Text="⚡" FontSize="16" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{loc:Loc OracleSpec_HeaderTitle}" FontSize="15" FontWeight="Bold"/>
+                            <Border Background="#EA580C" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Oracle PL/SQL" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="{loc:Loc OracleSpec_HeaderSubtitle}" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="{loc:Loc OracleSpec_BtnReloadRange}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding RefreshFromSelectionCommand}" Margin="0,0,8,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ========================================== -->
+        <!-- MAIN CONTENT: 2-COLUMN SPLIT               -->
+        <!-- ========================================== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Left Column: Table & Spec Grid (460px) -->
+                <ColumnDefinition Width="480" MinWidth="380"/>
+                <!-- Splitter -->
+                <ColumnDefinition Width="12"/>
+                <!-- Right Column: Code Generator Preview (*) -->
+                <ColumnDefinition Width="*" MinWidth="450"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT PANEL: Spec Table Definition -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <!-- Table Meta Settings -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Columns DataGrid -->
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Card 1: Table Info & Generation Options -->
+                <Border Grid.Row="0" Style="{StaticResource SpecCardBorder}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <!-- Table Info -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Schema -->
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{loc:Loc OracleSpec_LblSchema}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                                <TextBox Text="{Binding SchemaName, UpdateSourceTrigger=PropertyChanged}" Padding="6,4"/>
+                            </StackPanel>
+
+                            <!-- Table Name -->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{loc:Loc OracleSpec_LblTableName}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                                <TextBox Text="{Binding TableName, UpdateSourceTrigger=PropertyChanged}" FontWeight="SemiBold" Padding="6,4"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Table Logical Name / Description -->
+                        <StackPanel Margin="0,0,0,8">
+                            <TextBlock Text="{loc:Loc OracleSpec_LblTableComment}" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                            <TextBox Text="{Binding TableLogicalName, UpdateSourceTrigger=PropertyChanged}" Padding="6,4"/>
+                        </StackPanel>
+
+                        <!-- Options Checkboxes -->
+                        <WrapPanel Margin="0,4,0,0">
+                            <CheckBox Content="{loc:Loc OracleSpec_OptIncludeComments}" IsChecked="{Binding IncludeComments}" Margin="0,0,14,4"/>
+                            <CheckBox Content="{loc:Loc OracleSpec_OptSeqTrigger}" IsChecked="{Binding IncludeSequenceTrigger}" Margin="0,0,14,4"/>
+                            <CheckBox Content="{loc:Loc OracleSpec_OptIdentity}" IsChecked="{Binding UseIdentityColumn}" Margin="0,0,14,4"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 2: Columns Specification Grid -->
+                <Border Grid.Row="1" Style="{StaticResource SpecCardBorder}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Grid Toolbar -->
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc OracleSpec_LblColumnList}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text=" (" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SelectedColumnsCount}" FontWeight="Bold" Foreground="#2563EB" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="/" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ColumnsCount}" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <TextBlock Text=")" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="{loc:Loc OracleSpec_BtnSelectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding SelectAllColumnsCommand}" FontSize="10.5" Padding="6,2" Margin="0,0,4,0"/>
+                                <Button Content="{loc:Loc OracleSpec_BtnDeselectAll}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding DeselectAllColumnsCommand}" FontSize="10.5" Padding="6,2"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- DataGrid -->
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Columns}" Style="{StaticResource SpecDataGridStyle}">
+                            <DataGrid.Columns>
+                                <!-- Selected CheckBox -->
+                                <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="32">
+                                    <DataGridCheckBoxColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="✓" FontWeight="Bold"/>
+                                        </DataTemplate>
+                                    </DataGridCheckBoxColumn.HeaderTemplate>
+                                </DataGridCheckBoxColumn>
+
+                                <!-- Physical Column Name -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColPhysical}" Binding="{Binding PhysicalName, UpdateSourceTrigger=PropertyChanged}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Logical Name -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColLogical}" Binding="{Binding LogicalName, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+
+                                <!-- Data Type -->
+                                <DataGridTemplateColumn Header="{loc:Loc OracleSpec_ColDataType}" Width="85">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding OracleDataType}" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <ComboBox ItemsSource="{Binding DataContext.CommonOracleDataTypes, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      SelectedItem="{Binding OracleDataType, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEditable="True"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Length / Precision -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColLength}" Binding="{Binding DataLength, UpdateSourceTrigger=PropertyChanged}" Width="55"/>
+
+                                <!-- PK -->
+                                <DataGridCheckBoxColumn Header="{loc:Loc OracleSpec_ColPk}" Binding="{Binding IsPrimaryKey, UpdateSourceTrigger=PropertyChanged}" Width="35"/>
+
+                                <!-- Nullable -->
+                                <DataGridCheckBoxColumn Header="{loc:Loc OracleSpec_ColNullable}" Binding="{Binding IsNullable, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
+
+                                <!-- Default Value -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColDefault}" Binding="{Binding DefaultValue, UpdateSourceTrigger=PropertyChanged}" Width="65"/>
+
+                                <!-- Comments -->
+                                <DataGridTextColumn Header="{loc:Loc OracleSpec_ColComments}" Binding="{Binding Comments, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- SPLITTER -->
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="Transparent" Cursor="SizeWE"/>
+
+            <!-- RIGHT PANEL: Script Output & Actions -->
+            <Border Grid.Column="2" Style="{StaticResource SpecCardBorder}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <!-- Gen Mode Tab Bar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Code Preview TextBox -->
+                        <RowDefinition Height="*"/>
+                        <!-- Output Status Bar -->
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Gen Mode Segmented Buttons -->
+                    <Border Grid.Row="0" Background="#F1F5F9" CornerRadius="6" Padding="3" Margin="0,0,0,10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#0F172A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <WrapPanel>
+                            <!-- DDL Script -->
+                            <Button Content="{loc:Loc OracleSpec_ModeDdl}"
+                                    Command="{Binding SetGenModeCommand}" CommandParameter="DdlScript"
+                                    Margin="2">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsModeDdl}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- PL/SQL Safe Block -->
+                            <Button Content="{loc:Loc OracleSpec_ModePlSqlBlock}"
+                                    Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlSafeBlock"
+                                    Margin="2">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsModePlSqlBlock}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- PL/SQL CRUD Procedures -->
+                            <Button Content="{loc:Loc OracleSpec_ModeProcedures}"
+                                    Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlCrudProcedures"
+                                    Margin="2">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsModeCrudProcedures}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- PL/SQL MERGE INTO -->
+                            <Button Content="{loc:Loc OracleSpec_ModeMerge}"
+                                    Command="{Binding SetGenModeCommand}" CommandParameter="PlSqlMergeUpsert"
+                                    Margin="2">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsModeMergeUpsert}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- C# Entity -->
+                            <Button Content="{loc:Loc OracleSpec_ModeCSharp}"
+                                    Command="{Binding SetGenModeCommand}" CommandParameter="CSharpEntity"
+                                    Margin="2">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsModeCSharp}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- TypeScript DTO -->
+                            <Button Content="{loc:Loc OracleSpec_ModeTypeScript}"
+                                    Command="{Binding SetGenModeCommand}" CommandParameter="TypeScriptDto"
+                                    Margin="2">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedTabBtn}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsModeTypeScript}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </WrapPanel>
+                    </Border>
+
+                    <!-- Code Preview TextBox -->
+                    <TextBox Grid.Row="1"
+                             Text="{Binding GeneratedScriptText, Mode=OneWay}"
+                             FontFamily="Consolas, Cascadia Code, Courier New" FontSize="12.5"
+                             IsReadOnly="False"
+                             AcceptsReturn="True"
+                             AcceptsTab="True"
+                             TextWrapping="No"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             Padding="12"
+                             BorderThickness="1"
+                             BorderBrush="#CBD5E1">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Background" Value="#0F172A"/>
+                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                                <Setter Property="CaretBrush" Value="#38BDF8"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                        <Setter Property="Background" Value="#F8FAFC"/>
+                                        <Setter Property="Foreground" Value="#0F172A"/>
+                                        <Setter Property="CaretBrush" Value="#0284C7"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+
+                    <!-- Output Status Bar -->
+                    <Border Grid.Row="2" Margin="0,8,0,0" Padding="0,4,0,0">
+                        <Grid>
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="#64748B" FontSize="11.5" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ========================================== -->
+        <!-- FOOTER ACTION BAR                          -->
+        <!-- ========================================== -->
+        <Border Grid.Row="2" Margin="0,12,0,0" Padding="0,8,0,0" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left info -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{loc:Loc OracleSpec_FooterTip}" FontSize="11" Foreground="#94A3B8"/>
+                </StackPanel>
+
+                <!-- Right Actions -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <!-- Copy to Clipboard -->
+                    <Button Content="{loc:Loc OracleSpec_BtnCopyClipboard}" Style="{StaticResource SpecPrimaryBtn}" Command="{Binding CopyClipboardCommand}" Margin="0,0,8,0"/>
+
+                    <!-- Save to File -->
+                    <Button Content="{loc:Loc OracleSpec_BtnSaveFile}" Style="{StaticResource SpecSecondaryBtn}" Command="{Binding SaveFileCommand}" Margin="0,0,8,0"/>
+
+                    <!-- Send to Oracle Quick Query -->
+                    <Button Content="{loc:Loc OracleSpec_BtnSendToOracle}" Style="{StaticResource SpecAccentBtn}" Command="{Binding SendToOracleQuickQueryCommand}" Margin="0,0,14,0"/>
+
+                    <!-- Close -->
+                    <Button Content="{loc:Loc Common_Close}" Style="{StaticResource SpecSecondaryBtn}" Click="OnCloseClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

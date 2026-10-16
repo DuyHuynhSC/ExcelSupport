@@ -247,6 +247,20 @@ namespace ExcelSupport.Services
                         SqlScriptGeneratorDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
                     }
                 },
+                new PaletteCommandItem
+                {
+                    Id = "oracle_spec_to_plsql",
+                    TitleKey = "btnOracleSpecToPlSql",
+                    DescriptionKey = "btnOracleSpecToPlSql_SuperTip",
+                    CategoryKey = "grpDatabaseTools",
+                    IconEmoji = "⚡",
+                    Keywords = new List<string> { "spec to plsql", "plsql", "ddl", "oracle ddl", "table definition", "spec to code", "sinh plsql", "tao bang", "ddl generator", "crud procedure", "merge into", "テーブル定義書", "ddl生成", "plsql生成" },
+                    Action = () =>
+                    {
+                        var app = AddInEvents.Instance?.ExcelAppInstance ?? (ExcelApp)ExcelDnaUtil.Application;
+                        OracleSpecToPlSqlDialog.ShowWindow(app, AddInEvents.MainViewModel?.IsDarkTheme ?? false);
+                    }
+                },
 
                 // ==================== 4. XỬ LÝ DỮ LIỆU (grpDataTools) ====================
                 new PaletteCommandItem

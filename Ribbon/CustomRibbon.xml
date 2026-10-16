@@ -157,6 +157,15 @@
                   getScreentip='GetRibbonScreentip'
                   getSupertip='GetRibbonSupertip'
                   onAction='OnSqlScriptGenerator' />
+
+          <button id='btnOracleSpecToPlSql'
+                  size='large'
+                  image='spec_plsql_icon'
+                  getVisible='GetControlVisible'
+                  getLabel='GetRibbonLabel'
+                  getScreentip='GetRibbonScreentip'
+                  getSupertip='GetRibbonSupertip'
+                  onAction='OnOracleSpecToPlSql' />
         </group>
 
         <!-- Group 4: Xử Lý Dữ Liệu -->
