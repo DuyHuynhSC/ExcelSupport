@@ -424,6 +424,12 @@ namespace ExcelSupport.Views
             }
             catch { }
 
+            try
+            {
+                profileSettingsControl?.SaveCurrentProfile();
+            }
+            catch { }
+
             bool ok = RibbonVisibilityService.SaveVisibilityMap(map);
             if (ok)
             {

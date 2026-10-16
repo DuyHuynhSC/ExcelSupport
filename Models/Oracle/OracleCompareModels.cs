@@ -271,38 +271,18 @@ namespace ExcelSupport.Models
                 Users = new List<OracleUserCredential>();
             }
 
-            if (Users.Count == 0)
+            if (Users.Count == 0 && !string.IsNullOrWhiteSpace(_username))
             {
-                if (!string.IsNullOrWhiteSpace(_username))
+                Users.Add(new OracleUserCredential
                 {
-                    Users.Add(new OracleUserCredential
-                    {
-                        Username = _username,
-                        Password = _password ?? "",
-                        RoleOrDescription = "Default User",
-                        IsDefault = true
-                    });
-                }
-                else
-                {
-                    Users.Add(new OracleUserCredential
-                    {
-                        Username = "XXX_USR1",
-                        Password = "",
-                        RoleOrDescription = "Admin / Primary User",
-                        IsDefault = true
-                    });
-                    Users.Add(new OracleUserCredential
-                    {
-                        Username = "XXX_USR9",
-                        Password = "",
-                        RoleOrDescription = "Read-Only / Secondary User",
-                        IsDefault = false
-                    });
-                }
+                    Username = _username,
+                    Password = _password ?? "",
+                    RoleOrDescription = "Default User",
+                    IsDefault = true
+                });
             }
 
-            if (!Users.Any(u => u.IsDefault))
+            if (Users.Count > 0 && !Users.Any(u => u.IsDefault))
             {
                 Users[0].IsDefault = true;
             }

@@ -44,10 +44,16 @@ namespace ExcelSupport.Services
                     foreach (var p in projectProfiles)
                     {
                         var db = p.DatabaseConnection;
-                        db.Id = p.Id;
-                        db.Name = p.Name;
-                        db.IsDefault = (p.Id == activeId);
-                        list.Add(db);
+                        bool isConfigured = !string.IsNullOrWhiteSpace(db.Host) ||
+                                           !string.IsNullOrWhiteSpace(db.ServiceNameOrSid) ||
+                                           (db.Users != null && db.Users.Count > 0);
+                        if (isConfigured || p.Id == activeId)
+                        {
+                            db.Id = p.Id;
+                            db.Name = p.Name;
+                            db.IsDefault = (p.Id == activeId);
+                            list.Add(db);
+                        }
                     }
                     _profiles = list;
                     return list;
@@ -63,38 +69,8 @@ namespace ExcelSupport.Services
 
         public static List<OracleConnectionProfile> Load()
         {
-            var list = JsonConfigStore.Load(ConfigFileName, () =>
-            {
-                var p1 = new OracleConnectionProfile
-                {
-                    Name = "Localhost ORCL (Default)",
-                    Host = "localhost",
-                    Port = 1521,
-                    ServiceNameOrSid = "ORCL",
-                    ServiceType = OracleServiceNameType.ServiceName,
-                    IsDefault = true
-                };
-                p1.EnsureDefaultUsers();
-
-                var p2 = new OracleConnectionProfile
-                {
-                    Name = "Dev / UAT Environment",
-                    Host = "192.168.1.100",
-                    Port = 1521,
-                    ServiceNameOrSid = "DEVDB",
-                    ServiceType = OracleServiceNameType.ServiceName,
-                    IsDefault = false
-                };
-                p2.EnsureDefaultUsers();
-
-                return new List<OracleConnectionProfile> { p1, p2 };
-            });
-
-            foreach (var p in list)
-            {
-                p.EnsureDefaultUsers();
-            }
-            return list;
+            var list = JsonConfigStore.Load(ConfigFileName, () => new List<OracleConnectionProfile>());
+            return list ?? new List<OracleConnectionProfile>();
         }
 
         public static bool Save(List<OracleConnectionProfile> profiles)

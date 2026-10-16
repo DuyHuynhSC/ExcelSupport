@@ -97,7 +97,7 @@ namespace ExcelSupport.Views
                         p.Name = $"{LocalizationService.Get("SpecProfile_NewProjectPrefix", "Dự Án Mới")} {_profiles.Count + 1}";
                     }
                     p.IsActive = (p.Id == _activeProfileId);
-                    p.DatabaseConnection.EnsureDefaultUsers();
+                    if (p.DatabaseConnection.Users == null) p.DatabaseConnection.Users = new List<OracleUserCredential>();
                     p.DatabaseConnection.Id = p.Id;
                     p.DatabaseConnection.Name = p.Name;
                     p.DatabaseConnection.IsDefault = (p.Id == _activeProfileId);
@@ -164,7 +164,7 @@ namespace ExcelSupport.Views
 
                 // 2. Database Tab
                 var db = p.DatabaseConnection;
-                db.EnsureDefaultUsers();
+                if (db.Users == null) db.Users = new List<OracleUserCredential>();
                 txtSettingHost.Text = db.Host;
                 txtSettingPort.Text = db.Port.ToString();
                 txtSettingService.Text = db.ServiceNameOrSid;
@@ -405,17 +405,22 @@ namespace ExcelSupport.Views
             txtStatusNote.Foreground = SuccessBrush;
         }
 
+        public void SaveCurrentProfile()
+        {
+            if (_selectedProfile != null)
+            {
+                SaveFormToModel(_selectedProfile);
+            }
+
+            // Save all profiles to ProjectProfileManager (which syncs to OracleConnectionManager)
+            ProjectProfileManager.SaveAllProfiles(_profiles.ToList(), _activeProfileId);
+        }
+
         private void BtnSaveProject_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (_selectedProfile != null)
-                {
-                    SaveFormToModel(_selectedProfile);
-                }
-
-                // Save all profiles to ProjectProfileManager (which syncs to OracleConnectionManager)
-                ProjectProfileManager.SaveAllProfiles(_profiles.ToList(), _activeProfileId);
+                SaveCurrentProfile();
 
                 txtStatusNote.Text = LocalizationService.Get("SpecProfile_SaveSuccess", "✓ Đã lưu thành công cấu hình Profile dự án!");
                 txtStatusNote.Foreground = SuccessBrush;
@@ -554,17 +559,6 @@ namespace ExcelSupport.Views
         {
             if (sender is WpfButton btn && btn.DataContext is OracleUserCredential userToDelete)
             {
-                if (_settingUsers.Count <= 1)
-                {
-                    WpfMessageBox.Show(
-                        Window.GetWindow(this),
-                        LocalizationService.Get("Oracle_MsgMinUserRequired", "Mỗi profile cần ít nhất 1 tài khoản kết nối."),
-                        LocalizationService.Get("Common_Notice", "Thông Báo"),
-                        WpfMessageBoxButton.OK,
-                        WpfMessageBoxImage.Warning);
-                    return;
-                }
-
                 _settingUsers.Remove(userToDelete);
                 if (userToDelete.IsDefault && _settingUsers.Count > 0)
                 {

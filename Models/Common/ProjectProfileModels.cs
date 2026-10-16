@@ -196,23 +196,18 @@ namespace ExcelSupport.Models
                     _databaseConnection = new OracleConnectionProfile
                     {
                         Id = this.Id,
-                        Name = string.IsNullOrWhiteSpace(this.Name) ? "Default Oracle DB" : $"{this.Name} DB",
-                        Host = "localhost",
+                        Name = string.IsNullOrWhiteSpace(this.Name) ? "" : $"{this.Name} DB",
+                        Host = "",
                         Port = 1521,
-                        ServiceNameOrSid = "ORCL",
+                        ServiceNameOrSid = "",
                         ServiceType = OracleServiceNameType.ServiceName
                     };
-                    _databaseConnection.EnsureDefaultUsers();
                 }
                 return _databaseConnection;
             }
             set
             {
                 _databaseConnection = value;
-                if (_databaseConnection != null)
-                {
-                    _databaseConnection.EnsureDefaultUsers();
-                }
             }
         }
 

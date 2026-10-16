@@ -206,20 +206,18 @@ namespace ExcelSupport.Services
                 {
                     Id = defaultProf.Id,
                     Name = defaultProf.Name,
-                    Host = "localhost",
+                    Host = "",
                     Port = 1521,
-                    ServiceNameOrSid = "ORCL",
+                    ServiceNameOrSid = "",
                     ServiceType = OracleServiceNameType.ServiceName,
                     IsDefault = true
                 };
-                defaultProf.DatabaseConnection.EnsureDefaultUsers();
 
                 var def = new ProjectProfilesConfig
                 {
                     Profiles = new List<ProjectProfile> { defaultProf },
                     ActiveProfileId = defaultProf.Id
                 };
-                TryMigrateLegacyOracleConnections(def);
                 return def;
             });
 
@@ -240,17 +238,15 @@ namespace ExcelSupport.Services
                 {
                     Id = defaultProf.Id,
                     Name = defaultProf.Name,
-                    Host = "localhost",
+                    Host = "",
                     Port = 1521,
-                    ServiceNameOrSid = "ORCL",
+                    ServiceNameOrSid = "",
                     ServiceType = OracleServiceNameType.ServiceName,
                     IsDefault = true
                 };
-                defaultProf.DatabaseConnection.EnsureDefaultUsers();
 
                 config.Profiles = new List<ProjectProfile> { defaultProf };
                 config.ActiveProfileId = defaultProf.Id;
-                TryMigrateLegacyOracleConnections(config);
             }
             else
             {
@@ -270,9 +266,9 @@ namespace ExcelSupport.Services
                         {
                             Id = p.Id,
                             Name = p.Name,
-                            Host = "localhost",
+                            Host = "",
                             Port = 1521,
-                            ServiceNameOrSid = "ORCL",
+                            ServiceNameOrSid = "",
                             ServiceType = OracleServiceNameType.ServiceName
                         };
                     }
@@ -281,57 +277,45 @@ namespace ExcelSupport.Services
                         p.DatabaseConnection.Id = p.Id;
                         p.DatabaseConnection.Name = p.Name;
                     }
-                    p.DatabaseConnection.EnsureDefaultUsers();
                     p.IsActive = (p.Id == config.ActiveProfileId);
                     p.DatabaseConnection.IsDefault = (p.Id == config.ActiveProfileId);
                 }
-
-                TryMigrateLegacyOracleConnections(config);
             }
 
             return config;
         }
 
-        private static void TryMigrateLegacyOracleConnections(ProjectProfilesConfig config)
-        {
-            try
-            {
-                string oracleJsonPath = Path.Combine(JsonConfigStore.BaseDirectory, "oracle_connections.json");
-                if (File.Exists(oracleJsonPath) && config.Profiles != null && config.Profiles.Count > 0)
-                {
-                    string json = File.ReadAllText(oracleJsonPath);
-                    var legacyList = JsonConvert.DeserializeObject<List<OracleConnectionProfile>>(json);
-                    if (legacyList != null && legacyList.Count > 0)
-                    {
-                        var firstProj = config.Profiles[0];
-                        if (firstProj.DatabaseConnection == null)
-                        {
-                            firstProj.DatabaseConnection = new OracleConnectionProfile();
-                        }
-                        // If first project's DB is untouched/default, import legacy settings
-                        if (firstProj.DatabaseConnection.Users == null || firstProj.DatabaseConnection.Users.Count <= 1 &&
-                            (firstProj.DatabaseConnection.Users.Count == 0 || firstProj.DatabaseConnection.Users[0].Username == "XXX_USR1" || firstProj.DatabaseConnection.Users[0].Username == ""))
-                        {
-                            var legacy = legacyList[0];
-                            firstProj.DatabaseConnection.Host = legacy.Host;
-                            firstProj.DatabaseConnection.Port = legacy.Port;
-                            firstProj.DatabaseConnection.ServiceNameOrSid = legacy.ServiceNameOrSid;
-                            firstProj.DatabaseConnection.ServiceType = legacy.ServiceType;
-                            firstProj.DatabaseConnection.Users = legacy.Users;
-                            firstProj.DatabaseConnection.SelectedUserId = legacy.SelectedUserId;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ProjectProfileManager] Migration error: {ex.Message}");
-            }
-        }
-
         private static void SaveConfig(ProjectProfilesConfig config)
         {
             JsonConfigStore.Save(ConfigFileName, config);
+            SyncOracleConnections(config);
+        }
+
+        private static void SyncOracleConnections(ProjectProfilesConfig config)
+        {
+            try
+            {
+                var dbs = new List<OracleConnectionProfile>();
+                if (config.Profiles != null)
+                {
+                    foreach (var p in config.Profiles)
+                    {
+                        var db = p.DatabaseConnection;
+                        if (db != null && (!string.IsNullOrWhiteSpace(db.Host) || !string.IsNullOrWhiteSpace(db.ServiceNameOrSid) || (db.Users != null && db.Users.Count > 0)))
+                        {
+                            db.Id = p.Id;
+                            db.Name = p.Name;
+                            db.IsDefault = (p.Id == config.ActiveProfileId);
+                            dbs.Add(db);
+                        }
+                    }
+                }
+                JsonConfigStore.Save("oracle_connections.json", dbs);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProjectProfileManager] Sync error: {ex.Message}");
+            }
         }
     }
 }
