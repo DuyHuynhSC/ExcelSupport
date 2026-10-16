@@ -298,6 +298,12 @@ namespace ExcelSupport
 
         private void ExcelApp_WorkbookBeforeClose(Workbook Wb, ref bool Cancel)
         {
+            try
+            {
+                TaskPaneRegistry.OnWorkbookBeforeClose(Wb);
+            }
+            catch { }
+
             Services.GridRulerService.OnWorkbookBeforeSave(Wb);
             QueueRefresh();
         }

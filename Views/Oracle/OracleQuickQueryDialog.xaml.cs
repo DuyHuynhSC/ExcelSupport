@@ -95,7 +95,7 @@ namespace ExcelSupport.Views
 
             try
             {
-                string sql = await OracleQuickQueryService.GenerateSqlFromSelectionAsync(selectionText, aiConfig);
+                string sql = await OracleQuickQueryService.GenerateSqlFromSelectionAsync(selectionText!, aiConfig);
                 if (!string.IsNullOrWhiteSpace(sql))
                 {
                     txtSqlQuery.Text = sql;
