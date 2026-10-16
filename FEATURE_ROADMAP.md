@@ -37,7 +37,7 @@ graph TD
 
 ### 🇯🇵 2. Bộ Tiện Ích Chuyên Sâu Cho BSE / IT Dev & QA (Japan Offshore Suite)
 
-#### 2.1. Spec to Code / DDL Generator (Sinh Câu Lệnh PL/SQL Oracle từ Thiết Kế Bảng Tính) — [Ưu tiên P0]
+#### 2.1. Spec to Code / DDL Generator (Sinh Câu Lệnh PL/SQL Oracle từ Thiết Kế Bảng Tính) — [Ưu tiên P0 - ✅ Đã hoàn thành]
 * **Vấn đề giải quyết:** Trong các dự án phần mềm (đặc biệt khi làm việc với khách hàng Nhật Bản), **Tài liệu thiết kế bảng (テーブル定義書 - Table Definition)**, **Danh mục cột** và **Đặc tả CRUD / Xử lý dữ liệu** 100% được viết bằng Excel. Dev và BSE thường phải đọc từng dòng để gõ lại các câu lệnh DDL `CREATE TABLE`, `COMMENT ON COLUMN` hoặc viết thủ công các khối PL/SQL `MERGE INTO`, `INSERT`, Stored Procedure tốn rất nhiều thời gian và dễ phát sinh lỗi lệch kiểu dữ liệu, sai độ dài hay thiếu chú thích.
 * **Mô tả hoạt động & Luồng tương tác (Khi quét chọn 1 vùng):**
   - **Quét chọn 1 vùng đặc tả trên Excel:** Người dùng quét chọn vùng đặc tả thiết kế trên bảng tính Excel (chứa các cột: Tên logic tiếng Nhật/Việt, Tên vật lý Physical Column, Kiểu dữ liệu Data Type, Độ dài Length/Scale, Cho phép Null, Khóa chính PK, Giá trị mặc định Default, Ghi chú/Comment) hoặc vùng bảng dữ liệu mẫu.
@@ -185,7 +185,7 @@ graph TD
 |:---:|---|---|:---:|:---:|:---:|
 | 1 | **Quick Command Palette (`Ctrl + Shift + P`)** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
 | 2 | **Project Document & Quick Spec Launcher** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
-| 3 | **Spec to Code / DDL Generator (Sinh PL/SQL Oracle từ Đặc Tả Excel)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1** |
+| 3 | **Spec to Code / DDL Generator (Sinh PL/SQL Oracle từ Đặc Tả Excel)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 1 (Đã hoàn thành ✅)** |
 | 4 | **Japanese Design Quick Formatter (Chuẩn hóa format TKCT Nhật)** | BSE, Dev, QA Nhật | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 1 (Đã hoàn thành ✅)** |
 | 5 | **QA Test Evidence Smart Paster** | QA, Tester, Dev | ⭐⭐⭐⭐⭐ | Thấp - TB | **Phase 2** |
 | 6 | **Workbook Health Check & Bloat Reducer** | Toàn bộ người dùng | ⭐⭐⭐⭐⭐ | Trung bình | **Phase 2** |

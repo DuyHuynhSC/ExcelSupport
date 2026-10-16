@@ -255,7 +255,7 @@ namespace ExcelSupport.Services
         public static string SanitizeIdentifier(string? name)
         {
             if (string.IsNullOrWhiteSpace(name)) return string.Empty;
-            string s = name.Trim();
+            string s = name!.Trim();
             s = Regex.Replace(s, @"\s+", "_");
             s = Regex.Replace(s, @"[^A-Za-z0-9_#$]", "");
             return s.ToUpperInvariant();
