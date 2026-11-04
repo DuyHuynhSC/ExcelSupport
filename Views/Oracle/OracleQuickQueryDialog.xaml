@@ -141,6 +141,52 @@
             </Style.Triggers>
         </Style>
 
+        <!-- DataGridRowHeader Style -->
+        <Style TargetType="DataGridRowHeader">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Background" Value="#F1F5F9"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#1E293B"/>
+                    <Setter Property="BorderBrush" Value="#334155"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- DataGridCell Style for Cell Selection -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
+                            <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#DBEAFE"/>
+                    <Setter Property="Foreground" Value="#1E3A8A"/>
+                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </Trigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                        <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="#1E3A8A"/>
+                    <Setter Property="Foreground" Value="#60A5FA"/>
+                    <Setter Property="BorderBrush" Value="#38BDF8"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- ComboBox ToggleButton Template -->
         <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
             <Grid>
@@ -760,7 +806,7 @@
                     </Border.Style>
 
                     <Grid>
-                        <DataGrid x:Name="dgPreview" AutoGenerateColumns="True" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Extended" CanUserSortColumns="True" ClipboardCopyMode="IncludeHeader">
+                        <DataGrid x:Name="dgPreview" AutoGenerateColumns="True" IsReadOnly="True" HeadersVisibility="All" SelectionUnit="CellOrRowHeader" SelectionMode="Extended" CanUserSortColumns="True" ClipboardCopyMode="ExcludeHeader" MouseDoubleClick="DgPreview_MouseDoubleClick">
                             <DataGrid.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Click="DgPreviewCopy_Click" Header="{loc:Loc Oracle_CopySelection}">

@@ -988,6 +988,7 @@
   "Oracle_CopiedSqlStatus": "📋 SQL query copied to clipboard!",
   "Oracle_PastedSqlStatus": "📥 Content pasted from clipboard!",
   "Oracle_CopiedGridStatus": "📋 Preview data copied to clipboard!",
+  "Oracle_CopiedSingleCellStatus": "📋 Copied cell value: \",
   "Oracle_CopySelection": "📋 Copy selected cells/rows (Ctrl+C)",
   "Oracle_CopyWithHeaders": "📊 Copy with column headers",
   "Oracle_OptIncludeTitle": "Include table name as title",

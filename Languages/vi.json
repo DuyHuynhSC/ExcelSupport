@@ -988,6 +988,7 @@
   "Oracle_CopiedSqlStatus": "📋 Đã sao chép câu lệnh SQL vào bộ nhớ tạm!",
   "Oracle_PastedSqlStatus": "📥 Đã dán nội dung từ bộ nhớ tạm!",
   "Oracle_CopiedGridStatus": "📋 Đã sao chép dữ liệu xem trước vào bộ nhớ tạm!",
+  "Oracle_CopiedSingleCellStatus": "📋 Đã sao chép giá trị ô: \",
   "Oracle_CopySelection": "📋 Sao chép ô/dòng đã chọn (Ctrl+C)",
   "Oracle_CopyWithHeaders": "📊 Sao chép kèm tiêu đề cột",
   "Oracle_OptIncludeTitle": "Kèm tên bảng làm tiêu đề",

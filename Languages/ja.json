@@ -988,6 +988,7 @@
   "Oracle_CopiedSqlStatus": "📋 SQLクエリをクリップボードにコピーしました！",
   "Oracle_PastedSqlStatus": "📥 クリップボードから貼り付けました！",
   "Oracle_CopiedGridStatus": "📋 プレビューデータをクリップボードにコピーしました！",
+  "Oracle_CopiedSingleCellStatus": "📋 セルの値をコピーしました: \",
   "Oracle_CopySelection": "📋 選択したセル/行をコピー (Ctrl+C)",
   "Oracle_CopyWithHeaders": "📊 列ヘッダー付きでコピー",
   "Oracle_OptIncludeTitle": "テーブル名をタイトルとして含める",

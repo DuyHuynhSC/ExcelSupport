@@ -17,6 +17,8 @@ using ExcelRange = Microsoft.Office.Interop.Excel.Range;
 using ExcelWorksheet = Microsoft.Office.Interop.Excel.Worksheet;
 using Window = System.Windows.Window;
 using WpfClipboard = System.Windows.Clipboard;
+using WpfDataGridCell = System.Windows.Controls.DataGridCell;
+using WpfDataGridColumnHeader = System.Windows.Controls.Primitives.DataGridColumnHeader;
 
 namespace ExcelSupport.Views
 {
@@ -933,15 +935,85 @@ namespace ExcelSupport.Views
             }
         }
 
+        private void DgPreview_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var dep = e.OriginalSource as DependencyObject;
+            while (dep != null && !(dep is WpfDataGridCell) && !(dep is WpfDataGridColumnHeader))
+            {
+                dep = System.Windows.Media.VisualTreeHelper.GetParent(dep);
+            }
+
+            if (dep is WpfDataGridCell)
+            {
+                CopyDataGridToClipboard(includeHeaders: false);
+            }
+        }
+
+        private string? GetSelectedSingleCellValue()
+        {
+            if (dgPreview.SelectedCells.Count != 1) return null;
+
+            var cellInfo = dgPreview.SelectedCells[0];
+            if (cellInfo.Item == null || cellInfo.Column == null) return null;
+
+            // 1. Lấy nội dung hiển thị từ TextBlock nếu có
+            var content = cellInfo.Column.GetCellContent(cellInfo.Item);
+            if (content is TextBlock tb)
+            {
+                return tb.Text;
+            }
+
+            // 2. Lấy từ DataRowView nếu cột tương ứng hợp lệ
+            if (cellInfo.Item is System.Data.DataRowView rowView)
+            {
+                string colName = cellInfo.Column.SortMemberPath;
+                if (string.IsNullOrEmpty(colName) && cellInfo.Column.Header != null)
+                {
+                    colName = cellInfo.Column.Header.ToString() ?? "";
+                }
+                if (!string.IsNullOrEmpty(colName) && rowView.Row.Table.Columns.Contains(colName))
+                {
+                    object val = rowView[colName];
+                    return val == DBNull.Value ? "" : val?.ToString() ?? "";
+                }
+            }
+
+            return null;
+        }
+
         private void CopyDataGridToClipboard(bool includeHeaders)
         {
             try
             {
+                // Nếu chỉ chọn đúng 1 ô và không yêu cầu kèm tiêu đề cột
+                if (!includeHeaders && dgPreview.SelectedCells.Count == 1)
+                {
+                    string? singleVal = GetSelectedSingleCellValue();
+                    if (singleVal != null)
+                    {
+                        WpfClipboard.SetText(singleVal);
+                        string displayVal = singleVal.Length > 40 ? singleVal.Substring(0, 40) + "..." : singleVal;
+                        txtStatus.Text = string.Format(LocalizationService.Get("Oracle_CopiedSingleCellStatus", "📋 Đã sao chép giá trị ô: \"{0}\""), displayVal);
+                        return;
+                    }
+                }
+
+                // Nếu chọn nhiều ô hoặc yêu cầu kèm Header
                 dgPreview.ClipboardCopyMode = includeHeaders
                     ? DataGridClipboardCopyMode.IncludeHeader
                     : DataGridClipboardCopyMode.ExcludeHeader;
+
                 ApplicationCommands.Copy.Execute(null, dgPreview);
-                txtStatus.Text = LocalizationService.Get("Oracle_CopiedGridStatus", "📋 Đã sao chép dữ liệu xem trước vào bộ nhớ tạm!");
+
+                int cellCount = dgPreview.SelectedCells.Count;
+                if (cellCount > 1)
+                {
+                    txtStatus.Text = string.Format(LocalizationService.Get("Oracle_CopiedGridStatus", "📋 Đã sao chép {0} ô dữ liệu vào bộ nhớ tạm!"), cellCount);
+                }
+                else
+                {
+                    txtStatus.Text = LocalizationService.Get("Oracle_CopiedGridStatus", "📋 Đã sao chép dữ liệu xem trước vào bộ nhớ tạm!");
+                }
             }
             catch (Exception ex)
             {
