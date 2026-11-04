@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:loc="clr-namespace:ExcelSupport.Helpers"
+        xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Title="{loc:Loc Oracle_QuickQueryTitle}"
         Height="680" Width="940"
@@ -586,7 +587,29 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <TextBlock Text=" (vd: SELECT * FROM ADDMTA WHERE ROWNUM &lt;= 50)" FontSize="11" Foreground="#94A3B8" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        <!-- Nút Sao Chép SQL (Ctrl+C) -->
+                        <Button x:Name="btnCopySql" Style="{StaticResource SecondaryActionBtn}" Padding="6,2" Margin="10,0,4,0" Height="25" Click="BtnCopySql_Click" ToolTip="{loc:Loc Oracle_BtnCopySqlTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📋" FontSize="11" Margin="0,0,3,0"/>
+                                <TextBlock Text="{loc:Loc Oracle_BtnCopySql}" FontSize="11"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Nút Dán SQL (Ctrl+V) -->
+                        <Button x:Name="btnPasteSql" Style="{StaticResource SecondaryActionBtn}" Padding="6,2" Margin="0,0,4,0" Height="25" Click="BtnPasteSql_Click" ToolTip="{loc:Loc Oracle_BtnPasteSqlTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📥" FontSize="11" Margin="0,0,3,0"/>
+                                <TextBlock Text="{loc:Loc Oracle_BtnPasteSql}" FontSize="11"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Nút Định Dạng SQL -->
+                        <Button x:Name="btnFormatSql" Style="{StaticResource SecondaryActionBtn}" Padding="6,2" Margin="0,0,8,0" Height="25" Click="BtnFormatSql_Click" ToolTip="{loc:Loc Oracle_BtnFormatSqlTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🎨" FontSize="11" Margin="0,0,3,0"/>
+                                <TextBlock Text="{loc:Loc Oracle_BtnFormatSql}" FontSize="11"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- Natural Language, Table Structure Inspector & Query History Selector -->
@@ -634,7 +657,56 @@
                     </StackPanel>
                 </Grid>
 
-                <TextBox Grid.Row="1" x:Name="txtSqlQuery" Style="{StaticResource SqlEditorStyle}"/>
+                <Border Grid.Row="1" x:Name="bdSqlEditor" BorderThickness="1" CornerRadius="6">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                            <Setter Property="Background" Value="#FFFFFF"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="BorderBrush" Value="#475569"/>
+                                    <Setter Property="Background" Value="#1E293B"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <avalonedit:TextEditor x:Name="txtSqlQuery"
+                                           FontFamily="Consolas, 'Cascadia Mono', 'Courier New'"
+                                           FontSize="13"
+                                           ShowLineNumbers="True"
+                                           WordWrap="False"
+                                           HorizontalScrollBarVisibility="Auto"
+                                           VerticalScrollBarVisibility="Auto"
+                                           Padding="6,6">
+                        <avalonedit:TextEditor.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Click="BtnCutSql_Click" Header="{loc:Loc Common_Cut}">
+                                    <MenuItem.Icon><TextBlock Text="✂️" FontSize="12"/></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Click="BtnCopySql_Click" Header="{loc:Loc Common_Copy}">
+                                    <MenuItem.Icon><TextBlock Text="📋" FontSize="12"/></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Click="BtnPasteSql_Click" Header="{loc:Loc Common_Paste}">
+                                    <MenuItem.Icon><TextBlock Text="📥" FontSize="12"/></MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Click="BtnSelectAllSql_Click" Header="{loc:Loc Common_SelectAll}">
+                                    <MenuItem.Icon><TextBlock Text="🔘" FontSize="12"/></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Click="BtnClearSql_Click" Header="{loc:Loc Common_Clear}">
+                                    <MenuItem.Icon><TextBlock Text="🧹" FontSize="12"/></MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Click="BtnFormatSql_Click" Header="{loc:Loc Oracle_BtnFormatSql}">
+                                    <MenuItem.Icon><TextBlock Text="🎨" FontSize="12"/></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Click="BtnInspectStructure_Click" Header="{loc:Loc Oracle_BtnTableStructure}">
+                                    <MenuItem.Icon><TextBlock Text="🔍" FontSize="12"/></MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </avalonedit:TextEditor.ContextMenu>
+                    </avalonedit:TextEditor>
+                </Border>
             </Grid>
 
             <!-- Row 2: GridSplitter -->
@@ -688,7 +760,22 @@
                     </Border.Style>
 
                     <Grid>
-                        <DataGrid x:Name="dgPreview" AutoGenerateColumns="True" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Extended" CanUserSortColumns="True"/>
+                        <DataGrid x:Name="dgPreview" AutoGenerateColumns="True" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Extended" CanUserSortColumns="True" ClipboardCopyMode="IncludeHeader">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Click="DgPreviewCopy_Click" Header="{loc:Loc Oracle_CopySelection}">
+                                        <MenuItem.Icon><TextBlock Text="📋" FontSize="12"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Click="DgPreviewCopyWithHeaders_Click" Header="{loc:Loc Oracle_CopyWithHeaders}">
+                                        <MenuItem.Icon><TextBlock Text="📊" FontSize="12"/></MenuItem.Icon>
+                                    </MenuItem>
+                                    <Separator/>
+                                    <MenuItem Command="ApplicationCommands.SelectAll" Header="{loc:Loc Common_SelectAll}">
+                                        <MenuItem.Icon><TextBlock Text="🔘" FontSize="12"/></MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                        </DataGrid>
 
                         <!-- Empty Placeholder Text -->
                         <TextBlock x:Name="txtPreviewPlaceholder" Text="{loc:Loc Oracle_PreviewPlaceholder}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11.5" IsHitTestVisible="False">

@@ -1,4 +1,4 @@
-{
+﻿{
   "tabWorkbookNav": "FJS Tools",
   "grpNavExplorer": "ナビゲーション",
   "grpQuickTools": "クイックツール",
@@ -979,6 +979,17 @@
   "Oracle_NlAiSuccess": "✨ AIによるSQLクエリへの変換が完了しました！",
   "Oracle_NlAiError": "AI SQL変換エラー: {0}",
   "Oracle_NlEmptySelection": "Excelでクエリ内容を含むセルをあらかじめ選択してください。",
+  "Oracle_BtnCopySql": "コピー",
+  "Oracle_BtnCopySqlTip": "SQLクエリをクリップボードにコピー (Ctrl+C)",
+  "Oracle_BtnPasteSql": "貼り付け",
+  "Oracle_BtnPasteSqlTip": "クリップボードからエディタに貼り付け (Ctrl+V)",
+  "Oracle_BtnFormatSql": "整形",
+  "Oracle_BtnFormatSqlTip": "SQLクエリを読みやすく自動整形",
+  "Oracle_CopiedSqlStatus": "📋 SQLクエリをクリップボードにコピーしました！",
+  "Oracle_PastedSqlStatus": "📥 クリップボードから貼り付けました！",
+  "Oracle_CopiedGridStatus": "📋 プレビューデータをクリップボードにコピーしました！",
+  "Oracle_CopySelection": "📋 選択したセル/行をコピー (Ctrl+C)",
+  "Oracle_CopyWithHeaders": "📊 列ヘッダー付きでコピー",
   "Oracle_OptIncludeTitle": "テーブル名をタイトルとして含める",
   "Oracle_OptIncludeHeaders": "ヘッダー行を含める",
   "Oracle_OptAutoFit": "列幅を自動調整",

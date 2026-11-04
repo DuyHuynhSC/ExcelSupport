@@ -2,4 +2,5 @@
   <ExternalLibrary Path="ExcelSupport.dll" ExplicitExports="true" LoadFromBytes="true" Pack="true" ComServer="true" />
   <Reference Path="Newtonsoft.Json.dll" Pack="true" />
   <Reference Path="Oracle.ManagedDataAccess.dll" Pack="true" />
+  <Reference Path="ICSharpCode.AvalonEdit.dll" Pack="true" />
 </DnaLibrary>

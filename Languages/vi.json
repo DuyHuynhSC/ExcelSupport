@@ -1,4 +1,4 @@
-{
+﻿{
   "tabWorkbookNav": "FJS Tools",
   "grpNavExplorer": "Điều Hướng",
   "grpQuickTools": "Tiện Ích Nhanh",
@@ -979,6 +979,17 @@
   "Oracle_NlAiSuccess": "✨ AI đã chuyển đổi thành công sang câu lệnh SQL!",
   "Oracle_NlAiError": "Lỗi AI chuyển đổi SQL: {0}",
   "Oracle_NlEmptySelection": "Vui lòng chọn các ô chứa nội dung truy vấn trên Excel trước.",
+  "Oracle_BtnCopySql": "Sao Chép",
+  "Oracle_BtnCopySqlTip": "Sao chép câu lệnh SQL vào bộ nhớ tạm (Ctrl+C)",
+  "Oracle_BtnPasteSql": "Dán",
+  "Oracle_BtnPasteSqlTip": "Dán nội dung từ bộ nhớ tạm vào trình soạn thảo (Ctrl+V)",
+  "Oracle_BtnFormatSql": "Định Dạng",
+  "Oracle_BtnFormatSqlTip": "Tự động căn lề và định dạng câu SQL đẹp mắt",
+  "Oracle_CopiedSqlStatus": "📋 Đã sao chép câu lệnh SQL vào bộ nhớ tạm!",
+  "Oracle_PastedSqlStatus": "📥 Đã dán nội dung từ bộ nhớ tạm!",
+  "Oracle_CopiedGridStatus": "📋 Đã sao chép dữ liệu xem trước vào bộ nhớ tạm!",
+  "Oracle_CopySelection": "📋 Sao chép ô/dòng đã chọn (Ctrl+C)",
+  "Oracle_CopyWithHeaders": "📊 Sao chép kèm tiêu đề cột",
   "Oracle_OptIncludeTitle": "Kèm tên bảng làm tiêu đề",
   "Oracle_OptIncludeHeaders": "Kèm dòng Header",
   "Oracle_OptAutoFit": "Tự động căn chỉnh độ rộng cột",

@@ -16,6 +16,7 @@ using ExcelApp = Microsoft.Office.Interop.Excel.Application;
 using ExcelRange = Microsoft.Office.Interop.Excel.Range;
 using ExcelWorksheet = Microsoft.Office.Interop.Excel.Worksheet;
 using Window = System.Windows.Window;
+using WpfClipboard = System.Windows.Clipboard;
 
 namespace ExcelSupport.Views
 {
@@ -25,7 +26,15 @@ namespace ExcelSupport.Views
         private readonly ObservableCollection<OracleUserCredential> _users = new ObservableCollection<OracleUserCredential>();
         public static readonly DependencyProperty IsDarkThemeProperty =
             DependencyProperty.Register(nameof(IsDarkTheme), typeof(bool), typeof(OracleQuickQueryDialog),
-                new PropertyMetadata(false));
+                new PropertyMetadata(false, OnIsDarkThemeChanged));
+
+        private static void OnIsDarkThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is OracleQuickQueryDialog dlg && dlg.txtSqlQuery != null)
+            {
+                OracleSqlSyntaxHighlighter.ApplyTheme(dlg.txtSqlQuery, (bool)e.NewValue);
+            }
+        }
 
         public bool IsDarkTheme
         {
@@ -46,6 +55,8 @@ namespace ExcelSupport.Views
             InitializeComponent();
             IsDarkTheme = isDarkTheme;
             _pendingAiSelectionText = pendingAiSelectionText;
+
+            OracleSqlSyntaxHighlighter.ApplyTheme(txtSqlQuery, isDarkTheme);
 
             if (!string.IsNullOrWhiteSpace(initialSql))
             {
@@ -101,7 +112,7 @@ namespace ExcelSupport.Views
                     txtSqlQuery.Text = sql;
                     txtStatus.Text = LocalizationService.Get("Oracle_NlAiSuccess", "✨ AI đã tạo câu lệnh SQL từ nội dung đang chọn!");
                     txtSqlQuery.Focus();
-                    txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+                    txtSqlQuery.CaretOffset = txtSqlQuery.Text.Length;
                 }
                 else
                 {
@@ -215,6 +226,7 @@ namespace ExcelSupport.Views
                 }
                 catch { }
 
+                System.Windows.Forms.Integration.ElementHost.EnableModelessKeyboardInterop(_currentInstance);
                 _currentInstance.ShowDialog();
                 _currentInstance = null;
             }
@@ -269,7 +281,7 @@ namespace ExcelSupport.Views
             {
                 txtSqlQuery.Text = item.Sql;
                 txtSqlQuery.Focus();
-                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+                txtSqlQuery.CaretOffset = txtSqlQuery.Text.Length;
             }
         }
 
@@ -393,7 +405,7 @@ namespace ExcelSupport.Views
                 txtSqlQuery.Text = selText.Trim().TrimEnd(';');
                 txtStatus.Text = LocalizationService.Get("Oracle_AiSqlSuccess", "✨ Đã nạp thành công câu truy vấn SQL từ vùng chọn!");
                 txtSqlQuery.Focus();
-                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+                txtSqlQuery.CaretOffset = txtSqlQuery.Text.Length;
                 return;
             }
 
@@ -403,7 +415,7 @@ namespace ExcelSupport.Views
                 txtSqlQuery.Text = generatedSql;
                 txtStatus.Text = infoMsg;
                 txtSqlQuery.Focus();
-                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+                txtSqlQuery.CaretOffset = txtSqlQuery.Text.Length;
                 return;
             }
 
@@ -414,7 +426,7 @@ namespace ExcelSupport.Views
                 txtSqlQuery.Text = specSql;
                 txtStatus.Text = LocalizationService.Get("Oracle_AiSqlSuccess", "✨ Đã nạp thành công câu truy vấn SQL từ vùng chọn!");
                 txtSqlQuery.Focus();
-                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+                txtSqlQuery.CaretOffset = txtSqlQuery.Text.Length;
                 return;
             }
 
@@ -499,7 +511,7 @@ namespace ExcelSupport.Views
             {
                 txtSqlQuery.Text = generatedSql;
                 txtSqlQuery.Focus();
-                txtSqlQuery.CaretIndex = txtSqlQuery.Text.Length;
+                txtSqlQuery.CaretOffset = txtSqlQuery.Text.Length;
             }, IsDarkTheme);
         }
 
@@ -757,6 +769,27 @@ namespace ExcelSupport.Views
                 e.Handled = true;
                 BtnInspectStructure_Click(btnInspectStructure, new RoutedEventArgs());
             }
+            else if (e.Key == Key.C && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (txtSqlQuery.IsKeyboardFocusWithin)
+                {
+                    CopySqlToClipboard();
+                    e.Handled = true;
+                }
+                else if (dgPreview.IsKeyboardFocusWithin)
+                {
+                    CopyDataGridToClipboard(includeHeaders: false);
+                    e.Handled = true;
+                }
+            }
+            else if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (txtSqlQuery.IsKeyboardFocusWithin)
+                {
+                    PasteSqlFromClipboard();
+                    e.Handled = true;
+                }
+            }
             else if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
             {
                 e.Handled = true;
@@ -779,5 +812,143 @@ namespace ExcelSupport.Views
                 Close();
             }
         }
+
+        #region Clipboard & SQL Action Handlers
+
+        private void BtnCopySql_Click(object sender, RoutedEventArgs e)
+        {
+            CopySqlToClipboard();
+        }
+
+        private void BtnPasteSql_Click(object sender, RoutedEventArgs e)
+        {
+            PasteSqlFromClipboard();
+        }
+
+        private void BtnCutSql_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(txtSqlQuery.SelectedText))
+            {
+                WpfClipboard.SetText(txtSqlQuery.SelectedText);
+                int offset = txtSqlQuery.SelectionStart;
+                int len = txtSqlQuery.SelectionLength;
+                txtSqlQuery.Document.Remove(offset, len);
+                txtSqlQuery.CaretOffset = offset;
+                txtStatus.Text = LocalizationService.Get("Oracle_CopiedSqlStatus", "📋 Đã sao chép câu lệnh SQL vào bộ nhớ tạm!");
+            }
+            else
+            {
+                CopySqlToClipboard();
+                txtSqlQuery.Text = string.Empty;
+            }
+        }
+
+        private void BtnSelectAllSql_Click(object sender, RoutedEventArgs e)
+        {
+            txtSqlQuery.SelectAll();
+            txtSqlQuery.Focus();
+        }
+
+        private void BtnClearSql_Click(object sender, RoutedEventArgs e)
+        {
+            txtSqlQuery.Text = string.Empty;
+            txtSqlQuery.Focus();
+        }
+
+        private void BtnFormatSql_Click(object sender, RoutedEventArgs e)
+        {
+            string currentSql = txtSqlQuery.Text;
+            if (string.IsNullOrWhiteSpace(currentSql)) return;
+
+            string formatted = OracleSqlSyntaxHighlighter.FormatSql(currentSql);
+            if (!string.Equals(formatted, currentSql, StringComparison.Ordinal))
+            {
+                txtSqlQuery.Text = formatted;
+                txtSqlQuery.Focus();
+                txtSqlQuery.CaretOffset = txtSqlQuery.Text.Length;
+                txtStatus.Text = "🎨 Đã định dạng câu lệnh SQL chuẩn đẹp!";
+            }
+        }
+
+        private void DgPreviewCopy_Click(object sender, RoutedEventArgs e)
+        {
+            CopyDataGridToClipboard(includeHeaders: false);
+        }
+
+        private void DgPreviewCopyWithHeaders_Click(object sender, RoutedEventArgs e)
+        {
+            CopyDataGridToClipboard(includeHeaders: true);
+        }
+
+        private void CopySqlToClipboard()
+        {
+            try
+            {
+                string textToCopy = !string.IsNullOrEmpty(txtSqlQuery.SelectedText)
+                    ? txtSqlQuery.SelectedText
+                    : txtSqlQuery.Text;
+
+                if (!string.IsNullOrEmpty(textToCopy))
+                {
+                    WpfClipboard.SetText(textToCopy);
+                    txtStatus.Text = LocalizationService.Get("Oracle_CopiedSqlStatus", "📋 Đã sao chép câu lệnh SQL vào bộ nhớ tạm!");
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi sao chép: {ex.Message}";
+            }
+        }
+
+        private void PasteSqlFromClipboard()
+        {
+            try
+            {
+                if (WpfClipboard.ContainsText())
+                {
+                    string clip = WpfClipboard.GetText();
+                    if (!string.IsNullOrEmpty(clip))
+                    {
+                        if (txtSqlQuery.SelectionLength > 0)
+                        {
+                            int offset = txtSqlQuery.SelectionStart;
+                            int len = txtSqlQuery.SelectionLength;
+                            txtSqlQuery.Document.Replace(offset, len, clip);
+                            txtSqlQuery.CaretOffset = offset + clip.Length;
+                        }
+                        else
+                        {
+                            int offset = txtSqlQuery.CaretOffset;
+                            txtSqlQuery.Document.Insert(offset, clip);
+                            txtSqlQuery.CaretOffset = offset + clip.Length;
+                        }
+                        txtSqlQuery.Focus();
+                        txtStatus.Text = LocalizationService.Get("Oracle_PastedSqlStatus", "📥 Đã dán nội dung từ bộ nhớ tạm!");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi dán: {ex.Message}";
+            }
+        }
+
+        private void CopyDataGridToClipboard(bool includeHeaders)
+        {
+            try
+            {
+                dgPreview.ClipboardCopyMode = includeHeaders
+                    ? DataGridClipboardCopyMode.IncludeHeader
+                    : DataGridClipboardCopyMode.ExcludeHeader;
+                ApplicationCommands.Copy.Execute(null, dgPreview);
+                txtStatus.Text = LocalizationService.Get("Oracle_CopiedGridStatus", "📋 Đã sao chép dữ liệu xem trước vào bộ nhớ tạm!");
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Text = $"Lỗi sao chép bảng: {ex.Message}";
+            }
+        }
+
+        #endregion
     }
 }

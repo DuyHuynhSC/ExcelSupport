@@ -1,4 +1,4 @@
-{
+﻿{
   "tabWorkbookNav": "FJS Tools",
   "grpNavExplorer": "Navigation",
   "grpQuickTools": "Quick Tools",
@@ -979,6 +979,17 @@
   "Oracle_NlAiSuccess": "✨ AI successfully converted natural language to SQL!",
   "Oracle_NlAiError": "AI SQL conversion error: {0}",
   "Oracle_NlEmptySelection": "Please select cells containing query description in Excel first.",
+  "Oracle_BtnCopySql": "Copy",
+  "Oracle_BtnCopySqlTip": "Copy SQL query to clipboard (Ctrl+C)",
+  "Oracle_BtnPasteSql": "Paste",
+  "Oracle_BtnPasteSqlTip": "Paste content from clipboard into SQL editor (Ctrl+V)",
+  "Oracle_BtnFormatSql": "Format",
+  "Oracle_BtnFormatSqlTip": "Auto-align and beautify SQL query",
+  "Oracle_CopiedSqlStatus": "📋 SQL query copied to clipboard!",
+  "Oracle_PastedSqlStatus": "📥 Content pasted from clipboard!",
+  "Oracle_CopiedGridStatus": "📋 Preview data copied to clipboard!",
+  "Oracle_CopySelection": "📋 Copy selected cells/rows (Ctrl+C)",
+  "Oracle_CopyWithHeaders": "📊 Copy with column headers",
   "Oracle_OptIncludeTitle": "Include table name as title",
   "Oracle_OptIncludeHeaders": "Include header row",
   "Oracle_OptAutoFit": "Auto-fit columns width",
