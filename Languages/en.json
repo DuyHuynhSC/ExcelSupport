@@ -971,8 +971,6 @@
   "Oracle_SqlEditorLabel": "SQL Query:",
   "Oracle_BtnLoadFromSelection": "From Selection",
   "Oracle_BtnLoadFromSelectionTip": "Read natural language from selected Excel cells and convert to SQL query (Shortcut: Ctrl + L)",
-  "Oracle_BtnAiGenerateSql": "AI NL➔SQL",
-  "Oracle_BtnAiGenerateSqlTip": "Use AI to convert natural language requirement into Oracle SQL query",
   "Oracle_NlDetectedStatus": "⚡ Auto-generated SQL from selected Excel cells (Table: {0})",
   "Oracle_NlNoTableFound": "No table name or query requirement found in selected cells. Please verify your selection.",
   "Oracle_NlAiGenerating": "⏳ Connecting to AI to convert natural language into SQL...",
@@ -988,7 +986,7 @@
   "Oracle_CopiedSqlStatus": "📋 SQL query copied to clipboard!",
   "Oracle_PastedSqlStatus": "📥 Content pasted from clipboard!",
   "Oracle_CopiedGridStatus": "📋 Preview data copied to clipboard!",
-  "Oracle_CopiedSingleCellStatus": "📋 Copied cell value: \",
+  "Oracle_CopiedSingleCellStatus": "📋 Copied cell value: \"{0}\"",
   "Oracle_CopySelection": "📋 Copy selected cells/rows (Ctrl+C)",
   "Oracle_CopyWithHeaders": "📊 Copy with column headers",
   "Oracle_OptIncludeTitle": "Include table name as title",
@@ -1684,5 +1682,9 @@
   "OracleSpec_ModeQueryCSharp": "5. C# LINQ / Query Method",
   "OracleSpec_LoadedQuerySuccess": "Successfully parsed query spec for table {0} with {1} conditions.",
   "Cmd_OracleSpecToPlSql": "Oracle Spec to PL/SQL & DDL Generator",
-  "Cmd_OracleSpecToPlSql_Desc": "Parse selected Excel table spec to generate DDL CREATE TABLE, COMMENT, PL/SQL Block or CRUD Procedures"
+  "Cmd_OracleSpecToPlSql_Desc": "Parse selected Excel table spec to generate DDL CREATE TABLE, COMMENT, PL/SQL Block or CRUD Procedures",
+  "Ai_FormulaExplanationHeader": "Detailed Explanation:",
+  "Oracle_Sid": "SID",
+  "Oracle_UsersListHeader": "Oracle User Accounts List (Users / Schemas)",
+  "TableExport_OptFirstRowHeader": "First row contains column headers"
 }

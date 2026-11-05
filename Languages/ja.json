@@ -971,8 +971,6 @@
   "Oracle_SqlEditorLabel": "SQLクエリ文:",
   "Oracle_BtnLoadFromSelection": "選択セルから取得",
   "Oracle_BtnLoadFromSelectionTip": "選択中のExcelセルから自然言語の抽出条件を読み取ってSQLに変換 (ショートカット: Ctrl + L)",
-  "Oracle_BtnAiGenerateSql": "AI 自然言語➔SQL",
-  "Oracle_BtnAiGenerateSqlTip": "AIを使用して自然言語の条件や質問をOracle SQLクエリに変換",
   "Oracle_NlDetectedStatus": "⚡ 選択セルからSQLを自動生成しました (テーブル: {0})",
   "Oracle_NlNoTableFound": "選択したセルにテーブル名や抽出条件が見つかりませんでした。内容を確認してください。",
   "Oracle_NlAiGenerating": "⏳ AIに接続して自然言語をSQLクエリに変換中...",
@@ -988,7 +986,7 @@
   "Oracle_CopiedSqlStatus": "📋 SQLクエリをクリップボードにコピーしました！",
   "Oracle_PastedSqlStatus": "📥 クリップボードから貼り付けました！",
   "Oracle_CopiedGridStatus": "📋 プレビューデータをクリップボードにコピーしました！",
-  "Oracle_CopiedSingleCellStatus": "📋 セルの値をコピーしました: \",
+  "Oracle_CopiedSingleCellStatus": "📋 セルの値をコピーしました: \"{0}\"",
   "Oracle_CopySelection": "📋 選択したセル/行をコピー (Ctrl+C)",
   "Oracle_CopyWithHeaders": "📊 列ヘッダー付きでコピー",
   "Oracle_OptIncludeTitle": "テーブル名をタイトルとして含める",
@@ -1684,5 +1682,9 @@
   "OracleSpec_ModeQueryCSharp": "5. C#クエリメソッド雛形",
   "OracleSpec_LoadedQuerySuccess": "テーブル「{0}」の抽出仕様から {1} 件の条件を解析しました。",
   "Cmd_OracleSpecToPlSql": "テーブル定義書からOracle PL/SQL & DDL生成 (Spec to PL/SQL)",
-  "Cmd_OracleSpecToPlSql_Desc": "Excelの設計書範囲からDDL CREATE TABLE、COMMENT、PL/SQLブロックまたはCRUDプロシージャを自動生成"
+  "Cmd_OracleSpecToPlSql_Desc": "Excelの設計書範囲からDDL CREATE TABLE、COMMENT、PL/SQLブロックまたはCRUDプロシージャを自動生成",
+  "Ai_FormulaExplanationHeader": "詳細な説明:",
+  "Oracle_Sid": "SID",
+  "Oracle_UsersListHeader": "Oracle ユーザー一覧 (Users / Schemas)",
+  "TableExport_OptFirstRowHeader": "先頭行を列ヘッダーとする"
 }

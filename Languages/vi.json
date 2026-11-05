@@ -971,8 +971,6 @@
   "Oracle_SqlEditorLabel": "Câu lệnh SQL:",
   "Oracle_BtnLoadFromSelection": "Lấy Từ Ô Chọn",
   "Oracle_BtnLoadFromSelectionTip": "Đọc nội dung tự nhiên từ các ô đang chọn trong Excel và chuyển thành câu lệnh SQL (Phím tắt: Ctrl + L)",
-  "Oracle_BtnAiGenerateSql": "AI NL➔SQL",
-  "Oracle_BtnAiGenerateSqlTip": "Sử dụng AI chuyển đổi yêu cầu ngôn ngữ tự nhiên thành câu lệnh SQL Oracle",
   "Oracle_NlDetectedStatus": "⚡ Đã tự động tạo SQL từ các ô chọn trên Excel (Bảng: {0})",
   "Oracle_NlNoTableFound": "Không tìm thấy tên bảng hoặc nội dung truy vấn trong các ô đã chọn. Vui lòng kiểm tra lại nội dung.",
   "Oracle_NlAiGenerating": "⏳ Đang kết nối AI để chuyển đổi ngôn ngữ tự nhiên thành câu lệnh SQL...",
@@ -988,7 +986,7 @@
   "Oracle_CopiedSqlStatus": "📋 Đã sao chép câu lệnh SQL vào bộ nhớ tạm!",
   "Oracle_PastedSqlStatus": "📥 Đã dán nội dung từ bộ nhớ tạm!",
   "Oracle_CopiedGridStatus": "📋 Đã sao chép dữ liệu xem trước vào bộ nhớ tạm!",
-  "Oracle_CopiedSingleCellStatus": "📋 Đã sao chép giá trị ô: \",
+  "Oracle_CopiedSingleCellStatus": "📋 Đã sao chép giá trị ô: \"{0}\"",
   "Oracle_CopySelection": "📋 Sao chép ô/dòng đã chọn (Ctrl+C)",
   "Oracle_CopyWithHeaders": "📊 Sao chép kèm tiêu đề cột",
   "Oracle_OptIncludeTitle": "Kèm tên bảng làm tiêu đề",
@@ -1684,5 +1682,9 @@
   "OracleSpec_ModeQueryCSharp": "5. C# LINQ / Query Method",
   "OracleSpec_LoadedQuerySuccess": "Đã phân tích đặc tả truy vấn bảng {0} với {1} điều kiện.",
   "Cmd_OracleSpecToPlSql": "Sinh PL/SQL Oracle & DDL từ Bảng Đặc Tả (Spec to PL/SQL)",
-  "Cmd_OracleSpecToPlSql_Desc": "Quét chọn bảng thiết kế Excel để sinh câu lệnh DDL CREATE TABLE, COMMENT, PL/SQL Block hoặc CRUD Procedures"
+  "Cmd_OracleSpecToPlSql_Desc": "Quét chọn bảng thiết kế Excel để sinh câu lệnh DDL CREATE TABLE, COMMENT, PL/SQL Block hoặc CRUD Procedures",
+  "Ai_FormulaExplanationHeader": "Giải Thích Chi Tiết:",
+  "Oracle_Sid": "SID",
+  "Oracle_UsersListHeader": "Danh Sách Tài Khoản Oracle (Users / Schemas)",
+  "TableExport_OptFirstRowHeader": "Dòng đầu tiên là tiêu đề cột"
 }
